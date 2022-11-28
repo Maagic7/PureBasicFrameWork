@@ -9,7 +9,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/10/27
-; VERSION  :  1.0
+; VERSION  :  0.1
 ; COMPILER :  PureBasic 6.0
 ; ===========================================================================
 ; ChangeLog: 
