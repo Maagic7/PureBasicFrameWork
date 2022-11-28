@@ -324,61 +324,6 @@ Module VDraw
   EndProcedure
   
   
-  Procedure.i FindIntersection(X1.d, Y1.d, X2.d, Y2.d, X3.d, Y3.d, X4.d, Y4.d, *isP.TPoint)
-    Protected.d dX12, dY12, dX34, dY34, Denominator, T1, T2
-    
-    dX12 = X2 - X1
-    dY12 = Y2 - Y1
-    dX34 = X4 - X3
-    dY34 = Y4 - Y3
-  
-    Denominator = (dY12 * dX34 - dX12 * dY34)
-    T1 = ((X1 - X3) * dY34 + (Y3 - Y1) * dX34) / Denominator
-  
-    If IsInfinity(T1)   ; if T1 is not a valid number
-      ProcedureReturn #False 
-    EndIf
-  
-    T2 = ((X3 - X1) * dY12 + (Y1 - Y3) * dX12) / Denominator
-    
-    ; Intersection Point
-    *isP\X = X1 + dX12 * T1
-    *isP\Y = Y1 + dY12 * T1
-  
-    ProcedureReturn #True
-  EndProcedure
-  
-  Procedure.i FindArcFromTangents(X1.d, Y1.d, X2.d, Y2.d, X3.i, Y3.d, X4.d, Y4.d, *isPoint.TPoint)
-    Protected.f dX, dY, dX1, dY1, dX2, dY2, Radius
-    Protected.TPoint sPoint, pPoint1, pPoint2, isCircle
-   
-    If FindIntersection(X1, Y1, X2, Y2, X3, Y3, X4, Y4, *isPoint)
-    
-      dX1 = X2 - X1
-      dY1 = Y2 - Y1
-  
-      pPoint1\X = X2 - dY1
-      pPoint1\Y = X2 + dX1
-      
-      dX2 = X3 - X4
-      dY2 = Y3 - Y4
-      
-      pPoint2\X = X3 - dY2
-      pPoint2\Y = Y3 + dX2
-      
-      If FindIntersection(X2, Y2, pPoint1\X, pPoint1\Y, X3, Y3, pPoint2\X, pPoint2\Y, @isCircle)
-    
-        dX = X2 - isCircle\X
-        dY = Y2 - isCircle\Y
-      
-        Radius = Sqr(dX * dX + dY * dY)
-        
-        ProcedureReturn Radius
-      EndIf
-    
-    EndIf
-  
-  EndProcedure  
 
   ;- ----------------------------------------------------------------------
   ;- Module Public Functions
