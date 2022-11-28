@@ -245,7 +245,7 @@ Module VDraw
     ; ======================================================================
     
     ; Call the Exception Handler Function in the Module Exception
-    Exception::Exception("ECAD_VDraw", FName, ExceptionType)
+    Exception::Exception("VDraw", FName, ExceptionType)
     ProcedureReturn ExceptionType
   EndProcedure
 
