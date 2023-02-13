@@ -154,7 +154,7 @@ Module STL
   ; DESC: Parse a Line wich contains Vector coordinates [x,y,z]
   ; DESC: Any text before the coordiantes will be skiped (like: "facet normal" or "vertex" 
   ; VAR(Text) : The Text String (must be trimmed)
-  ; VAR(*Pt3D.TPoint3Dd) : 3D-Point which contains the returned x,y,z coordiates
+  ; VAR(*Vector.VECf::TVector) : 3D-Vector which contains the returned x,y,z coordiates
   ; RET.i : #FALSE if no numeric value found
   ; ============================================================================
     
@@ -652,8 +652,8 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 512
-; FirstLine = 471
+; CursorPosition = 170
+; FirstLine = 123
 ; Folding = ---
 ; Optimizer
 ; CPU = 5
