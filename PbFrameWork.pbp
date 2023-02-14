@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.00 LTS (Windows - x86)">
+  <section name="config">
+    <options closefiles="1" openmode="0" name="Purebasic FrameWork"/>
+  </section>
+  <section name="data">
+    <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
+    <log show="1"/>
+    <lastopen date="2022-12-23 22:35" user="user1" host="AMD5800X"/>
+  </section>
+  <section name="files">
+    <file name="Modules\PbFw_Module_BUFFER.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="822253999c68492bd37c7d011b7908d3"/>
+    </file>
+    <file name="Modules\PbFw_Module_CLIMA.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="427ad2cae1b741e87c65fac615e0d489"/>
+    </file>
+    <file name="Modules\PbFw_Module_COLOR.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="187e77f013caf3be71f1a84cff74c061"/>
+    </file>
+    <file name="Modules\PbFw_Module_CPU.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="22370bce6921e0d3366c5b08effca540"/>
+    </file>
+    <file name="Modules\PbFw_Module_CSV.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="6805a76e7406383797298698ea54d701"/>
+    </file>
+    <file name="Modules\PbFw_Module_Exception.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="1a6ec0127ff00a1978dcc70ed80ee7b2"/>
+    </file>
+    <file name="Modules\PbFw_Module_FileSystem.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="6f79bc9dbc6cef3e39d4a12b26a61073"/>
+    </file>
+    <file name="Modules\PbFw_Module_IsNumeric.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="81c2ddd22adc98921e4f711d1c23ba26"/>
+    </file>
+    <file name="Modules\PbFw_Module_Math.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="f9f2fcc5d0b6f8386510e716566a4a71"/>
+    </file>
+    <file name="Modules\PbFw_Module_MyToolBarStandard.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="6d5442418a2d49ece61d009173fdd517"/>
+    </file>
+    <file name="Modules\PbFw_Module_Obj3Df.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="1e94873772d2dc209b2a768f560ea729"/>
+    </file>
+    <file name="Modules\PbFw_Module_Roman.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="ec254219e8118b91315b4b5d1957f89d"/>
+    </file>
+    <file name="Modules\PbFw_Module_STEP.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="d0621153f5694b0d5c988598ab98258a"/>
+    </file>
+    <file name="Modules\PbFw_Module_STL.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="549bf66f2c79a97c9c7616549f10e13d"/>
+    </file>
+    <file name="Modules\PbFw_Module_STRING.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="57fed294a5bd0ebd32a5b2d20589e7c2"/>
+    </file>
+    <file name="Modules\PbFw_Module_System.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="4bc281355073e47526ec94dad402b516"/>
+    </file>
+    <file name="Modules\PbFw_Module_Thread.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="ace1ef93d97ca0ee8763ed39fa474928"/>
+    </file>
+    <file name="Modules\PbFw_Module_VDraw.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="0fd740cce34b13cdeda14152438c633d"/>
+    </file>
+    <file name="Modules\PbFw_Module_VECTORd.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="18a1f0fe71e8ead81d29a04fd3e9d4f1"/>
+    </file>
+    <file name="Modules\PbFw_Module_VECTORf.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="++"/>
+      <fingerprint md5="7bdc16bd6c8fc8ffded3b8a41d36f927"/>
+    </file>
+  </section>
+  <section name="targets">
+    <target name="Default Target" enabled="1" default="1">
+      <inputfile value="PbFw_Main_Inculde.pbi"/>
+      <outputfile value=""/>
+      <compiler version="PureBasic 6.00 LTS (Windows - x86)"/>
+      <options thread="1" debug="1" optimizer="1"/>
+      <format exe="default" cpu="5"/>
+    </target>
+  </section>
+</project>
