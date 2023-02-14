@@ -1,5 +1,17 @@
+
+Readme
+
 PureBasic Framwork
 It's  in Beta V0.1 State
 Do not use any code in your projects until you tested it!
 
 Download it, only if you want to be part of the development!
+
+Some highlights
+
+PbFw_Module_Bits  : optimized Bit manipulation functions
+PbFW_Module_Roman : Converter for Roman Numbers
+PbFw_VECTORf      : SSE optimized float Vector operations (3D Grafics)
+PbFw_VECTORd      : SSE optimized double Vector operations (3D Grafics)
+PbFw_Module_STL   : A STL-File-Format importer (3D Grafics)
+ 
