@@ -9,7 +9,7 @@ Some highlights
 
 PbFw_Module_Bits  : optimized Bit manipulation functions
 PbFW_Module_Roman : Converter for Roman Numbers
-PbFw_VECTORf      : SSE optimized float Vector operations (3D Grafics)
-PbFw_VECTORd      : SSE optimized double Vector operations (3D Grafics)
+PbFw_Module_VECTORf      : SSE optimized float Vector operations (3D Grafics)
+PbFw_Module_VECTORd      : SSE optimized double Vector operations (3D Grafics)
 PbFw_Module_STL   : A STL-File-Format importer (3D Grafics)
  
