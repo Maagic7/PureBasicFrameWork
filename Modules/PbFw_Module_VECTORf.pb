@@ -3,7 +3,7 @@
 ; NAME : PureBasic Framework : Module VECTORf [VEDf::]
 ; DESC : Single precicion Vector Library
 ; DESC : using the MMX, SSE Registers, to speed up vector operations
-; DESC : For double precicion Vectors use VECTORd [VECf::]
+; DESC : For double precicion Vectors use VECTORd [VECd::]
 ; SOURCES:
 ;   Lazarus Free Pascal SEE optimation
 ;     https://wiki.freepascal.org/SSE/de
@@ -693,9 +693,9 @@ EndDeclareModule
   EndMacro
   
   Macro mac_Vector_CrossProduct(OUT, IN1, IN2)
- 		Out\X = *In1\Y * *In2\Z - *In1\Z * *In2\Y
-		Out\Y = *In1\Z * *In2\X - *In1\X * *In2\Z
-		Out\Z = *In1\X * *In2\Y - *In1\Y * *In2\X
+ 		Out\X = IN1\Y * IN2\Z - IN1\Z * IN2\Y
+		Out\Y = IN1\Z * IN2\X - IN1\X * IN2\Z
+		Out\Z = IN1\X * IN2\Y - IN1\Y * IN2\X
 		Out\W = 0
 	EndMacro
 	
@@ -788,11 +788,11 @@ EndDeclareModule
         ProcedureReturn ; EAX
       
       CompilerCase #VEC_SSE_C_Backend   ; for the C-Backend
-        mac_Vector4_ADD(*OUT, *IN1, *IN2)    
+        mac_Vector_ADD(*OUT, *IN1, *IN2)    
         ProcedureReturn *OUT
 
       CompilerDefault             ; Classic Version
-        mac_Vector4_ADD(*OUT, *IN1, *IN2)     
+        mac_Vector_ADD(*OUT, *IN1, *IN2)     
         ProcedureReturn *OUT
 
     CompilerEndSelect  
@@ -819,7 +819,7 @@ EndDeclareModule
         ProcedureReturn ; EAX
         
       CompilerCase #VEC_SSE_C_Backend   ; for the C-Backend
-        mac_Vector4_SUB(*OUT, *IN1, *IN2)        
+        mac_Vector_SUB(*OUT, *IN1, *IN2)        
         ProcedureReturn *OUT
 
       CompilerDefault             ; Classic Version
@@ -850,11 +850,11 @@ EndDeclareModule
         ProcedureReturn ; EAX
         
       CompilerCase #VEC_SSE_C_Backend   ; for the C-Backend
-         mac_Vector4_MUL(*OUT, *IN1, *IN2)        
+         mac_Vector_MUL(*OUT, *IN1, *IN2)        
          ProcedureReturn *OUT 
 
       CompilerDefault             ; Classic Version
-        mac_Vector4_MUL(*OUT, *IN1, *IN2)        
+        mac_Vector_MUL(*OUT, *IN1, *IN2)        
         ProcedureReturn *OUT 
 
     CompilerEndSelect  
@@ -881,11 +881,11 @@ EndDeclareModule
         ProcedureReturn ; EAX
        
       CompilerCase #VEC_SSE_C_Backend   ; for the C-Backend
-        mac_Vector4_DIV(*OUT, *IN1, *IN2)        
+        mac_Vector_DIV(*OUT, *IN1, *IN2)        
         ProcedureReturn *OUT
 
       CompilerDefault             ; Classic Versio  
-        mac_Vector4_DIV(*OUT, *IN1, *IN2)        
+        mac_Vector_DIV(*OUT, *IN1, *IN2)        
         ProcedureReturn *OUT
      
     CompilerEndSelect  
@@ -913,11 +913,11 @@ EndDeclareModule
   			ProcedureReturn ; EAX
   			
       CompilerCase #VEC_SSE_C_Backend       ; for the C-Backend
-        mac_VectorMin(*OUT, *IN1, *IN2)       
+        mac_Vector_Min(*OUT, *IN1, *IN2)       
         ProcedureReturn *OUT
 
       CompilerDefault                       ; Classic Version
-        mac_Vector_Max(*OUT, *IN1, *IN2)       
+        mac_Vector_Min(*OUT, *IN1, *IN2)       
         ProcedureReturn *OUT
 
     CompilerEndSelect     
@@ -945,7 +945,7 @@ EndDeclareModule
   			ProcedureReturn ; EAX
   			
       CompilerCase #VEC_SSE_C_Backend       ; for the C-Backend
-        mac_VectorMin(*OUT, *IN1, *IN2)       
+        mac_Vector_Min(*OUT, *IN1, *IN2)       
         ProcedureReturn *OUT
 
       CompilerDefault                       ; Classic Version
@@ -1721,7 +1721,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 60
+; CursorPosition = 115
+; FirstLine = 92
 ; Folding = -------------
 ; Optimizer
 ; CPU = 5

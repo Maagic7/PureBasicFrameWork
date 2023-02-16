@@ -28,26 +28,25 @@ DeclareModule CPU
   ; Application-Feature
   CompilerIf #PB_Compiler_Processor = #PB_Processor_x86 Or #PB_Compiler_Processor = #PB_Processor_x64 And  #PB_Compiler_32Bit  
     ; 32 Bit Application on AMD/INTEL x86, x64
-    #APPx32_MMX = #True
-    #APPx32_SSE = #True
+    #CPU_APPx32_MMX = #True
+    #CPU_APPx32_SSE = #True
     
-    #APPx64_MMX = #False  
-    #APPx64_SSE = #False
-    
+    #CPU_APPx64_MMX = #False  
+    #CPU_APPx64_SSE = #False
   CompilerElseIf #PB_Compiler_Processor = #PB_Processor_x64 And  #PB_Compiler_64Bit 
     ; 64 Bit Application on AMD/INTEL x64
-    #APPx32_MMX = #False
-    #APPx32_SSE = #False
+    #CPU_APPx32_MMX = #False
+    #CPU_APPx32_SSE = #False
     
-    #APPx64_MMX = #True  
-    #APPx64_SSE = #True
+    #CPU_APPx64_MMX = #True  
+    #CPU_APPx64_SSE = #True
     
   CompilerElse
-    #APPx32_MMX = #False
-    #APPx32_SSE = #False
+    #CPU_APPx32_MMX = #False
+    #CPU_APPx32_SSE = #False
     
-    #APPx64_MMX = #False  
-    #APPx64_SSE = #False  
+    #CPU_APPx64_MMX = #False  
+    #CPU_APPx64_SSE = #False  
   CompilerEndIf
   
   ;  ----------------------------------------------------------------------
@@ -602,8 +601,8 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 536
-; FirstLine = 488
+; CursorPosition = 45
+; FirstLine = 122
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

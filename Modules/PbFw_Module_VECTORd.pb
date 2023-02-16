@@ -3,7 +3,7 @@
 ; NAME : PureBasic Framework : Module VECTORd [VEDd::]
 ; DESC : Double precicion Vector Library
 ; DESC : using the MMX, SSE Registers, to speed up vector operations
-; DESC : For single precicion Vectors use VECTORf [VECd::]
+; DESC : For single precicion Vectors use VECTORf [VECf::]
 ; SOURCES:
 ;   Lazarus Free Pascal SEE optimation
 ;     https://wiki.freepascal.org/SSE/de
@@ -553,25 +553,49 @@ EndDeclareModule
   EndMacro
   
   Macro mac_Vector_CrossProduct(OUT, IN1, IN2)
- 		*Out\X = *In1\Y * *In2\Z - *In1\Z * *In2\Y
-		*Out\Y = *In1\Z * *In2\X - *In1\X * *In2\Z
-		*Out\Z = *In1\X * *In2\Y - *In1\Y * *In2\X
-		*Out\W = 0
+ 		Out\X = IN1\Y * IN2\Z - IN1\Z * IN2\Y
+		Out\Y = IN1\Z * IN2\X - IN1\X * IN2\Z
+		Out\Z = IN1\X * IN2\Y - IN1\Y * IN2\X
+		Out\W = 0
 	EndMacro
 	
-	Macro mac_Vextor_X_Matrix(vecOUT, vecIN, Matrix)
+	Macro mac_Vector_X_Matrix(OUT, IN, Matrix)
+ 	  ; 3D
+; 	  OUT\x = IN\x * Matrix\m11 + IN\y * Matrix\m12 + IN\z * Matrix\m13
+; 	  OUT\y = IN\x * Matrix\m21 + IN\y * Matrix\m22 + IN\z * Matrix\m23
+;     OUT\z = IN\x * Matrix\m31 + IN\y * Matrix\m32 + IN\z * Matrix\m33
 	  
-	  ; *****     C O D E   F E H L T   N O C H *****
-	  
+	  ; 4D
+	  OUT\x = IN\x * Matrix\m11 + IN\y * Matrix\m12 + IN\z * Matrix\m13 + IN\w * Matrix\m14
+	  OUT\y = IN\x * Matrix\m21 + IN\y * Matrix\m22 + IN\z * Matrix\m23 + IN\w * Matrix\m24
+    OUT\z = IN\x * Matrix\m31 + IN\y * Matrix\m32 + IN\z * Matrix\m33 + IN\w * Matrix\m34
+    OUT\w = IN\x * Matrix\m41 + IN\y * Matrix\m42 + IN\z * Matrix\m43 + IN\w * Matrix\m44	  
 	EndMacro
 	
-	Macro mac_Matrix_X_Matrix(OUT, M1, M2)
+	Macro mac_Matrix_X_Matrix(OUT, A, B)   
 	  
-	  ; *****     C O D E   F E H L T   N O C H *****
-	  
-	EndMacro
-	
+	  OUT\m11 = A\m11 * B\m11  +  A\m21 * B\m12  +  A\m31 * B\m13  +  A\m41 * B\m14  
+  	OUT\m12 = A\m12 * B\m11  +  A\m22 * B\m12  +  A\m32 * B\m13  +  A\m24 * B\m14
+  	OUT\m13 = A\m13 * B\m11  +  A\m23 * B\m12  +  A\m33 * B\m13  +  A\m34 * B\m14
+  	OUT\m14 = A\m14 * B\m11  +  A\m24 * B\m12  +  A\m34 * B\m13  +  A\m44 * B\m14
+  	
+  	OUT\m21 = A\m11 * B\m21  +  A\m21 * B\m22  +  A\m31 * B\m23  +  A\m41 * B\m24
+  	OUT\m22 = A\m12 * B\m21  +  A\m22 * B\m22  +  A\m32 * B\m23  +  A\m42 * B\m24
+  	OUT\m23 = A\m13 * B\m21  +  A\m23 * B\m22  +  A\m33 * B\m23  +  A\m43 * B\m24
+  	OUT\m24 = A\m14 * B\m21  +  A\m24 * B\m22  +  A\m34 * B\m23  +  A\m44 * B\m24
   
+  	OUT\m31 = A\m11 * B\m31  +  A\m21 * B\m32  +  A\m31 * B\m33  +  A\m41 * B\m34
+  	OUT\m32 = A\m12 * B\m31  +  A\m22 * B\m32  +  A\m32 * B\m33  +  A\m42 * B\m34
+  	OUT\m33 = A\m13 * B\m31  +  A\m23 * B\m32  +  A\m33 * B\m33  +  A\m43 * B\m34
+  	OUT\m34 = A\m14 * B\m31  +  A\m24 * B\m32  +  A\m34 * B\m33  +  A\m44 * B\m34
+  
+  	OUT\m41 = A\m11 * B\m41  +  A\m21 * B\m42  +  A\m31 * B\m43  +  A\m41 * B\m44
+  	OUT\m42 = A\m12 * B\m41  +  A\m22 * B\m42  +  A\m32 * B\m43  +  A\m42 * B\m44
+  	OUT\m42 = A\m13 * B\m41  +  A\m23 * B\m42  +  A\m33 * B\m43  +  A\m43 * B\m44
+  	OUT\m44 = A\m14 * B\m41  +  A\m24 * B\m42  +  A\m34 * B\m43  +  A\m44 * B\m44
+        	
+  EndMacro
+
   Procedure.s Get_MMX_STATE_TXT()
     Protected ret.s
     
@@ -628,11 +652,11 @@ EndDeclareModule
         ProcedureReturn ; EAX
       
       CompilerCase #VEC_SSE_C_Backend   ; for the C-Backend
-        mac_Vector4_ADD(*OUT, *IN1, *IN2)    
+        mac_Vector_ADD(*OUT, *IN1, *IN2)    
         ProcedureReturn *OUT
 
       CompilerDefault             ; Classic Version
-        mac_Vector4_ADD(*OUT, *IN1, *IN2)     
+        mac_Vector_ADD(*OUT, *IN1, *IN2)     
         ProcedureReturn *OUT
 
     CompilerEndSelect  
@@ -659,11 +683,11 @@ EndDeclareModule
         ProcedureReturn ; EAX
         
       CompilerCase #VEC_SSE_C_Backend   ; for the C-Backend
-        mac_Vector4_SUB(*OUT, *IN1, *IN2)        
+        mac_Vector_SUB(*OUT, *IN1, *IN2)        
         ProcedureReturn *OUT
 
       CompilerDefault             ; Classic Version
-        mac_Vector4_SUB(*OUT, *IN1, *IN2)     
+        mac_Vector_SUB(*OUT, *IN1, *IN2)     
         ProcedureReturn *OUT
 
     CompilerEndSelect  
@@ -690,11 +714,11 @@ EndDeclareModule
         ProcedureReturn ; EAX
         
       CompilerCase #VEC_SSE_C_Backend   ; for the C-Backend
-         mac_Vector4_MUL(*OUT, *IN1, *IN2)        
+         mac_Vector_MUL(*OUT, *IN1, *IN2)        
          ProcedureReturn *OUT 
 
       CompilerDefault             ; Classic Version
-        mac_Vector4_MUL(*OUT, *IN1, *IN2)        
+        mac_Vector_MUL(*OUT, *IN1, *IN2)        
         ProcedureReturn *OUT 
 
     CompilerEndSelect  
@@ -721,11 +745,11 @@ EndDeclareModule
         ProcedureReturn ; EAX
        
       CompilerCase #VEC_SSE_C_Backend   ; for the C-Backend
-        mac_Vector4_DIV(*OUT, *IN1, *IN2)        
+        mac_Vector_DIV(*OUT, *IN1, *IN2)        
         ProcedureReturn *OUT
 
       CompilerDefault             ; Classic Versio  
-        mac_Vector4_DIV(*OUT, *IN1, *IN2)        
+        mac_Vector_DIV(*OUT, *IN1, *IN2)        
         ProcedureReturn *OUT
      
     CompilerEndSelect  
@@ -753,7 +777,7 @@ EndDeclareModule
   			ProcedureReturn ; EAX
   			
       CompilerCase #VEC_SSE_C_Backend       ; for the C-Backend
-        mac_VectorMin(*OUT, *IN1, *IN2)       
+        mac_Vector_Min(*OUT, *IN1, *IN2)       
         ProcedureReturn *OUT
 
       CompilerDefault                       ; Classic Version
@@ -785,11 +809,11 @@ EndDeclareModule
   			ProcedureReturn ; EAX
   			
       CompilerCase #VEC_SSE_C_Backend       ; for the C-Backend
-        mac_VectorMin(*OUT, *IN1, *IN2)       
+        mac_Vector_Max(*OUT, *IN1, *IN2)       
         ProcedureReturn *OUT
 
       CompilerDefault                       ; Classic Version
-        mac_Vector_Max(*OUT, *IN1, *IN2)       
+        mac_Vector_Min(*OUT, *IN1, *IN2)       
         ProcedureReturn *OUT
 
     CompilerEndSelect       
@@ -966,7 +990,7 @@ EndDeclareModule
     CompilerEndSelect    
   EndProcedure
   
-  Procedure.d  Vector_Length(*In.TVector)
+  Procedure.d Vector_Length(*In.TVector)
   ; ============================================================================
   ; NAME: Vector_Length
   ; DESC: Calculates the Vector Length L=SQRT(x² + y² + z²) 
@@ -1481,8 +1505,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 246
-; FirstLine = 194
+; CursorPosition = 130
+; FirstLine = 1305
 ; Folding = ------------
 ; Optimizer
 ; CPU = 5
