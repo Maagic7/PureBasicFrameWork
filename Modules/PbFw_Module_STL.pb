@@ -395,10 +395,13 @@ Module STL
         ResetList(*STLobj\Facet())      
         
         With *STLobj
-          VECf::Vector_Set(\Min, 10e99, 10e99, 10e99, 10e99)    ; Clear Min-Coordinates        
-          VECf::Vector_Set(\Max, -10e99, -10e99, -10e99, -10e99)                    ; Clear Max-Coordinates
-          ForEach \Facet()          
-            VECf::Vector_MinMax(\Min, \Max, \Facet())
+          VECf::Vector_Set(\Min, 10e99, 10e99, 10e99, 10e99)        ; Clear Min-Coordinates        
+          VECf::Vector_Set(\Max, -10e99, -10e99, -10e99, -10e99)    ; Clear Max-Coordinates
+          ForEach \Facet() 
+            VECf::Vector_Min(\Min, \Facet()\V1, \Facet()\V2)
+            VECf::Vector_Min(\Min, \Min, \Facet()\V3)
+            VECf::Vector_Max(\Max, \Facet()\V1, \Facet()\V2)
+            VECf::Vector_Max(\Max, \Max, \Facet()\V3)
           Next  
         EndWith       
         
@@ -651,10 +654,9 @@ CompilerIf #PB_Compiler_IsMainFile
 
 CompilerEndIf
 
-; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 170
-; FirstLine = 123
+; IDE Options = PureBasic 6.01 LTS beta 3 (Windows - x64)
+; CursorPosition = 402
+; FirstLine = 383
 ; Folding = ---
 ; Optimizer
 ; CPU = 5
-; Compiler = PureBasic 6.00 LTS (Windows - x86)

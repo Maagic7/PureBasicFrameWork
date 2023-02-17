@@ -58,8 +58,8 @@
 ;- Include Files
 ;- ----------------------------------------------------------------------
 
-  XIncludeFile "Module_BUFFER.pb"  ; Module for Buffer handling
-  XIncludeFile "Module_STRING.pb"  ; Module for extended String handling
+  XIncludeFile "PbFw_Module_BUFFER.pb"  ; Module for Buffer handling
+  XIncludeFile "PbFw_Module_STRING.pb"  ; Module for extended String handling
 
   DeclareModule STEP3D
     
@@ -75,15 +75,19 @@
   ;  - This will usually be a list containing a single string, which may be either a simple string like "IFC2X3" or an 'object identifier' such as "AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }" (more commonly known as AP214
     
   Structure STEP_Header
-    fileDescription : List String
-    fileName : String
-    timeStamp : String
-    author : List String
-    organization : List String
-    preprocessorVersion : String
-    originatingSystem : String
-    authorization : String
-    schemaIdentifiers : List String
+;     fileDescription : List String
+;     fileName : String
+;     timeStamp : String
+;     author : List String
+;     organization : List String
+;     preprocessorVersion : String
+;     originatingSystem : String
+;     authorization : String
+;     schemaIdentifiers : List String
+  EndStructure
+  
+  Structure TSolid
+    
   EndStructure
   
   Enumeration STEP_AttributeType
@@ -131,7 +135,7 @@
     #bezier_curve 	
     #rational_b_spline_curve 	
     #uniform_curve 	
-    #quasi_ uniform_curve 	
+    #quasi_uniform_curve 	
     #surface_curve 	
     #seam_curve 	
     #composite_curve_segment 	
@@ -195,12 +199,12 @@ Module STEP3D
   ; RET.i : FileFormat 
   ; ============================================================================
     
-    Protected hBUF.BUFFER::TBuffer    ; Buffer Handle Structure (Module BUFFER)
+   ; Protected hBUF.BUFFER::TBuffer    ; Buffer Handle Structure (Module BUFFER)
     
     ProcedureReturn #True
   EndProcedure
   
-  IncludeFile PbFw_Module_STEP3D_KeyWords.pb  
+  IncludeFile "PbFw_Module_STEP3D_BASICS.pb"
 EndModule
 
 CompilerIf #PB_Compiler_IsMainFile
@@ -209,8 +213,9 @@ CompilerIf #PB_Compiler_IsMainFile
   
 CompilerEndIf
 
-; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 4
+; IDE Options = PureBasic 6.01 LTS beta 3 (Windows - x64)
+; CursorPosition = 206
+; FirstLine = 117
 ; Folding = --
 ; Optimizer
 ; CPU = 5

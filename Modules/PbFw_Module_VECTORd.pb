@@ -23,7 +23,9 @@
 ; COMPILER :  PureBasic 6.0
 ; ===========================================================================
 ; ChangeLog: 
-;{ 2022/12/11 S.Maag : added SetMatrix-Functions
+;{ 
+; 2023/02/16 S.Maag : some Bugfixes 
+; 2022/12/11 S.Maag : added SetMatrix-Functions
 ;}
 ; ===========================================================================
 
@@ -114,7 +116,9 @@ DeclareModule VECd
   Declare.i Vector_Add(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
   Declare.i Vector_Sub(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
   Declare.i Vector_Mul(*OUT.TVector, *IN1.TVector, *IN2.TVector)
-  Declare.i Vector_Div(*OUT.TVector, *IN1.TVector, *IN2.TVector)
+  Declare.i Vector_Div(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
+  Declare.i Vector_Min(*OutTVector, *IN1.TVector, *IN2.TVector)
+  Declare.i Vector_Max(*OutTVector, *IN1.TVector, *IN2.TVector)
   Declare.i Vector_Swap(*OUT.TVector, *IN.Tvector)
   Declare.i Vector_Copy(*OUT.TVector, *IN.TVector)
   Declare.i Vector_Set(*Out.TVector, X.d=0.0, Y.d=0.0, Z.d=0.0, W.d=0.0)
@@ -540,11 +544,6 @@ EndDeclareModule
     EndIf
   EndMacro
   
-  Macro mac_VectorMinMax(OutMin, OutMax, IN1, IN2)   
-    mac_Vector_Min(OutMin, IN1, IN2)
-    mac_Vector_Max(OutMax, IN1, IN2)   
-  EndMacro
-
   Macro mac_Vector_Scale(OUT, IN, Factor)
     OUT\x= IN\x * Factor   
     OUT\y= IN\y * Factor   
@@ -819,35 +818,6 @@ EndDeclareModule
     CompilerEndSelect       
   EndProcedure
   
-  Procedure.i Vector_MinMax(*OutMin.TVector, *OutMax.TVector, *IN1.TVector, *IN2.TVector)
-  ; ============================================================================
-  ; NAME: Vector_MinMax
-  ; DESC: Calculates the maximum and maximum coordiantes of 2 Vectors and 
-  ; DESC: return it in a Vector
-  ; VAR(*OutMin) : Pointer to Vector which receives the Min-Coordinates (x,y,z,w)
-  ; VAR(*OutMax) : Pointer to Vector which receives the Max-Coordinates (x,y,z,w)
-  ; VAR(*IN1) : Pointer to IN1-Vector VECd::TVector
-  ; VAR(*IN2) : Pointer to IN1-Vector VECd::TVector
-  ; RET : -
-  ; ============================================================================
-    ; Das Krezprodukt ergbigt einen zu den beiden Vectoren senkrechten Vector
-    CompilerSelect #VEC_USE_MMX
-        
-      CompilerCase #VEC_SSE_x64             ; 64 Bit-Version
-        ASM_Vector_MinMax(RAX, RDX, RCX)    ; for x64 we use RAX,RDX,RCX
-   			
-      CompilerCase #VEC_SSE_x32             ; 32 Bit Version
-        ASM_Vector_MinMax(EAX, EDX, ECX)    ; for x32 we use Registers EAX,EDX,ECX
-   			
-      CompilerCase #VEC_SSE_C_Backend       ; for the C-Backend
-        mac_Vector_MinMax(*OutMin, *OutMax *IN1, *IN2)       
-
-      CompilerDefault                       ; Classic Version
-        mac_Vector_MinMax(*OutMin, *OutMax *IN1, *IN2)       
- 
-    CompilerEndSelect      
-  EndProcedure
-
   ; ----------------------------------------------------------------------------------------------------
   ; H O W  T O  S H U F F L E  ?  (reorder Elements!)
   ; ----------------------------------------------------------------------------------------------------
@@ -1131,7 +1101,7 @@ EndDeclareModule
   ; RET.i : *Matrix
   ; ============================================================================
     
-     ; 3D-Translation (Verschiebung)
+    ; 3D-Translation (Verschiebung)
     ; |1   0   0   dx | 
     ; |0   1   0   dy | 
     ; |0   0   1   dz | 
@@ -1139,10 +1109,10 @@ EndDeclareModule
 
     If *Matrix
       ; Attention here we set the values horizontal! Not vertical! -> 90° turned
-  	  mac_SetVector(*Matrix\v[0],  1,  0,  0,  0) ; (X ,Y, Z, W)
-  	  mac_SetVector(*Matrix\v[1],  0,  1,  0,  0)
-  	  mac_SetVector(*Matrix\v[2],  0,  0,  1,  0)
-  	  mac_SetVector(*Matrix\v[3], dX, dY, dZ,  1)
+  	  mac_SetVector(*Matrix\v[0],  1,  0,  0,  dX) ; (X ,Y, Z, W)
+  	  mac_SetVector(*Matrix\v[1],  0,  1,  0,  dY)
+  	  mac_SetVector(*Matrix\v[2],  0,  0,  1,  dZ)
+  	  mac_SetVector(*Matrix\v[3],  0,  0,  0,  1)
   	EndIf
 	  ProcedureReturn *Matrix
   EndProcedure
@@ -1294,13 +1264,38 @@ EndDeclareModule
     CompilerEndSelect       
   EndProcedure
   
+  Procedure.i SetMatrixRotXYZ(*Matrix.TMatrix, AngleX.d, AngleY.d, AngleZ.d)
+  ; ============================================================================
+  ; NAME: SetMatrixRotXYZ
+  ; DESC: Set the Matrix for Rotation arround all 3-Axis
+  ; VAR(*Matrix) : Pointer to VECf::TMatrix
+  ; VAR(AngleX.d) : Angle X in Radian (use Radain() to convert Degree to Radian
+  ; VAR(AngleY.d) : Angle Y in Radian (use Radain() to convert Degree to Radian
+  ; VAR(AngleZ.d) : Angle Z in Radian (use Radain() to convert Degree to Radian   
+  ; RET.i : *Matrix
+  ; ============================================================================
+    
+    Protected m1.TMatrix, m2.TMatrix, m3.TMatrix
+        
+    SetMatrixRotX(m1, AngleX)
+    SetMatrixRotY(m2, AngleY)
+    
+    Matrix_X_Matrix(m3, m1, m2)       ; XY-Matirx
+
+    SetMatrixRotZ(m1, AngleZ)         ; m1 = Z-matrix
+    
+    Matrix_X_Matrix(*Matrix, m1, m3)  ; OUT = Z-Matrix * XY-Matrix
+    
+    ProcedureReturn *Matrix
+  EndProcedure
+
   Procedure.i Matrix_X_Matrix(*OUT.TMatrix, *M1.TMatrix, *M2.TMatrix)
   ; ============================================================================
   ; NAME: Matrix_X_Matrix
   ; DESC: Caluclate the Matrix-Matrix-Product  M() x M()
   ; VAR(*OUT) : Pointer to Return-Matrix VECd::TMatrix
   ; VAR(*M1) : Pointer to IN1 Matrix a VECd::TMatrix
-  ; VAR(*M1) : Pointer to IN2 Matrix a VECd::TMatrix
+  ; VAR(*M2) : Pointer to IN2 Matrix a VECd::TMatrix
   ; RET.i : *OUT
   ; ============================================================================
    
@@ -1504,10 +1499,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 130
-; FirstLine = 1305
+; IDE Options = PureBasic 6.01 LTS beta 3 (Windows - x64)
+; CursorPosition = 121
+; FirstLine = 90
 ; Folding = ------------
 ; Optimizer
 ; CPU = 5
-; Compiler = PureBasic 6.00 LTS (Windows - x86)
