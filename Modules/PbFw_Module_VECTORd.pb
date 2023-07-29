@@ -1488,7 +1488,6 @@ Module VECd
     Protected s.d=Sin(Angle)
 	  Protected c.d=Cos(Angle)
 	  
-    ; Attention here the values ar vertical
     ; Rotation Y
     ; | cos   0    sin   0 | 
     ; |  0    1     0    0 | 
@@ -1517,7 +1516,6 @@ Module VECd
     Protected s.d=Sin(Angle)
 	  Protected c.d=Cos(Angle)
 	  
-    ; Attention here the values ar vertical
     ; Rotation Z
     ; |cos   -sin   0   0 | 
     ; |sin    cos   0   0 | 
@@ -1810,8 +1808,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 1284
-; FirstLine = 1235
+; CursorPosition = 1518
+; FirstLine = 1457
 ; Folding = -------------
 ; Optimizer
 ; CPU = 5
