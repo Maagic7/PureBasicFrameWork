@@ -7,7 +7,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/11/08
-; VERSION  :  0.1
+; VERSION  :  0.1 untested Developer Version
 ; COMPILER :  PureBasic 6.0
 ; ===========================================================================
 ; ChangeLog: 
@@ -40,6 +40,7 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
+XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 ; XIncludeFile ""
 
 DeclareModule STR
@@ -52,23 +53,23 @@ DeclareModule STR
   ; PB 5.5 and higher use Unicode as Standard Mode
   ; older Versions use ASCII-Mode as standard for the EXE
   CompilerIf #PB_Compiler_Unicode
-    #STR_CharMode = #PB_Unicode       ; Application CharacterMode = Unicode
-    #STR_CharModeName = "Unicode"     ; Application CharacterModeName
+    #PbFw_STR_CharMode = #PB_Unicode       ; Application CharacterMode = Unicode
+    #PbFw_STR_CharModeName = "Unicode"     ; Application CharacterModeName
   CompilerElse
-    #STR_CharMode = #PB_Ascii         ; Application CharacterMode = ASCII 
-    #STR_CharModeName = "ASCII"       ; Application CharacterModeName
+    #PbFw_STR_CharMode = #PB_Ascii         ; Application CharacterMode = ASCII 
+    #PbFw_STR_CharModeName = "ASCII"       ; Application CharacterModeName
   CompilerEndIf
-  #STR_CharSize = SizeOf(Character)   ; Application CharacterSize = 2 Bytes
+  #PbFw_STR_CharSize = SizeOf(Character)   ; Application CharacterSize = 2 Bytes
    
   EnumerationBinary
-    #STR_xDoubleQuotes      
-    #STR_xSingleQuotes
+    #PbFw_STR_xDoubleQuotes      
+    #PbFw_STR_xSingleQuotes
   EndEnumeration
   
-  #STR_CHAR_TAB         =  9    ; TAB
-  #STR_CHAR_SPACE       = 32    ; ' '
-  #STR_CHAR_DoubleQuote = 34    ; "
-  #STR_CHAR_SingleQuote = 39    ; '
+  #PbFw_STR_CHAR_TAB         =  9    ; TAB
+  #PbFw_STR_CHAR_SPACE       = 32    ; ' '
+  #PbFw_STR_CHAR_DoubleQuote = 34    ; "
+  #PbFw_STR_CHAR_SingleQuote = 39    ; '
   
   ; Structure for indexing Words in Strings
   Structure TWordIndex
@@ -85,11 +86,11 @@ DeclareModule STR
   Prototype.i CountWords(*String, cSeparator.c=' ', IngnoreSpaces=#True)
   Global CountWords.CountWords               ; define Prototype-Handler for CountWords
   
-  Prototype.s AddQuotes(String$, cQuote.c=#STR_CHAR_DoubleQuote)
-  Global AddQuotes.AddQuotes                 ; define Prototype-Handler for CountWords
+  Prototype.s AddQuotes(String$, cQuote.c=#PbFw_STR_CHAR_DoubleQuote)
+  Global AddQuotes.AddQuotes                 ; define Prototype-Handler for AddQuotes
   
-  Prototype.s RemoveQuotes(String$, QuoteType=#STR_xDoubleQuotes, xTrim=#True)
-  Global RemoveQuotes.RemoveQuotes                 ; define Prototype-Handler for CountWords
+  Prototype.s RemoveQuotes(String$, QuoteType=#PbFw_STR_xDoubleQuotes, xTrim=#True)
+  Global RemoveQuotes.RemoveQuotes                 ; define Prototype-Handler for AddQuotes
   
   Declare RemoveCharFast(*String, Char.c)
   Declare.i RemoveChars(*String.String, Char1.c, Char2.c=0, xTrim=#False)
@@ -134,6 +135,7 @@ DeclareModule STR
 Module STR      ; Module STRING [STR::]
     
   EnableExplicit
+  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
    
   Structure pChar   ; virtual CHAR-ARRAY, used as Pointer to overlay on strings 
     a.a[0]          ; fixed ARRAY Of CHAR Length 0
@@ -157,8 +159,8 @@ Module STR      ; Module STRING [STR::]
     
     Protected RET.s
     If CharMode = #PB_Default
-      ; #STR_CharMode is [#PB_Unicode or #PB_Ascii]
-      CharMode = #STR_CharMode    
+      ; #PbFw_STR_CharMode is [#PB_Unicode or #PB_Ascii]
+      CharMode = #PbFw_STR_CharMode    
     EndIf
     
     Select CharMode
@@ -231,7 +233,7 @@ Module STR      ; Module STRING [STR::]
     ProcedureReturn RET
   EndProcedure
   
-  Procedure _UnQoteWord(*String, *ret.TWordIndex, PosStart=0, PosEnd=0, UnQuoteMode=#STR_xDoubleQuotes, xTrim=#True)
+  Procedure _UnQoteWord(*String, *ret.TWordIndex, PosStart=0, PosEnd=0, UnQuoteMode=#PbFw_STR_xDoubleQuotes, xTrim=#True)
   ; ============================================================================
   ; NAME: _UnQoteWord
   ; DESC: Removes the Quotes from a String/Word by calculating the PositionIndex
@@ -270,11 +272,11 @@ Module STR      ; Module STRING [STR::]
          
       ; Debug Str(I) + " : " + Str(*char\c[I] )
       Select *char\c[I]
-        Case #STR_CHAR_DoubleQuote
+        Case #PbFw_STR_CHAR_DoubleQuote
           ; Debug "DoubleQuote at : " + Str(I)
            
           If Not xQuoteLeftFound
-            If UnQuoteMode & #STR_xDoubleQuotes
+            If UnQuoteMode & #PbFw_STR_xDoubleQuotes
               Debug "DoubleQuote Left at : " + Str(I)
               xQuoteLeftFound = #True
               xDoubleQuoteFound = #True
@@ -282,10 +284,10 @@ Module STR      ; Module STRING [STR::]
              EndIf
           EndIf
         
-        Case #STR_CHAR_SingleQuote
+        Case #PbFw_STR_CHAR_SingleQuote
            
           If Not xQuoteLeftFound
-            If UnQuoteMode & #STR_xSingleQuotes
+            If UnQuoteMode & #PbFw_STR_xSingleQuotes
               Debug "SingleQuote Left at : " + Str(I)
               xQuoteLeftFound = #True
               xSingleQuoteFound =#True
@@ -293,7 +295,7 @@ Module STR      ; Module STRING [STR::]
             EndIf
           EndIf
           
-        Case  #STR_CHAR_SPACE
+        Case  #PbFw_STR_CHAR_SPACE
           ; Skip Spaces
           If xTrim 
             newStart = I + 1
@@ -337,21 +339,21 @@ Module STR      ; Module STRING [STR::]
         
         Select *char\c[I] 
             
-          Case #STR_CHAR_DoubleQuote
+          Case #PbFw_STR_CHAR_DoubleQuote
             If xDoubleQuoteFound And (Not xQuoteRightFound)
               Debug "DoubleQuote Right at : " + Str(I)
               xQuoteRightFound = #True 
               newEnd= I-1
             EndIf
             
-          Case #STR_CHAR_SingleQuote
+          Case #PbFw_STR_CHAR_SingleQuote
             If xSingleQuoteFound And (Not xQuoteRightFound)
               Debug "SingleQuote Right at : " + Str(I)
               xQuoteRightFound = #True  
               newEnd= I-1
             EndIf
            
-          Case  #STR_CHAR_SPACE
+          Case  #PbFw_STR_CHAR_SPACE
             If xTrim 
               newEnd= I-1
             EndIf
@@ -409,14 +411,14 @@ Module STR      ; Module STRING [STR::]
           *char\c = cReplace    ; replace the Char
           N + 1
         EndIf
-        *char + #STR_CharSize   ; Index to next Char
+        *char + #PbFw_STR_CharSize   ; Index to next Char
       Wend
     EndIf
     ProcedureReturn N
   EndProcedure
   ReplaceChar = @_ReplaceChar()     ; Bind ProcedureAdress to the PrototypeHandler
 
-  ; for String we can use the PB CountString()
+  ; for Strings we can use the PB CountString()
   Procedure.i _CountChar(*String, cSearch.c)
   ; ============================================================================
   ; NAME: _CountChar
@@ -436,7 +438,7 @@ Module STR      ; Module STRING [STR::]
         If *char\c =  cSearch 
           N + 1                   ; count the Char
         EndIf
-        *char + #STR_CharSize     ; Index to next Char
+        *char + #PbFw_STR_CharSize     ; Index to next Char
       Wend
     EndIf
     ProcedureReturn N  ; return the number of Chars found
@@ -477,7 +479,7 @@ Module STR      ; Module STRING [STR::]
             xWordStart = #False  
           EndIf
           
-        Case #STR_CHAR_SPACE    ; if the Separator is not ' ' we must handle Spaces seperatly
+        Case #PbFw_STR_CHAR_SPACE    ; if the Separator is not ' ' we must handle Spaces seperatly
           ; Attention this CASE will only be processed if the Seperator it'n not a SPACE
           If Not IngnoreSpaces
              xWordStart = #True  ; if we do not ignore Spaces it is a WordStart
@@ -487,7 +489,7 @@ Module STR      ; Module STRING [STR::]
         Default 
           xWordStart = #True
       EndSelect      
-       *char + #STR_CharSize              ; Index to next Char
+       *char + #PbFw_STR_CharSize              ; Index to next Char
     Wend
     
     ; If a Word was started And we reached the End of String, we have To count this last Word
@@ -498,13 +500,13 @@ Module STR      ; Module STRING [STR::]
   EndProcedure
   CountWords = @_CountWords()     ; Bind ProcedureAdress to the PrototypeHandler
   
-  Procedure.s _AddQuotes(*String, cQuote.c=#STR_CHAR_DoubleQuote)  ; 
+  Procedure.s _AddQuotes(*String, cQuote.c=#PbFw_STR_CHAR_DoubleQuote)  ; 
   ; ============================================================================
   ; NAME: _AddQuotes
   ; DESC: !PointerVersion! use it as ProtoType AddQuotes()
   ; DESC: Add Quotes to a String on left and right side
   ; VAR(String$): The String
-  ; VAR(QuoteType): #STR_xDoubleQuotes, #STR_xSingleQuotes
+  ; VAR(QuoteType): #PbFw_STR_xDoubleQuotes, #PbFw_STR_xSingleQuotes
   ; RET.s : String without Quotes
   ; ============================================================================
     ; ASCII-34 = ", ASCII-39 = '
@@ -512,13 +514,13 @@ Module STR      ; Module STRING [STR::]
   EndProcedure
   AddQuotes = @_AddQuotes()     ; Bind ProcedureAdress to the PrototypeHandler
       
-  Procedure.s _RemoveQuotes(*String, UnQuoteMode=#STR_xDoubleQuotes, xTrim=#True)
+  Procedure.s _RemoveQuotes(*String, UnQuoteMode=#PbFw_STR_xDoubleQuotes, xTrim=#True)
   ; ============================================================================
   ; NAME: RemoveQuotes
   ; DESC: !PointerVersion! use it as ProtoType RemoveQuotes()
   ; DESC: Remove Quotes from a String on left and right side
   ; VAR(String$): The String
-  ; VAR(UnQuoteMode): #STR_xDoubleQuotes, #STR_xSingleQuotes or cmbination of both
+  ; VAR(UnQuoteMode): #PbFw_STR_xDoubleQuotes, #PbFw_STR_xSingleQuotes or cmbination of both
   ; VAR(xTrim): #True: Remove SPACEs inside the Quotes / #FalseÖ keep SPACEs
   ;             Spaces outside the Quotes are removed always
   ; RET.s : String without Quotes
@@ -538,7 +540,7 @@ Module STR      ; Module STRING [STR::]
    
         ; because WordStart is the NumberOfFirstChar [1..] we have to 
         ; subtract 1 to get a 0-based Pointer for PeekS()
-        *pWord = *String + (\WordStart-1) * #STR_CharSize
+        *pWord = *String + (\WordStart-1) * #PbFw_STR_CharSize
         
         ProcedureReturn PeekS(*pWord, \Length)
         
@@ -554,7 +556,7 @@ Module STR      ; Module STRING [STR::]
   EndProcedure
   RemoveQuotes = @_RemoveQuotes()     ; Bind ProcedureAdress to the PrototypeHandler
     
-  Procedure RemoveCharFast(*String, Char.c)
+  Procedure.i RemoveCharFast(*String, Char.c)
   ; ============================================================================
   ; NAME: RemoveChars
   ; NAME: Attention! This is a Pointer-Version! Be sure to call it with a
@@ -565,119 +567,92 @@ Module STR      ; Module STRING [STR::]
   ; VAR(Char.c) : The Character to remove
   ; RET: - 
   ; ============================================================================
-    Protected I, pWrt, pRead, *pC.pChar
-     
-    #cst_repChar = 1    
-    *pC = *String    ; Set the CharPointer = StartOfString
-      
-    If *pC And Char        
-      ; ----------------------------------------------------------------------
-      ; compacting the String
-      ; ----------------------------------------------------------------------
-      Repeat
-        Select *pC\c[I]                   
-          Case 0              ; --- EndOfString
-            Break                   
-          Case Char           ; --- the searched Character
-            pRead +1                      ; Set the ReadPositon to Next Char
-            
-          Default             ; --- other characters => compact the String 
-            If pRead > pWrt               ; if ReadPosition > WritePosition
-              *pC\c[pWrt] =  *pC\c[pRead] ; Copy the Character from ReadPosition to WritePosition = compacting the String
-              pWrt +1  : pRead  +1        ; set new Read And Write-Position
-            EndIf           
-        EndSelect      
-        I + 1 
-      ForEver     
-   
-      ; I is EndOfString and Nulltermination! So if pWrt is not the orginal EndOfString
-      ; we must wirte a NullTermination
-      If pWrt < I   ;
-        *pC\c[pWrt] = 0  ; Write Null at EndOfString
-      EndIf       
-    EndIf    
-  EndProcedure
-  
-  Procedure.i RemoveChars(*String.String, Char1.c, Char2.c=0, xTrim=#False)
-  ; ============================================================================
-  ; NAME: RemoveChars
-  ; DESC: Removes up to 2 different Character from a String
-  ; DESC: The String will be shorter after
-  ; DESC: Example: str\s= " ..This, is a, Test.! " : RemoveChars(str\s, '.' , ',' ,#True)
-  ; DESC: =>              "This is a Test!"
-  ; VAR(*String.String) : Pointer to String-Struct
-  ; VAR(Char1.c) : The first Character to remove
-  ; VAR(Char2.c) : The second Character to remove 
-  ; VAR(xTrim=#False): Do a left and right Trim (remove leading Spaces)
-  ; RET.i: Number of removed Characters
-  ; ============================================================================
-    Protected I, cnt, pWrt, pRead, *pC.pChar
-    Protected xStart
     
-    #cst_repChar = 1
-    
-    *pC = @*String\s    ; Set the CharPointer = StartOfString
-      
-    If *pC And Char1
-      
-      If Char2 = 0      ; for the routine, Char2 can't be 0
-        Char2 = Char1
-      EndIf 
-  
-      ; ----------------------------------------------------------------------
-      ; If xTrim Then !remove leading characters of {Spaces, Char1, Char2}
-      ; ----------------------------------------------------------------------
-      If xTrim     ; if remove leading Space AND char
-        Repeat
-          Select *pC\c[I]
-            Case #STR_CHAR_SPACE, Char1, Char2   ; Character Is Space or searched Char
-              pRead +1      ; Set the ReadPositon to next Character
-              cnt +1        ; count removed Characters           
-            Default
-              Break           
-          EndSelect
-          I +1
-        ForEver
-      EndIf  
-      ; ----------------------------------------------------------------------
-      ; compacting the String
-      ; ----------------------------------------------------------------------
-      Repeat
-        Select *pC\c[I]                   
-          Case 0 ; EndOfString
-            Break                   
-          Case Char1, Char2  ; if it's the searched Character
-            pRead +1           ; Set the ReadPositon one further
-            cnt +1             ; count removed Characters         
-          Default       ; other characters => compact the String 
-            If pRead > pWrt ; if ReadPosition > WritePosition
-              *pC\c[pWrt] =  *pC\c[pRead] ; Copy the Character from ReadPosition to WritePosition => compacting the String
-              pWrt +1  : pRead  +1        ; set new Read And Write-Position
-            EndIf           
-        EndSelect      
-        I + 1 
-      ForEver     
-      ; ----------------------------------------------------------------------
-      ; If xTrimg Then !search Spaces at End of compact String and remove it!
-      ; ----------------------------------------------------------------------
-      If xTrim ; if Trim, search Spaces at last WritePosition pWrt and
-        pWrt - 1
-        While *pC\c[pWrt] = #STR_CHAR_SPACE
-          pWrt-1
-          cnt +1
-        Wend
-        pWrt +1 ; set pWrt to EndOfString-Position
-      EndIf
-      
-      ; I is EndOfString and Nulltermination! So if pWrt is not the orginal EndOfString
-      ; we must wirte a NullTermination
-      If pWrt < I         
-        *pC\c[pWrt] = 0   ; Write Null at EndOfString
-      EndIf
-        
+   Protected *pWrite.Character = *String
+   Protected *pRead.Character = *String
+  	    
+    If (Not *String) Or (Not Char)
+      ProcedureReturn
     EndIf
     
-    ProcedureReturn cnt ; Return number of removed Chars
+ 	  While *pRead\c     ; While Not NullChar    
+   	  If  *pRead\c <> Char  	      
+   	    If *pWrite <> *pRead     ; if  WritePosition <> ReadPosition
+          *pWrite\c = *pRead\c   ; Copy the Character from ReadPosition to WritePosition => compacting the String
+        EndIf
+        *pWrite + SizeOf(Character) ; set new Write-Position          
+      EndIf           
+      *pRead + SizeOf(Character) ; Set Pointer to NextChar
+    Wend
+  	
+  	; If *pWrite is not at end of orignal *pRead,
+  	; we removed some char and must write a 0-Termination as new EndOfString 
+  	If *pRead <> *pWrite
+  		*pWrite\c = 0
+  	EndIf
+  	
+  	ProcedureReturn (*pRead - *pWrite)/SizeOf(Character) ; Number of characters removed
+  EndProcedure
+  
+  Procedure RemoveNonWordChars(*String.Character)
+    ; ============================================================================
+    ; NAME: RemoveNonWordChars
+    ; NAME: Attention! This is a Pointer-Version! Be sure to call it with a
+    ; DESC: correct String-Pointer
+    ; DESC: Removes a NonWord Characters from the String
+    ; DESC: The String will be shorter after
+    ; DESC: (question at PB-Forum: https://www.purebasic.fr/english/viewtopic.php?t=82139)
+    ; VAR(*String) : Pointer to String
+    ; RET: - 
+    ; ============================================================================
+    
+    Protected *pWrite.Character = *String
+  	
+    Macro RemoveNonWordChars_KeepChar()
+    	If *pWrite <> *String     ; if  WritePosition <> ReadPosition
+    		*pWrite\c = *String\c   ; Copy the Character from ReadPosition to WritePosition => compacting the String
+    	EndIf
+    	*pWrite + SizeOf(Character) ; set new Write-Position 
+    EndMacro
+    
+    If Not *String
+      ProcedureReturn
+    EndIf
+    
+  	While *String\c     ; While Not NullChar
+  	  
+  	  Select *String\c
+  	      
+        ; ----------------------------------------------------------------------
+        ; Characters to keep
+        ; ----------------------------------------------------------------------             
+  	      
+        ; If we check for the most probably Chars first, we speed up the operation
+        ; because we minimze the number of checks to do!
+        Case 'a' To 'z'   ; keep  a to z
+          RemoveNonWordChars_KeepChar()		; local Macro _KeppChar()
+          
+        Case 'A' To 'Z'   ; keep  A to Z
+          RemoveNonWordChars_KeepChar()				
+                 
+   	    Case '0' To '9'   ; keep 0 to 9
+          RemoveNonWordChars_KeepChar()				
+          
+        Case '_'          ; keep '_'
+          RemoveNonWordChars_KeepChar()				
+                        
+      EndSelect
+      
+      *String + SizeOf(Character) ; Set Pointer to NextChar
+  		
+    Wend
+  	
+  	; If *pWrite is not at end of orignal *String,
+  	; we removed some char and must write a 0-Termination as new EndOfString 
+  	If *String <> *pWrite
+  		*pWrite\c = 0
+  	EndIf
+  
   EndProcedure
 
   Procedure.s RemoveTabsAndDoubleSpace(String$)
@@ -695,7 +670,7 @@ Module STR      ; Module STRING [STR::]
     
     *pC = @String$    ; Set the CharPointer = StartOfString
     
-    While *pC\c[I] = #STR_CHAR_SPACE
+    While *pC\c[I] = #PbFw_STR_CHAR_SPACE
       *pC\c[I] = #cst_repChar    ; mark leading spaces to remove
       I+1
     Wend
@@ -704,16 +679,16 @@ Module STR      ; Module STRING [STR::]
     Repeat
       Select *pC\c[I]   ; Switch for the CharType
                     
-        Case #STR_CHAR_TAB   ; TAB         
+        Case #PbFw_STR_CHAR_TAB   ; TAB         
           If cnt > 0                  ; If there was a Space befor
             *pC\c[I] = #cst_repChar   ; mark it to remove
           Else                        ; No Space befor
-            *pC\c[I] = #STR_CHAR_SPACE     ; TAB => SPACE
+            *pC\c[I] = #PbFw_STR_CHAR_SPACE     ; TAB => SPACE
             lastSpace = I             ; save position of last Space
-            cnt + 1                     ; Cnt the Space
+            cnt + 1                   ; Cnt the Space
           EndIf          
           
-        Case #STR_CHAR_SPACE  ; SPACE         
+        Case #PbFw_STR_CHAR_SPACE  ; SPACE         
           If cnt > 0 
             *pC\c[I] = #cst_repChar 
           Else
@@ -737,7 +712,7 @@ Module STR      ; Module STRING [STR::]
     
     ProcedureReturn ReplaceString(String$, Chr(#cst_repChar), "")  ; now remove the marked Characters
     
-    ; _RemoveChars is same speed than ReplaceString() - so there is no advantage
+    ; _RemoveChars is same speed as ReplaceString() - so there is no advantage
     ;_RemoveChars(@String$, #cst_repChar)
     ;ProcedureReturn String$
   EndProcedure
@@ -751,7 +726,7 @@ Module STR      ; Module STRING [STR::]
   ; VAR(List WordIndex.TWordIndex()): Your List() which should hold the WordIndex  
   ; VAR(cSeparator.c) : Character which seperatres the Words
   ;                     Double characters are igored
-  ; VAR(UnQuoteMode): #STR_xDoubleQuotes, #STR_xSingleQuotes or cmbination of both
+  ; VAR(UnQuoteMode): #PbFw_STR_xDoubleQuotes, #PbFw_STR_xSingleQuotes or cmbination of both
   ; VAR(xTrim): #True: Remove SPACEs inside the Quotes / #FalseÖ keep SPACEs
   ;             Spaces outside the Quotes are removed always
   ; RET.i : Number of Words found; ListSize(WordIndex())
@@ -778,7 +753,7 @@ Module STR      ; Module STRING [STR::]
             PosEnd = I-1
          EndIf
           
-        Case #STR_CHAR_SPACE    ; if the Separator is not ' ' we must handle Spaces seperatly
+        Case #PbFw_STR_CHAR_SPACE    ; if the Separator is not ' ' we must handle Spaces seperatly
           ; Attention this CASE will only be processed if the Seperator it'n not a SPACE
           If Not xTrim
             xWordStart = #True  ; if we do not ignore Spaces it is a WordStart
@@ -830,7 +805,7 @@ Module STR      ; Module STRING [STR::]
             PosEnd = I-1
           EndIf
           
-        Case #STR_CHAR_SPACE     ; if the Separator is not ' ' we must handle Spaces seperatly
+        Case #PbFw_STR_CHAR_SPACE     ; if the Separator is not ' ' we must handle Spaces seperatly
           ; Attention this CASE will only be processed if the Seperator it'n not a SPACE
           If Not IgnoreSpaces
             xWordStart = #True   ; if we do not ignore Spaces it is a WordStart
@@ -888,7 +863,7 @@ Module STR      ; Module STRING [STR::]
             *End = *String
           EndIf
         Else
-          If *String\c = #STR_CHAR_DoubleQuote
+          If *String\c = #PbFw_STR_CHAR_DoubleQuote
             If Not lock
               lock = #True
               dq = #True
@@ -1117,7 +1092,7 @@ Module STR      ; Module STRING [STR::]
    Protected sRet.s
       
    If *Buffer
-      sRet.s = Space(Bytes * #STR_CharSize)
+      sRet.s = Space(Bytes * #PbFw_STR_CharSize)
       *dest = @sRet
       *src = *Buffer  
        
@@ -1128,8 +1103,8 @@ Module STR      ; Module STRING [STR::]
         loNibble =  (*src\a[I] & $0F) + '0'
         If loNibble > '9' : loNibble  + 7 : EndIf
         
-        *dest\c[I * #STR_CharSize]   = hiNibble         
-        *dest\c[I * #STR_CharSize +1]= loNibble
+        *dest\c[I * #PbFw_STR_CharSize]   = hiNibble         
+        *dest\c[I * #PbFw_STR_CharSize +1]= loNibble
       Next
     
       ProcedureReturn sRet
@@ -1159,7 +1134,7 @@ Module STR      ; Module STRING [STR::]
       Debug "Bytes : " + Bytes
       
       While Bytes 
-        hiNibble = (*src\c[I * #STR_CharSize]) ; read HexChar from String
+        hiNibble = (*src\c[I * #PbFw_STR_CharSize]) ; read HexChar from String
          
         If hiNibble           
           If hiNibble >'F'
@@ -1174,7 +1149,7 @@ Module STR      ; Module STRING [STR::]
           Break   ; leave While          
         EndIf
         
-        loNibble = (*src\c[I * #STR_CharSize +1]) 
+        loNibble = (*src\c[I * #PbFw_STR_CharSize +1]) 
         ;Debug "hi : " + hiNibble + " / lo : " + Chr(loNibble)
         If loNibble          
           If loNibble >'F'
@@ -1198,6 +1173,7 @@ Module STR      ; Module STRING [STR::]
   EndProcedure
   HexStringToBuffer = @_HexStringToBuffer()     ; Bind ProcedureAdress to the PrototypeHandler
   
+ 
 EndModule
 
 CompilerIf #PB_Compiler_IsMainFile
@@ -1208,7 +1184,7 @@ CompilerIf #PB_Compiler_IsMainFile
   EnableExplicit
   UseModule STR
   
-  #AllQuotes = #STR_xDoubleQuotes | #STR_xSingleQuotes
+  #AllQuotes = #PbFw_STR_xDoubleQuotes | #PbFw_STR_xSingleQuotes
   Define s.s, ret.s
   Define I
   Define T1, T2, T3
@@ -1217,7 +1193,7 @@ CompilerIf #PB_Compiler_IsMainFile
 ;   Debug "The String : " + s
 ;   Debug ""
 ;   Debug "Without Trim"
-;   ret = AddQuotes(s,#STR_xDoubleQuotes)
+;   ret = AddQuotes(s,#PbFw_STR_xDoubleQuotes)
 ;   Debug "Add double Quotes : " + ret
 ;   ret = RemoveQuotes(ret, #AllQuotes, #False)  
 ;   Debug "Remove double Quotes : " + ret
@@ -1249,23 +1225,23 @@ CompilerIf #PB_Compiler_IsMainFile
 ;   ret = RemoveQuotes(ret, #AllQuotes, #False)  
 ;   Debug "Remove all Quotes : " + ret
 ;   Debug ""
-;   ret = AddQuotes(s,#STR_xDoubleQuotes)
+;   ret = AddQuotes(s,#PbFw_STR_xDoubleQuotes)
 ;   Debug "Add double Quotes : " + ret
 ;   ret = RemoveQuotes(ret,#AllQuotes, #False)
 ;   Debug "Remove all Quotes : " + ret
 ;   Debug ""
 ;   Debug "With Trim"
-;     ret = AddQuotes(s,#STR_xSingleQuotes)
+;     ret = AddQuotes(s,#PbFw_STR_xSingleQuotes)
 ;   Debug "Add single Quotes : " + ret
 ;   ret = RemoveQuotes(ret, #AllQuotes)  
 ;   Debug "Remove all Quotes : " + ret
 ;   Debug ""
-;   ret = AddQuotes(s,#STR_xDoubleQuotes)
+;   ret = AddQuotes(s,#PbFw_STR_xDoubleQuotes)
 ;   Debug "Add double Quotes : " + ret
 ;   ret = RemoveQuotes(ret,#AllQuotes)
 ;   Debug "Remove all Quotes : " + ret
 ;   Debug ""
-;   ret = AddQuotes(s,#STR_xDoubleQuotes)
+;   ret = AddQuotes(s,#PbFw_STR_xDoubleQuotes)
 ;   Debug "Add double Quotes : " + ret
 ;   Debug "Try what happens without QuoteType"
 ;   ret = RemoveQuotes(ret,0)
@@ -1287,9 +1263,9 @@ CompilerIf #PB_Compiler_IsMainFile
 ;   EndMacro
 
 CompilerEndIf
-; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 637
-; FirstLine = 568
+; IDE Options = PureBasic 6.02 LTS (Windows - x64)
+; CursorPosition = 591
+; FirstLine = 528
 ; Folding = -----
 ; Optimizer
 ; CPU = 5
