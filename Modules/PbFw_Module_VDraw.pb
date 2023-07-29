@@ -9,7 +9,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/10/27
-; VERSION  :  0.1
+; VERSION  :  0.1 untested Developer Version
 ; COMPILER :  PureBasic 6.0
 ; ===========================================================================
 ; ChangeLog: 
@@ -64,8 +64,9 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
-XIncludeFile "PbFw_Module_Color.pb"
-XIncludeFile "PbFw_Module_Exception.pb"
+XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::     FrameWork control Module
+XIncludeFile "PbFw_Module_Color.pb"       ; COL::      Color Handling Module
+XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::      Debug Module
 
 ;{ *** All PB Vectro drawing commands ****
    ; AddPathArc                                      
@@ -226,12 +227,19 @@ EndDeclareModule
 Module VDraw
   
   EnableExplicit
+  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+  
+  
+  Structure TVDraw
+    VStart.i
+    StrokeWidth.d  
+  EndStructure
   
   ;- ----------------------------------------------------------------------
   ;- Module Private Functions
   ;- ----------------------------------------------------------------------
   
-  #VectorDrawingNotStarted = Exception::#EXCEPTION_VectorDrawingNotStarted
+  #VectorDrawingNotStarted = DBG::#PbfW_DBG_VectorDrawingNotStarted
   Global memScaleX.d = 1.0  ; total Zoom factor X [DPIscalingX * Zoom]
   Global memScaleY.d = 1.0  ; total Zoom factor Y [DPIscalingY * Zoom]
   Global memDPIscaling = #False
@@ -245,7 +253,7 @@ Module VDraw
     ; ======================================================================
     
     ; Call the Exception Handler Function in the Module Exception
-    Exception::Exception("ECAD_VDraw", FName, ExceptionType)
+    DBG::Exception("ECAD_VDraw", FName, ExceptionType)
     ProcedureReturn ExceptionType
   EndProcedure
 
@@ -261,8 +269,9 @@ Module VDraw
     X.d     ; X As Double (64Bit Float)
     Y.d     ; Y As Double (64Bit Float)
   EndStructure
-   
-  Global Stroke.i, VStart.i, Line.TLineInfo
+  
+  Global Line.TLineInfo 
+  Global Stroke.i 
   Global VStart.i ; indication VectorDrawing started
   
   Macro mac_AddAlphaIfNull(Color)
@@ -276,7 +285,7 @@ Module VDraw
   ; ======================================================================
 
     If Alpha(Color)=0 
-      Color = Color | COLOR::#AlphaMask  ; Set Alpha =255 -> full intransparent
+      Color = Color | COLOR::#PbFw_COL_AlphaMask  ; Set Alpha =255 -> full intransparent
     EndIf
   EndMacro
   
@@ -323,36 +332,35 @@ Module VDraw
     
   EndProcedure
   
-  
-  Procedure.i FindIntersection(X1.d, Y1.d, X2.d, Y2.d, X3.d, Y3.d, X4.d, Y4.d, *isP.TPoint)
-    Protected.d dX12, dY12, dX34, dY34, Denominator, T1, T2
+  Procedure.i _FindLinesIntersection(L1_X1.d, L1_Y1.d, L1_X2.d, L1_Y2.d, L2_X1.d, L2_Y1.d, L2_X2.d, L2_Y2.d, *isP.TPoint)
+    Protected.d L1_W, L1_H, L2_W, L2_H, Denominator, T1, T2
     
-    dX12 = X2 - X1
-    dY12 = Y2 - Y1
-    dX34 = X4 - X3
-    dY34 = Y4 - Y3
+    L1_W = L1_X2 - L1_X1
+    L1_H = L1_Y2 - L1_Y1
+    L2_W = L2_X2 - L2_X1
+    L2_H = L2_Y2 - L2_Y1
   
-    Denominator = (dY12 * dX34 - dX12 * dY34)
-    T1 = ((X1 - X3) * dY34 + (Y3 - Y1) * dX34) / Denominator
+    Denominator = (L1_H * L2_W - L1_W * L2_H)
+    T1 = ((L1_X1 - L2_X1) * L2_H + (L2_Y1 - L1_Y1) * L2_W) / Denominator
   
     If IsInfinity(T1)   ; if T1 is not a valid number
       ProcedureReturn #False 
     EndIf
   
-    T2 = ((X3 - X1) * dY12 + (Y1 - Y3) * dX12) / Denominator
+    T2 = ((L2_X1 - L1_X1) * L1_H + (L1_Y1 - L2_Y1) * L1_W) / Denominator
     
     ; Intersection Point
-    *isP\X = X1 + dX12 * T1
-    *isP\Y = Y1 + dY12 * T1
+    *isP\X = L1_X1 + L1_W * T1
+    *isP\Y = L1_Y1 + L1_H * T1
   
     ProcedureReturn #True
   EndProcedure
   
-  Procedure.i FindArcFromTangents(X1.d, Y1.d, X2.d, Y2.d, X3.i, Y3.d, X4.d, Y4.d, *isPoint.TPoint)
+  Procedure.i _FindArcFromTangents(X1.d, Y1.d, X2.d, Y2.d, X3.i, Y3.d, X4.d, Y4.d, *isPoint.TPoint)
     Protected.f dX, dY, dX1, dY1, dX2, dY2, Radius
     Protected.TPoint sPoint, pPoint1, pPoint2, isCircle
    
-    If FindIntersection(X1, Y1, X2, Y2, X3, Y3, X4, Y4, *isPoint)
+    If _FindLinesIntersection(X1, Y1, X2, Y2, X3, Y3, X4, Y4, *isPoint)
     
       dX1 = X2 - X1
       dY1 = Y2 - Y1
@@ -366,7 +374,7 @@ Module VDraw
       pPoint2\X = X3 - dY2
       pPoint2\Y = Y3 + dX2
       
-      If FindIntersection(X2, Y2, pPoint1\X, pPoint1\Y, X3, Y3, pPoint2\X, pPoint2\Y, @isCircle)
+      If _FindLinesIntersection(X2, Y2, pPoint1\X, pPoint1\Y, X3, Y3, pPoint2\X, pPoint2\Y, @isCircle)
     
         dX = X2 - isCircle\X
         dY = Y2 - isCircle\Y
@@ -969,7 +977,7 @@ Module VDraw
        
       mac_AddAlphaIfNull(Color) ; set Alpha Channel to 255 if it is 0
       
-      Angle = FindArcFromTangents(X1, Y1, X2, Y2, X3, Y3, X4, Y4, @isP)
+      Angle = _FindArcFromTangents(X1, Y1, X2, Y2, X3, Y3, X4, Y4, @isP)
       
       MovePathCursor(X1, Y1)
       AddPathLine(X2, Y2)
@@ -1197,6 +1205,7 @@ Module VDraw
   ; DESC: Stops the Vector Drawing 
   ; RET : -
   ; ======================================================================
+    
     Stroke = 0
     StopVectorDrawing()
     Vstart = #False     ; clear the Start indication of VectorDrawing
@@ -1263,10 +1272,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf  
 
 DisableExplicit
-; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 11
-; Folding = 7------
+; IDE Options = PureBasic 6.01 LTS (Windows - x86)
+; CursorPosition = 38
+; Folding = -------
 ; Optimizer
-; EnableXP
-; DPIAware
 ; CPU = 5
+; Compiler = PureBasic 6.00 LTS (Windows - x86)
