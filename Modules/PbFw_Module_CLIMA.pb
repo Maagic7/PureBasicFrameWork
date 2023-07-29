@@ -151,7 +151,7 @@ Module CLIMA
   ; ======================================================================
   ; NAME: Load_AirSatTable
   ; DESC: Load the AirSaturation Table
-  ; DESC: Alle the formulas are aproximations. The Table contains
+  ; DESC: All the formulas are aproximations. The Table contains
   ; DESC: the more exact values between a AirTemp of [-100°C..+140°C]
   ; VAR((Array Table.TAirSatTable(1): The Arry which should hold the Table
   ; RET-i: NoOf loaded Datasets
@@ -499,8 +499,9 @@ EndModule
 
 
 
-; IDE Options = PureBasic 6.01 LTS (Windows - x86)
-; CursorPosition = 9
+; IDE Options = PureBasic 6.02 LTS (Windows - x64)
+; CursorPosition = 170
+; FirstLine = 137
 ; Folding = --
 ; Optimizer
 ; CPU = 5
