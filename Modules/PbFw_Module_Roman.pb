@@ -49,7 +49,7 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
-;XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
+XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 
 DeclareModule Rom
     
@@ -62,7 +62,7 @@ EndDeclareModule
 Module Rom
   
   EnableExplicit
-  ;PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
   
   ; private Structure
   Structure TRomanNumeral
@@ -194,10 +194,11 @@ CompilerIf #PB_Compiler_IsMainFile
   v = 1984 : Debug(Str(v) + " : " + IntToRoman(v)) 
   v = 4999 : Debug(Str(v) + " : " + IntToRoman(v))
   s=IntToRoman(v) : : Debug s + " : " + Str(RomanToInt(s))
-  v = RomanToInT("XXX")
+
 CompilerEndIf 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x86)
-; CursorPosition = 16
+; CursorPosition = 196
+; FirstLine = 107
 ; Folding = --
 ; Optimizer
 ; CPU = 5
