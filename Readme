@@ -1,5 +1,5 @@
 
-PureBasic Framwork
+PureBasic Framework
 It's  mostly in Beta or Brainstorming State
 See comments in Module Code for the actual relase State!
 Do not use any code in your projects until you tested it!
@@ -13,4 +13,5 @@ PbFW_Module_Roman   : Converter for Roman Numbers
 PbFw_Module_VECTORf : SSE optimized float Vector operations (3D Grafics)
 PbFw_Module_VECTORd : SSE optimized double Vector operations (3D Grafics)
 PbFw_Module_STL     : A STL-File-Format importer (3D Grafics)
- 
+PbFw_Module_Prime   : fast 64Bit Prime Number Test and Prime Factorisation
+                      using Modulo(30) distance for reducing caclculations
