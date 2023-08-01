@@ -14,13 +14,15 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/11/12
-; VERSION  :  2.0
+; VERSION  :  2.0  Release Version
 ; COMPILER :  PureBasic 6.0
 ; ===========================================================================
 ; ChangeLog: 
 ;{ 
-;  2023/08/01 S.Maag: New IntToRoman and RomanToInt Function based on RoseattaCode
-;                     because it's much smarter code then my >300 line code was
+;  2023/08/01 S.Maag: 
+;     - New IntToRoman And RomanToInt Function based on RoseattaCode
+;       because it's much smarter code as my >300 line code was!
+;     - Added RemoveNonRomanChars() from a String
 ;}
 ; ===========================================================================
 
@@ -52,9 +54,10 @@
 XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 
 DeclareModule Rom
-    
-  Declare.i RomanToInt(sTxt.s)
-  Declare.s IntToRoman(iValue.i)
+  
+  Declare.s RemoveNonRomanChars(sRoman.s)   ; Removes all non Roman characters from a String
+  Declare.i RomanToInt(sTxt.s)              ; Converts a Roman Numeral String into an Integer
+  Declare.s IntToRoman(iValue.i)            ; Converts an Integer into a Roman Numeral String
 
 EndDeclareModule
 
@@ -69,11 +72,62 @@ Module Rom
     Symbol.s 
     Value.i
   EndStructure
-    
+  
+  Macro UCaseChar(Char, ReturnChar)
+    #DeltaChar= 'a' - 'A'  ;  a[97]-A[65]=32
+    If char >='a' And char <='z'
+      ReturnChar = Char - #DeltaChar   ; add 32 to LCase Char
+    Else
+      ReturnChar = Char
+    EndIf
+  EndMacro
+
   ;- ----------------------------------------------------------------------
   ;- Module Public Functions
   ;- ----------------------------------------------------------------------
   
+  Procedure.s RemoveNonRomanChars(sRoman.s)
+    ; ============================================================================
+    ; NAME: RemoveNonRomanChars
+    ; DESC: Removes all non Roman characters from a String
+    ; DESC: kepp only M,D,C,L,X,I Upcase all chars
+    ; DESC: it can be used for correcting user inputs
+    ; VAR(sRoman.s) : Roman Numeral String
+    ; RET.s: Roman Numeral String, 
+    ; ============================================================================
+    
+    Protected *pWrite.Character = @sRoman   ; WritePointer
+    Protected *pRead.Character = @sRoman    ; ReadPointer
+    Protected c.c   ; c As Character
+            
+  	While *pRead\c     ; While Not NullChar
+  	  
+  	  c = *pRead\c    ; copy to extra char variable for UCase(c)	  
+  	  If c >='a' And c <='z' ; we have to UCase it
+   	    c - 32 ;   UCase(c) ;  32 = 'a' - 'A'  ;  a[97]-A[65]=32
+   	    *pRead\c = c ; write back UCase(c)
+   	  EndIf
+  	  
+  	  Select c 	      
+        ; ----------------------------------------------------------------------
+        ; Characters to keep {M,D,C,L,X,V,I}
+        ; ----------------------------------------------------------------------               	      
+        Case 'M', 'D', 'C', 'L', 'X', 'V' ,'I'   ; keep  it
+         	If *pWrite <> *pRead     ; if  WritePosition <> ReadPosition
+        		*pWrite\c = *pRead\c   ; Copy the Character from ReadPosition to WritePosition => compacting the String
+        	EndIf
+        	*pWrite + SizeOf(Character) ; set new Write-Position                        
+      EndSelect
+      
+      *pRead + SizeOf(Character) ; Set Pointer to NextChar 		
+    Wend
+    
+    ; write the Null-Termination at last Position
+ 		*pWrite\c = 0
+ 		
+ 		ProcedureReturn sRoman ; Return the compacted String with Roman Numerals only
+  EndProcedure
+
   Procedure.i RomanToInt(sRoman.s)
   ; ============================================================================
   ; NAME: RomanToInt
@@ -194,10 +248,15 @@ CompilerIf #PB_Compiler_IsMainFile
   v = 1984 : Debug(Str(v) + " : " + IntToRoman(v)) 
   v = 4999 : Debug(Str(v) + " : " + IntToRoman(v))
   s=IntToRoman(v) : : Debug s + " : " + Str(RomanToInt(s))
-
+  
+  s="123 MCM.LXXXX-Iv"
+  Debug #Null$
+  Debug "Remove non Roman Characters from: "
+  Debug s
+  Debug RemoveNonRomanChars("123 MCm.LXXxX-Iv")
 CompilerEndIf 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x86)
-; CursorPosition = 8
+; CursorPosition = 16
 ; Folding = --
 ; Optimizer
 ; CPU = 5
