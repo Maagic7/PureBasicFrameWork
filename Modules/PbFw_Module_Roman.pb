@@ -6,7 +6,7 @@
 ;  DESC : which allows a max of 4 identical characters MMMMM (=40000)
 ;  DESC : for higher values special conventions are used which are
 ;  DESC : not identical. 
-;  DESC : RomanToInt(XVII) => 7; IntToRoman(20) =XX
+;  DESC : RomanToInt("XVII") => 17; IntToRoman(20) = "XX"
 ;  SOURCES: Wikipedia https://en.wikipedia.org/wiki/Roman_numerals
 ;           https://rosettacode.org/wiki/Roman_numerals/Decode#PureBasi
 ;           https://rosettacode.org/wiki/Roman_numerals/Encode#PureBasic
@@ -197,8 +197,7 @@ CompilerIf #PB_Compiler_IsMainFile
 
 CompilerEndIf 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x86)
-; CursorPosition = 196
-; FirstLine = 107
+; CursorPosition = 8
 ; Folding = --
 ; Optimizer
 ; CPU = 5
