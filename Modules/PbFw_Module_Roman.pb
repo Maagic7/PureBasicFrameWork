@@ -73,15 +73,6 @@ Module Rom
     Value.i
   EndStructure
   
-  Macro UCaseChar(Char, ReturnChar)
-    #DeltaChar= 'a' - 'A'  ;  a[97]-A[65]=32
-    If char >='a' And char <='z'
-      ReturnChar = Char - #DeltaChar   ; add 32 to LCase Char
-    Else
-      ReturnChar = Char
-    EndIf
-  EndMacro
-
   ;- ----------------------------------------------------------------------
   ;- Module Public Functions
   ;- ----------------------------------------------------------------------
@@ -256,7 +247,8 @@ CompilerIf #PB_Compiler_IsMainFile
   Debug RemoveNonRomanChars("123 MCm.LXXxX-Iv")
 CompilerEndIf 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x86)
-; CursorPosition = 16
+; CursorPosition = 74
+; FirstLine = 24
 ; Folding = --
 ; Optimizer
 ; CPU = 5
