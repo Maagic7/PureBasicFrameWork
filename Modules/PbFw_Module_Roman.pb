@@ -14,7 +14,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/11/12
-; VERSION  :  1.0
+; VERSION  :  2.0
 ; COMPILER :  PureBasic 6.0
 ; ===========================================================================
 ; ChangeLog: 
@@ -197,8 +197,7 @@ CompilerIf #PB_Compiler_IsMainFile
   v = RomanToInT("XXX")
 CompilerEndIf 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x86)
-; CursorPosition = 93
-; FirstLine = 57
+; CursorPosition = 16
 ; Folding = --
 ; Optimizer
 ; CPU = 5
