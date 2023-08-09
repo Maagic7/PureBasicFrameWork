@@ -45,6 +45,9 @@
 ; DATE     :  2022/12/04
 ; VERSION  :  0.12 untested Developper Version
 ; COMPILER :  PureBasic 6.0
+;
+; LICENCE  :  MIT License see https://opensource.org/license/mit/
+;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
 ; 
@@ -54,7 +57,7 @@
 ; 2023/02/16 S.Maag : some Bugfixes 
 ; 2022/12/11 S.Maag : added SetMatrix-Functions
 ;}
-;{ Todo:
+;{ TODO:
 ; Implement all the SSE optimations for the C-Backend on x86
 ; propably by using the C intrinsic Macros
 ;}
@@ -101,7 +104,7 @@ DeclareModule VECd
   ; Vector ist immer aus 4 Elementen, sonst macht das keinen Sinn
   ; die Unterscheidung Vector3, Vector4 bringt nur Nachteile statt Vorteile
   ; Man braucht neben den x,y,z,w Kooridnaten noch die Möglichkeit des
-  ; indizierten Zugriffs des dürfte für Matrix-Operationen besser sein!
+  ; indizierten Zugriffs das dürfte für Matrix-Operationen besser sein!
   
   Structure TPoint2D
     X.d          
@@ -149,17 +152,14 @@ DeclareModule VECd
   Structure TMatrix  ; Double precicion Matrix
     StructureUnion
       v.TVector[0]   ; Vector interpretation of the Matrix Structure
-    EndStructureUnion
+      Pt2D.TPoint2D[0]
+   EndStructureUnion
     m11.d : m12.d : m13.d : m14.d    
     m21.d : m22.d : m23.d : m24.d
     m31.d : m32.d : m33.d : m34.d   
     m41.d : m42.d : m43.d : m44.d
   EndStructure
   
-  Structure pTMatrix  ; Pointer to virtual TVector-Array 
-    m.TMatrix[0]      ; Virtual Array of *TVector  
-  EndStructure
-
   Macro mac_SetVector(Vec, _X, _Y, _Z, _W)
     Vec\x = _X
     Vec\y = _Y
@@ -407,9 +407,9 @@ Module VECd
  			!MOV    REGC, [p.p_outMin]
 			!MOV    REGD, [p.p_outMax]
 			
-			!MOVUPS  YMM0, [REGD]       ; outMax
-      !MOVUPS  YMM1, [REGC]       ; outMin      
-      !SUBPS YMM0, YMM1           ; YMM0 = (outMax - outMin)
+			!MOVUPS  YMM0, [REGD]         ; outMax
+      !MOVUPS  YMM1, [REGC]         ; outMin      
+      !SUBPS YMM0, YMM1             ; YMM0 = (outMax - outMin)
       
  			!MOV    REGC, [p.p_inMin]
 			!MOV    REGD, [p.p_inMax]
@@ -1808,8 +1808,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 1518
-; FirstLine = 1457
+; CursorPosition = 1380
+; FirstLine = 1739
 ; Folding = -------------
 ; Optimizer
 ; CPU = 5

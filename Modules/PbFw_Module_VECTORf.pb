@@ -46,43 +46,24 @@
 ; DATE     :  2022/12/04
 ; VERSION  :  0.51 Developper Version
 ; COMPILER :  PureBasic 6.0
+;
+; LICENCE  :  MIT License see https://opensource.org/license/mit/
+;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
 ; 
-; 2023/07/29 S.Maag : changed come comments
+; 2023/07/29 S.Maag : changed some comments
 ; 2023/03/19 S.Maag : added Vector_Lerp, Vector_InverseLerp, Vector_Rempap
 ; 2023/02/18 S.Maag : integrated FrameWork Contol Module PbFw::
 ; 2023/02/17 S.Maag : some Bugfixes and x64 Test 
 ; 2022/12/24 S.Maag : added some tests and optimations
 ; 2022/12/11 S.Maag : added SetMatrix-Functions
 ;} 
-;{ Todo:
+;{ TODO:
 ; Implement all the SSE optimations for the C-Backend on x86
 ; propably by using the C intrinsic Macros
 ;}
 ; ===========================================================================
-
-;{ ===================      M I T   L I C E N S E        ====================
-;
-; Permission is hereby granted, free of charge, to any person obtaining a copy
-; of this software and associated documentation files (the "Software"), to deal
-; in the Software without restriction, including without limitation the rights
-; to use, copy, modify, merge, publish, distribute, SUBlicense, and/or sell
-; copies of the Software, and to permit persons to whom the Software is
-; furnished to do so, SUBject to the following conditions:
-; 
-; The above copyright notice and this permission notice shall be included in all
-; copies or SUBstantial portions of the Software.
-;
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-; SOFTWARE.
-;} ===========================================================================
-
 
 ;- ----------------------------------------------------------------------
 ;- Include Files
@@ -106,7 +87,7 @@ DeclareModule VECf
   ; Vector ist immer aus 4 Elementen, sonst macht das keinen Sinn
   ; die Unterscheidung Vector3, Vector4 bringt nur Nachteile statt Vorteile
   ; Man braucht neben den x,y,z,w Kooridnaten noch die Möglichkeit des
-  ; indizierten Zugriffs des dürfte für Matrix-Operationen besser sein!
+  ; indizierten Zugriffs das dürfte für Matrix-Operationen besser sein!
   Structure TPoint2D Align 4    ; to be sure it will be 4Byte Aligned at x64
     X.f          
     Y.f          
@@ -153,6 +134,7 @@ DeclareModule VECf
   Structure TMatrix  ; Single precicion Matrix
     StructureUnion
       v.TVector[0]   ; Vector interpretation of the Matrix Structure
+      Pt2D.TPoint2D[0]
     EndStructureUnion
     m11.f : m12.f : m13.f : m14.f    
     m21.f : m22.f : m23.f : m24.f
@@ -160,10 +142,6 @@ DeclareModule VECf
     m41.f : m42.f : m43.f : m44.f
   EndStructure
     
-  Structure pTMatrix  ; Pointer to virtual Matrix-Array 
-    m.TMatrix[0]      ; Virtual Array of *TVector  
-  EndStructure
-
   Macro mac_SetVector(Vec, _X, _Y, _Z, _W)
     Vec\x = _X
     Vec\y = _Y
@@ -1940,8 +1918,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 1359
-; FirstLine = 1292
-; Folding = --------------
+; CursorPosition = 137
+; FirstLine = 96
+; Folding = -------------
 ; Optimizer
 ; CPU = 5

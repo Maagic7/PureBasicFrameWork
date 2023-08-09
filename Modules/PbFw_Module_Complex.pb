@@ -14,32 +14,16 @@
 ; DATE     :  2023/02/27
 ; VERSION  :  0.5 Developer Version
 ; COMPILER :  PureBasic 6.0
+;
+; LICENCE  :  MIT License see https://opensource.org/license/mit/
+;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
-; ChangeLog: 
-;{
+;{ ChangeLog: 
+; 
+;}
+;{ TODO:
 ;}
 ; ===========================================================================
-
-;{ ====================      M I T   L I C E N S E        ====================
-;
-; Permission is hereby granted, free of charge, to any person obtaining a copy
-; of this software and associated documentation files (the "Software"), to deal
-; in the Software without restriction, including without limitation the rights
-; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-; copies of the Software, and to permit persons to whom the Software is
-; furnished to do so, subject to the following conditions:
-; 
-; The above copyright notice and this permission notice shall be included in all
-; copies or substantial portions of the Software.
-;
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-; SOFTWARE.
-;} ============================================================================
 
 ;- ----------------------------------------------------------------------
 ;- Include Files
@@ -115,7 +99,7 @@ Module Complex
     
     DBG::mac_CheckPointer(*IN)      ; Check Pointer Exception
     
-    ; ATan2 is the Purebasic function to calculate Angle Phi of a Point an X-Axis
+    ; ATan2 is the Purebasic function to calculate Angle Phi of a Point with X-Axis
     ProcedureReturn ATan2(*IN\x, *IN\iy)    
   EndProcedure
   
@@ -130,6 +114,8 @@ Module Complex
   ; ============================================================================
    
     DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)      ; Check Pointer Exception
+    
+    ; SSE-Version possible
     
     *OUT\x= *IN1\x + *IN2\x
     *OUT\iy= *IN1\iy + *IN2\iy   
@@ -148,6 +134,8 @@ Module Complex
    
     DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)      ; Check Pointer Exception
     
+    ; SSE-Version possible
+     
     *OUT\x= *IN1\x - *IN2\x
     *OUT\iy= *IN1\iy - *IN2\iy   
     ProcedureReturn *OUT
@@ -165,6 +153,8 @@ Module Complex
     
     DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)      ; Check Pointer Exception
     
+    ; SSE-Version possible but lower precision
+ 
     *OUT\x= *IN1\x * *IN2\x - *IN1\iy * *IN2\iy
     *OUT\iy= *IN1\x * *IN2\iy + *IN1\iy * *IN2\x    
     ProcedureReturn *OUT
@@ -181,7 +171,8 @@ Module Complex
   ; ============================================================================
     
     DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)      ; Check Pointer Exception
-   
+    
+    ; SSE maybe or Add and Sub
     *OUT\x= 1/(*IN2\x * *IN2\x + *IN2\iy * *IN2\iy)
     *OUT\iy= *IN2\x * *IN1\iy - *IN1\x * *IN2\iy  
      ProcedureReturn *OUT
@@ -197,7 +188,7 @@ Module Complex
      
     DBG::mac_CheckPointer(*InOut)      ; Check Pointer Exception
     With *InOut
-      \x=   \x
+      ;\x=   \x
       \iy= -\iy
     EndWith
     ProcedureReturn *InOut
@@ -295,9 +286,9 @@ Module Complex
 EndModule
 
 CompilerIf #PB_Compiler_IsMainFile
- ; ----------------------------------------------------------------------
- ;  M O D U L E   T E S T   C O D E
- ; ---------------------------------------------------------------------- 
+ ;- ----------------------------------------------------------------------
+ ;-  M O D U L E   T E S T   C O D E
+ ;-  ---------------------------------------------------------------------- 
  
   UseModule Complex
   
@@ -347,7 +338,8 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 29
+; CursorPosition = 291
+; FirstLine = 256
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

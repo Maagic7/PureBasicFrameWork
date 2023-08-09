@@ -1,48 +1,32 @@
 ﻿; ===========================================================================
-;  FILE : Module_COLOR.pb
-;  NAME : Module COLOR
+;  FILE : PbFw_Module_COLOR.pb
+;  NAME : Module COLOR::
 ;  DESC : Implements Standard COLOR Functions in a Modul
 ;  DESC : and supplies Constans for common Colors
 ; ===========================================================================
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/03/09
-; VERSION  :  0.1
+; VERSION  :  0.1 untested Developer Version
 ; COMPILER :  PureBasic 6.0
+;
+; LICENCE  :  MIT License see https://opensource.org/license/mit/
+;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog:
 ;{  2022/11/17 S.Maag : 
 ;   - added universal Pointer pColor for virtual TColor-Array
 ;   - added some Macros using pColor to get direct access to R,G,B,A                    
 ;}
+;{ TODO:
+;}
 ; ============================================================================
-
-;{ ====================      M I T   L I C E N S E        ====================
-;
-; Permission is hereby granted, free of charge, to any person obtaining a copy
-; of this software and associated documentation files (the "Software"), to deal
-; in the Software without restriction, including without limitation the rights
-; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-; copies of the Software, and to permit persons to whom the Software is
-; furnished to do so, subject to the following conditions:
-; 
-; The above copyright notice and this permission notice shall be included in all
-; copies or substantial portions of the Software.
-;
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-; SOFTWARE.
-;} ============================================================================
-;
 
 ;- ----------------------------------------------------------------------
 ;- Include Files
 ;- ----------------------------------------------------------------------
 
+XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 ; XIncludeFile ""
 
 DeclareModule COLOR
@@ -50,35 +34,35 @@ DeclareModule COLOR
   ;- COLORS
   ;- ----------------------------------------------------------------------
   ; Stadard Colors   
-  #Black       = 0            ; RGB(0,0,0)
-  #Blue        = 16711680     ; RGB(0,0,255)
-  #Gray        = 8421504      ; RGB(128,128,128)
-  #Green       = 65280        ; RGB(0,255,0)
-  #Magenta     = 16711935     ; RGB(255,0,255) 
-  #Orange      = 42495        ; RGB(255,165,0) 
-  #OrangeRed   = 17919        ; RGB(255,69,0)
-  #Pink        = 13353215     ; RGB(255,192,203)
-  #Purple      = 8388736      ; RGB(128,0,128) 
-  #Red         = 255          ; RGB(255,0,0)
-  #White       = 16777215     ; RGB(255,255,255)
-  #Violet      = 15631086     ; RGB(238,130,238)
-  #Yellow      = 65535        ; RGB(255,255,0) 
-  #YellowGreen = 3329434      ; RGB(154,205,50)
+  #PbFw_COL_Black       = 0            ; RGB(0,0,0)
+  #PbFw_COL_Blue        = 16711680     ; RGB(0,0,255)
+  #PbFw_COL_Gray        = 8421504      ; RGB(128,128,128)
+  #PbFw_COL_Green       = 65280        ; RGB(0,255,0)
+  #PbFw_COL_Magenta     = 16711935     ; RGB(255,0,255) 
+  #PbFw_COL_Orange      = 42495        ; RGB(255,165,0) 
+  #PbFw_COL_OrangeRed   = 17919        ; RGB(255,69,0)
+  #PbFw_COL_Pink        = 13353215     ; RGB(255,192,203)
+  #PbFw_COL_Purple      = 8388736      ; RGB(128,0,128) 
+  #PbFw_COL_Red         = 255          ; RGB(255,0,0)
+  #PbFw_COL_White       = 16777215     ; RGB(255,255,255)
+  #PbFw_COL_Violet      = 15631086     ; RGB(238,130,238)
+  #PbFw_COL_Yellow      = 65535        ; RGB(255,255,0) 
+  #PbFw_COL_YellowGreen = 3329434      ; RGB(154,205,50)
   
-  #DarkBlue    = 9109504      ; RGB(0,0,139) 
-  #DarkGray    = 11119017     ; RGB(169,169,169) 
-  #DarkGreen   = 25600        ; RGB(0,100,0)
-  #DarkMagenta = 9109643      ; RGB(139,0,139) 
-  #DarkOrange  = 36095        ; RGB(255,140,0) 
-  #DarkRed     = 139          ; RGB(139,0,0) 
-  #DarkViolet  = 13828244     ; RGB(148,0,211) 
-  #DeepPink    = 9639167      ; RGB(255,20,147) 
+  #PbFw_COL_DarkBlue    = 9109504      ; RGB(0,0,139) 
+  #PbFw_COL_DarkGray    = 11119017     ; RGB(169,169,169) 
+  #PbFw_COL_DarkGreen   = 25600        ; RGB(0,100,0)
+  #PbFw_COL_DarkMagenta = 9109643      ; RGB(139,0,139) 
+  #PbFw_COL_DarkOrange  = 36095        ; RGB(255,140,0) 
+  #PbFw_COL_DarkRed     = 139          ; RGB(139,0,0) 
+  #PbFw_COL_DarkViolet  = 13828244     ; RGB(148,0,211) 
+  #PbFw_COL_DeepPink    = 9639167      ; RGB(255,20,147) 
   
-  #LightBlue   = 15128749     ; RGB(173,216,230)
-  #LightGreen  = 9498256      ; RGB(144,238,144) 
-  #LightGray   = 13882323     ; RGB(211,211,211) 
-  #LightPink   = 12695295     ; RGB(255,182,193) 
-  #LightYellow = 14745599     ; RGB(255,255,224)
+  #PbFw_COL_LightBlue   = 15128749     ; RGB(173,216,230)
+  #PbFw_COL_LightGreen  = 9498256      ; RGB(144,238,144) 
+  #PbFw_COL_LightGray   = 13882323     ; RGB(211,211,211) 
+  #PbFw_COL_LightPink   = 12695295     ; RGB(255,182,193) 
+  #PbFw_COL_LightYellow = 14745599     ; RGB(255,255,224)
   
   ;{ More Colors, definition translated from the NET-Framework 
   ; ----------------------------------------------------------
@@ -223,11 +207,11 @@ DeclareModule COLOR
     ; This is the Exception Alpha first
     ; ----------------------------------------------------------------------
     
-    #idxRed   = 3  ; ByteIndex for RED     TColor\c[idxRed]
-    #idxGreen = 2  ; ByteIndex for Green   TColor\c[idxGreen]
-    #idxBlue  = 1  ; ByteIndex for Blue    TColor\c[idxBlue]
-    #idxAlpha = 0  ; ByteIndex for Alpha   TColor\c[idxAlpha]
-    #AlphaMask = $FF  ; BitMask for Alpha in Byte 0
+    #PbFw_COL_idxRed   = 3  ; ByteIndex for RED     TColor\c[idxRed]
+    #PbFw_COL_idxGreen = 2  ; ByteIndex for Green   TColor\c[idxGreen]
+    #PbFw_COL_idxBlue  = 1  ; ByteIndex for Blue    TColor\c[idxBlue]
+    #PbFw_COL_idxAlpha = 0  ; ByteIndex for Alpha   TColor\c[idxAlpha]
+    #PbFw_COL_AlphaMask = $FF  ; BitMask for Alpha in Byte 0
     
   CompilerElse  ; x86, x64; ARM32; ARM64
     ; ----------------------------------------------------------------------
@@ -235,11 +219,11 @@ DeclareModule COLOR
     ; In Memory RGBA but in Processor Register ABGR  
     ; ----------------------------------------------------------------------
    
-    #idxRed   = 0  ; ByteIndex for RED     TColor\c[idxRed]
-    #idxGreen = 1  ; ByteIndex for Green   TColor\c[idxGreen]
-    #idxBlue  = 2  ; ByteIndex for Blue    TColor\c[idxBlue]
-    #idxAlpha = 3  ; ByteIndex for Alpha   TColor\c[idxAlpha]
-    #AlphaMask = $FF000000  ; BitMask for Alpha in Byte 3
+    #PbFw_COL_idxRed   = 0  ; ByteIndex for RED     TColor\c[idxRed]
+    #PbFw_COL_idxGreen = 1  ; ByteIndex for Green   TColor\c[idxGreen]
+    #PbFw_COL_idxBlue  = 2  ; ByteIndex for Blue    TColor\c[idxBlue]
+    #PbFw_COL_idxAlpha = 3  ; ByteIndex for Alpha   TColor\c[idxAlpha]
+    #PbFw_COL_AlphaMask = $FF000000  ; BitMask for Alpha in Byte 3
                             ; COLOR | AlphaMask sets the Alpha value To 255 (=$FF)
   CompilerEndIf
 
@@ -250,8 +234,8 @@ DeclareModule COLOR
   Structure TColor
     StructureUnion
      Color.l      ; Access as 32Bit Long
-     c.a[4]       ; Access as Array 4Bytes [0..3]
-     ; c.a[4] defines a fixed 4Byte Array[0..3] for ASCI Bytes 0..255
+     c.a[4]       ; Access as Array 4Bytes [0..3]                 
+     w.u[2]       ; Access for 16/15 Bit Colors w As unsigned WORD (unicode)
     EndStructureUnion
   EndStructure
   
@@ -299,38 +283,38 @@ DeclareModule COLOR
 
   ; ALPHA CHANNEL
   Macro pCol_GetAlpha_(pColor, Index)
-    pColor\col[Index]\c[#idxAplpha]  
+    pColor\col[Index]\c[#PbFw_COL_idxAplpha]  
   EndMacro
   
   Macro pCol_SetAlpha_(pColor, Index, NewAlpha)
-    pColor\col[Index]\c[#idxAplpha] = NewAlpha 
+    pColor\col[Index]\c[#PbFw_COL_idxAplpha] = NewAlpha 
   EndMacro
   
   ; RED CHANNEL
   Macro pCol_GetRed_(pColor, Index)
-    pColor\col[Index]\c[#idxRed]  
+    pColor\col[Index]\c[#PbFw_COL_idxRed]  
   EndMacro
   
   Macro pCol_SetRed_(pColor, Index, NewRed)
-    pColor\col[Index]\c[#idxRed] = NewRed
+    pColor\col[Index]\c[#PbFw_COL_idxRed] = NewRed
   EndMacro
   
   ; GREEN CHANNEL
   Macro pCol_GetGreen_(pColor, Index)
-    pColor\col[Index]\c[#idxGreen]  
+    pColor\col[Index]\c[#PbFw_COL_idxGreen]  
   EndMacro
   
   Macro pCol_SetGreen_(pColor, Index, NewGreen)
-    pColor\col[Index]\c[#idxGreen] = NewGreen
+    pColor\col[Index]\c[#PbFw_COL_idxGreen] = NewGreen
   EndMacro
   
   ; BLUE CHANNEL
   Macro pCol_GetBlue_(pColor, Index)
-    pColor\col[Index]\c[#idxGreen]  
+    pColor\col[Index]\c[#PbFw_COL_idxGreen]  
   EndMacro
   
   Macro pCol_SetBlue_(pColor, Index, NewBlue)
-    pColor\col[Index]\c[#idxGreen] = NewBlue
+    pColor\col[Index]\c[#PbFw_COL_idxGreen] = NewBlue
   EndMacro
   
   ; ======================================================================
@@ -339,38 +323,38 @@ DeclareModule COLOR
  
   ; ALPHA CHANNEL
   Macro TCol_GetAlpha (TColor)          ; returns the value of the Alpah Channel, Like PB's Alpha()
-    TColor\c[#idxAplpha]  
+    TColor\c[#PbFw_COL_idxAplpha]  
   EndMacro
   
   Macro TCol_SetAlpha(TColor, NewAlpha) ; sets the Alpha Channel with a new Value
-    TColor\c[#idxAlpha] = NewAlpha 
+    TColor\c[#PbFw_COL_idxAlpha] = NewAlpha 
   EndMacro
   
   ; RED CHANNEL
   Macro TCol_GetRed(TColor)             ; returns the value of the Red Channel, Like PB's Red()
-    TColor\c[#idxRed]    
+    TColor\c[#PbFw_COL_idxRed]    
   EndMacro
   
   Macro TCol_SetRed(TColor, NewRed)     ; sets the Red Channel with a new Value
-    TColor\c[#idxRed] = NewRed 
+    TColor\c[#PbFw_COL_idxRed] = NewRed 
   EndMacro
   
   ; GREEN CHANNEL
   Macro TCol_GetGreen(TColor)           ; returns the value of the Green Channel, Like PB's Green()
-    TColor\c[#idxGreen]    
+    TColor\c[#PbFw_COL_idxGreen]    
   EndMacro
   
   Macro TCol_SetGreen(TColor, NewGreen) ; sets the Green Channel with a new Value
-    TColor\c[#idxGreen] = NewGreen 
+    TColor\c[#PbFw_COL_idxGreen] = NewGreen 
   EndMacro
   
   ; BLUE CHANNEL
   Macro mTCol_GetBlue(TColor)           ; returns the value of the Blue Channel, Like PB's Blue()
-    TColor\c[#idxBlue]    
+    TColor\c[#PbFw_COL_idxBlue]    
   EndMacro
   
   Macro mac_SetBlue(TColor, NewBlue)    ; sets the Blue Channel with a new Value
-    TColor\c[#idxBlue] = NewBlue 
+    TColor\c[#PbFw_COL_idxBlue] = NewBlue 
   EndMacro
   
   Macro ToggleRGB(TColor)
@@ -380,7 +364,7 @@ DeclareModule COLOR
   ; DESC : 
   ; VAR(TColor) : Color As TColor Structure or *TColor
   ; ======================================================================
-    Swap TColor\c[#idxRed], TColor\c[#idxBlue]
+    Swap TColor\c[#PbFw_COL_idxRed], TColor\c[#PbFw_COL_idxBlue]
   EndMacro
   
   Macro ToggleRGBA(TColor)
@@ -390,8 +374,8 @@ DeclareModule COLOR
   ; DESC : (Little-Endian <=> Big-Endian)
   ; VAR(TColor) : Color As TColor Structure or *TColor
   ; ======================================================================
-    Swap TColor\c[#idxAlpha], TColor\c[#idxRed]
-    Swap TColor\c[#idxGreen], TColor\c[#idxBlue]
+    Swap TColor\c[#PbFw_COL_idxAlpha], TColor\c[#PbFw_COL_idxRed]
+    Swap TColor\c[#PbFw_COL_idxGreen], TColor\c[#PbFw_COL_idxBlue]
     ; The fastest way would be the Processors ByteSwap Command in Assembler BSWAP
   EndMacro
 
@@ -400,7 +384,8 @@ EndDeclareModule
 Module COLOR
   
   EnableExplicit
-  
+  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+
   ;- ----------------------------------------------------------------------
   ;- Module Public Functions
   ;- ----------------------------------------------------------------------
@@ -645,7 +630,7 @@ EndModule
 
 CompilerIf #PB_Compiler_IsMainFile
   EnableExplicit
-  UseModule Color
+  UseModule COLOR
   
   #Window = 0
   #Gadget = 1
@@ -666,15 +651,15 @@ CompilerIf #PB_Compiler_IsMainFile
   EndIf
 
   Define *pCol.pColor
-  *pCol\col[0]\c[#idxAlpha] = 255
+  *pCol\col[0]\c[#PbFw_COL_idxAlpha] = 255
   *pCol\col[0]\Color = 255
 CompilerEndIf  
 
 DisableExplicit
 
 
-; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 9
+; IDE Options = PureBasic 6.02 LTS (Windows - x64)
+; CursorPosition = 13
 ; Folding = 4-----
 ; Optimizer
 ; CPU = 2

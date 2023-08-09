@@ -15,40 +15,23 @@
 ;  DESC:   how you get from the EXPRESS schema To the file format.
 ;  DESC: ISO 10303-42 has all the math of curves, surfaces, etc, all expressed
 ;  DESC:   in the EXPRESS schema language.
+;
+;  SOURCES: https://www.steptools.com/stds/stp_aim/html/
 ; ===========================================================================
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2023/02/09
-; VERSION  :  0.0     Developper version onnly!
+; VERSION  :  0.0    Brainstorming Version
 ; COMPILER :  PureBasic 6.0
 ; ===========================================================================
-; ChangeLog:
-;{
-;}
-; ============================================================================
-
-;{ ====================      M I T   L I C E N S E        ====================
-;
-; Permission is hereby granted, free of charge, to any person obtaining a copy
-; of this software and associated documentation files (the "Software"), to deal
-; in the Software without restriction, including without limitation the rights
-; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-; copies of the Software, and to permit persons to whom the Software is
-; furnished to do so, subject to the following conditions:
+;{ ChangeLog: 
 ; 
-; The above copyright notice and this permission notice shall be included in all
-; copies or substantial portions of the Software.
-;
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-; SOFTWARE.
-;} ============================================================================
+;}
+;{ TODO:
+;}
+; ===========================================================================
 
-; https://www.steptools.com/stds/stp_aim/html/
+
 ;- ----------------------------------------------------------------------
 ;- KeyWord/Function Constants
 ;{ 
@@ -2324,7 +2307,7 @@
 #STEP_ZERO_SURFACE_NORMAL = 2270
 #STEP_ZONE_BREAKDOWN_CONTEXT = 2271
 #STEP_ZONE_ELEMENT_USAGE = 2272
-#STEP_ZONE_STRUCTURAL_MAKEUP = 227
+#STEP_ZONE_STRUCTURAL_MAKEUP = 2273
 ;}
 
 ;- ----------------------------------------------------------------------
@@ -13701,7 +13684,7 @@ EndProcedure
 ;- KeyWord DataSection
 ;- ---------------------------------------------------------------------
 ;{ 
-DataSection ; STEP Funtion KeyWords  
+DataSection ; STEP Function KeyWords  
   keyWords:
   ;       ID,  Name
   Data.s "1", "A3M_EQUIVALENCE_ACCURACY_ASSOCIATION"
@@ -18386,8 +18369,9 @@ CreateKeyWordConstants(lstKeyWords())
 
 CompilerEndIf
   
-; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 16
+; IDE Options = PureBasic 6.02 LTS (Windows - x64)
+; CursorPosition = 34
+; FirstLine = 18
 ; Folding = ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ; Optimizer
 ; Executable = ..\Demos\STEP.exe

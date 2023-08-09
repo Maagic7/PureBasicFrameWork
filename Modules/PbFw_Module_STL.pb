@@ -7,39 +7,22 @@
 ;  DESC : See Wikipeida for STL-Format description
 ;  DESC : English:  https://en.wikipedia.org/wiki/STL_(file_format)
 ;  DESC : German:   https://de.wikipedia.org/wiki/STL-Schnittstelle
+;
+;  SOURCES: 
 ; ===========================================================================
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/11/10
-; VERSION  :  0.1
+; VERSION  :  0.5 Developer Version
 ; COMPILER :  PureBasic 6.0
 ; ===========================================================================
-; ChangeLog:
-;{
-;}
-; ============================================================================
-
-;{ ====================      M I T   L I C E N S E        ====================
-;
-; Permission is hereby granted, free of charge, to any person obtaining a copy
-; of this software and associated documentation files (the "Software"), to deal
-; in the Software without restriction, including without limitation the rights
-; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-; copies of the Software, and to permit persons to whom the Software is
-; furnished to do so, subject to the following conditions:
+;{ ChangeLog: 
 ; 
-; The above copyright notice and this permission notice shall be included in all
-; copies or substantial portions of the Software.
-;
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-; SOFTWARE.
-;} ============================================================================
-;
+;}
+;{ TODO:
+;}
+; ===========================================================================
+
 
 ;{ ====================   S T L   F I L E   F O R M A T   ====================
 
@@ -79,9 +62,10 @@
 ;- Include Files
 ;- ----------------------------------------------------------------------
 
- XIncludeFile "PbFw_Module_BUFFER.pb"     ; BUFFER:: Module for Buffer handling
- XIncludeFile "PbFw_Module_IsNumeric.pb"  ; STR::    Module for String Functions
- XIncludeFile "PbFw_Module_VECTORf.pb"    ; VECf::   double precicion Vector Module
+XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
+XIncludeFile "PbFw_Module_BUFFER.pb"      ; BUFFER::  Module for Buffer handling
+XIncludeFile "PbFw_Module_IsNumeric.pb"   ; STR::     Module for String Functions
+XIncludeFile "PbFw_Module_VECTORf.pb"     ; VECf::    single precision Vector Module
     
 DeclareModule STL
   
@@ -117,7 +101,8 @@ EndDeclareModule
 
 Module STL
   
-  EnableExplicit  
+  EnableExplicit
+  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
   
   ;- ----------------------------------------------------------------------
   ;- Module Private Functions
@@ -654,9 +639,8 @@ CompilerIf #PB_Compiler_IsMainFile
 
 CompilerEndIf
 
-; IDE Options = PureBasic 6.01 LTS beta 3 (Windows - x64)
-; CursorPosition = 402
-; FirstLine = 383
+; IDE Options = PureBasic 6.02 LTS (Windows - x64)
+; CursorPosition = 36
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

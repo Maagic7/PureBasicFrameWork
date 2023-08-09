@@ -10,6 +10,9 @@
 ; DATE     :  2022/12/08
 ; VERSION  :  0.1 untested Developer Version
 ; COMPILER :  PureBasic 6.0
+;
+; LICENCE  :  MIT License see https://opensource.org/license/mit/
+;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog:
 ;{ 
@@ -272,13 +275,17 @@ DeclareModule CPU
     BPEXT.l
   EndStructure
   
+  Define CpuMultiMediaFeatures.TCpuMultiMediaFeatures
+  Define CpuMoreFeatures.TCpuMoreFeatures
+  
   ;  ----------------------------------------------------------------------
   ;- Declare Puclic Functions
   ;- ----------------------------------------------------------------------
-
-  Declare.i CPUID_IsSupported() ; Check if CPUID is supported by the CPU
-  Declare   CPUID (function.l, *EAX, *EBX, *ECX, *EDX) ; This wraps the CPUID instruction.
   
+  Declare.i CPUID_IsSupported() ; Check if CPUID is supported by the CPU
+  Declare.i CPUID (function.l, *EAX, *EBX, *ECX, *EDX) ; This wraps the CPUID instruction.
+  Declare.i GetCpuMultiMediaFeatures(*Features.TCpuMultiMediaFeatures)
+
   Declare.s GetCPUVendorID()
   Declare.i GetHighestLeaf(Extended=#False)
 
@@ -359,7 +366,7 @@ Module CPU
     CompilerEndIf
   EndProcedure    
   
-  Procedure CPUID (Function.l, *EAX, *EBX, *ECX, *EDX)
+  Procedure.i CPUID (Function.l, *EAX, *EBX, *ECX, *EDX)
   ; ======================================================================
   ;  NAME: CPUID
   ;  DESC: This wraps the CPUID instruction. And copies the return values
@@ -370,53 +377,66 @@ Module CPU
   ;  VAR(*EBX): Pointer to a 32Bit Long to receive EBX after !CPUID
   ;  VAR(*ECX): Pointer to a 32Bit Long to receive ECX after !CPUID
   ;  VAR(*EDX): Pointer to a 32Bit Long to receive EDX after !CPUID
-  ;  RET : -
+  ;  RET : TRUE if succseed
   ; ====================================================================== 
     
   ; more informations for the CPUID instruction you can find here:
     ; https://c9x.me/x86/html/file_module_x86_id_45.html
     ; https://www.lowlevel.eu/wiki/CPUID
     
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm
-      CompilerIf (#PB_Compiler_Processor = #PB_Processor_x86)  
-        !MOV EAX, DWORD [p.v_Function]
-        !CPUID
-        !MOV EBP, DWORD [p.p_EAX]
-        !MOV DWORD [EBP], EAX
-        !MOV EBP, DWORD [p.p_EBX]
-        !MOV DWORD [EBP], EBX
-        !MOV EBP, DWORD [p.p_ECX]
-        !MOV DWORD [EBP], ECX
-        !MOV EBP, DWORD [p.p_EDX]
-        !MOV DWORD [EBP], EDX        
-      CompilerElse   
-        !XOR RAX, RAX
-        !MOV EAX, DWORD [p.v_Function]
-        !CPUID
-        !MOV RBP, QWORD [p.p_EAX]
-        !MOV DWORD [RBP], EAX
-        !MOV RBP, QWORD [p.p_EBX]
-        !MOV DWORD [RBP], EBX
-        !MOV RBP, QWORD [p.p_ECX]
-        !MOV DWORD [RBP], ECX
-        !MOV RBP, QWORD [p.p_EDX]
-        !MOV DWORD [RBP], EDX
-      CompilerEndIf  
-    
-    CompilerElseIf #PB_Compiler_Backend = #PB_Backend_C
-      !unsigned int reg_a, reg_b, reg_c, reg_d;
+    If *EAX And *EBX And *ECX And *EDX
+      If CPUID_IsSupported()
+        
+        CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm
+          CompilerIf (#PB_Compiler_Processor = #PB_Processor_x86)  
+            !MOV EAX, DWORD [p.v_Function]
+            !CPUID
+            !MOV EBP, DWORD [p.p_EAX]
+            !MOV DWORD [EBP], EAX
+            !MOV EBP, DWORD [p.p_EBX]
+            !MOV DWORD [EBP], EBX
+            !MOV EBP, DWORD [p.p_ECX]
+            !MOV DWORD [EBP], ECX
+            !MOV EBP, DWORD [p.p_EDX]
+            !MOV DWORD [EBP], EDX        
+          CompilerElse   
+            !XOR RAX, RAX
+            !MOV EAX, DWORD [p.v_Function]
+            !CPUID
+            !MOV RBP, QWORD [p.p_EAX]
+            !MOV DWORD [RBP], EAX
+            !MOV RBP, QWORD [p.p_EBX]
+            !MOV DWORD [RBP], EBX
+            !MOV RBP, QWORD [p.p_ECX]
+            !MOV DWORD [RBP], ECX
+            !MOV RBP, QWORD [p.p_EDX]
+            !MOV DWORD [RBP], EDX
+          CompilerEndIf  
+        
+        CompilerElseIf #PB_Compiler_Backend = #PB_Backend_C
+          !unsigned int reg_a, reg_b, reg_c, reg_d;
+          
+          !asm volatile ("cpuid;"  
+          !: "=a" (reg_a), "=b" (reg_b), "=c" (reg_c), "=d" (reg_d)	
+          !: "0" (v_function)
+          !);
+          
+          ! * (unsigned int *) p_EAX = reg_a;
+          ! * (unsigned int *) p_EBX = reg_b;
+          ! * (unsigned int *) p_ECX = reg_c;
+          ! * (unsigned int *) p_EDX = reg_d;
+        CompilerEndIf
+        ProcedureReturn #True
+        
+      Else
+        *EAX = 0 : *EBX = 0 : *ECX = 0 : *EDX = 0 
+        ProcedureReturn #False
+      EndIf
       
-      !asm volatile ("cpuid;"  
-      !: "=a" (reg_a), "=b" (reg_b), "=c" (reg_c), "=d" (reg_d)	
-      !: "0" (v_function)
-      !);
+    Else 
+      ProcedureReturn #False
+    EndIf
       
-      ! * (unsigned int *) p_EAX = reg_a;
-      ! * (unsigned int *) p_EBX = reg_b;
-      ! * (unsigned int *) p_ECX = reg_c;
-      ! * (unsigned int *) p_EDX = reg_d;
-    CompilerEndIf
-  
   EndProcedure
 
   Procedure GetRegisterSet_x86(*RET.TCpuRegisterSet_x86)
@@ -453,32 +473,38 @@ Module CPU
   EndProcedure
 
  
-  Procedure GetCpuMultiMediaFeatures(*Features.TCpuMultiMediaFeatures)
+  Procedure.i GetCpuMultiMediaFeatures(*Features.TCpuMultiMediaFeatures)
   ; ======================================================================
   ;  NAME: GetCpuMultiMediaFeatures
   ;  DESC: Returns the MultiMedia-Features of the CPU
   ;  VAR(*Features.TCpuMultiMediaFeatures) Pointer to Structure
-  ;  RET: -
+  ;  RET: #True if succeeded
   ; ====================================================================== 
     
     Protected.l mEAX, mEBX, mECX, mEDX     
+    Protected ret.i
     
+    If *Features
     ; Call CPUID with Function $01
-    CPUID($01, @mEAX, @mEBX, @mECX, @mEDX)
-    
-    With *Features
-      \MMX =  Bool (mEDX & #PbfW_CPU_FEAT_EDX_MMX) 
-      \SSE =  Bool (mEDX & #PbfW_CPU_FEAT_EDX_SSE)
-      \SSE2 = Bool (mEDX & #PbfW_CPU_FEAT_EDX_SSE2)
-      \SSE3 = Bool (mECX & #PbfW_CPU_FEAT_ECX_SSE3)
+      If CPUID($01, @mEAX, @mEBX, @mECX, @mEDX)
       
-      \SSE4_1 = Bool (mECX & #PbfW_CPU_FEAT_ECX_SSE4_1)
-      \SSE4_2 = Bool (mECX & #PbfW_CPU_FEAT_ECX_SSE4_2)
-      \AVX =    Bool (mECX & #PbfW_CPU_FEAT_ECX_AVX)
-      \AVX2 =   0 ; ??? where to find the Flag
-      ;\AVX512 = 0
-      ;\AES = 0
-    EndWith
+        With *Features
+          \MMX =  Bool (mEDX & #PbfW_CPU_FEAT_EDX_MMX) 
+          \SSE =  Bool (mEDX & #PbfW_CPU_FEAT_EDX_SSE)
+          \SSE2 = Bool (mEDX & #PbfW_CPU_FEAT_EDX_SSE2)
+          \SSE3 = Bool (mECX & #PbfW_CPU_FEAT_ECX_SSE3)
+          
+          \SSE4_1 = Bool (mECX & #PbfW_CPU_FEAT_ECX_SSE4_1)
+          \SSE4_2 = Bool (mECX & #PbfW_CPU_FEAT_ECX_SSE4_2)
+          \AVX =    Bool (mECX & #PbfW_CPU_FEAT_ECX_AVX)
+          \AVX2 =   0 ; ??? where to find the Flag
+          ;\AVX512 = 0
+          ;\AES = 0
+        EndWith
+        ret = #True
+      EndIf
+    EndIf
+    ProcedureReturn ret
     
   EndProcedure
   
@@ -499,8 +525,7 @@ Module CPU
     ; the VendorName contains 12 Chars in ASCII, token from the Registers EBX,EDX,ECX    
     Protected.l mEAX, mEBX, mECX, mEDX     
     
-    If CPUID_IsSupported()
-      CPUID(0, @mEAX, @mEBX, @mECX, @mEDX)
+    If CPUID(0, @mEAX, @mEBX, @mECX, @mEDX)
       ProcedureReturn PeekS(@mEBX, 4, #PB_Ascii) + PeekS(@mEDX, 4, #PB_Ascii) + PeekS(@mECX, 4, #PB_Ascii)      
     Else
       ProcedureReturn "unknown Vendor"
@@ -520,16 +545,22 @@ Module CPU
     Protected.l mEAX, mEBX, mECX, mEDX     
     Protected.l function
     
-    If CPUID_IsSupported()
-      If xExtended
-        function = $80000000
-      EndIf
-      CPUID(function, @mEAX, @mEBX, @mECX, @mEDX)
+    If xExtended
+      function = $80000000
     EndIf
     
+    CPUID(function, @mEAX, @mEBX, @mECX, @mEDX)
+     
     ProcedureReturn mEAX   
   EndProcedure
-
+  
+  ;- ----------------------------------------------------------------------
+  ;- Initalisation
+  ;- ----------------------------------------------------------------------
+  
+  GetCpuMultiMediaFeatures(CpuMultiMediaFeatures)
+  GetCpuMoreFeatures(CpuMoreFeatures)
+  
 EndModule
 
 CompilerIf #PB_Compiler_IsMainFile
@@ -595,10 +626,8 @@ CompilerIf #PB_Compiler_IsMainFile
   MessageRequester("CPUID", text$)
 CompilerEndIf
 
-; IDE Options = PureBasic 6.01 LTS (Windows - x86)
-; CursorPosition = 208
-; FirstLine = 522
+; IDE Options = PureBasic 6.02 LTS (Windows - x64)
+; CursorPosition = 15
 ; Folding = ----
 ; Optimizer
 ; CPU = 5
-; Compiler = PureBasic 6.00 LTS (Windows - x86)
