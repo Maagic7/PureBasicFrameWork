@@ -12,35 +12,18 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/11/10
-; VERSION  :  0.0
+; VERSION  :  0.0  Brainstorming Version
 ; COMPILER :  PureBasic 6.0
+;
+; LICENCE  :  MIT License see https://opensource.org/license/mit/
+;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog:
 ;{
 ;}
+;{ TODO:
+;}
 ; ============================================================================
-
-;{ ====================      M I T   L I C E N S E        ====================
-;
-; Permission is hereby granted, free of charge, to any person obtaining a copy
-; of this software and associated documentation files (the "Software"), to deal
-; in the Software without restriction, including without limitation the rights
-; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-; copies of the Software, and to permit persons to whom the Software is
-; furnished to do so, subject to the following conditions:
-; 
-; The above copyright notice and this permission notice shall be included in all
-; copies or substantial portions of the Software.
-;
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-; SOFTWARE.
-;} ============================================================================
-;
 
 ;{ ==========     S T E P   F I L E   F O R M A T   B A S I C S      ==========
 
@@ -58,8 +41,9 @@
 ;- Include Files
 ;- ----------------------------------------------------------------------
 
-  XIncludeFile "PbFw_Module_BUFFER.pb"  ; Module for Buffer handling
-  XIncludeFile "PbFw_Module_STRING.pb"  ; Module for extended String handling
+XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
+XIncludeFile "PbFw_Module_BUFFER.pb"      ; BUFFER::  Module for Buffer handling
+XIncludeFile "PbFw_Module_STRING.pb"      ; STR::     Module for extended String handling
 
   DeclareModule STEP3D
     
@@ -176,7 +160,8 @@ EndDeclareModule
 
 Module STEP3D
   
-  EnableExplicit  
+  EnableExplicit
+  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
   
   ;- ----------------------------------------------------------------------
   ;- Module Private Functions
@@ -213,9 +198,8 @@ CompilerIf #PB_Compiler_IsMainFile
   
 CompilerEndIf
 
-; IDE Options = PureBasic 6.01 LTS beta 3 (Windows - x64)
-; CursorPosition = 206
-; FirstLine = 117
+; IDE Options = PureBasic 6.02 LTS (Windows - x64)
+; CursorPosition = 24
 ; Folding = --
 ; Optimizer
 ; CPU = 5
