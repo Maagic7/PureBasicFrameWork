@@ -9,10 +9,16 @@
 ; DATE     :  2022/10/30
 ; VERSION  :  0.1 untested Developer Version
 ; COMPILER :  PureBasic 6.0
+;
+; LICENCE  :  MIT License see https://opensource.org/license/mit/
+;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
-; ChangeLog:
-;             
-; ============================================================================
+;{ ChangeLog: 
+; 
+;}
+;{ TODO:
+;}
+; ===========================================================================
 
 EnableExplicit
 
@@ -500,9 +506,8 @@ EndModule
 
 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 170
-; FirstLine = 137
-; Folding = --
+; CursorPosition = 21
+; Folding = ---
 ; Optimizer
 ; CPU = 5
 ; Compiler = PureBasic 6.00 LTS (Windows - x86)
