@@ -9,11 +9,14 @@
 ; DATE     : 2023/03/28
 ; VERSION  : 0.5 Developer Version
 ; COMPILER : PureBasic 6.0
+;
+; LICENCE  :  MIT License see https://opensource.org/license/mit/
+;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
 ; 
 ;}
-;{ Todo:
+;{ TODO:
 ;}
 ; ===========================================================================
 
@@ -363,8 +366,8 @@ CompilerIf #PB_Compiler_IsMainFile
   Test_PrimeFactors()
 CompilerEndIf
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 186
-; FirstLine = 164
+; CursorPosition = 27
+; FirstLine = 51
 ; Folding = --
 ; Optimizer
 ; CPU = 5
