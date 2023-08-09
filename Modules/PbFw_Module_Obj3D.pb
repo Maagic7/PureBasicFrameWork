@@ -9,33 +9,16 @@
 ; DATE     :  2022/12/15
 ; VERSION  :  0.0  Brainstorming Version
 ; COMPILER :  PureBasic 6.0
+;
+; LICENCE  :  MIT License see https://opensource.org/license/mit/
+;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog: 
 ;{
 ;}
+;{ TODO:
+;}
 ; ===========================================================================
-
-;{ ====================      M I T   L I C E N S E        ====================
-;
-; Permission is hereby granted, free of charge, to any person obtaining a copy
-; of this software and associated documentation files (the "Software"), to deal
-; in the Software without restriction, including without limitation the rights
-; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-; copies of the Software, and to permit persons to whom the Software is
-; furnished to do so, subject to the following conditions:
-; 
-; The above copyright notice and this permission notice shall be included in all
-; copies or substantial portions of the Software.
-;
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-; SOFTWARE.
-;} ============================================================================
-
 
 ;- ----------------------------------------------------------------------
 ;- Include Files
@@ -1065,9 +1048,8 @@ Module Obj3Df
 
 EndModule
 
-; IDE Options = PureBasic 6.01 LTS (Windows - x64)
-; CursorPosition = 1044
-; FirstLine = 972
+; IDE Options = PureBasic 6.02 LTS (Windows - x64)
+; CursorPosition = 19
 ; Folding = ----
 ; Optimizer
 ; CPU = 5
