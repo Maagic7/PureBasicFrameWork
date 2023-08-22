@@ -14,7 +14,8 @@
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog: 
-;{
+;{ 2023/08/22 S.Maag : fixed syntax errors
+;
 ;}
 ;{ TODO:
 ;}
@@ -231,7 +232,7 @@ DeclareModule Obj3D
   ;- ----------------------------------------------------------------------
   ;- Declare Module
   ;- ----------------------------------------------------------------------
-  Declare.i CreateLine(*Obj3D.TLine, width.d, height.d)
+  Declare.i Create_Line(*Obj3D.TLine, width.d, height.d)
   Declare.i Create_PolyLine(*Obj3D.TLine, width.d, height.d)
 
   Declare.i Create_Triangle(*Obj3D.TPolygon, X2.d,Y2.d, X3.d,Y3.d)
@@ -243,20 +244,20 @@ DeclareModule Obj3D
   Declare.i Create_Ellipse(*Obj3D.TEllipse, rx.d, ry.d)
   
   Declare.i Create_3DBox(*Obj3D.T3DPolygon, X.d, Y.d, width.d, height.d, depth.d)
-  Declare.i Create_T3DCylinder(*Obj3D.T3DCone, r.d, h.d)
-  Declare.i Create_T3DCone(*Obj3D.T3DCone, r1.d, r2.d, h.d)
-  Declare.i Create_T3DVolPentagon(*Obj3D.T3DVolPentagon, r.d, h.d)
-  Declare.i Create_T3DVolHexagon(*Obj3D.T3DVolHexagon, r.d, h.d)
-  Declare.i Create_T3DVolOctagon(*Obj3D.T3DVolOctagon, r.d, h.d)
+  Declare.i Create_3DCylinder(*Obj3D.T3DCone, r.d, h.d)
+  Declare.i Create_3DCone(*Obj3D.T3DCone, r1.d, r2.d, h.d)
+  Declare.i Create_3DPentagon(*Obj3D.T3DPolygon, r.d, h.d)
+  Declare.i Create_3DHexagon(*Obj3D.T3DPolygon, r.d, h.d)
+  Declare.i Create_3DOctagon(*Obj3D.T3DPolygon, r.d, h.d)
 
 EndDeclareModule
 
-Module Obj3Df
+Module Obj3D
   
   EnableExplicit
   PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
  
-  UseModule VECf
+  UseModule VECd
   
   ;  ----------------------------------------------------------------------
   ;- Create 2D flat Objects
@@ -279,8 +280,8 @@ Module Obj3Df
     
     With *Obj3D
       \NoOfPts = 2      
-      If ArraySize(*\PTs()) <> \NoOfPts
-        ReDim \PTs(\NoOfPts)
+      If ArraySize(\PT()) <> \NoOfPts
+        ReDim \PT(\NoOfPts)
       EndIf     
       \NoOfPts    = 2
       \ObjType    = #PbFw_Obj3D_Line 
@@ -318,8 +319,8 @@ Module Obj3Df
     
     With *Obj3D
       \NoOfPts = 5      
-      If ArraySize(*\PTs()) <> \NoOfPts
-        ReDim \PTs(\NoOfPts)
+      If ArraySize(\PT()) <> \NoOfPts
+        ReDim \PT(\NoOfPts)
       EndIf     
       \NoOfPts    = 2
       \ObjType    = #PbFw_Obj3D_Line 
@@ -338,9 +339,9 @@ Module Obj3Df
       \z = 0 
     EndWith
     
-   *Obj3D\PT(0) = *Obj3D\PT(1) ; Set Reference Point PT(0)
+    *Obj3D\PT(0) = *Obj3D\PT(1) ; Set Reference Point PT(0)
    
-   ProcedureReturn *Obj3D
+    ProcedureReturn *Obj3D
   EndProcedure
   
   Procedure.i Create_Triangle(*Obj3D.TPolygon, X2.d,Y2.d, X3.d,Y3.d)
@@ -359,8 +360,8 @@ Module Obj3Df
     
     With *Obj3D
       \NoOfPts = 3     
-      If ArraySize(*\PTs()) <> \NoOfPts
-        ReDim \PTs(\NoOfPts)
+      If ArraySize(\PT()) <> \NoOfPts
+        ReDim \PT(\NoOfPts)
       EndIf      
       \ObjType    = #PbFw_Obj3D_Polygon  
       \ObjSubType = #PbFw_Obj3D_SubType_Triangle
@@ -384,9 +385,9 @@ Module Obj3Df
       \z = 0        
     EndWith
     
-   *Obj3D\PT(0) = *Obj3D\PT(1) ; Set Reference Point PT(0)
+    *Obj3D\PT(0) = *Obj3D\PT(1) ; Set Reference Point PT(0)
    
-   ProcedureReturn *Obj3D  
+    ProcedureReturn *Obj3D  
   EndProcedure
   
   Procedure.i Create_Rectangle(*Obj3D.TPolygon, width.d, height.d)
@@ -409,8 +410,8 @@ Module Obj3Df
     
     With *Obj3D
       \NoOfPts = 4     
-      If ArraySize(*\PTs()) <> \NoOfPts
-        ReDim \PTs(\NoOfPts)
+      If ArraySize(\PT()) <> \NoOfPts
+        ReDim \PT(\NoOfPts)
       EndIf      
       \ObjType    = #PbFw_Obj3D_Polygon  
       \ObjSubType = #PbFw_Obj3D_SubType_Rectangle
@@ -459,8 +460,8 @@ Module Obj3Df
     
     With *Obj3D
       \NoOfPts = 5     
-      If ArraySize(*\PTs()) <> \NoOfPts
-        ReDim \PTs(\NoOfPts)
+      If ArraySize(\PT()) <> \NoOfPts
+        ReDim \PT(\NoOfPts)
       EndIf      
       \ObjType    = #PbFw_Obj3D_Polygon  
       \ObjSubType = #PbFw_Obj3D_SubType_Pentagon
@@ -520,8 +521,8 @@ Module Obj3Df
     
     With *Obj3D
       \NoOfPts = 6     
-      If ArraySize(*\PTs()) <> \NoOfPts
-        ReDim \PTs(\NoOfPts)
+      If ArraySize(\PT()) <> \NoOfPts
+        ReDim \PT(\NoOfPts)
       EndIf      
       \ObjType    = #PbFw_Obj3D_Polygon  
       \ObjSubType = #PbFw_Obj3D_SubType_Hexagon
@@ -587,8 +588,8 @@ Module Obj3Df
     
     With *Obj3D
       \NoOfPts = 8     
-      If ArraySize(*\PTs()) <> \NoOfPts
-        ReDim \PTs(\NoOfPts)
+      If ArraySize(\PT()) <> \NoOfPts
+        ReDim \PT(\NoOfPts)
       EndIf      
       \ObjType    = #PbFw_Obj3D_Polygon  
       \ObjSubType = #PbFw_Obj3D_SubType_Octagon
@@ -668,8 +669,8 @@ Module Obj3Df
       
       With *Obj3D
         \NoOfPts = NoOfPoints     
-        If ArraySize(*\PTs()) <> \NoOfPts
-          ReDim \PTs(\NoOfPts)
+        If ArraySize(\PT()) <> \NoOfPts
+          ReDim \PT(\NoOfPts)
         EndIf      
         \ObjType    = #PbFw_Obj3D_Polygon  
         \ObjSubType = #PbFw_Obj3D_SubType_Polygon
@@ -722,8 +723,8 @@ Module Obj3Df
       
       With *Obj3D
         \NoOfPts = lstSize     
-        If ArraySize(*\PTs()) <> \NoOfPts
-          ReDim \PTs(\NoOfPts)
+        If ArraySize(\PT()) <> \NoOfPts
+          ReDim \PT(\NoOfPts)
         EndIf      
         \ObjType    = #PbFw_Obj3D_Polygon  
         \ObjSubType = #PbFw_Obj3D_SubType_Polygon
@@ -763,8 +764,8 @@ Module Obj3Df
     
     With *Obj3D
       \NoOfPts = 1     
-      If ArraySize(*\PTs()) <> \NoOfPts
-        ReDim \PTs(\NoOfPts)
+      If ArraySize(\PT()) <> \NoOfPts
+        ReDim \PT(\NoOfPts)
       EndIf      
       \ObjType    = #PbFw_Obj3D_Ellipse  
       \ObjSubType = #PbFw_Obj3D_SubType_Circle
@@ -807,8 +808,8 @@ Module Obj3Df
     
     With *Obj3D
       \NoOfPts = 1     
-      If ArraySize(*\PTs()) <> \NoOfPts
-        ReDim \PTs(\NoOfPts)
+      If ArraySize(\PT()) <> \NoOfPts
+        ReDim \PT(\NoOfPts)
       EndIf      
       \ObjType    = #PbFw_Obj3D_Ellipse  
       \ObjSubType = #PbFw_Obj3D_SubType_Ellipse
@@ -854,13 +855,13 @@ Module Obj3Df
   ; RET.i : *Obj3D
   ; ============================================================================
    
-  ;         .p5------------.p6  
-  ;      .  |            . |
-  ;    P1--------------P2  |
-  ;    |    |          |   |
-  ;    |   .p4---------|--.p7
-  ;    | .             |.
-  ;    P0--------------P3
+  ;         .p5  
+  ;      .  |    .         
+  ;    P1   |        .
+  ;    |   .|            .
+  ;    |   .p4-----------.p6
+  ;    | .           .
+  ;    P0--------------P2
     
     DBG::mac_CheckPointer(*Obj3D)    ; Check Pointer Exception
  
@@ -928,14 +929,14 @@ Module Obj3Df
     ProcedureReturn *Obj3D
   EndProcedure
   
-  Procedure.i Create_3DCylinder(*Obj3D.T3DCone, r.d, depth.d)
+  Procedure.i Create_3DCylinder(*Obj3D.T3DCone, r.d, h.d)
   ; ============================================================================
   ; NAME: Create_T3DCylinder
   ; DESC: Create a 3D Cylinder definition in a T3DCone Structure
   ; DESC: with Center Point = [0,0,0]
   ; VAR(*Obj3D.T3DCone) : Pointer to the 3DCone Object
   ; VAR(r.d): Radius
-  ; VAR(depth.d):  depth  (lenth in z-direction)
+  ; VAR(h.d): Height  (lenth in z-direction)
   ; RET.i : *Obj3D
   ; ============================================================================
    
@@ -958,7 +959,7 @@ Module Obj3Df
     ProcedureReturn *Obj3D
   EndProcedure
   
-  Procedure.i Create_3DCone(*Obj3D.T3DCone, r1.d, r2.d, depth.d)
+  Procedure.i Create_3DCone(*Obj3D.T3DCone, r1.d, r2.d, h.d)
   ; ============================================================================
   ; NAME: Create_T3DCone
   ; DESC: Create a 3D Cone definition in a T3DCone Structure
@@ -966,17 +967,18 @@ Module Obj3Df
   ; VAR(*Obj3D.T3DCone) : Pointer to the 3DCone Object
   ; VAR(r1.d): Radius 1
   ; VAR(r2.d): Radius 2
-  ; VAR(depth.d):  depth  (lenth in z-direction)
+  ; VAR(h.d):  Height  (lenth in z-direction)
   ; RET.i : *Obj3D
   ; ============================================================================
       
     DBG::mac_CheckPointer(*Obj3D)    ; Check Pointer Exception
     
-    Create_TEllipse(*Obj3D\EL(0], r1, r1)  
-    *Obj3D\EL(1] = *Obj3D\EL(0]
+    Create_Ellipse(*Obj3D\EL[0], r1, r1)  
+    *Obj3D\EL[1] = *Obj3D\EL[0]
     
-    With *Obj3D\EL(1)
-      \PT\z = depth
+    With *Obj3D\EL[1]
+      
+      \PT(1)\z = h
       \Rx\x = r2
       \Ry\y = r2
     EndWith
@@ -984,16 +986,25 @@ Module Obj3Df
     ProcedureReturn *Obj3D
   EndProcedure
   
-  Procedure.i Create_3DPentagon(*Obj3D.T3DVolPentagon, r.d, h.d)
-    
+  Procedure.i Create_3DPentagon(*Obj3D.T3DPolygon, r.d, h.d)
+  ; ============================================================================
+  ; NAME: Create_3DPentagon
+  ; DESC: Create a 3D Pentagon definition in a T3DCone Structure
+  ; DESC: with Center Point = [0,0,0]
+  ; VAR(*Obj3D.T3DPolygon) : Pointer to the 3DCone Object
+  ; VAR(r.d): Radius 
+  ; VAR(h.d): Height
+  ; RET.i : *Obj3D
+  ; ============================================================================
+   
     DBG::mac_CheckPointer(*Obj3D)    ; Check Pointer Exception
     
     With *Obj3D
-      Create_TPentagon(\PEN[0], r) 
-      \PEN[1] = \PEN[0]  
+      Create_Pentagon(\POL[0], r) 
+      \POL[1] = \POL[0]  
     EndWith 
     
-    With *Obj3D\PEN[1]
+    With *Obj3D\POL[1]
      \PT(0)\z = h 
      \PT(1)\z = h 
      \PT(2)\z = h 
@@ -1001,19 +1012,28 @@ Module Obj3Df
      \PT(4)\z = h    
     EndWith
     
-   ProcedureReturn *Obj3D  
+    ProcedureReturn *Obj3D  
   EndProcedure
   
-  Procedure.i Create_3DHexagon(*Obj3D.T3DVolHexagon, r.d, h.d)
-    
+  Procedure.i Create_3DHexagon(*Obj3D.T3DPolygon, r.d, h.d)
+  ; ============================================================================
+  ; NAME: Create_3DHexagon
+  ; DESC: Create a 3D Hexagon definition in a T3DCone Structure
+  ; DESC: with Center Point = [0,0,0]
+  ; VAR(*Obj3D.T3DPolygon) : Pointer to the 3DPolygon Object
+  ; VAR(r.d): Radius 
+  ; VAR(h.d): Height
+  ; RET.i : *Obj3D
+  ; ============================================================================
+   
     DBG::mac_CheckPointer(*Obj3D)    ; Check Pointer Exception
     
     With *Obj3D
-      Create_THexagon(\HEX[0], r) 
-      \HEX[1] = \HEX[0]  
+      Create_Hexagon(\POL[0], r) 
+      \POL[1] = \POL[0]  
     EndWith 
     
-    With *Obj3D\HEX[1]
+    With *Obj3D\POL[1]
      \PT(0)\z = h 
      \PT(1)\z = h 
      \PT(2)\z = h 
@@ -1025,14 +1045,23 @@ Module Obj3Df
     ProcedureReturn *Obj3D  
   EndProcedure
   
-  Procedure.i Create_3DOctagon(*Obj3D.T3DVolOctagon, r.d, h.d)
+  Procedure.i Create_3DOctagon(*Obj3D.T3DPolygon, r.d, h.d)
+  ; ============================================================================
+  ; NAME: Create_3DOctagon
+  ; DESC: Create a 3D Octagon definition in a T3DCone Structure
+  ; DESC: with Center Point = [0,0,0]
+  ; VAR(*Obj3D.T3DPolygon) : Pointer to the 3DPolygon Object
+  ; VAR(r.d): Radius 
+  ; VAR(h.d): Height
+  ; RET.i : *Obj3D
+  ; ============================================================================
     
     With *Obj3D
-      Create_TOctagon(\OCT[0], r) 
-      \OCT[1] = \OCT[0]  
+      Create_Octagon(\POL[0], r) 
+      \POL[1] = \POL[0]  
     EndWith 
     
-    With *Obj3D\OCT[1]
+    With *Obj3D\POL[1]
      \PT(0)\z = h 
      \PT(1)\z = h 
      \PT(2)\z = h 
@@ -1043,13 +1072,13 @@ Module Obj3Df
      \PT(7)\z = h    
     EndWith
     
-   ProcedureReturn *Obj3D  
+    ProcedureReturn *Obj3D  
   EndProcedure
 
 EndModule
 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 19
+; CursorPosition = 998
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

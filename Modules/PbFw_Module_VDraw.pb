@@ -1,5 +1,5 @@
 ﻿; ===========================================================================
-;  FILE : Module_VDraw.pb
+;  FILE : PbFw_Module_VDraw.pb
 ;  NAME : Module Vectror Drawing [VDraw::]
 ;  DESC : Implements Drawing Commands with the VectorDrawing Library
 ;  DESC : 
@@ -37,6 +37,8 @@
 ;   - Changed Define statment in Procedures to Protected
 ;
 ;   - Added Exeption Handling because I want to have it for my Project
+;
+; 2023/08/22 S.Maag; moved all local data to TThis Structure to prepare for OOP 
 ;}
 ;{ TODO:
 ;}
@@ -152,56 +154,56 @@ XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::      Debug Module
 
 DeclareModule VDraw
     
-  EnumerationBinary FLAGs
-    #FLAG_Text_Default  = #PB_VectorText_Default 
-    #FLAG_Text_Visible  = #PB_VectorText_Visible
-    #FLAG_Text_Offset   = #PB_VectorText_Offset
-    #FLAG_Text_Baseline = #PB_VectorText_Baseline
-    #FLAG_Vertical
-    #FLAG_Horizontal
-    #FLAG_Diagonal
-    #FLAG_Window
-    #FLAG_Image
-    #FLAG_Printer
-    #FLAG_Canvas
+  EnumerationBinary EVDrawFlags
+    #PbFw_VD_FLAG_Text_Default  = #PB_VectorText_Default 
+    #PbFw_VD_FLAG_Text_Visible  = #PB_VectorText_Visible
+    #PbFw_VD_FLAG_Text_Offset   = #PB_VectorText_Offset
+    #PbFw_VD_FLAG_Text_Baseline = #PB_VectorText_Baseline
+    #PbFw_VD_FLAG_Vertical
+    #PbFw_VD_FLAG_Horizontal
+    #PbFw_VD_FLAG_Diagonal
+    #PbFw_VD_FLAG_Window
+    #PbFw_VD_FLAG_Image
+    #PbFw_VD_FLAG_Printer
+    #PbFw_VD_FLAG_Canvas
   EndEnumeration
   
-  #RoundEnd       = #PB_Path_RoundEnd
-  #SquareEnd      = #PB_Path_SquareEnd
-  #RoundCorner    = #PB_Path_RoundCorner
-  #FLAG_DiagonalCorner = #PB_Path_DiagonalCorner
+  #PbFw_VD_RoundEnd       = #PB_Path_RoundEnd
+  #PbFw_VD_SquareEnd      = #PB_Path_SquareEnd
+  #PbFw_VD_RoundCorner    = #PB_Path_RoundCorner
+  #PbFw_VD_FLAG_DiagonalCorner = #PB_Path_DiagonalCorner
   
   ;- ----------------------------------------------------------------------
   ;-   Declare Module
   ;  ----------------------------------------------------------------------  
   
-  ; To avoid confilcts with PureBasic 2D Drawing commands, we use "_" at the end of the commands
+  ; To avoid confilcts with PureBasic 2D Drawing commands, we use "V_" as Prefix
+  Declare.i  V_StartDraw(PBNo.i, OutPutType.i=#PbFw_VD_FLAG_Canvas, Unit.i=#PB_Unit_Pixel, Zoom.d=1.0, DPIscaling=#False)
+  Declare.i  V_StopDraw() 
+
+  Declare.i  V_Box(X.d, Y.d, Width.d, Height.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Rotate.d=0, Flags.i=#False)
+  Declare.i  V_Circle(X.d, Y.d, Radius.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Flags.i=#False)
+  Declare.i  V_CircleArc(X.d, Y.d, Radius.d, startAngle.d, endAngle.d, Color.l, Flags.i=#False)
+  Declare.i  V_CircleSector(X.d, Y.d, Radius.d, startAngle.d, endAngle.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Flags.i=#False)
   
-  Declare   Box_(X.d, Y.d, Width.d, Height.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Rotate.d=0, Flags.i=#False)
-  Declare   Circle_(X.d, Y.d, Radius.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Flags.i=#False)
-  Declare   CircleArc_(X.d, Y.d, Radius.d, startAngle.d, endAngle.d, Color.l, Flags.i=#False)
-  Declare   CircleSector_(X.d, Y.d, Radius.d, startAngle.d, endAngle.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Flags.i=#False)
+  Declare.i  V_Ellipse(X.d, Y.d, RadiusX.d, RadiusY.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Rotate.d=0, Flags.i=#False)
+  Declare.i  V_EllipseArc(X.d, Y.d, RadiusX.d, RadiusY.d, startAngle.d, endAngle.d, Color.l, Flags.i=#False)
   
-  Declare   Ellipse_(X.d, Y.d, RadiusX.d, RadiusY.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Rotate.d=0, Flags.i=#False)
-  Declare   EllipseArc_(X.d, Y.d, RadiusX.d, RadiusY.d, startAngle.d, endAngle.d, Color.l, Flags.i=#False)
+  Declare.i  V_Line(X.d, Y.d, Width.d, Height.d, Color.l, Flags.i=#False)
+  Declare.i  V_LinesArc(X1.d, Y1.d, X2.d, Y2.d, X3.d, Y3.d, Radius.d, Color.l, Flags.i=#False)
+  Declare.i  V_LineH(X.d, Y.d, Width.d, Color.l, Flags.i=#False)
+  Declare.i  V_LineV(X.d, Y.d, Height.d, Color.l, Flags.i=#False)
+  Declare.i  V_LineXY(X1.d, Y1.d, X2.d, Y2.d, Color.l, Flags.i=#False)
+  Declare.i  V_SetFont(FontID.i, Size.d=#PB_Default, Flags.i=#False)
   
-  Declare   Line_(X.d, Y.d, Width.d, Height.d, Color.l, Flags.i=#False)
-  Declare   LinesArc_(X1.d, Y1.d, X2.d, Y2.d, X3.d, Y3.d, Radius.d, Color.l, Flags.i=#False)
-  Declare   HLine_(X.d, Y.d, Width.d, Color.l, Flags.i=#False)
-  Declare   VLine_(X.d, Y.d, Height.d, Color.l, Flags.i=#False)
-  Declare   LineXY_(X1.d, Y1.d, X2.d, Y2.d, Color.l, Flags.i=#False)
-  Declare   Font_(FontID.i, Size.d=#PB_Default, Flags.i=#False)
+  Declare.i  V_TangentsArc(X1.d, Y1.d, X2.d, Y2.d, X3.i, Y3.d, X4.d, Y4.d, Color.l, Flags.i=#False)
+  Declare.i  V_Text(X.d, Y.d, Text$, Color.l, Angle.d=0, Flags.i=#False)
+  Declare.d  V_GetTextWidth(Text.s,  Flags.i=#PB_VectorText_Default) ; [ #FLAG_Text_Default / #FLAG_Text_Visible / #FLAG_Text_Offset ]
+  Declare.d  V_GetTextHeight(Text.s, Flags.i=#PB_VectorText_Default) ; [ #FLAG_Text_Default / #FLAG_Text_Visible / #FLAG_Text_Offset / #FLAG_Text_Baseline ]
   
-  Declare   TangentsArc_(X1.d, Y1.d, X2.d, Y2.d, X3.i, Y3.d, X4.d, Y4.d, Color.l, Flags.i=#False)
-  Declare   Text_(X.d, Y.d, Text$, Color.l, Angle.d=0, Flags.i=#False)
-  Declare.d TextWidth_(Text.s,  Flags.i=#PB_VectorText_Default) ; [ #FLAG_Text_Default / #FLAG_Text_Visible / #FLAG_Text_Offset ]
-  Declare.d TextHeight_(Text.s, Flags.i=#PB_VectorText_Default) ; [ #FLAG_Text_Default / #FLAG_Text_Visible / #FLAG_Text_Offset / #FLAG_Text_Baseline ]
-  
-  Declare   SetDotPattern(LineWidth.d, Array Pattern.d(1), Flags.i=#False, StartOffset.d=0)
-  Declare   DisableDotPattern(State.i=#True)
-  Declare   SetStroke_(LineWidth.d=1)
-  Declare.i StartVector_(PB_No.i, OutPutType.i=#FLAG_Canvas, Unit.i=#PB_Unit_Pixel, Zoom.d=1.0, DPIscaling=#False)
-  Declare   StopVector_() 
+  Declare.i  V_SetDotPattern(LineWidth.d, Array Pattern.d(1), Flags.i=#False, StartOffset.d=0)
+  Declare.i  V_DisableDotPattern(State.i=#True)
+  Declare.i  V_SetStroke(LineWidth.d=1)
 
 EndDeclareModule
 
@@ -210,18 +212,12 @@ Module VDraw
   
   EnableExplicit
   PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
-  
-  
-  Structure TVDraw
-    VStart.i
-    StrokeWidth.d  
-  EndStructure
-  
+    
   ;- ----------------------------------------------------------------------
   ;- Module Private Functions
   ;- ----------------------------------------------------------------------
   
-  #VectorDrawingNotStarted = DBG::#PbfW_DBG_VectorDrawingNotStarted
+  #VectorDrawingNotStarted = DBG::#PbFW_DBG_VectorDrawingNotStarted
   Global memScaleX.d = 1.0  ; total Zoom factor X [DPIscalingX * Zoom]
   Global memScaleY.d = 1.0  ; total Zoom factor Y [DPIscalingY * Zoom]
   Global memDPIscaling = #False
@@ -235,9 +231,14 @@ Module VDraw
     ; ======================================================================
     
     ; Call the Exception Handler Function in the Module Exception
-    DBG::Exception("ECAD_VDraw", FName, ExceptionType)
+    DBG::Exception(#PB_Compiler_Module, FName, ExceptionType)
     ProcedureReturn ExceptionType
   EndProcedure
+  
+  Structure TPoint
+    X.d     ; X As Double (64Bit Float)
+    Y.d     ; Y As Double (64Bit Float)
+  EndStructure
 
   Structure TLineInfo
     Width.d
@@ -246,15 +247,16 @@ Module VDraw
     Offset.i
     Array Pattern.d(1)
   EndStructure  
-  
-  Structure TPoint
-    X.d     ; X As Double (64Bit Float)
-    Y.d     ; Y As Double (64Bit Float)
+    
+  Structure TThis
+    Line.TLineInfo
+    Stroke.d
+    VStart.i
   EndStructure
   
-  Global Line.TLineInfo 
-  Global Stroke.i 
-  Global VStart.i ; indication VectorDrawing started
+  Global This.TThis
+  Global *This.TThis  ; prepare a Pointer on This to prepare it for OOP use
+  *This = @This
   
   Macro mac_AddAlphaIfNull(Color)
   ; ======================================================================
@@ -297,7 +299,7 @@ Module VDraw
   ;     ProcedureReturn DesktopScaledY(Value)
   ;   EndProcedure
   
- 
+  ; Private
   Procedure _LineXY(X1.d, Y1.d, X2.d, Y2.d, Color.l)
     
     mac_AddAlphaIfNull(Color) ; set Alpha Channel to 255 if it is 0
@@ -306,14 +308,16 @@ Module VDraw
     AddPathLine(X2, Y2)
     VectorSourceColor(Color)
     
-    If Line\State And Line\Width > 0
-      CustomDashPath(Line\Width, Line\Pattern(), Line\Flags, Line\Offset)
-    Else
-      StrokePath(Stroke)
-    EndIf  
-    
+    With *This
+      If \Line\State And \Line\Width > 0
+        CustomDashPath(\Line\Width, \Line\Pattern(), \Line\Flags, \Line\Offset)
+      Else
+        StrokePath(\Stroke)
+      EndIf  
+    EndWith
   EndProcedure
   
+  ; Private
   Procedure.i _FindLinesIntersection(L1_X1.d, L1_Y1.d, L1_X2.d, L1_Y2.d, L2_X1.d, L2_Y1.d, L2_X2.d, L2_Y2.d, *isP.TPoint)
     Protected.d L1_W, L1_H, L2_W, L2_H, Denominator, T1, T2
     
@@ -338,8 +342,9 @@ Module VDraw
     ProcedureReturn #True
   EndProcedure
   
-  Procedure.i _FindArcFromTangents(X1.d, Y1.d, X2.d, Y2.d, X3.i, Y3.d, X4.d, Y4.d, *isPoint.TPoint)
-    Protected.f dX, dY, dX1, dY1, dX2, dY2, Radius
+  ; Private  
+  Procedure.d _FindArcFromTangents(X1.d, Y1.d, X2.d, Y2.d, X3.i, Y3.d, X4.d, Y4.d, *isPoint.TPoint)
+    Protected.d dX, dY, dX1, dY1, dX2, dY2, Radius
     Protected.TPoint sPoint, pPoint1, pPoint2, isCircle
    
     If _FindLinesIntersection(X1, Y1, X2, Y2, X3, Y3, X4, Y4, *isPoint)
@@ -364,19 +369,93 @@ Module VDraw
         Radius = Sqr(dX * dX + dY * dY)
         
         ProcedureReturn Radius
-      EndIf
-    
-    EndIf
-  
+      EndIf   
+    EndIf  
   EndProcedure  
 
   ;- ----------------------------------------------------------------------
   ;- Module Public Functions
   ;- ----------------------------------------------------------------------
-  
-  Procedure Box_(X.d, Y.d, Width.d, Height.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Rotate.d=0, Flags.i=#False)
+    
+  Procedure.i V_StartDraw(PBNo.i, OutPutType.i=#PbFw_VD_FLAG_Canvas, Unit.i=#PB_Unit_Pixel, Zoom.d=1.0, DPIscaling=#False) 
   ; ======================================================================
-  ; NAME: Box
+  ; NAME: V_StartDraw
+  ; DESC: Start Vector Drawing
+  ; VAR(PB_No): PureBasic Number; #Gadget, #Image. #Window
+  ; VAR(OutPutType): #FLAG_Canvas, #FLAG_Image, #FLAG_Window, #FLAG_Printer
+  ; VAR(Unit): #PB_Unit_Pixel, #PB_Unit_Millimeter, #PB_Unit_Inch, #PB_Unit_Point
+  ; VAR(Zoom.d): Zoom factor
+  ; VAR(DPIscaling) : Desktop/OS DPI-Scaling #FALE=OFF, #TRUE=ON
+  ; RET : 0=FAULT;  <>0 Drawing started
+  ; ======================================================================
+    
+    *This\Stroke = 1
+    
+    memDpiScaling = DPIscaling 
+
+    If memDPIscaling
+      memScaleX = Zoom * mac_ScaleX(1)
+      memScaleY = Zoom * mac_ScaleY(1)
+    Else
+      memScaleX = Zoom
+      memScaleY = Zoom
+    EndIf
+  
+    Select OutPutType
+        
+      Case #PbFw_VD_FLAG_Canvas
+        If IsGadget(PbNo)
+          If GadgetType(PbNo) = #PB_GadgetType_Canvas
+            If StartVectorDrawing(CanvasVectorOutput(PBNo, Unit))
+              *This\VStart = #True
+            EndIf
+          EndIf
+        EndIf  
+        
+      Case #PbFw_VD_FLAG_Image
+        If IsImage(PbNo)
+          If StartVectorDrawing(ImageVectorOutput(PBNo, Unit))
+            *This\VStart = #True
+          EndIf
+        EndIf
+        
+      Case #PbFw_VD_FLAG_Window
+        If IsWindow(PbNo)
+          If StartVectorDrawing(WindowVectorOutput(PBNo, Unit))
+            *This\VStart = #True   
+          EndIf
+        EndIf
+        
+      Case #PbFw_VD_FLAG_Printer    
+        If StartVectorDrawing(PrinterVectorOutput(Unit))
+          *This\VStart = #True
+        EndIf
+        
+    EndSelect
+        
+    If *This\VStart = #False
+      _Exception(#PB_Compiler_Procedure, #VectorDrawingNotStarted)
+    EndIf
+    
+    ProcedureReturn *This\VStart
+  EndProcedure
+  
+  Procedure.i V_StopDraw() 
+  ; ======================================================================
+  ; NAME: StopVector_
+  ; DESC: Stops the Vector Drawing 
+  ; RET : #True
+  ; ======================================================================
+    
+    *This\Stroke = 0
+    *This\Vstart = #False     ; clear the Start indication of VectorDrawing
+    StopVectorDrawing()
+    ProcedureReturn #True
+  EndProcedure
+
+  Procedure.i V_Box(X.d, Y.d, Width.d, Height.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Rotate.d=0, Flags.i=#False)
+  ; ======================================================================
+  ; NAME: V_Box
   ; DESC: Draws a Box 
   ; VAR(X): X-Coordinate
   ; VAR(Y): Y-Coordinate
@@ -393,7 +472,7 @@ Module VDraw
     
     Protected ret
     
-    If VStart  ; if Vector drawing is started
+    If *This\VStart  ; if Vector drawing is started
   
       X = mac_ScaleX(X)
       Y = mac_ScaleY(Y)
@@ -415,9 +494,9 @@ Module VDraw
           
           mac_AddAlphaIfNull(GradientColor) ; set Alpha Channel to 255 if it is 0
 
-          If Flags & #FLAG_Horizontal
+          If Flags & #PbFw_VD_FLAG_Horizontal
             VectorSourceLinearGradient(X, Y, X + Width, Y)
-          ElseIf Flags & #FLAG_Diagonal
+          ElseIf Flags & #PbFw_VD_FLAG_Diagonal
             VectorSourceLinearGradient(X, Y, X + Width, Y + Height)
           Else
             VectorSourceLinearGradient(X, Y, X, Y + Height)
@@ -434,25 +513,26 @@ Module VDraw
       
       VectorSourceColor(Color)
       
-      If Line\State And Line\Width > 0
-        CustomDashPath(Line\Width, Line\Pattern(), Line\Flags, Line\Offset)
-      Else
-        StrokePath(Stroke)
-      EndIf  
-      
+      With *This
+        If \Line\State And \Line\Width > 0
+          CustomDashPath(\Line\Width, \Line\Pattern(), \Line\Flags, \Line\Offset)
+        Else
+          StrokePath(\Stroke)
+        EndIf  
+      EndWith
       If Rotate <>0  : RotateCoordinates(X, Y, -Rotate) : EndIf
     
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("Box_",ret)
+      _Exception(#PB_Compiler_Procedure, ret)
     EndIf 
     
     ProcedureReturn ret                     
   EndProcedure
   
-  Procedure Circle_(X.d, Y.d, Radius.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Flags.i=#False)
+  Procedure.i V_Circle(X.d, Y.d, Radius.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Flags.i=#False)
   ; ======================================================================
-  ; NAME: Circle_
+  ; NAME: V_Circle
   ; DESC: Draws a Circle 
   ; VAR(X): X-Coordinate
   ; VAR(Y): Y-Coordinate
@@ -466,7 +546,7 @@ Module VDraw
     
     Protected ret
     
-    If VStart  ; if Vector drawing is started
+    If *This\VStart  ; if Vector drawing is started
    
       X = mac_ScaleX(X)
       Y = mac_ScaleY(Y)
@@ -495,24 +575,25 @@ Module VDraw
       EndIf
       
       VectorSourceColor(Color)
-      
-      If Line\State And Line\Width > 0
-        CustomDashPath(Line\Width, Line\Pattern(), Line\Flags, Line\Offset)
-      Else
-        StrokePath(Stroke)
-      EndIf  
+      With *This
+        If \Line\State And \Line\Width > 0
+          CustomDashPath(\Line\Width, \Line\Pattern(), \Line\Flags, \Line\Offset)
+        Else
+          StrokePath(\Stroke)
+        EndIf  
+      EndWith
     
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("Circle_",ret)
+      _Exception(#PB_Compiler_Procedure, ret)
     EndIf 
     
     ProcedureReturn ret                  
   EndProcedure
   
-  Procedure CircleArc_(X.d, Y.d, Radius.d, startAngle.d, endAngle.d, Color.l, Flags.i=#False)
+  Procedure.i V_CircleArc(X.d, Y.d, Radius.d, startAngle.d, endAngle.d, Color.l, Flags.i=#False)
   ; ======================================================================
-  ; NAME: CircleArc_
+  ; NAME: V_CircleArc
   ; DESC: Draws a Circle Arc
   ; VAR(X): X-Coordinate
   ; VAR(Y): Y-Coordinate
@@ -526,7 +607,7 @@ Module VDraw
   
     Protected ret
     
-    If VStart  ; if Vector drawing is started
+    If *This\VStart  ; if Vector drawing is started
       
       X = mac_ScaleX(X)
       Y = mac_ScaleY(Y)
@@ -538,23 +619,25 @@ Module VDraw
       
       VectorSourceColor(Color)
       
-      If Line\State And Line\Width > 0
-        CustomDashPath(Line\Width, Line\Pattern(), Line\Flags, Line\Offset)
-      Else
-        StrokePath(Stroke)
-      EndIf  
-    
+      With *This
+        If \Line\State And \Line\Width > 0
+          CustomDashPath(\Line\Width, \Line\Pattern(), \Line\Flags, \Line\Offset)
+        Else
+          StrokePath(\Stroke)
+        EndIf  
+      EndWith
+      
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("CircleArc_",ret)
+      _Exception(#PB_Compiler_Procedure, ret)
     EndIf 
     
     ProcedureReturn ret                  
   EndProcedure
   
-  Procedure CircleSector_(X.d, Y.d, Radius.d, startAngle.d, endAngle.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Flags.i=#False)
+  Procedure.i V_CircleSector(X.d, Y.d, Radius.d, startAngle.d, endAngle.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Flags.i=#False)
   ; ======================================================================
-  ; NAME: CircleSector_
+  ; NAME: V_CircleSector
   ; DESC: Draws a Circle Sector 
   ; VAR(X): X-Coordinate
   ; VAR(Y): Y-Coordinate
@@ -570,7 +653,7 @@ Module VDraw
     
     Protected ret
     
-    If VStart  ; if Vector drawing is started
+    If *This\VStart  ; if Vector drawing is started
     
       X = mac_ScaleX(X)
       Y = mac_ScaleY(Y)
@@ -601,24 +684,24 @@ Module VDraw
       EndIf
       
       VectorSourceColor(Color)
-      
-      If Line\State And Line\Width > 0
-        CustomDashPath(Line\Width, Line\Pattern(), Line\Flags, Line\Offset)
-      Else
-        StrokePath(Stroke)
-      EndIf  
-      
+      With *This
+        If \Line\State And \Line\Width > 0
+          CustomDashPath(\Line\Width, \Line\Pattern(), \Line\Flags, \Line\Offset)
+        Else
+          StrokePath(\Stroke)
+        EndIf  
+      EndWith
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("CircleSector_",ret)
+      _Exception(#PB_Compiler_Procedure, ret)
     EndIf 
     
     ProcedureReturn ret               
   EndProcedure
     
-  Procedure Ellipse_(X.d, Y.d, RadiusX.d, RadiusY.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Rotate.d=0, Flags.i=#False)
+  Procedure.i V_Ellipse(X.d, Y.d, RadiusX.d, RadiusY.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Rotate.d=0, Flags.i=#False)
   ; ======================================================================
-  ; NAME: Ellipse_
+  ; NAME: V_Ellipse
   ; DESC: Draws a Ellipse
   ; VAR(X): X-Coordinate
   ; VAR(Y): Y-Coordinate
@@ -634,7 +717,7 @@ Module VDraw
     
     Protected ret
     
-    If VStart  ; if Vector drawing is started
+    If *This\VStart  ; if Vector drawing is started
 
       X = mac_ScaleX(X)
       Y = mac_ScaleY(Y)
@@ -672,26 +755,26 @@ Module VDraw
       EndIf
       
       VectorSourceColor(Color)
-      
-      If Line\State And Line\Width > 0
-        CustomDashPath(Line\Width, Line\Pattern(), Line\Flags, Line\Offset)
-      Else
-        StrokePath(Stroke)
-      EndIf  
-      
+      With *This
+        If \Line\State And \Line\Width > 0
+          CustomDashPath(\Line\Width, \Line\Pattern(), \Line\Flags, \Line\Offset)
+        Else
+          StrokePath(\Stroke)
+        EndIf  
+      EndWith
       If Rotate <>0 : RotateCoordinates(X, Y, -Rotate) : EndIf
       
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("Ellipse_",ret)
+      _Exception(#PB_Compiler_Procedure, ret)
     EndIf 
     
     ProcedureReturn ret             
   EndProcedure
   
-  Procedure EllipseArc_(X.d, Y.d, RadiusX.d, RadiusY.d, startAngle.d, endAngle.d, Color.l, Flags.i=#False)
+  Procedure.i V_EllipseArc(X.d, Y.d, RadiusX.d, RadiusY.d, startAngle.d, endAngle.d, Color.l, Flags.i=#False)
   ; ======================================================================
-  ; NAME: EllipseArc_
+  ; NAME: V_EllipseArc
   ; DESC: Draws a Ellipse Arc {Ellipsenbogen}
   ; VAR(X): X-Coordinate
   ; VAR(Y): Y-Coordinate
@@ -706,7 +789,7 @@ Module VDraw
    
     Protected ret
     
-    If VStart  ; if Vector drawing is started
+    If *This\VStart  ; if Vector drawing is started
       
       X = mac_ScaleX(X)
       Y = mac_ScaleY(Y)
@@ -718,23 +801,24 @@ Module VDraw
       AddPathEllipse(X, Y, RadiusX, RadiusY, startAngle, endAngle)
       VectorSourceColor(Color)
       
-      If Line\State And Line\Width > 0
-        CustomDashPath(Line\Width, Line\Pattern(), Line\Flags, Line\Offset)
-      Else
-        StrokePath(Stroke)
-      EndIf  
-    
+      With *This
+        If \Line\State And \Line\Width > 0
+          CustomDashPath(\Line\Width, \Line\Pattern(), \Line\Flags, \Line\Offset)
+        Else
+          StrokePath(\Stroke)
+        EndIf  
+      EndWith
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("EllipseArc_",ret)
+      _Exception(#PB_Compiler_Procedure, ret)
     EndIf 
     
     ProcedureReturn ret          
   EndProcedure
 
-  Procedure Line_(X.d, Y.d, Width.d, Height.d, Color.l, Flags.i=#False)
+  Procedure.i V_Line(X.d, Y.d, Width.d, Height.d, Color.l, Flags.i=#False)
   ; ======================================================================
-  ; NAME: Line_
+  ; NAME: V_Line
   ; DESC: Draws a Line
   ; VAR(X): X-Coordinate
   ; VAR(Y): Y-Coordinate
@@ -746,7 +830,7 @@ Module VDraw
     
     Protected ret
     
-    If VStart  ; if Vector drawing is started
+    If *This\VStart  ; if Vector drawing is started
 
       X = mac_ScaleX(X)
       Y = mac_ScaleY(Y)
@@ -768,15 +852,15 @@ Module VDraw
     
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("Line_",ret)
+      _Exception(#PB_Compiler_Procedure, ret)
     EndIf 
     
     ProcedureReturn ret        
   EndProcedure
   
-  Procedure VLine_(X.d, Y.d, Height.d, Color.l, Flags.i=#False)
+  Procedure.i V_LineV(X.d, Y.d, Height.d, Color.l, Flags.i=#False)
   ; ======================================================================
-  ; NAME: VLine_
+  ; NAME: V_LineV
   ; DESC: Draws a vertical Line
   ; VAR(X): X-Coordinate
   ; VAR(Y): Y-Coordinate
@@ -787,7 +871,7 @@ Module VDraw
     
     Protected ret
     
-    If VStart  ; if Vector drawing is started
+    If *This\VStart  ; if Vector drawing is started
 
       X = mac_ScaleX(X)
       Y = mac_ScaleY(Y)
@@ -802,15 +886,15 @@ Module VDraw
       
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("VLine_",ret)
+      _Exception(#PB_Compiler_Procedure, ret)
     EndIf 
     
     ProcedureReturn ret        
   EndProcedure
   
-  Procedure HLine_(X.d, Y.d, Width.d, Color.l, Flags.i=#False)
+  Procedure.i V_LineH(X.d, Y.d, Width.d, Color.l, Flags.i=#False)
   ; ======================================================================
-  ; NAME: HLine_
+  ; NAME: V_LineH
   ; DESC: Draws a horizontal Line
   ; VAR(X): X-Coordinate
   ; VAR(Y): Y-Coordinate
@@ -821,7 +905,7 @@ Module VDraw
    
     Protected ret
     
-    If VStart  ; if Vector drawing is started
+    If *This\VStart  ; if Vector drawing is started
       
       X = mac_ScaleX(X)
       Y = mac_ScaleY(Y)
@@ -836,15 +920,15 @@ Module VDraw
       
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("HLine_",ret)
+      _Exception(#PB_Compiler_Procedure, ret)
     EndIf 
     
     ProcedureReturn ret  
   EndProcedure
   
-  Procedure LineXY_(X1.d, Y1.d, X2.d, Y2.d, Color.l, Flags.i=#False)
+  Procedure.i V_LineXY(X1.d, Y1.d, X2.d, Y2.d, Color.l, Flags.i=#False)
   ; ======================================================================
-  ; NAME: LineXY_
+  ; NAME: V_LineXY
   ; DESC: Draws a Line between 2 Points
   ; VAR(X1): X-Coordinate Point 1
   ; VAR(Y1): Y-Coordinate Point 1
@@ -856,7 +940,7 @@ Module VDraw
     
     Protected ret
     
-    If VStart  ; if Vector drawing is started
+    If *This\VStart  ; if Vector drawing is started
    
       X1 = mac_ScaleX(X1)
       Y1 = mac_ScaleY(Y1)
@@ -870,15 +954,15 @@ Module VDraw
       
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("LineXY_",ret)
+      _Exception(#PB_Compiler_Procedure, ret)
     EndIf 
     
     ProcedureReturn ret  
   EndProcedure
     
-  Procedure LinesArc_(X1.d, Y1.d, X2.d, Y2.d, X3.d, Y3.d, Radius.d, Color.l, Flags.i=#False)
+  Procedure.i V_LinesArc(X1.d, Y1.d, X2.d, Y2.d, X3.d, Y3.d, Radius.d, Color.l, Flags.i=#False)
   ; ======================================================================
-  ; NAME: LinesArc_
+  ; NAME: V_LinesArc
   ; DESC: Draws a Arc between 3 Points 
   ; VAR(X1): X-Coordinate Point 1
   ; VAR(Y1): Y-Coordinate Point 1
@@ -894,7 +978,7 @@ Module VDraw
     
     Protected ret
     
-    If VStart  ; if Vector drawing is started
+    If *This\VStart  ; if Vector drawing is started
 
       X1 = mac_ScaleX(X1)
       Y1 = mac_ScaleY(Y1)
@@ -911,24 +995,24 @@ Module VDraw
       AddPathLine(X3, Y3)
       
       VectorSourceColor(Color)
-      
-      If Line\State And Line\Width > 0
-        CustomDashPath(Line\Width, Line\Pattern(), Line\Flags, Line\Offset)
-      Else
-        StrokePath(Stroke)
-      EndIf  
-    
+      With *This
+        If \Line\State And \Line\Width > 0
+          CustomDashPath(\Line\Width, \Line\Pattern(), \Line\Flags, \Line\Offset)
+        Else
+          StrokePath(\Stroke)
+        EndIf  
+      EndWith
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("LinesArc_",ret)
+      _Exception(#PB_Compiler_Procedure, ret)
     EndIf 
     
     ProcedureReturn ret
   EndProcedure
   
-  Procedure TangentsArc_(X1.d, Y1.d, X2.d, Y2.d, X3.i, Y3.d, X4.d, Y4.d, Color.l, Flags.i=#False)
+  Procedure.i V_TangentsArc(X1.d, Y1.d, X2.d, Y2.d, X3.i, Y3.d, X4.d, Y4.d, Color.l, Flags.i=#False)
   ; ======================================================================
-  ; NAME: TangentsArc_
+  ; NAME: V_TangentsArc
   ; DESC: Draws a tangetial ARC 
   ; VAR(X1): X-Coordinate Point 1
   ; VAR(Y1): Y-Coordinate Point 1
@@ -946,7 +1030,7 @@ Module VDraw
     Protected isP.TPoint ; Intersection Point
     Protected ret
     
-    If VStart  ; if Vector drawing is started
+    If *This\VStart  ; if Vector drawing is started
       
       X1 = mac_ScaleX(X1)
       Y1 = mac_ScaleY(Y1)
@@ -967,24 +1051,24 @@ Module VDraw
       AddPathLine(X4, Y4)
   
       VectorSourceColor(Color)
-      
-      If Line\State And Line\Width > 0
-        CustomDashPath(Line\Width, Line\Pattern(), Line\Flags, Line\Offset)
-      Else
-        StrokePath(Stroke)
-      EndIf  
-      
+      With *This
+        If \Line\State And \Line\Width > 0
+          CustomDashPath(\Line\Width, \Line\Pattern(), \Line\Flags, \Line\Offset)
+        Else
+          StrokePath(\Stroke)
+        EndIf  
+      EndWith
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("TangentsArc_",ret)
+      _Exception(#PB_Compiler_Procedure, ret)
     EndIf 
     
     ProcedureReturn ret
   EndProcedure
   
-  Procedure Font_(FontID.i, Size.d=#PB_Default, Flags.i=#False)
+  Procedure.i V_SetFont(FontID.i, Size.d=#PB_Default, Flags.i=#False)
   ; ======================================================================
-  ; NAME: Font_
+  ; NAME: V_SetFont
   ; DESC: Set the Font and Size
   ; VAR(X): 
   ; VAR(FontID): Font ID
@@ -1003,9 +1087,9 @@ Module VDraw
 
   EndProcedure
 
-  Procedure Text_(X.d, Y.d, Text$, Color.l, Rotate.d=0, Flags.i=#False)
+  Procedure.i V_Text(X.d, Y.d, Text$, Color.l, Rotate.d=0, Flags.i=#False)
   ; ======================================================================
-  ; NAME: Text_
+  ; NAME: V_Text
   ; DESC: Draws a Text at X, Y
   ; VAR(X): X-Coordinate
   ; VAR(Y): Y-Coordinate
@@ -1016,7 +1100,7 @@ Module VDraw
     
     Protected ret
     
-    If VStart
+    If *This\VStart
 
       X = mac_ScaleX(X)
       Y = mac_ScaleY(Y)
@@ -1032,15 +1116,15 @@ Module VDraw
       If Rotate <> 0 : RotateCoordinates(X, Y, -Rotate) : EndIf
     Else
       ret = #VectorDrawingNotStarted
-      _Exception("Text_",ret)     
+      _Exception(#PB_Compiler_Procedure, ret)     
     EndIf
     
     ProcedureReturn ret
   EndProcedure
   
-  Procedure.d TextWidth_(Text.s, Flags.i=#PB_VectorText_Default)
+  Procedure.d V_GetTextWidth(Text.s, Flags.i=#PB_VectorText_Default)
     ; ======================================================================
-    ; NAME: TextWidth_
+    ; NAME: V_GetTextWidth
     ; DESC: Calculates the Text Width
     ; VAR(X): 
     ; RET : TextWidth
@@ -1048,19 +1132,19 @@ Module VDraw
    
     Protected ret.d
     
-    If VStart
+    If *This\VStart
       ret= VectorTextWidth(Text, Flags)
     Else
       ret= 0
-      _Exception("TextWidth_", #VectorDrawingNotStarted)
+      _Exception(#PB_Compiler_Procedure, #VectorDrawingNotStarted)
     EndIf
     
     ProcedureReturn ret
  EndProcedure
   
-  Procedure.d TextHeight_(Text.s, Flags.i=#PB_VectorText_Default)
+  Procedure.d V_GetTextHeight(Text.s, Flags.i=#PB_VectorText_Default)
   ; ======================================================================
-  ; NAME: TextHeight_
+  ; NAME: V_GetTextHeight
   ; DESC: Calculates the Text Height
   ; VAR(Text$): The Text String
   ; VAR(Flags): FLAGs   
@@ -1068,19 +1152,19 @@ Module VDraw
   ; ======================================================================
     Protected ret.d
     
-    If VStart
+    If *This\VStart
       ret= VectorTextHeight(Text, Flags)  
     Else
       ret= 0
-      _Exception("TextHeight", #VectorDrawingNotStarted)
+      _Exception(#PB_Compiler_Procedure, #VectorDrawingNotStarted)
     EndIf
     
     ProcedureReturn ret
   EndProcedure
   
-  Procedure SetDotPattern(LineWidth.d, Array Pattern.d(1), Flags.i=#False, StartOffset.d=0)
+  Procedure.i V_SetDotPattern(LineWidth.d, Array Pattern.d(1), Flags.i=#False, StartOffset.d=0)
   ; ======================================================================
-  ; NAME: SetDotPattern
+  ; NAME: V_SetDotPattern
   ; DESC: Sets the DotPattern
   ; VAR(LineWidth): LineWidth (thickness)
   ; VAR(Array Patternd(1): The pattern definition (dash and dot length)    
@@ -1089,119 +1173,60 @@ Module VDraw
   ; RET : .
   ; ======================================================================
     
-    Line\Width = mac_ScaleX(LineWidth)
-     
-    CopyArray(Pattern(), Line\Pattern())
-    
-    Line\Flags     = Flags
-    Line\Offset    = StartOffset
-    
-    If LineWidth
-      Line\State = #True
-    Else
-      Line\State = #False
-    EndIf
-    
+    With *This
+      \Line\Width = mac_ScaleX(LineWidth)
+       
+      CopyArray(Pattern(), \Line\Pattern())
+      
+      \Line\Flags     = Flags
+      \Line\Offset    = StartOffset
+      
+      If LineWidth
+        \Line\State = #True
+      Else
+        \Line\State = #False
+      EndIf
+    EndWith
   EndProcedure
   
-  Procedure DisableDotPattern(NewState.i=#True)
+  Procedure.i V_DisableDotPattern(NewState.i=#True)
   ; ======================================================================
-  ; NAME: DisableDotPattern
+  ; NAME: V_DisableDotPattern
   ; DESC: Disable/Enable DotPattern
   ; VAR(NewState): #FALSE=Disabled, #TRUE=Enabled
   ; RET : -
   ; ======================================================================
-   
-    If NewState
-      Line\State = #False
-    Else  
-      Line\State = #True
-    EndIf
     
+    With *This
+      If NewState
+        \Line\State = #False
+      Else  
+        \Line\State = #True
+      EndIf
+    EndWith
   EndProcedure  
 
-  Procedure SetStroke_(LineWidth.d=1)
+  Procedure.i V_SetStroke(LineWidth.d=1)
   ; ======================================================================
-  ; NAME: SetStroke_
+  ; NAME: V_SetStroke
   ; DESC: Sets the Stroke, LineWidth (thikness)
   ; VAR(LineWidth): Line width (thickness)
   ; RET : .
   ; ======================================================================
-    Stroke = LineWidth
-  EndProcedure
-  
-  Procedure.i StartVector_(PB_No.i, OutPutType.i=#FLAG_Canvas, Unit.i=#PB_Unit_Pixel, Zoom.d=1.0, DPIscaling=#False) 
-  ; ======================================================================
-  ; NAME: StartVector_
-  ; DESC: Start Vector Drawing
-  ; VAR(PB_No): PureBasic Number; #Gadget, #Image. #Window
-  ; VAR(OutPutType): #FLAG_Canvas, #FLAG_Image, #FLAG_Window, #FLAG_Printer
-  ; VAR(Unit): #PB_Unit_Pixel, #PB_Unit_Millimeter, #PB_Unit_Inch, #PB_Unit_Point
-  ; VAR(Zoom.d): Zoom factor
-  ; VAR(DPIscaling) : Desktop/OS DPI-Scaling #FALE=OFF, #TRUE=ON
-  ; RET : 0=FAULT;  <>0 Drawing started
-  ; ======================================================================
-    Protected ret
     
-    Stroke = 1
-    
-    memDpiScaling = DPIscaling 
-
-    If memDPIscaling
-      memScaleX = Zoom * mac_ScaleX(1)
-      memScaleY = Zoom * mac_ScaleY(1)
-    Else
-      memScaleX = Zoom
-      memScaleY = Zoom
-    EndIf
-  
-  
-    Select OutPutType
-        
-      Case #FLAG_Canvas
-        ret = StartVectorDrawing(CanvasVectorOutput(PB_No, Unit))
-        
-      Case #FLAG_Image
-        ret = StartVectorDrawing(ImageVectorOutput(PB_No, Unit))
-        
-      Case #FLAG_Window
-        ret = StartVectorDrawing(WindowVectorOutput(PB_No, Unit))
-        
-      Case #FLAG_Printer
-        ret = StartVectorDrawing(PrinterVectorOutput(Unit))
-        
-    EndSelect
-    
-    VStart = ret    ; Indication: VectorDrawing started #True=started
-    
-    If Vstart = #False
-      _Exception("StartVector_",#VectorDrawingNotStarted)
-    EndIf
-    
-    ProcedureReturn ret
-  EndProcedure
-  
-  Procedure StopVector_() 
-  ; ======================================================================
-  ; NAME: StopVector_
-  ; DESC: Stops the Vector Drawing 
-  ; RET : -
-  ; ======================================================================
-    
-    Stroke = 0
-    StopVectorDrawing()
-    Vstart = #False     ; clear the Start indication of VectorDrawing
+    *This\Stroke = LineWidth
   EndProcedure
    
 EndModule
 
-;- ========  Module - Example ========
-
-EnableExplicit
-
 CompilerIf #PB_Compiler_IsMainFile
+ ;- ----------------------------------------------------------------------
+ ;-  M O D U L E   T E S T   C O D E
+ ;-  ---------------------------------------------------------------------- 
   
-  #FLAG_Window = 0
+  EnableExplicit
+ 
+  #PbFw_VD_FLAG_Window = 0
   #Gadget = 1
   #Font   = 2
   
@@ -1214,50 +1239,49 @@ CompilerIf #PB_Compiler_IsMainFile
   Pattern(2) = 6
   Pattern(3) = 5
   
-  If OpenWindow(#FLAG_Window, 0, 0, 200, 200, "VectorDrawing Example", #PB_Window_SystemMenu|#PB_Window_Tool|#PB_Window_ScreenCentered)
+  If OpenWindow(#PbFw_VD_FLAG_Window, 0, 0, 200, 200, "VectorDrawing Example", #PB_Window_SystemMenu|#PB_Window_Tool|#PB_Window_ScreenCentered)
     
     CanvasGadget(#Gadget, 10, 10, 180, 180)
 
-    If VDraw::StartVector_(#Gadget, VDraw::#FLAG_Canvas)
+    If VDraw::V_StartDraw(#Gadget, VDraw::#PbFw_VD_FLAG_Canvas)
       
-      VDraw::Font_(FontID(#Font))
+      VDraw::V_SetFont(FontID(#Font))
       
-      VDraw::Box_(2, 2, 176, 176, $CD0000, $FACE87, $FFF8F0, 0) ; VDraw::#FLAG_Horizontal / VDraw::#FLAG_Diagonal
-      VDraw::Text_(65, 65, "Text", $701919, #False)
+      VDraw::V_Box(2, 2, 176, 176, $CD0000, $FACE87, $FFF8F0, 0) ; VDraw::#FLAG_Horizontal / VDraw::#FLAG_Diagonal
+      VDraw::V_Text(65, 65, "Text", $701919, #False)
       
       ;VDraw::SetDotPattern(2, Pattern())
       
-      VDraw::CircleSector_(90, 90, 70, 40, 90, $800000, $00D7FF, $008CFF)
-      VDraw::SetStroke_(2)
-      VDraw::LineXY_(90, 90, 90 + 80 * Cos(Radian(150)), 90 + 80 * Sin(Radian(150)), $228B22)
-      VDraw::Circle_(90, 90, 80, $800000, #PB_Default, #PB_Default)
-      ;VDraw::Ellipse_(90, 90, 80, 60, $800000, $FACE87, $FFF8F0, 30)
-      VDraw::SetStroke_(4)
-      VDraw::EllipseArc_(90, 90, 70, 45, 160, 240, $CC3299)
-      VDraw::SetStroke_(1)
-      VDraw::CircleArc_(90, 90, 70, 250, 340, $008CFF)
+      VDraw::V_CircleSector(90, 90, 70, 40, 90, $800000, $00D7FF, $008CFF)
+      VDraw::V_SetStroke(2)
+      VDraw::V_LineXY(90, 90, 90 + 80 * Cos(Radian(150)), 90 + 80 * Sin(Radian(150)), $228B22)
+      VDraw::V_Circle(90, 90, 80, $800000, #PB_Default, #PB_Default)
+      ;VDraw::V_Ellipse(90, 90, 80, 60, $800000, $FACE87, $FFF8F0, 30)
+      VDraw::V_SetStroke(4)
+      VDraw::V_EllipseArc(90, 90, 70, 45, 160, 240, $CC3299)
+      VDraw::V_SetStroke(1)
+      VDraw::V_CircleArc(90, 90, 70, 250, 340, $008CFF)
       
       ;VDraw::DisableDotPattern(#True)
       
-      VDraw::Line_(10, 90, 160, 1, $8515C7)
+      VDraw::V_Line(10, 90, 160, 1, $8515C7)
       
-      VDraw::StopVector_()
+      VDraw::V_Stopdraw()
     EndIf
     
     Repeat
-      Event = WaitWindowEvent()
+      Define Event = WaitWindowEvent()
     Until Event = #PB_Event_CloseWindow
     
   EndIf
 
-  
+  DisableExplicit
 CompilerEndIf  
 
-DisableExplicit
+
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 36
-; FirstLine = 6
+; CursorPosition = 255
+; FirstLine = 1167
 ; Folding = -------
 ; Optimizer
 ; CPU = 5
-; Compiler = PureBasic 6.00 LTS (Windows - x86)

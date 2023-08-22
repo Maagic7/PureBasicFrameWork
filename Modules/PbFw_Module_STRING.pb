@@ -579,6 +579,88 @@ Module STR      ; Module STRING [STR::]
   	ProcedureReturn (*pRead - *pWrite)/SizeOf(Character) ; Number of characters removed
   EndProcedure
   
+  Procedure.i RemoveChars(*String.String, Char1.c, Char2.c=0, xTrim=#False)
+  ; ============================================================================
+  ; NAME: RemoveChars
+  ; DESC: Removes up to 2 different Character from a String
+  ; DESC: The String will be shorter after
+  ; DESC: Example: str\s= " ..This, is a, Test.! " : RemoveChars(str\s, '.' , ',' ,#True)
+  ; DESC: =>              "This is a Test!"
+  ; VAR(*String.String) : Pointer to String-Struct
+  ; VAR(Char1.c) : The first Character to remove
+  ; VAR(Char2.c) : The second Character to remove 
+  ; VAR(xTrim=#False): Do a left and right Trim (remove leading Spaces)
+  ; RET.i: Number of removed Characters
+  ; ============================================================================
+    Protected I, cnt, pWrt, pRead, *pC.pChar
+    Protected xStart
+    
+    #cst_repChar = 1
+    
+    *pC = @*String\s    ; Set the CharPointer = StartOfString
+      
+    If *pC And Char1
+      
+      If Char2 = 0      ; for the routine, Char2 can't be 0
+        Char2 = Char1
+      EndIf 
+  
+      ; ----------------------------------------------------------------------
+      ; If xTrim Then !remove leading characters of {Spaces, Char1, Char2}
+      ; ----------------------------------------------------------------------
+      If xTrim     ; if remove leading Space AND char
+        Repeat
+          Select *pC\c[I]
+            Case #PbFw_STR_CHAR_SPACE, Char1, Char2   ; Character Is Space or searched Char
+              pRead +1      ; Set the ReadPositon to next Character
+              cnt +1        ; count removed Characters           
+            Default
+              Break           
+          EndSelect
+          I +1
+        ForEver
+      EndIf  
+      ; ----------------------------------------------------------------------
+      ; compacting the String
+      ; ----------------------------------------------------------------------
+      Repeat
+        Select *pC\c[I]                   
+          Case 0 ; EndOfString
+            Break                   
+          Case Char1, Char2  ; if it's the searched Character
+            pRead +1           ; Set the ReadPositon one further
+            cnt +1             ; count removed Characters         
+          Default       ; other characters => compact the String 
+            If pRead > pWrt ; if ReadPosition > WritePosition
+              *pC\c[pWrt] =  *pC\c[pRead] ; Copy the Character from ReadPosition to WritePosition => compacting the String
+              pWrt +1  : pRead  +1        ; set new Read And Write-Position
+            EndIf           
+        EndSelect      
+        I + 1 
+      ForEver     
+      ; ----------------------------------------------------------------------
+      ; If xTrimg Then !search Spaces at End of compact String and remove it!
+      ; ----------------------------------------------------------------------
+      If xTrim ; if Trim, search Spaces at last WritePosition pWrt and
+        pWrt - 1
+        While *pC\c[pWrt] = #PbFw_STR_CHAR_SPACE
+          pWrt-1
+          cnt +1
+        Wend
+        pWrt +1 ; set pWrt to EndOfString-Position
+      EndIf
+      
+      ; I is EndOfString and Nulltermination! So if pWrt is not the orginal EndOfString
+      ; we must wirte a NullTermination
+      If pWrt < I         
+        *pC\c[pWrt] = 0   ; Write Null at EndOfString
+      EndIf
+        
+    EndIf
+    
+    ProcedureReturn cnt ; Return number of removed Chars
+  EndProcedure
+
   Procedure RemoveNonWordChars(*String.Character)
     ; ============================================================================
     ; NAME: RemoveNonWordChars
@@ -1249,8 +1331,8 @@ CompilerIf #PB_Compiler_IsMainFile
 
 CompilerEndIf
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 22
-; Folding = -----
+; CursorPosition = 645
+; Folding = ------
 ; Optimizer
 ; CPU = 5
 ; Compiler = PureBasic 6.00 LTS (Windows - x86)
