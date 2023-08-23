@@ -170,7 +170,8 @@ Module StrSSE
   	;
     ; XMM0 XMM1 XMM2 XMM3 XMM4
     ; XMM1 = [String1] : XMM2=[String2] : XMM3=WideCharMask
-  
+    
+    DisableDebugger
     CompilerIf #PB_Compiler_64Bit
       
       !MOV RDX, [p.p_String] 
@@ -200,6 +201,7 @@ Module StrSSE
     CompilerEndIf 
     
     ProcedureReturn
+    EnableDebugger
   EndProcedure
   
   Procedure.i SSE_LenStr(*String)
@@ -222,7 +224,8 @@ Module StrSSE
     
     ; XMM0 XMM1 XMM2 XMM3 XMM4
     ; XMM1 = [String1] : XMM2=[String2] : XMM3=WideCharMask
-  
+    
+    DisableDebugger
     CompilerIf #PB_Compiler_64Bit 
       
       !MOV RDX, [p.p_String] 
@@ -259,7 +262,7 @@ Module StrSSE
       ProcedureReturn
       
     CompilerEndIf
-  
+    EnableDebugger
   EndProcedure
   
   Procedure.i SSE_StringCompare(*String1, *String2)
@@ -273,7 +276,7 @@ Module StrSSE
         
     ; XMM0 XMM1 XMM2 XMM3 XMM4
     ; XMM1 = [String1] : XMM2=[String2]
-    
+    DisableDebugger
     CompilerIf #PB_Backend_Asm
       CompilerIf #PB_Compiler_64Bit 
   
@@ -385,9 +388,8 @@ Module StrSSE
       
     CompilerElse
       
-      ProcedureReturn MemoryStringLength(*String)
-    CompilerEndIf
-    
+  CompilerEndIf
+    EnableDebugger
   EndProcedure
   
   ;- ----------------------------------------------------------------------
@@ -493,7 +495,8 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 17
+; CursorPosition = 203
+; FirstLine = 293
 ; Folding = 8--
 ; Optimizer
 ; CPU = 5
