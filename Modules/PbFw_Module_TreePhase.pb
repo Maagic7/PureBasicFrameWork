@@ -1,7 +1,7 @@
 ﻿; ===========================================================================
 ;  FILE: PbFw_Module_TreeOhase.pb
 ;  NAME: Module Tree Phase Current System 
-;  DESC: Calculations for 3-Phase Current electrical systems
+;  DESC: Calculations for 3-Phase Current in electrical systems
 ;  DESC: 
 ;  DESC: 
 ;  DESC: 
@@ -109,7 +109,7 @@ Module TreePhase
   ; VAR(U_Ph_N.d) : Phase to Neutral Voltage
   ; RET.d : Phase to Phase Voltage
   ; ============================================================================
-    ProcedureReturn U_Ph_N * Sqr(2)  
+    ProcedureReturn U_Ph_N * Sqr(3)  
   EndProcedure
   
   Procedure.d GetPeakVoltage(U_Grid.d)
@@ -140,7 +140,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 102
+; CursorPosition = 111
+; FirstLine = 31
 ; Folding = --
 ; Optimizer
 ; CPU = 5
