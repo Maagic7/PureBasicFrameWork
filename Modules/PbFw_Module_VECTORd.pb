@@ -43,7 +43,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/12/04
-; VERSION  :  0.12 untested Developper Version
+; VERSION  :  0.13 untested Developper Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -51,6 +51,7 @@
 ; ===========================================================================
 ;{ ChangeLog: 
 ; 
+; 2024/02/24 S.Maag : included "PbFw_ASM_Macros.pbi"
 ; 2023/07/29 S.Maag : changed come comments
 ; 2023/03/19 S.Maag : added Vector_Lerp, Vector_InverseLerp, Vector_Rempap
 ; 2023/02/18 S.Maag : integrated FrameWork Contol Module PbFw::
@@ -160,7 +161,7 @@ DeclareModule VECd
     m41.d : m42.d : m43.d : m44.d
   EndStructure
   
-  Macro mac_SetVector(Vec, _X, _Y, _Z, _W)
+  Macro mac_SetVector(Vec, _X, _Y, _Z=0, _W=0)
     Vec\x = _X
     Vec\y = _Y
     Vec\z = _Z
@@ -226,6 +227,8 @@ Module VECd
   
   EnableExplicit
   PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+  
+  IncludeFile "PbFw_ASM_Macros.pbi"       ; Standard Assembler Macros
 
   ;- ----------------------------------------------------------------------
   ;- Module Private
@@ -268,7 +271,7 @@ Module VECd
     	!MOV REGD, [p.p_IN1]
       !VMOVUPD  YMM0, [REGA]
       !VMOVUPD  YMM1, [REGD]
-      !VSUBPD   YMM1, YMM1, YMM0
+      !VADDPD   YMM1, YMM1, YMM0
       !MOV REGA, [p.p_OUT]
       !VMOVUPD  [REGA], YMM1     
   EndMacro
@@ -301,7 +304,7 @@ Module VECd
     	!MOV REGD, [p.p_IN2]
       !VMOVUPD  YMM0, [REGA]
       !VMOVUPD  YMM1, [REGD]
-      !Vdivpd   YMM1, YMM0, YMM1
+      !VDIVPD   YMM1, YMM0, YMM1
       !MOV REGA, [p.p_OUT]
       !VMOVUPD  [REGA], YMM1
   EndMacro 
@@ -369,7 +372,7 @@ Module VECd
 			!MOV REGD, [p.p_IN2]
 			!VMOVUPD YMM0, [REGC]         ; unaligned packed double
 			!VMOVUPD YMM1, [REGD]
-			!VMOVAPD YMM2, YMM0          ; aligned packed double
+			!VMOVAPD YMM2, YMM0           ; aligned packed double
 			!VMOVAPD YMM3, YMM1
 			!VPERMPD YMM0, YMM0, 11001001b
 			!VPERMPD YMM1, YMM1, 11010010b
@@ -462,12 +465,6 @@ Module VECd
       !VMOVUPD [REGA], YMM0
   EndMacro
   
-  ; Structure to save XMM-Registers on Stack
-  ; we must use a Structure because Arrays are not created directly on the Stack
-  Structure TMem128
-    m.a[128]
-  EndStructure
-
   Macro ASM_Matrix_X_Matrix(REGA, REGD, REGC) 
     ;Matrix_X_Matrix(*OUT.TMatrix, *M1.TMatrix, *M2.TMatrix)
     
@@ -476,20 +473,8 @@ Module VECd
     ; be shure to call the ASM_Matrix_X_Matrix(RAX, RDX, RCX) 
     ; do not swicht the Registers, otherwise you will get wrong Return Value
     
-      ; ----------------------------------------------------------------------
-      ; 1st PUSH the XMM-Register 4..6 to Stack because in PB-Inline-ASM
-      ; only XMM0..3 are free to use! We must save XMM4..6
-      Protected Mem.TMem128    ; create a 80yte Memory on Stack
-      Protected *pMem 
-      ; Align the the Pointer to 32Bytes, so we can use faster MOVDQA for aligend Memory
-      *pMem = @Mem\m[31] & ~%11111  ; := AND NOT 31 := AND -32; cleares the 5 lo- Bits (:= Align 32)
-      
-      ; get the Piointer of 128Byte Memory
-      ; save XMM-Regsiter 4..6 to our 128Byte Memory-Block on Stack
-      !MOV REGC, [p.p_pMem]
-      !VMOVAPD [REGC]    , YMM4  ; 32 Bytes
-      !VMOVAPD [REGC+$20], YMM5  ; 32 Bytes
-      !VMOVAPD [REGC+$40], YMM6  ; 32 Bytes
+      ; Save XMM-Register 
+      ASM_PUSH_XMM_6to7(REGC)   ; Macro from "PbFw_ASM_Macros.pbi"
       ; ----------------------------------------------------------------------
     
 	    ; translated from the FreePascal Wiki at https://wiki.freepascal.org/SSE/de	  
@@ -579,11 +564,7 @@ Module VECd
       
       ; ----------------------------------------------------------------------
       ; now resotre XMM-Register 4..6
-      ; REGC we did not toch in MatrixMultiply, so it still contains 
-      ; Storage Memory Adress of XMM-Registers
-      !VMOVAPD YMM4, [REGC]
-      !VMOVAPD YMM5, [REGC+$20]
-      !VMOVAPD YMM6, [REGC+$40]
+      ASM_POP_XMM_6to7(REGC)
       ; ----------------------------------------------------------------------
 
   EndMacro
@@ -712,8 +693,8 @@ Module VECd
 	Macro mac_Matrix_X_Matrix(OUT, A, B)   
 	  
 	  OUT\m11 = A\m11 * B\m11  +  A\m21 * B\m12  +  A\m31 * B\m13  +  A\m41 * B\m14  
-  	OUT\m12 = A\m12 * B\m11  +  A\m22 * B\m12  +  A\m32 * B\m13  +  A\m24 * B\m14
-  	OUT\m13 = A\m13 * B\m11  +  A\m23 * B\m12  +  A\m33 * B\m13  +  A\m34 * B\m14
+  	OUT\m12 = A\m12 * B\m11  +  A\m22 * B\m12  +  A\m32 * B\m13  +  A\m42 * B\m14
+  	OUT\m13 = A\m13 * B\m11  +  A\m23 * B\m12  +  A\m33 * B\m13  +  A\m43 * B\m14
   	OUT\m14 = A\m14 * B\m11  +  A\m24 * B\m12  +  A\m34 * B\m13  +  A\m44 * B\m14
   	
   	OUT\m21 = A\m11 * B\m21  +  A\m21 * B\m22  +  A\m31 * B\m23  +  A\m41 * B\m24
@@ -728,7 +709,7 @@ Module VECd
   
   	OUT\m41 = A\m11 * B\m41  +  A\m21 * B\m42  +  A\m31 * B\m43  +  A\m41 * B\m44
   	OUT\m42 = A\m12 * B\m41  +  A\m22 * B\m42  +  A\m32 * B\m43  +  A\m42 * B\m44
-  	OUT\m42 = A\m13 * B\m41  +  A\m23 * B\m42  +  A\m33 * B\m43  +  A\m43 * B\m44
+  	OUT\m43 = A\m13 * B\m41  +  A\m23 * B\m42  +  A\m33 * B\m43  +  A\m43 * B\m44
   	OUT\m44 = A\m14 * B\m41  +  A\m24 * B\m42  +  A\m34 * B\m43  +  A\m44 * B\m44
         	
   EndMacro
@@ -1247,17 +1228,17 @@ Module VECd
     
     DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)     ; Check Pointer Exception
 
-    CompilerSelect PbFw::#PbfW_USE_MMX_Type
+    CompilerSelect PbFw::#PbFw_USE_MMX_Type
       
-      CompilerCase PbFw::#PbfW_SSE_x64    ; 64 Bit-Version       
+      CompilerCase PbFw::#PbFw_SSE_x64    ; 64 Bit-Version       
         ASM_Vector_Lerp(RAX, RDX, RCX)    ; for x64 we use RAX,RDX,RCX
         ProcedureReturn ; RAX
         
-      CompilerCase PbFw::#PbfW_SSE_x32    ; 32 Bit Version
+      CompilerCase PbFw::#PbFw_SSE_x32    ; 32 Bit Version
         ASM_Vector_Lerp(EAX, EDX, ECX)    ; for x32 we use Registers EAX,EDX,ECX
         ProcedureReturn ; EAX
         
-      CompilerCase PbFw::#PbfW_SSE_C_Backend   ; for the C-Backend
+      CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
         mac_Vector_Lerp(*OUT, *IN1 *IN2, T)        
         ProcedureReturn *OUT
 
@@ -1329,17 +1310,17 @@ Module VECd
     DBG::mac_CheckPointer3(*OUT, *IN, *inMin)         ; Check Pointer Exception
     DBG::mac_CheckPointer3(*inMax, *outMin, *outMax)  ; Check Pointer Exception
 
-    CompilerSelect PbFw::#PbfW_USE_MMX_Type
+    CompilerSelect PbFw::#PbFw_USE_MMX_Type
       
-      CompilerCase PbFw::#PbfW_SSE_x64      ; 64 Bit-Version             
+      CompilerCase PbFw::#PbFw_SSE_x64      ; 64 Bit-Version             
         ASM_Vector_Remap(RAX, RDX, RCX)     ; for x64 we use RAX,RDX,RCX
         ProcedureReturn ; RAX
         
-      CompilerCase PbFw::#PbfW_SSE_x32      ; 32 Bit Version        
+      CompilerCase PbFw::#PbFw_SSE_x32      ; 32 Bit Version        
         ASM_Vector_Remap(EAX, EDX, ECX)     ; for x32 we use Registers EAX,EDX,ECX
         ProcedureReturn ; EAX
         
-      CompilerCase PbFw::#PbfW_SSE_C_Backend   ; for the C-Backend
+      CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
         mac_Vector_Remap(*OUT\x, *IN\x, *inMin\x, *inMax\x, *outMin\x, *outMax\x)        
         mac_Vector_Remap(*OUT\y, *IN\y, *inMin\y, *inMax\y, *outMin\y, *outMax\y)        
         mac_Vector_Remap(*OUT\z, *IN\z, *inMin\z, *inMax\z, *outMin\z, *outMax\z)
@@ -1807,9 +1788,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 1380
-; FirstLine = 1739
+; IDE Options = PureBasic 6.04 LTS (Windows - x64)
+; CursorPosition = 60
+; FirstLine = 270
 ; Folding = -------------
 ; Optimizer
 ; CPU = 5
