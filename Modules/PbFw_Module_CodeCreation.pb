@@ -7,7 +7,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2023/11/17
-; VERSION  :  0.0 Brainstorming Version
+; VERSION  :  0.1 untested Developer Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -23,23 +23,45 @@
 
 ;- ----------------------------------------------------------------------
 ;- Include Files
-;-  ----------------------------------------------------------------------
+;- ----------------------------------------------------------------------
 XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
+XIncludeFile "PbFw_Module_String.pb"       ; STR::      String Module
 
 DeclareModule CC
   
   EnableExplicit
   
-  #PbFw_CC_SHL = -1  ; Shift the Code 1 Tab$ left
-  #PbFw_CC_NoShift = 0         
-  #PbFw_CC_SHR = 1  ; Shift the Code 1 Tab§ right
+  EnumerationBinary 0
+    #PbFw_CC_NoShift         
+    #PbFw_CC_SHL_BEFORE     ; Shift the Code 1 Tab$ left, before adding line
+    #PbFw_CC_SHR_BEFORE     ; Shift the Code 1 Tab$ right, before adding line
+    #PbFw_CC_SHL_AFTER      ; Shift the Code 1 Tab$ left, after adding line
+    #PbFw_CC_SHR_AFTER      ; Shift the Code 1 Tab$ right, after adding line
+  EndEnumeration
   
-  Declare ClrShift()
-  Declare SHR(Levels=1)
-  Declare SHL(Levels=1)
-  Declare ADD(sCodeLine.s="", Shift = #PbFw_CC_NoShift)
-  Declare ClearCode()
-  Declare CopyToClipBoard()
+  ; Test to make 'End-Commands easier! Use automatic shift
+  Enumeration EEndCommand
+    #PbFw_CC_CMD_Else             
+    #PbFw_CC_CMD_EndIf   
+    #PbFw_CC_CMD_EndMacro   
+    #PbFw_CC_CMD_EndProcedure     
+    #PbFw_CC_CMD_EndSelect        
+    #PbFw_CC_CMD_EndStructure 
+    #PbFw_CC_CMD_EndStructureUnion
+    #PbFw_CC_CMD_EndWith          
+    #PbFw_CC_CMD_ForEver          
+    #PbFw_CC_CMD_Wend             
+  EndEnumeration
+  
+  Declare ClrShift()          ; Clear the ShiftLevel
+  Declare SHR(Levels=1)       ; Set the CodeShiftLevel No of Levels right
+  Declare SHL(Levels=1)       ; Set the CodeShiftLevel No of Levels left
+  Declare ADD(sCodeLine.s="", Shift = #PbFw_CC_NoShift) ; Add a line To the CodeList
+  Declare PRC(ProcName$, Paramters$, ReturnAs$=".i")   ; Add a Procedure definition to the CodeList
+  Declare ADE(EnumCmd = #PbFw_CC_CMD_EndIf)            ; Easy way to add an 'End'-Command with automatic shifting
+
+  Declare ClearCode()         ; Clear all the code in lstCodeList()
+  Declare CopyToClipBoard()   ; Copy the Code stored in the List lstCodeLine To the ClipBoard
  
 EndDeclareModule
 
@@ -119,22 +141,94 @@ Module CC
   ; ============================================================================
     Protected I
     If sCodeLine
-      Select Shift
-        Case #PbFw_CC_SHL
-          SHL()  
-        Case #PbFw_CC_SHR
-          SHR()    
-      EndSelect
-        
+      
+      ; Test SHIFT_BEFOR adding line
+      If Shift & #PbFw_CC_SHL_BEFORE
+        SHL()  
+      ElseIf Shift  & #PbFw_CC_SHR_BEFORE
+        SHR()  
+      EndIf
+             
       AddElement(lstCodeLine())
       If mem_ShiftLevel > 0
         lstCodeLine() = mem_Tab$ + sCodeLine
       Else
         lstCodeLine() = sCodeLine
       EndIf
+      
+      ; Test SHIFT_AFTER adding line
+      If Shift & #PbFw_CC_SHL_AFTER
+        SHL()  
+      ElseIf Shift  & #PbFw_CC_SHR_AFTER
+        SHR()  
+      EndIf
+
     Else
       AddElement(lstCodeLine())  
     EndIf
+  EndProcedure
+  
+  Procedure PRC(ProcName$, Paramters$, ReturnAs$=".i")
+  ; ============================================================================
+  ; NAME: PRC
+  ; DESC: Add a Procedure definition to the CodeList
+  ; VAR(ProcName$): The ProcedureName
+  ; VAR(Paramters$): The Parameters-String withour brackets
+  ; VAR(ReturnAs$): The Procedure Return Type ".i", ".f", etc.
+  ; RET : -
+  ; ============================================================================
+    Protected code$ = "Procedure"
+    code$ + ReturnAs$ + " " + ProcName$ + "(" + Paramters$ + ")"
+    ADD(code$)
+  EndProcedure
+  
+  Procedure ADE(EnumCmd = #PbFw_CC_CMD_EndIf)
+  ; ============================================================================
+  ; NAME: ADE
+  ; DESC: Add a 'End'-Command with automatic shifting
+  ; RET : -
+  ; ============================================================================
+    Protected sText.s
+    Protected ShiftMode.i = #PbFw_CC_SHL_BEFORE
+    
+    Select EnumCmd
+      Case #PbFw_CC_CMD_Else             
+        sText = "Else"
+        ; at 'Else' we have to shift left before and shift right after
+        ShiftMode + #PbFw_CC_SHR_AFTER
+        
+      Case #PbFw_CC_CMD_EndIf            
+         sText = "EndIf"
+         
+       Case #PbFw_CC_CMD_EndMacro            
+         sText = "EndIf"
+      
+      Case #PbFw_CC_CMD_EndProcedure     
+        sText = "EndProcedure"
+        
+      Case #PbFw_CC_CMD_EndSelect        
+        sText = "EndSelect"
+        
+      Case #PbFw_CC_CMD_EndStructure 
+        sText = "EndStructure"
+        
+      Case #PbFw_CC_CMD_EndStructureUnion
+        sText = "EndStructureUnion"
+        
+      Case #PbFw_CC_CMD_EndWith          
+        sText = "EndWith"
+        
+      Case #PbFw_CC_CMD_ForEver          
+        sText = "ForEver"
+        
+      Case #PbFw_CC_CMD_Wend             
+        sText = "Wend"
+        
+      Default
+        sText = "Error! CodeCreation ADE(): unknown 'EndCommand'"
+    EndSelect
+    
+    ADD(sText, ShiftMode)
   EndProcedure
   
   Procedure ClearCode()
@@ -153,22 +247,21 @@ Module CC
   ; DESC: Copy the Code stored in the List lstCodeLine to the ClipBoard   
   ; RET : -
   ; ============================================================================
-    Protected txt.s
     
     ClearClipboard()
     
-    ForEach lstCodeLine()
-      txt = txt + lstCodeLine() + #CRLF$  
-    Next
+    ; use the JoinList Function from String Module to produce a singel String 
+    ; from all Code-Lines
+    SetClipboardText(STR::JoinList(lstCodeLine(), #CRLF$)) 
     
-    SetClipboardText(txt)  
   EndProcedure
    
 EndModule
 
-; IDE Options = PureBasic 6.04 LTS (Windows - x64)
-; CursorPosition = 69
-; FirstLine = 33
-; Folding = --
+
+; IDE Options = PureBasic 6.11 LTS (Windows - x64)
+; CursorPosition = 202
+; FirstLine = 180
+; Folding = ---
 ; Optimizer
 ; CPU = 5
