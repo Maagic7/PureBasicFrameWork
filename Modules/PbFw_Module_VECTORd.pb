@@ -1544,7 +1544,7 @@ Module VECd
   ; ============================================================================
   ; NAME: Vector_X_Matrix
   ; DESC: Caluclate the Vector-Matrix-Product  V()xM()
-  ; VAR(*OU.TVectorT) : Pointer to Return-Vector VECd::TVector
+  ; VAR(*OU.TVectorT): Pointer to Return-Vector VECd::TVector
   ; VAR(*IN.TVector) : Pointer to a VECd::TVector
   ; VAR(*Matrix.TMatrix) : Pointer to a VECd::TMatrix
   ; RET.i : *Matrix
@@ -1580,7 +1580,7 @@ Module VECd
   ; ============================================================================
   ; NAME: Matrix_X_Matrix
   ; DESC: Caluclate the Matrix-Matrix-Product  M() x M()
-  ; VAR(*OUT.TMatrix) : Pointer to Return-Matrix VECd::TMatrix
+  ; VAR(*OUT.TMatrix): Pointer to Return-Matrix VECd::TMatrix
   ; VAR(*M1.TMatrix) : Pointer to IN1 Matrix a VECd::TMatrix
   ; VAR(*M2.TMatrix) : Pointer to IN2 Matrix a VECd::TMatrix
   ; RET.i : *OUT
@@ -1788,9 +1788,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.04 LTS (Windows - x64)
-; CursorPosition = 60
-; FirstLine = 270
+; IDE Options = PureBasic 6.11 LTS (Windows - x64)
+; CursorPosition = 1642
+; FirstLine = 1623
 ; Folding = -------------
 ; Optimizer
 ; CPU = 5

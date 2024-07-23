@@ -9,7 +9,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/10/27
-; VERSION  :  0.1 untested Developer Version
+; VERSION  :  0.11 untested Developer Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -38,7 +38,9 @@
 ;
 ;   - Added Exeption Handling because I want to have it for my Project
 ;
-; 2023/08/22 S.Maag; moved all local data to TThis Structure to prepare for OOP 
+; 2024/07/17 S.Maag; added functions for regular Star shape and Triangle from Radius
+;
+; 2023/08/22 S.Maag; moved all local data to _TThis Structure to prepare for OOP 
 ;}
 ;{ TODO:
 ;}
@@ -217,7 +219,7 @@ Module VDraw
   ;- Module Private Functions
   ;- ----------------------------------------------------------------------
   
-  #VectorDrawingNotStarted = DBG::#PbFW_DBG_VectorDrawingNotStarted
+  #VectorDrawingNotStarted = DBG::#PbFw_DBG_Err_VectorDrawingNotStarted
   Global memScaleX.d = 1.0  ; total Zoom factor X [DPIscalingX * Zoom]
   Global memScaleY.d = 1.0  ; total Zoom factor Y [DPIscalingY * Zoom]
   Global memDPIscaling = #False
@@ -235,12 +237,12 @@ Module VDraw
     ProcedureReturn ExceptionType
   EndProcedure
   
-  Structure TPoint
+  Structure _TPoint
     X.d     ; X As Double (64Bit Float)
     Y.d     ; Y As Double (64Bit Float)
   EndStructure
 
-  Structure TLineInfo
+  Structure _TLineInfo
     Width.d
     State.i
     Flags.i
@@ -248,14 +250,14 @@ Module VDraw
     Array Pattern.d(1)
   EndStructure  
     
-  Structure TThis
-    Line.TLineInfo
+  Structure _TThis
+    Line._TLineInfo
     Stroke.d
     VStart.i
   EndStructure
   
-  Global This.TThis
-  Global *This.TThis  ; prepare a Pointer on This to prepare it for OOP use
+  Global This._TThis
+  Global *This._TThis  ; prepare a Pointer on This to prepare it for OOP use
   *This = @This
   
   Macro mac_AddAlphaIfNull(Color)
@@ -318,7 +320,7 @@ Module VDraw
   EndProcedure
   
   ; Private
-  Procedure.i _FindLinesIntersection(L1_X1.d, L1_Y1.d, L1_X2.d, L1_Y2.d, L2_X1.d, L2_Y1.d, L2_X2.d, L2_Y2.d, *isP.TPoint)
+  Procedure.i _FindLinesIntersection(L1_X1.d, L1_Y1.d, L1_X2.d, L1_Y2.d, L2_X1.d, L2_Y1.d, L2_X2.d, L2_Y2.d, *isP._TPoint)
     Protected.d L1_W, L1_H, L2_W, L2_H, Denominator, T1, T2
     
     L1_W = L1_X2 - L1_X1
@@ -343,9 +345,9 @@ Module VDraw
   EndProcedure
   
   ; Private  
-  Procedure.d _FindArcFromTangents(X1.d, Y1.d, X2.d, Y2.d, X3.i, Y3.d, X4.d, Y4.d, *isPoint.TPoint)
+  Procedure.d _FindArcFromTangents(X1.d, Y1.d, X2.d, Y2.d, X3.i, Y3.d, X4.d, Y4.d, *isPoint._TPoint)
     Protected.d dX, dY, dX1, dY1, dX2, dY2, Radius
-    Protected.TPoint sPoint, pPoint1, pPoint2, isCircle
+    Protected._TPoint sPoint, pPoint1, pPoint2, isCircle
    
     If _FindLinesIntersection(X1, Y1, X2, Y2, X3, Y3, X4, Y4, *isPoint)
     
@@ -372,6 +374,62 @@ Module VDraw
       EndIf   
     EndIf  
   EndProcedure  
+  
+  Procedure _CalculateStarPoints(Array StarPoints._TPoint(1), outerRadius.d, innerRadius.d, numPoints, StartAngle=0)
+  ; ======================================================================
+  ; NAME: CalculateStarPoints
+  ; DESC: Calculates the Points of reglar Star
+  ; VAR(Array StarPoints.Point(1)): Arry to return the Pionts
+  ; VAR(outerRadius.f): Radius of the outer circle
+  ; VAR(outerRadius.f): Radius of the inner circle
+  ; VAR(numPoints): Number of Points/Spikes
+  ; VAR(StartAngle) : Angle of the first Spike [0..360°]
+  ; RET :
+  ; ======================================================================
+    Protected.d Phi, dPhi
+    Protected.i I
+    
+    Dim StarPoints(2* numPoints - 1)
+    
+    Phi = Radian(StartAngle)
+    dPhi = #PI /numPoints
+    
+    For I = 0 To numPoints - 1
+      ; Calculate outer point
+      StarPoints(I * 2)\x = Sin(Phi) * outerRadius
+      StarPoints(I * 2)\y = Cos(Phi) * outerRadius
+      Phi = Phi + dPhi
+      
+      ; Calculate inner point
+      StarPoints(I * 2 + 1)\x = Sin(Phi) * innerRadius
+      StarPoints(I * 2 + 1)\y = Cos(Phi) * innerRadius
+      Phi = Phi + dPhi
+    Next 
+  EndProcedure
+  
+  Procedure _CalculateTrianglePoints(Array TrianglePoints._TPoint(1), radius.d, StartAngle=0)
+    ; ======================================================================
+    ; NAME: CalculateTrianglePoints
+    ; DESC: Calculates the Points of an equilateral triangle
+    ; VAR(Array TrianglePoints._TPoint(1)): Array to return the Points
+    ; VAR(radius.d) : Radius of the circle circumscribed around the triangle
+    ; VAR(StartAngle) : Angle of the first vertex [0..360°]
+    ; RET :
+    ; ======================================================================
+    Protected.f Phi, dPhi
+    Protected.i I
+    
+    Dim TrianglePoints(2)
+    
+    Phi = Radian(StartAngle)
+    dPhi = 2 * #PI / 3 ; 120 degrees for equilateral triangle
+    
+    For I = 0 To 2
+      TrianglePoints(I)\x = Sin(Phi) * radius
+      TrianglePoints(I)\y = Cos(Phi) * radius
+      Phi + dPhi
+    Next I
+  EndProcedure
 
   ;- ----------------------------------------------------------------------
   ;- Module Public Functions
@@ -936,6 +994,7 @@ Module VDraw
   ; VAR(Y2): Y-Coordinate Point 2
   ; VAR(Color): Drawing Color
   ; VAR(Flags): FLAGs
+  ; RET.i: 0 or ExeptionType
   ; ======================================================================
     
     Protected ret
@@ -973,7 +1032,7 @@ Module VDraw
   ; VAR(Radius): Radius Curve Radius
   ; VAR(Color): Drawing Color
   ; VAR(Flags): FLAGs   
-  ; RET : -
+  ; RET.i: 0 or ExeptionType
   ; ======================================================================
     
     Protected ret
@@ -1024,10 +1083,10 @@ Module VDraw
   ; VAR(Y4): Y-Coordinate Point 4
   ; VAR(Color): Drawing Color
   ; VAR(Flags): FLAGs   
-  ; RET : -
+  ; RET.i: 0 or ExeptionType
   ; ======================================================================
     Protected Angle.d
-    Protected isP.TPoint ; Intersection Point
+    Protected isP._TPoint ; Intersection Point
     Protected ret
     
     If *This\VStart  ; if Vector drawing is started
@@ -1095,7 +1154,7 @@ Module VDraw
   ; VAR(Y): Y-Coordinate
   ; VAR(Text$): The Text String
   ; VAR(Flags): FLAGs   
-  ; RET : -
+  ; RET.i: 0 or ExeptionType
   ; ======================================================================
     
     Protected ret
@@ -1127,7 +1186,7 @@ Module VDraw
     ; NAME: V_GetTextWidth
     ; DESC: Calculates the Text Width
     ; VAR(X): 
-    ; RET : TextWidth
+   ; RET : Text width in units according to the setting Pixel, mm ...
     ; ======================================================================
    
     Protected ret.d
@@ -1279,9 +1338,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf  
 
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 255
-; FirstLine = 1167
+; IDE Options = PureBasic 6.11 LTS (Windows - x64)
+; CursorPosition = 1290
+; FirstLine = 1285
 ; Folding = -------
 ; Optimizer
 ; CPU = 5

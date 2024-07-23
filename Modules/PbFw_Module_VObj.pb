@@ -7,7 +7,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/12/15
-; VERSION  :  0.1  Brainstorming Version
+; VERSION  :  0.12  Brainstorming Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -15,11 +15,14 @@
 ; ===========================================================================
 ; ChangeLog: 
 ;{ 
-;  2023/09/01 S.Maag : changed Name form Obj3D to VObj (VectorObjects)
+;   2024/07/18 S.Maag : addes function for regular Star shape!
+;               Added Functions to create Facets from VObj for Mesh use
+
+;   2023/09/01 S.Maag : changed Name form Obj3D to VObj (VectorObjects)
 ;     because this describes better what it is and we do not have Obj3D
 ;     prefixes for 2D Objects.                
 ;     Added some code!
-;  
+  
 ;   2023/08/22 S.Maag : fixed syntax Errors!
 ;}
 ;{ TODO:
@@ -81,6 +84,7 @@ DeclareModule VObj
     #PbFw_VObj_Polygon_Pentagon         ; 5 Edges, regular Pentagon
     #PbFw_VObj_Polygon_Hexagon          ; 6 Edges, regular Hexagon
     #PbFw_VObj_Polygon_Octagon          ; 8 Edges, regular Octagon
+    #PbFw_VObj_Polygon_Star             ; n Spikes, regular Star   
     #PbFw_VObj_Polygon_Polygon          ; any other Polygon
           
     ;#PbFw_VObj_Ellipse      
@@ -107,6 +111,7 @@ DeclareModule VObj
     #PbFw_VObj_3DPoly_Pentagon          ; 5 Edges, regular Pentagon
     #PbFw_VObj_3DPoly_Hexagon           ; 6 Edges, regular Hexagon
     #PbFw_VObj_3DPoly_Octagon           ; 8 Edges, regular Octagon
+    #PbFw_VObj_3DPoly_Star              ; n Spikes, regular Star   
     #PbFw_VObj_3DPoly_Polygon           ; any other Polygon
     
     ;#PbFw_VObj_3DCone
@@ -244,6 +249,14 @@ DeclareModule VObj
     EL.TEllipse[2]
   EndStructure  
   
+  ; Structure of a 3D Facet with normal Vector
+  Structure TFacet
+    V1.TVector
+    V2.TVector
+    V3.TVector
+    N.TVector
+  EndStructure
+
   ;- ----------------------------------------------------------------------
   ;- Declare Module
   ;- ----------------------------------------------------------------------
@@ -260,6 +273,8 @@ DeclareModule VObj
   Declare.i Create_Pentagon(*VObj.TPolygon, r.d)
   Declare.i Create_Hexagon(*VObj.TPolygon, r.d)
   Declare.i Create_Octagon(*VObj.TPolygon, r.d)
+  Declare.i Create_Star(*VObj.TPolygon, outerRadius.d, innerRadius.d,  NoOfSpikes, StartAngle=0)
+
   Declare.i Create_Circle(*VObj.TEllipse, r.d)
   Declare.i Create_Ellipse(*VObj.TEllipse, rx.d, ry.d)
   
@@ -473,7 +488,7 @@ Module VObj
   Procedure.i Create_Line(*VObj.TLine, W.d, H.d)
   ; ============================================================================
   ; NAME: Create_Line
-  ; DESC: Create a Line definition in a TLine Structure
+  ; DESC: Create a 2D Line definition in a TLine Structure
   ; VAR(*VObj.TLine) : Pointer to the Line Object
   ; VAR( W.d) :  Width
   ; VAR( H.d) : Height  
@@ -515,7 +530,7 @@ Module VObj
   Procedure.i Create_PolyLine(*VObj.TLine, W.d, H.d)
   ; ============================================================================
   ; NAME: Create_PolyLine
-  ; DESC: Create a PolyLine definition in a TLine Structure
+  ; DESC: Create a 2D PolyLine definition in a TLine Structure
   ; VAR(*VObj.TLine) : Pointer to the Line Object
   ; VAR( W.d) : Width
   ; VAR( H.d) : Height  
@@ -554,7 +569,7 @@ Module VObj
   Procedure.i Create_Triangle(*VObj.TPolygon, X2.d,Y2.d, X3.d,Y3.d)
   ; ============================================================================
   ; NAME: Create_Triangle
-  ; DESC: Create a Triangle definition in a TPolygon Structure
+  ; DESC: Create a 2D Triangle definition in a TPolygon Structure
   ; VAR(*VObj.TPolygon) : Pointer to the Polygon Object
   ; VAR(X2.d): X of 2nd Point
   ; VAR(Y2.d): Y of 2nd Point
@@ -600,7 +615,7 @@ Module VObj
   Procedure.i Create_Rectangle(*VObj.TPolygon, W.d, H.d)
   ; ============================================================================
   ; NAME: Create_Rectangle
-  ; DESC: Create a Rectangle definition in a TPolygon Structure
+  ; DESC: Create a 2D Rectangle definition in a TPolygon Structure
   ; VAR(*VObj.TPolygon) : Pointer to the Polygon Object
   ; VAR( W.d)  : Width
   ; VAR( H.d) : Height  
@@ -656,7 +671,7 @@ Module VObj
   Procedure.i Create_Pentagon(*VObj.TPolygon, r.d)
   ; ============================================================================
   ; NAME: Create_Pentagon
-  ; DESC: Create a Pentagon definition in a TPolygon Structure
+  ; DESC: Create a 2D Pentagon definition in a TPolygon Structure
   ; DESC: with Center Point = [0,0,0]
   ; VAR(*VObj.TPolygon) : Pointer to the Polygon Object
   ; VAR(r.d): Radius
@@ -717,7 +732,7 @@ Module VObj
   Procedure.i Create_Hexagon(*VObj.TPolygon, r.d)
   ; ============================================================================
   ; NAME: Create_Hexagon
-  ; DESC: Create a Hexagon definition in a TPolygon Structure
+  ; DESC: Create a 2D Hexagon definition in a TPolygon Structure
   ; DESC: with Center Point = [0,0,0]
   ; VAR(*VObj.TPolygon) : Pointer to the Polygon Object
   ; VAR(r.d): Radius
@@ -784,7 +799,7 @@ Module VObj
   Procedure.i Create_Octagon(*VObj.TPolygon, r.d)
   ; ============================================================================
   ; NAME: Create_Octagon
-  ; DESC: Create an Octagon definition in a TPolygon Structure
+  ; DESC: Create a 2D Octagon definition in a TPolygon Structure
   ; DESC: with Center Point = [0,0,0]
   ; VAR(*VObj.TPolygon) : Pointer to the Polygon Object
   ; VAR(r.d): Radius
@@ -860,6 +875,53 @@ Module VObj
     ProcedureReturn *VObj  
   EndProcedure
   
+  Procedure.i Create_Star(*VObj.TPolygon, outerRadius.d, innerRadius.d,  NoOfSpikes, StartAngle=0)
+  ; ============================================================================
+  ; NAME: Create_Star
+  ; DESC: Create a 2D Start in a TPolygon Structure
+  ; DESC: with Center Point = [0,0,0]
+  ; VAR(*VObj.TPolygon) : Pointer to the Polygon Object
+  ; VAR(outerRadius.d): Radius of the outer circle
+  ; VAR(outerRadius.d): Radius of the inner circle
+  ; VAR(NoOfSpikes) : Number of the Stars Spikes (2 Points needed per spike)
+  ; VAR(StartAngle) : Angle of the first Spike [0..360°] (because +y goes down 0° is down!
+  ; RET.i : *VObj
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer(*VObj)    ; Check Pointer Exception
+    
+    If NoOfSpikes > 0 And NoOfSpikes <= 36 ; 
+      With *VObj
+        \NoOfPts = NoOfSpikes * 2     
+        If ArraySize(\PT()) <> \NoOfPts
+          ReDim \PT(\NoOfPts)
+        EndIf      
+        \ObjType    = #PbFw_VObj_Polygon  
+        \ObjSubType = #PbFw_VObj_Polygon_Star
+           
+        Protected I.i            
+        Protected Phi.d = Radian(StartAngle) ; on a X/Y Screen the Angle 0 is down because +Y goes down
+        Protected dPhi.d = #PI / NoOfSpikes
+      
+        ; we start at Point 1 because Point 0 is the reference/center Point
+        ; the first Point is the Point on the outer Radius, the second on the inner Radius
+        For I = 2 To \NoOfPts Step 2
+          ; Calculate outer point
+          \PT(I-1)\x = Sin(Phi) * outerRadius
+          \PT(I-1)\y = Cos(Phi) * outerRadius
+          Phi = Phi + dPhi
+          
+          ; Calculate inner point
+          \PT(I)\x = Sin(Phi) * outerRadius
+          \PT(I)\y = Cos(Phi) * outerRadius
+          Phi = Phi + dPhi
+        Next i
+      EndWith    
+    EndIf
+  
+    ProcedureReturn *VObj
+  EndProcedure
+
   Procedure.i Create_PolygonCircel(*VObj.TPolygon, r.d, NoOfPoints.i)
   ; ============================================================================
   ; NAME: Create_PolygonCircel
@@ -1045,9 +1107,11 @@ Module VObj
     ProcedureReturn *VObj
   EndProcedure
   
+ 
   ;- ----------------------------------------------------------------------
   ;- Create 3D volume Objects
   ;- ----------------------------------------------------------------------
+
  
   Procedure.i Create3D_Triangle(*VObj.T3DPoly, X2.d,Y2.d, X3.d,Y3.d, depth.d)
   ; ============================================================================
@@ -1096,8 +1160,8 @@ Module VObj
   ; DESC: with Center Point = [0,0,0]
   ; VAR(*VObj.T3DPoly) : Pointer to the 3DPoly Object
   ; VAR(W.d): Width  (length in x-direction)
-  ; VAR(H.d): height (length in y-direction)    
-  ; VAR(D.d): depth  (length in z-direction)
+  ; VAR(H.d): Height (length in y-direction)    
+  ; VAR(D.d): Depth  (length in z-direction)
   ; RET.i : *VObj
   ; ============================================================================
    
@@ -1276,12 +1340,216 @@ Module VObj
     
     ProcedureReturn *VObj  
   EndProcedure
+    
+  ;- ----------------------------------------------------------------------
+  ;- VObjects to Facets
+  ;- ----------------------------------------------------------------------
+  
+  Procedure _CalcFacetNormal(*Facet.TFacet)
+    Protected v1.TVector
+    Protected v2.TVector
+    
+    ; Calculate the normal Vector N (counterclockwise Point order)
+    ; (if we change to clockwise Point order the direction of the normal Vector change)
+    Vector_SUB(v1, *Facet\V2, *Facet\V1)
+    Vector_SUB(v2, *Facet\V3, *Facet\V1)
+    Vector_CrossProduct(*Facet\N, v1, v2)
+    Vector_Normalize(*Facet\N)
+  EndProcedure
+  
+  Procedure _PointsToFacet(*Facet.TFacet, *P1.TVector, *P2.TVector, *P3.TVector)
+    Vector_Copy(*P1, *Facet\V1)
+    Vector_Copy(*P2, *Facet\V2)
+    Vector_Copy(*P3, *Facet\V3)
+    _CalcFacetNormal(*Facet)
+  EndProcedure
+  
+  Procedure _RectToFacet(*Facet1.TFacet, *Facet2.TFacet, *P1.TVector, *P2.TVector, *P3.TVector, *P4.TVector)
+    
+  ;   P2--------------P3
+  ;   |               | 
+  ;   |               |
+  ;   |               |
+  ;   P1--------------P4
+          
+    ; Facet 1 : P1, P2, P3
+    Vector_Copy(*P1, *Facet1\V1)
+    Vector_Copy(*P2, *Facet1\V2)
+    Vector_Copy(*P3, *Facet1\V3)
+    _CalcFacetNormal(*Facet1)
+    
+    ; Facet 2 : P1, P3, P4
+    Vector_Copy(*P1, *Facet2\V1)
+    Vector_Copy(*P3, *Facet2\V2)
+    Vector_Copy(*P4, *Facet2\V3)
+    _CalcFacetNormal(*Facet2)
+ 
+  EndProcedure
+  
+  Procedure _PoligonToFacet(Array Facets.TFacet(1), *Poly.TPolygon)
+    
+    Protected I    
+    Protected nFacets = *Poly\NoOfPts - 2  ; Number of facets for a polygon with nPoints vertices
+    
+    Dim Facets(nFacets -1)
+    
+    ; Create Facets: One facet from StartPoint with 2 other Points
+    ; Facet(1) = P1,P2,P3 : Facet(2) = P1,P3,P4 : Facet(3) = P1,P4,P5 ... P1, P(n-1), Pn
+    ; an alternative way would be to calculate the Facets from the CenterPoint - but that is work
+    For I = 0 To nFacets - 1
+      With *Poly
+        _PointsToFacet(Facets(I), \PT(1), \PT(I+2), \PT(I+3) )  
+      EndWith  
+    Next
+    ProcedureReturn nFacets
+  EndProcedure
+  
+  Procedure _CenterOf_RegularPolygon(*Out.TVector, *Poly.TPolygon)
+    ; triangles, Rectangles, Pentagon, Hexagon ... polygoned Circels
+    ; the CenterPoint is just the average of all coordinates
+    Protected I
+    Protected.d cx, cy, cz, f
+    
+    With *Poly
+      For I = 1 To \NoOfPts
+        Cx + \PT(I)\x
+        Cy + \PT(I)\y
+        Cz + \PT(I)\z
+      Next
+      f = 1 / \NoOfPts
+     EndWith
+    
+    With *Out
+      \x = cx * f
+      \y = cy * f
+      \z = cz * f
+    EndWith
+  
+    ProcedureReturn *Out
+  EndProcedure
+  
+  Procedure _CenterOf_FreePolygon(Array Poly.TPoint2D(1), numPoints)
+    ; we can calucalte only in X/Y Plane when Z=0 otherwise 
+    Protected I, J
+    Protected.d Area, cx, cy, cz, temp, f
+    
+    ; alogrithm by ChatCPT 4
+    For I = 1 To numPoints -1 
+      J = I+1
+      temp = Poly(I)\X * Poly(J)\Y - Poly(J)\X * Poly(I)\Y
+      Area + temp
+      Cx + (Poly(I)\X + Poly(J)\X) * temp
+      Cy + (Poly(I)\Y + Poly(J)\Y) * temp
+    Next
+    
+    ; the connection between last an first point (a closed Polygon)
+    I = numPoints : J= 1
+    temp = Poly(I)\X * Poly(J)\Y - Poly(J)\X * Poly(I)\Y
+    Area + temp
+    Cx + (Poly(I)\X + Poly(J)\X) * temp
+    Cy + (Poly(I)\Y + Poly(J)\Y) * temp
+  
+    ; Area / 2
+    ; Cx / (6.0 * Area)
+    ; Cy / (6.0 * Area)
+    
+    f = 1/(Area * 3)
+    cx * f
+    cy * f
+    
+  EndProcedure
+  
+  Procedure _CalculateCentroid3D(Array Poly.TVector(1), numPoints)
+    Protected I, J
+    Protected Area.d = 0.0
+    Protected Cx.d = 0.0
+    Protected Cy.d = 0.0
+    Protected Cz.d = 0.0
+    Protected temp.d
+    ; alogrithm by ChatCPT 4
+    For I = 1 To numPoints
+      J = (I + 1) % numPoints  ; Next vertex index, with wrap-around
+      
+      ; Compute the cross product of the edges
+      temp = (Poly(I)\x * Poly(J)\y - Poly(J)\x * Poly(I)\y) + (Poly(I)\y * Poly(J)\z - Poly(J)\y * Poly(I)\z) + (Poly(I)\z * Poly(J)\x - Poly(J)\z * Poly(I)\x)
+      Area + temp
+      Cx + (Poly(I)\x + Poly(J)\x) * temp
+      Cy + (Poly(I)\y + Poly(I)\y) * temp
+      Cz + (Poly(I)\z + Poly(I)\z) * temp
+    Next
+    
+    Area *0.5
+    
+    Cx / (6.0 * Area)
+    Cy / (6.0 * Area)
+    Cz / (6.0 * Area)
+  
+  EndProcedure
 
+  
+  Procedure Facets3D_Poligon(Array Facets.TFacet(1), *VObj.T3DPoly)
+  ; ============================================================================
+  ; NAME: Facets3D_Poligon
+  ; DESC: Creates the Facets of a 3D Poligon Structure
+  ; DESC: 
+  ; VAR(Array Facets(1).TFacet) : Array to receive the 12 Facets [0..11]
+  ; VAR(*VObj.T3DPoly) : Pointer to the 3DPoly Object
+  ; RET.i : No of Facets total
+  ; ============================================================================
+    Protected I, nFacets, nFPoly, sides, idx
+     
+    ; Step 1 count the Number of Facets
+    ; a 2D Poligion needs (NoOfPoints-2) Facets, we have 2 Poligons
+    ; and for each side 2 more facets. 
+    ; A Plogion with n Points has n sides 2
+    
+    With *VObj 
+      sides = \POL[0]\NoOfPts           ; no of sides of the 3D polygon based Cylinder
+      nFPoly = sides - 2                ; NoOfFacets for a Polygon
+      nFacets = nFPoly * 2 + sides * 2  ; NoOfFacets total (the 2 Polygons + the sides)
+    EndWith
+    
+    Dim Facets(nFacets-1)     ; Array for all Facets
+    
+    ; ----------------------------------------------------------------------
+    ;   Step 1: Process Facets of the 2 Polygons
+    ; ----------------------------------------------------------------------
+    idx = nFacets -nFPoly -1    ; Index at End of FacetArray for 2nd Polygon
+    
+    For I = 0 To (nFPoly - 1)
+      ; Facets of Poygon[0] - we put at beginning of the Facet-Array
+      With *VObj\POL[0]
+        ; Attention coordinates start at Point(1) : Point(0) is ReferencePoint
+        _PointsToFacet(Facets(I), \PT(1), \PT(I+2), \PT(I+3) )   
+      EndWith  
+      
+      ; Facets of Poygon[1] - we put at end of the Facet-Array
+      With *VObj\POL[1]
+        ; Attention coordinates start at Point(1) : Point(0) is ReferencePoint
+        _PointsToFacet(Facets(I+idx), \PT(1), \PT(I+2), \PT(I+3) )  
+      EndWith  
+    Next
+    
+    ; ----------------------------------------------------------------------
+    ;   Step 2: Process Facets of the Cylinder sides
+    ; ----------------------------------------------------------------------     
+    idx = nFPoly ; Set Index after Facets of 1st Polygon to add Facets of the sides
+        
+    For I = 1 To (sides -1)  ; [1..(NoOfPoints-1)]
+      With *VObj
+        ; Attention coordinates start at Point(1) : Point(0) is ReferencePoint
+        _RectToFacet(Facets(idx), Facets(idx+1), \POL[0]\PT(I), \POL[1]\PT(I), \POL[0]\PT(I+1), \POL[1]\PT(I+1)) 
+        idx + 1
+      EndWith
+    Next
+    
+    ProcedureReturn nFacets   ; Total number of facets
+  EndProcedure
+  
+    
 EndModule
-
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 347
-; FirstLine = 347
-; Folding = -----
+; IDE Options = PureBasic 6.11 LTS (Windows - x64)
+; CursorPosition = 292
+; Folding = ------
 ; Optimizer
 ; CPU = 5
