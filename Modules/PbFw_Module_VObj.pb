@@ -1358,9 +1358,9 @@ Module VObj
   EndProcedure
   
   Procedure _PointsToFacet(*Facet.TFacet, *P1.TVector, *P2.TVector, *P3.TVector)
-    Vector_Copy(*P1, *Facet\V1)
-    Vector_Copy(*P2, *Facet\V2)
-    Vector_Copy(*P3, *Facet\V3)
+    Vector_Copy(*Facet\V1, *P1)
+    Vector_Copy(*Facet\V2, *P2)
+    Vector_Copy(*Facet\V3, *P3)
     _CalcFacetNormal(*Facet)
   EndProcedure
   
@@ -1373,15 +1373,15 @@ Module VObj
   ;   P1--------------P4
           
     ; Facet 1 : P1, P2, P3
-    Vector_Copy(*P1, *Facet1\V1)
-    Vector_Copy(*P2, *Facet1\V2)
-    Vector_Copy(*P3, *Facet1\V3)
+    Vector_Copy(*Facet1\V1, *P1)
+    Vector_Copy(*Facet1\V2, *P2)
+    Vector_Copy(*Facet1\V3, *P3)
     _CalcFacetNormal(*Facet1)
     
     ; Facet 2 : P1, P3, P4
-    Vector_Copy(*P1, *Facet2\V1)
-    Vector_Copy(*P3, *Facet2\V2)
-    Vector_Copy(*P4, *Facet2\V3)
+    Vector_Copy(*Facet2\V1, *P1)
+    Vector_Copy(*Facet2\V2, *P3)
+    Vector_Copy(*Facet2\V3, *P4)
     _CalcFacetNormal(*Facet2)
  
   EndProcedure
@@ -1549,7 +1549,7 @@ Module VObj
     
 EndModule
 ; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 292
+; CursorPosition = 37
 ; Folding = ------
 ; Optimizer
 ; CPU = 5

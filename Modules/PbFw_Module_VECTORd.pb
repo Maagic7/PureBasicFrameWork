@@ -43,14 +43,14 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/12/04
-; VERSION  :  0.13 untested Developper Version
+; VERSION  :  0.14 untested Developper Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
-; 
+; 2024/07/23 S.Maag : changed wrong PS commands to PD commands in ASM Macros Vector Min, Max, MinMax
 ; 2024/02/24 S.Maag : included "PbFw_ASM_Macros.pbi"
 ; 2023/07/29 S.Maag : changed come comments
 ; 2023/03/19 S.Maag : added Vector_Lerp, Vector_InverseLerp, Vector_Rempap
@@ -315,7 +315,7 @@ Module VECd
 			!MOV    REGD, [p.p_IN2]
 			!VMOVUPD YMM1, [REGC]       ; IN1
 			!VMOVUPD YMM2, [REGD]       ; IN2
-			!VMINPS  YMM0, YMM1, YMM2
+			!VMINPD  YMM0, YMM1, YMM2
 			!VMOVUPD [REGA], YMM0    
   EndMacro
   
@@ -325,8 +325,8 @@ Module VECd
 			!MOV    REGD, [p.p_IN2]
 			!VMOVUPD YMM1, [REGC]       ; IN1
 			!VMOVUPD YMM2, [REGD]       ; IN2
-			!VMAXPS  YMM0, YMM1, YMM3
-			!MOVUPS [REGA], YMM0    
+			!VMAXPd  YMM0, YMM1, YMM3
+			!VMOVUPD [REGA], YMM0    
   EndMacro
   
   Macro ASM_Vector_MinMax(REGA, REGD, REGC) 
@@ -1789,8 +1789,7 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 1642
-; FirstLine = 1623
+; CursorPosition = 45
 ; Folding = -------------
 ; Optimizer
 ; CPU = 5
