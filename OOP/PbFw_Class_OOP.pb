@@ -3,7 +3,7 @@
 ; NAME : PureBasic Framework : Module object oriented programing [OOP::]
 ; DESC : Contains the BasceClass function for object oriented programing.
 ; DESC : Inheritance is supported! Overwriting Methodes is supported!
-; DESC : Because OOP is not natively supprot by PB, we have to do some jobs
+; DESC : Because OOP is not natively supported by PB, we have to do some jobs
 ; DESC : manually. 
 ; DESC : We have to create the VTable (virtual Methode Table), and we
 ; DESC : have to fill it with the correct Procedure addresses for our
@@ -21,7 +21,7 @@
 ; DESC : like the very comfortable one from the english forum
 ; DESC : http://www.purebasic.fr/english/viewtopic.php?f=12&t=64305
 ; DESC : but it hides the "how to do" in Multilevel Macro calls
-; DESC : and it use some tricky Macros. It is very hard to understand in 
+; DESC : and it use some tricky Macros. It is very hard to understand 
 ; DESC : in detail.
 ; ===========================================================================
 ;
@@ -209,7 +209,7 @@ Module OOP
   ; RET.i: Bytes copied
   ; ======================================================================
     
-    ProcedureReturn OOP::CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
+    ProcedureReturn CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
   EndProcedure
 
   
@@ -219,9 +219,8 @@ Module OOP
   
 EndModule
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 34
-; FirstLine = 12
+; IDE Options = PureBasic 6.03 LTS (Windows - x64)
+; CursorPosition = 23
 ; Folding = 9-
 ; Optimizer
 ; CPU = 5

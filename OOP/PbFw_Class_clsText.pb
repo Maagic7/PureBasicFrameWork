@@ -1,14 +1,14 @@
 ﻿; ===========================================================================
-; FILE : PbFw_Class_Template.pb 
-; NAME : PureBasic Framework: A Template for a Class Module
+; FILE : PbFw_Class_clsText.pb 
+; NAME : PureBasic Framework: Class clsText
 ; DESC : 
 ; DESC : 
 ; ===========================================================================
 ;
 ; AUTHOR   :  Stefan Maag
-; DATE     :  
-; VERSION  :  
-; COMPILER :  Purebasic
+; DATE     :  2023/08/06
+; VERSION  :  0.1 Brainstorming Version
+; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
 ;             or \PbFramWork\MitLicence.txt
@@ -24,33 +24,33 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 XIncludeFile "..\Modules\PbFw_Module_PbFw.pb"   ; PbFw:: FrameWork control Module
-XIncludeFile "PbFw_Class_OOP.pb"               ; OOP::  FrameWork BaseClass
+XIncludeFile "PbFw_Class_OOP.pb"                ; OOP::  FrameWork BaseClass
 
-DeclareModule clsTemplate ; clsText
+DeclareModule clsText ; clsText
   EnableExplicit
   
-  ; Input the BasceClassName here! Attention do not add ;comments after BaseClassName. PB don't like this in Macros
   Macro BaseClass
     OOP
   EndMacro
-  
-  ; if you want to use the IDE intellisense, exchange BaseClass here with the real ClassName otherwise the IDE don't detected it!
+   
   Interface IClass Extends BaseClass::IClass ; create the Interface
-    Text.s()          ; Get
-    Text_(NewText.s)  ; Set
+    GetText.s()
+    SetText(NewText.s)
+    GetFont.i()
+    SetFont(NewFontID.i)
   EndInterface
   
- ; if you want to use the IDE intellisense, exchange BaseClass here with the real ClassName otherwise the IDE don't detected it!
   Structure TThis Extends BaseClass::TThis   ; Structure for the Instance Data
     Text.s  
+    FontID.i
   EndStructure
   
   Declare.i New()
-  Declare.i Inherit_VTable(*Destination_VTable) 
+  Declare.i _Inherit_VTable(*Destination_VTable) 
  
 EndDeclareModule
 
-Module clsTemplate
+Module clsText
   EnableExplicit
   PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
  
@@ -65,23 +65,23 @@ Module clsTemplate
   Macro Overwrite(MethodeName, ProcedureName)
     PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @ProcedureName()) 
   EndMacro
-  
-  ;- ---------------------------------------------------------------------
-  ;- Public Methodes 
-  ;- ---------------------------------------------------------------------
 
-  Procedure.s Text(*This.TThis)
+  Procedure.s GetText(*This.TThis)
     ProcedureReturn  *This\Text
   EndProcedure : AsMethode(GetText)
     
-  Procedure Text_(*This.TThis, NewText.s)
+  Procedure SetText(*This.TThis, NewText.s)
     *This\Text = NewText  
   EndProcedure : AsMethode(SetText)
   
-  ;- ---------------------------------------------------------------------
-  ;- Public Procedures 
-  ;- ---------------------------------------------------------------------
-     
+  Procedure.i GetFont(*This.TThis)
+    ProcedureReturn *This\FontID
+  EndProcedure : AsMethode(GetFont)
+
+  Procedure SetFont(*This.TThis, NewFontID.i)
+    *This\FontID = NewFontID
+  EndProcedure : AsMethode(SetFont)
+      
   Procedure New() 
   ; ======================================================================
   ; NAME: New  
@@ -123,23 +123,15 @@ Module clsTemplate
 
 EndModule
 
-;- ----------------------------------------------------------------------
-;- Test Code 
-;- ----------------------------------------------------------------------
 
-CompilerIf #PB_Compiler_IsMainFile
-  
-  EnableExplicit
-  UseModule clsTemplate
-  
-  Define *obj1.IClass = New()
-  
-  DisableExplicit
-CompilerEndIf
+Define *obj1.clsText::IClass = clsText::New()
+
+UseModule clsText
+Define *obj2.IClass = New()
 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 78
-; FirstLine = 11
+; CursorPosition = 127
+; FirstLine = 29
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

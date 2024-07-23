@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.11 LTS (Windows - x64)">
+  <section name="config">
+    <options closefiles="1" openmode="0" name="PureBasic Framwork OOP developing"/>
+    <comment>internal PbFw Project for developping the OOP Functions</comment>
+  </section>
+  <section name="data">
+    <explorer view="..\Modules\" pattern="0"/>
+    <log show="1"/>
+    <lastopen date="2024-07-23 19:38" user="user1" host="AMD5800X"/>
+  </section>
+  <section name="files">
+    <file name="PbFw_Class_StringGadget.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
+      <fingerprint md5="ec07b555c754ac23c5d8b6988fa2512a"/>
+    </file>
+    <file name="PbFw_Class_GadgetBase.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
+      <fingerprint md5="4651479588fc8c641dd294d164ad097b"/>
+    </file>
+    <file name="PbFw_Class_OOP.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
+      <fingerprint md5="65f5c2390fb3e6d62a6221a05b6592f6"/>
+    </file>
+    <file name="..\Modules\PbFw_Module_PbFw.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="b31adf016daef91a422a06d1f4ecf613"/>
+    </file>
+    <file name="PbFw_Class_clsText.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
+      <fingerprint md5="ca0a9b7ba1d8c9b5cda10a061e411716"/>
+    </file>
+  </section>
+  <section name="targets">
+    <target name="Default Target" enabled="1" default="1">
+      <inputfile value=""/>
+      <outputfile value=""/>
+      <options debug="1" optimizer="1"/>
+      <format exe="default" cpu="5"/>
+    </target>
+  </section>
+</project>
