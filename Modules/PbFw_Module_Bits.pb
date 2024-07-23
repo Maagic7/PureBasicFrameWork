@@ -26,6 +26,16 @@
 ; }            
 ; ============================================================================
 
+; Some important Assembler Instructions
+; BSF : Bit Scan Forward
+; BSR : Bit Scan Reverse
+; BT  : Bit Test
+; BTC : Bit Test and Complement
+; BTS : Bit Test and Set
+; BTR : Bit Test and Reset
+; BSWAP : Byte Swap
+; POPCNT : Return the Count of Number of Bits Set to 1
+
 ;- ----------------------------------------------------------------------
 ;- Include Files
 ;  ----------------------------------------------------------------------
@@ -59,9 +69,9 @@ DeclareModule Bits
   Declare.i BSWAP128(*Value.Int128, *Out.Int128 = 0)  
 
   
-  Declare BSWAp_Mem16(*Mem)
-  Declare BSWAp_Mem32(*Mem)
-  Declare BSWAp_Mem64(*Mem)
+  Declare BSWAP_Mem16(*Mem)
+  Declare BSWAP_Mem32(*Mem)
+  Declare BSWAP_Mem64(*Mem)
   
   Declare.l ROL32(value.l, cnt.i = 1)
   Declare.l ROR32(value.l, cnt.i = 1)
@@ -276,9 +286,37 @@ Module Bits
       !popcnt r8 , rsi
     CompilerEndIf
     !add rax, r8
-    !ret
+    ProcedureReturn
   EndProcedure
   
+  ; other versions for Bitcount!
+  ; should be tested
+  Procedure _BitCount32(value.q)
+    ; Count the number of set bits (1s) in a 32-bit unsigned integer using Kernighan's algorithm
+    Protected.i count
+    
+    value & $FFFFFFFF
+    
+    While value
+      count +1
+      value & (value - 1)
+    Wend
+    
+    ProcedureReturn count
+  EndProcedure
+  
+  Procedure _BitCount64_(value.q)
+    ; Count the number of set bits (1s) in a 32-bit unsigned integer using Kernighan's algorithm
+    Protected.i count
+     
+      While value
+        count +1
+        value & (value - 1)
+      Wend
+    
+    ProcedureReturn count
+  EndProcedure
+
   ;- ----------------------------------------------------------------------
   ;- Module Public Functions
   ;- ----------------------------------------------------------------------
@@ -293,6 +331,7 @@ Module Bits
   ;  RET.i:  Gray encoded value of N
   ; ====================================================================== 
     
+  ; TODO! Maybe wrong because of PB's atithmetic Shift    
     ProcedureReturn N ! (N >> 1) ; N XOR ShiftRight(N,1)
   EndProcedure
   
@@ -306,6 +345,8 @@ Module Bits
   ; ======================================================================   
     Protected.i Mask = G 
     ; https://de.wikipedia.org/wiki/Gray-Code
+    
+   ; TODO! Maybe wrong because of PB's atithmetic Shift      
     While Mask > 0
       Mask >> 1   ;  ShiftRight(Mask, 1)
       G ! Mask    ;  G XOR Mask
@@ -407,6 +448,7 @@ Module Bits
 
   EndProcedure
   
+
   Procedure.u BSWAP16(Value.u)
   ; ======================================================================
   ;  NAME: BSWAP16
@@ -432,7 +474,8 @@ Module Bits
      
     CompilerCase #PbFw_BIT_C_Backend
       !return __builtin_bswap16(v_Value);
-        
+      ProcedureReturn
+      
     CompilerDefault     ; Classic Code without ASM or C optimations       
       Protected *Swap.pSwap
       *Swap = @Value
@@ -467,7 +510,7 @@ Module Bits
         
       CompilerCase #PbFw_BIT_C_Backend
         !return __builtin_bswap32(v_Value);
-         
+        
       CompilerDefault     ; Classic Code without ASM or C optimations       
         Protected *Swap.pSwap
         *Swap = @Value
@@ -505,7 +548,7 @@ Module Bits
         
       CompilerCase #PbFw_BIT_C_Backend
         !return __builtin_bswap64(v_value);
-        
+       
       CompilerDefault     ; Classic Code without ASM or C optimations       
         Protected *Swap.pSwap
         *Swap = @Value
@@ -540,6 +583,7 @@ Module Bits
     CompilerSelect #PbFw_BIT_UseCode
         
       CompilerCase #PbFw_BIT_ASMx32
+        ; ATTENTION That's wrong
         !mov edx, dword [p.v_high]
         !mov eax, dword [p.v_high + 4]
         !bswap edx
@@ -639,7 +683,7 @@ Module Bits
      
   EndProcedure
   
-  Procedure BSWAp_Mem32(*Mem)
+  Procedure BSWAP_Mem32(*Mem)
   ; ======================================================================
   ;  NAME: BSWAp_Mem32
   ;  DESC: LittleEndian<=>BigEndian conversion of a 32Bit value
@@ -681,7 +725,7 @@ Module Bits
           
   EndProcedure
   
-  Procedure BSWAp_Mem64(*Mem)
+  Procedure BSWAP_Mem64(*Mem)
   ; ======================================================================
   ;  NAME: BSWAp_Mem64
   ;  DESC: LittleEndian<=>BigEndian conversion of a 64Bit value
@@ -918,11 +962,82 @@ CompilerIf #PB_Compiler_IsMainFile
   EndProcedure
   
   Test_BSWAP()  
+  
+  DataSection
+    GrayCode:
+    Data.i 000000 ; 0
+    Data.i 000001
+    Data.i 000011
+    Data.i 000010
+    Data.i 000110
+    Data.i 000111
+    Data.i 000101
+    Data.i 000100
+    Data.i 001100
+    Data.i 001101
+    Data.i 001111 ; 10
+    Data.i 001110
+    Data.i 001010
+    Data.i 001011
+    Data.i 001001
+    Data.i 001000
+    Data.i 011000
+    Data.i 011001
+    Data.i 011011
+    Data.i 011010
+    Data.i 011110 ; 20
+    Data.i 011111
+    Data.i 011101
+    Data.i 011100
+    Data.i 010100
+    Data.i 010101
+    Data.i 010111
+    Data.i 010110
+    Data.i 010010
+    Data.i 010011
+    Data.i 010001 ; 30
+    Data.i 010000
+    Data.i 110000
+    Data.i 110001
+    Data.i 110011
+    Data.i 110010
+    Data.i 110110
+    Data.i 110111
+    Data.i 110101
+    Data.i 110100
+    Data.i 111100 ; 40
+    Data.i 111101
+    Data.i 111111
+    Data.i 111110
+    Data.i 111010
+    Data.i 111011
+    Data.i 111001
+    Data.i 111000
+    Data.i 101000
+    Data.i 101001
+    Data.i 101011 ; 50
+    Data.i 101010
+    Data.i 101110
+    Data.i 101111
+    Data.i 101101
+    Data.i 101100
+    Data.i 100100
+    Data.i 100101
+    Data.i 100111
+    Data.i 100110
+    Data.i 100010 ; 60
+    Data.i 100011
+    Data.i 100001
+    Data.i 100000 ; 63
+  EndDataSection
+  
 CompilerEndIf
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 27
+; IDE Options = PureBasic 6.04 LTS (Windows - x64)
+; CursorPosition = 839
+; FirstLine = 833
 ; Folding = ------
+; Markers = 334,349
 ; Optimizer
 ; EnableXP
 ; CPU = 5
