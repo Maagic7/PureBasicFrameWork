@@ -1,3702 +1,3895 @@
 ﻿; STEP File Format Structures and Procedures for Memory Allocation
 
-Structure TStepBase
+; 2024/07/21 Structure definitions up to Entity 149
+
+;- ----------------------------------------------------------------------
+;-  Auxillary Structures - not part of STEP definition
+;- ----------------------------------------------------------------------
+
+; beacuse the orignal STEP Object defintion is a Class-Based-System,
+; and we use Structure-Based-System, we can't implement this complex
+; hirarchical Clsass-Structure. To be more comfortable in PB, we 
+; define us some Auxillary Structures
+
+; The Base-Structure for each STEP Entity Object.
+; All Entities inherits form this Structure
+; And we can use this Structure as Refernce-Pointer for all Entities
+Structure TStepEntityBase
   ID.i            ; This the Function/Object ID from the Step decoumentation
-  Label.s         ; This is the Name
+  Name.s          ; This is the Name
+  ; beacuse we don't have inherit class structure in PB, we use hirachical Pointers
+  ; to specify the Parent SuperType and the Child SubType Entity
+  ; in Step defintion not all Entities have both. But this does not matter for us
+  *Parent.TStepEntityBase   ; Pointer to Parent/SuperType 
+  *Child.TStepEntityBase    ; Pointer to Child /SubType
 EndStructure
 
+; STEP implements some Selects for the Value interpretation. For me the original
+; look linke complicated C++ defintions, what we can't use in PB
+; So we use an universal Structure to store different Type of values
+; in Type we have to write the correct ValueType
+Structure TStepUniversalValue  
+  StructureUnion            ; 8-Byte-Value => 64Bit
+    vf.f
+    vd.d
+    vl.l
+    vq.q
+  EndStructureUnion
+  Type.i   ; [#PB_Float, #PB_Double, #PB_Long, #PB_Quad]
+EndStructure
+
+; Step defines a ValueLimit and a ValueRange option
+#STEP_Lower_Limit = 0
+#STEP_Upper_Limit = 1
+Structure TStepValueLimit
+  Limit.TStepUniversalValue   ; The LimitValue As UniversalValue [.f, .d, .l, .q]
+  Type.i                      ; [#STEP_Lower_Limit, #STEP_Upper_Limit]    
+EndStructure
+
+Structure TStepValueRange
+  Min.TStepUniversalValue   ; Minimum Value [.f, .d, .l, .q]
+  Max.TStepUniversalValue   ; Maximum Value
+EndStructure
+
+;- ----------------------------------------------------------------------
+;-   STEP Entity Structures
+;- ----------------------------------------------------------------------
  ; 294 : CARTESIAN_POINT
-Structure T_CARTESIAN_POINT Extends TStepBase ; ID= 294
+Structure T_CARTESIAN_POINT Extends TStepEntityBase ; ID= 294
   X.f
   Y.f
   Z.f
-EndStructure 
+EndStructure
 
  ; 2249 : VERTEX_POINT
-Structure T_VERTEX_POINT  Extends TStepBase ; ID= 2249
+Structure T_VERTEX_POINT  Extends TStepEntityBase ; ID= 2249
   *CPt.T_CARTESIAN_POINT      ; Pointer ot the bound cartesian point
 EndStructure 
 
 ; 675 : DIRECTION
-Structure T_DIRECTION Extends TStepBase ; ID= 675
+Structure T_DIRECTION Extends TStepEntityBase ; ID= 675
   *Pt.T_CARTESIAN_POINT  
 EndStructure 
 
 ; 2237 : VECTOR
-Structure T_VECTOR Extends TStepBase ; ID= 2237
+Structure T_VECTOR Extends TStepEntityBase ; ID= 2237
   *Dir.T_DIRECTION
   L.f               ; Lengt 
 EndStructure 
  
- ; 1 : A3M_EQUIVALENCE_ACCURACY_ASSOCIATION
-Structure T_A3M_EQUIVALENCE_ACCURACY_ASSOCIATION Extends TStepBase ; ID= 1
+ ; 1 : A3M_EQUIVALENCE_ACCURACY_ASSOCIATION -- IN AP242
+Structure T_A3M_EQUIVALENCE_ACCURACY_ASSOCIATION Extends TStepEntityBase ; ID= 1
+  Text.s      ; Desprition Text
+  *Specific_Accuracy.T_SHAPE_MEASUREMENT_ACCURACY
+  Equivalence_Target.i 
+EndStructure 
+ 
+ ; 2 : A3M_EQUIVALENCE_ASSESSMENT_BY_LOGICAL_TEST -- IN AP242
+Structure T_A3M_EQUIVALENCE_ASSESSMENT_BY_LOGICAL_TEST Extends TStepEntityBase ; ID= 2
+  ; no more entries because in PB we use *Parent-SuperType and *Child-SubType as Standard  
+EndStructure 
+ 
+ ; 3 : A3M_EQUIVALENCE_ASSESSMENT_BY_NUMERICAL_TEST -- IN AP242
+Structure T_A3M_EQUIVALENCE_ASSESSMENT_BY_NUMERICAL_TEST Extends TStepEntityBase ; ID= 3
+  Threshold.TStepUniversalValue 
+EndStructure 
+ 
+ ; 4 : A3M_EQUIVALENCE_CRITERIA_REPRESENTATION -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERIA_REPRESENTATION Extends TStepEntityBase ; ID= 4
   
 EndStructure 
  
- ; 2 : A3M_EQUIVALENCE_ASSESSMENT_BY_LOGICAL_TEST
-Structure T_A3M_EQUIVALENCE_ASSESSMENT_BY_LOGICAL_TEST Extends TStepBase ; ID= 2
-  
+ ; 5 : A3M_EQUIVALENCE_CRITERION   -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERION Extends TStepEntityBase ; ID= 5
+  Assessment_Specification.i
+  Measured_Data_Type.i 
+  List lst_Comparing_Element_Types.i() 
+  List lst_Compared_Element_Types.i()
+  List lst_Detected_Difference_Type.i()
+  List lst_Accuracy_Types.i() 
 EndStructure 
  
- ; 3 : A3M_EQUIVALENCE_ASSESSMENT_BY_NUMERICAL_TEST
-Structure T_A3M_EQUIVALENCE_ASSESSMENT_BY_NUMERICAL_TEST Extends TStepBase ; ID= 3
-  
+ ; 6 : A3M_EQUIVALENCE_CRITERION_FOR_ASSEMBLY -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERION_FOR_ASSEMBLY Extends TStepEntityBase ; ID= 6
+ ; no more entries
 EndStructure 
  
- ; 4 : A3M_EQUIVALENCE_CRITERIA_REPRESENTATION
-Structure T_A3M_EQUIVALENCE_CRITERIA_REPRESENTATION Extends TStepBase ; ID= 4
+ ; 7 : A3M_EQUIVALENCE_CRITERION_FOR_SHAPE -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERION_FOR_SHAPE Extends TStepEntityBase ; ID= 7
+ ; no more entries  
+EndStructure 
   
+ ; 8 : A3M_EQUIVALENCE_CRITERION_OF_ASSEMBLY_DATA_STRUCTURE -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERION_OF_ASSEMBLY_DATA_STRUCTURE Extends TStepEntityBase ; ID= 8
+ ; no more entries    
 EndStructure 
  
- ; 5 : A3M_EQUIVALENCE_CRITERION
-Structure T_A3M_EQUIVALENCE_CRITERION Extends TStepBase ; ID= 5
-  
+ ; 9 : A3M_EQUIVALENCE_CRITERION_OF_COMPONENT_PROPERTY_DIFFERENCE -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERION_OF_COMPONENT_PROPERTY_DIFFERENCE Extends TStepEntityBase ; ID= 9
+ ; no more entries   
 EndStructure 
  
- ; 6 : A3M_EQUIVALENCE_CRITERION_FOR_ASSEMBLY
-Structure T_A3M_EQUIVALENCE_CRITERION_FOR_ASSEMBLY Extends TStepBase ; ID= 6
-  
+ ; 10 : A3M_EQUIVALENCE_CRITERION_OF_DETAILED_ASSEMBLY_DATA_CONTENT -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERION_OF_DETAILED_ASSEMBLY_DATA_CONTENT Extends TStepEntityBase ; ID= 10
+ ; no more entries 
 EndStructure 
  
- ; 7 : A3M_EQUIVALENCE_CRITERION_FOR_SHAPE
-Structure T_A3M_EQUIVALENCE_CRITERION_FOR_SHAPE Extends TStepBase ; ID= 7
-  
+ ; 11 : A3M_EQUIVALENCE_CRITERION_OF_DETAILED_SHAPE_DATA_CONTENT -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERION_OF_DETAILED_SHAPE_DATA_CONTENT Extends TStepEntityBase ; ID= 11
+; no more entries  
 EndStructure 
  
- ; 8 : A3M_EQUIVALENCE_CRITERION_OF_ASSEMBLY_DATA_STRUCTURE
-Structure T_A3M_EQUIVALENCE_CRITERION_OF_ASSEMBLY_DATA_STRUCTURE Extends TStepBase ; ID= 8
-  
+ ; 12 : A3M_EQUIVALENCE_CRITERION_OF_REPRESENTATIVE_ASSEMBLY_PROPERTY_VALUE -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERION_OF_REPRESENTATIVE_ASSEMBLY_PROPERTY_VALUE Extends TStepEntityBase ; ID= 12
+  ; no more entries  
 EndStructure 
  
- ; 9 : A3M_EQUIVALENCE_CRITERION_OF_COMPONENT_PROPERTY_DIFFERENCE
-Structure T_A3M_EQUIVALENCE_CRITERION_OF_COMPONENT_PROPERTY_DIFFERENCE Extends TStepBase ; ID= 9
-  
+ ; 13 : A3M_EQUIVALENCE_CRITERION_OF_REPRESENTATIVE_SHAPE_PROPERTY_VALUE -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERION_OF_REPRESENTATIVE_SHAPE_PROPERTY_VALUE Extends TStepEntityBase ; ID= 13
+  ; no more entries  
 EndStructure 
  
- ; 10 : A3M_EQUIVALENCE_CRITERION_OF_DETAILED_ASSEMBLY_DATA_CONTENT
-Structure T_A3M_EQUIVALENCE_CRITERION_OF_DETAILED_ASSEMBLY_DATA_CONTENT Extends TStepBase ; ID= 10
-  
+ ; 14 : A3M_EQUIVALENCE_CRITERION_OF_SHAPE_DATA_STRUCTURE -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERION_OF_SHAPE_DATA_STRUCTURE Extends TStepEntityBase ; ID= 14
+  ; no more entries 
 EndStructure 
  
- ; 11 : A3M_EQUIVALENCE_CRITERION_OF_DETAILED_SHAPE_DATA_CONTENT
-Structure T_A3M_EQUIVALENCE_CRITERION_OF_DETAILED_SHAPE_DATA_CONTENT Extends TStepBase ; ID= 11
-  
+ ; 15 : A3M_EQUIVALENCE_CRITERION_REPORT_ITEM_WITH_MEASURED_VALUE -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERION_REPORT_ITEM_WITH_MEASURED_VALUE Extends TStepEntityBase ; ID= 15
+  ; no more entries  
 EndStructure 
  
- ; 12 : A3M_EQUIVALENCE_CRITERION_OF_REPRESENTATIVE_ASSEMBLY_PROPERTY_VALUE
-Structure T_A3M_EQUIVALENCE_CRITERION_OF_REPRESENTATIVE_ASSEMBLY_PROPERTY_VALUE Extends TStepBase ; ID= 12
+ ; 16 : A3M_EQUIVALENCE_CRITERION_WITH_SPECIFIED_ELEMENTS -- IN AP242
+Structure T_A3M_EQUIVALENCE_CRITERION_WITH_SPECIFIED_ELEMENTS Extends TStepEntityBase ; ID= 16
+  ; no more entries  
+EndStructure 
   
+ ; 17 : A3M_EQUIVALENCE_INSPECTION_INSTANCE_REPORT_ITEM -- IN AP242
+Structure T_A3M_EQUIVALENCE_INSPECTION_INSTANCE_REPORT_ITEM Extends TStepEntityBase ; ID= 17
+  Measured_Value_For_Inspected_Element.i ; TYPE equivalence_measured_value_select
 EndStructure 
  
- ; 13 : A3M_EQUIVALENCE_CRITERION_OF_REPRESENTATIVE_SHAPE_PROPERTY_VALUE
-Structure T_A3M_EQUIVALENCE_CRITERION_OF_REPRESENTATIVE_SHAPE_PROPERTY_VALUE Extends TStepBase ; ID= 13
-  
+ ; 18 : A3M_EQUIVALENCE_INSPECTION_REQUIREMENT_WITH_VALUES -- IN AP242
+Structure T_A3M_EQUIVALENCE_INSPECTION_REQUIREMENT_WITH_VALUES Extends TStepEntityBase ; ID= 18
+  List lst_Applied_Values.i()  ; *T_Measure_Representation_Item 
 EndStructure 
  
- ; 14 : A3M_EQUIVALENCE_CRITERION_OF_SHAPE_DATA_STRUCTURE
-Structure T_A3M_EQUIVALENCE_CRITERION_OF_SHAPE_DATA_STRUCTURE Extends TStepBase ; ID= 14
-  
+ ; 19 : A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION -- IN AP242
+Structure T_A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION Extends TStepEntityBase ; ID= 19
+  ; no more entries 
 EndStructure 
  
- ; 15 : A3M_EQUIVALENCE_CRITERION_REPORT_ITEM_WITH_MEASURED_VALUE
-Structure T_A3M_EQUIVALENCE_CRITERION_REPORT_ITEM_WITH_MEASURED_VALUE Extends TStepBase ; ID= 15
-  
+ ; 20 : A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION_FOR_ASSEMBLY -- IN AP242
+Structure T_A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION_FOR_ASSEMBLY Extends TStepEntityBase ; ID= 20
+  ; no more entries   
 EndStructure 
  
- ; 16 : A3M_EQUIVALENCE_CRITERION_WITH_SPECIFIED_ELEMENTS
-Structure T_A3M_EQUIVALENCE_CRITERION_WITH_SPECIFIED_ELEMENTS Extends TStepBase ; ID= 16
-  
-EndStructure 
- 
- ; 17 : A3M_EQUIVALENCE_INSPECTION_INSTANCE_REPORT_ITEM
-Structure T_A3M_EQUIVALENCE_INSPECTION_INSTANCE_REPORT_ITEM Extends TStepBase ; ID= 17
-  
-EndStructure 
- 
- ; 18 : A3M_EQUIVALENCE_INSPECTION_REQUIREMENT_WITH_VALUES
-Structure T_A3M_EQUIVALENCE_INSPECTION_REQUIREMENT_WITH_VALUES Extends TStepBase ; ID= 18
-  
-EndStructure 
- 
- ; 19 : A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION
-Structure T_A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION Extends TStepBase ; ID= 19
-  
-EndStructure 
- 
- ; 20 : A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION_FOR_ASSEMBLY
-Structure T_A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION_FOR_ASSEMBLY Extends TStepBase ; ID= 20
-  
-EndStructure 
- 
- ; 21 : A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION_FOR_SHAPE
-Structure T_A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION_FOR_SHAPE Extends TStepBase ; ID= 21
-  
+ ; 21 : A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION_FOR_SHAPE -- IN AP242
+Structure T_A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION_FOR_SHAPE Extends TStepEntityBase ; ID= 21
+  ; no more entries  
 EndStructure 
  
  ; 22 : A3M_EQUIVALENCE_SUMMARY_REPORT_REQUEST_WITH_REPRESENTATIVE_VALUE
-Structure T_A3M_EQUIVALENCE_SUMMARY_REPORT_REQUEST_WITH_REPRESENTATIVE_VALUE Extends TStepBase ; ID= 22
-  
+Structure T_A3M_EQUIVALENCE_SUMMARY_REPORT_REQUEST_WITH_REPRESENTATIVE_VALUE Extends TStepEntityBase ; ID= 22
+  Report_Request_Type.i  ; TYPE representative_value_type
 EndStructure 
  
- ; 23 : A3M_INSPECTED_MODEL_AND_INSPECTION_RESULT_RELATIONSHIP
-Structure T_A3M_INSPECTED_MODEL_AND_INSPECTION_RESULT_RELATIONSHIP Extends TStepBase ; ID= 23
-  
+ ; 23 : A3M_INSPECTED_MODEL_AND_INSPECTION_RESULT_RELATIONSHIP -- IN AP242
+Structure T_A3M_INSPECTED_MODEL_AND_INSPECTION_RESULT_RELATIONSHIP Extends TStepEntityBase ; ID= 23
+  Inspected_model.i     ; TYPE target_annotated_3d_model_select                           ;
+  *Equivalence_Result.T_A3M_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION ; ENTITY a3m_equivalence_inspection_result_representation
 EndStructure 
  
- ; 24 : A3MA_ASSEMBLY_AND_SHAPE_CRITERIA_RELATIONSHIP
-Structure T_A3MA_ASSEMBLY_AND_SHAPE_CRITERIA_RELATIONSHIP Extends TStepBase ; ID= 24
-  
+ ; 24 : A3MA_ASSEMBLY_AND_SHAPE_CRITERIA_RELATIONSHIP -- IN AP242
+Structure T_A3MA_ASSEMBLY_AND_SHAPE_CRITERIA_RELATIONSHIP Extends TStepEntityBase ; ID= 24
+  ; no more entries 
 EndStructure 
  
- ; 25 : A3MA_EQUIVALENCE_CRITERION_ASSESSMENT_THRESHOLD_RELATIONSHIP
-Structure T_A3MA_EQUIVALENCE_CRITERION_ASSESSMENT_THRESHOLD_RELATIONSHIP Extends TStepBase ; ID= 25
-  
+ ; 25 : A3MA_EQUIVALENCE_CRITERION_ASSESSMENT_THRESHOLD_RELATIONSHIP -- IN AP242
+Structure T_A3MA_EQUIVALENCE_CRITERION_ASSESSMENT_THRESHOLD_RELATIONSHIP Extends TStepEntityBase ; ID= 25
+  ; no more entries 
 EndStructure 
  
- ; 26 : A3MA_EQUIVALENCE_INSPECTION_RESULT
-Structure T_A3MA_EQUIVALENCE_INSPECTION_RESULT Extends TStepBase ; ID= 26
-  
+ ; 26 : A3MA_EQUIVALENCE_INSPECTION_RESULT IN AP242
+Structure T_A3MA_EQUIVALENCE_INSPECTION_RESULT Extends TStepEntityBase ; ID= 26
+  ; no more entries  
 EndStructure 
  
- ; 27 : A3MA_LENGTH_MEASURE_AND_CONTEXT_DEPENDENT_MEASURE_PAIR
-Structure T_A3MA_LENGTH_MEASURE_AND_CONTEXT_DEPENDENT_MEASURE_PAIR Extends TStepBase ; ID= 27
-  
+ ; 27 : A3MA_LENGTH_MEASURE_AND_CONTEXT_DEPENDENT_MEASURE_PAIR IN AP242
+Structure T_A3MA_LENGTH_MEASURE_AND_CONTEXT_DEPENDENT_MEASURE_PAIR Extends TStepEntityBase ; ID= 27
+  ; no more entries    
 EndStructure 
  
  ; 28 : A3MS_EQUIVALENCE_CRITERION_WITH_SPECIFIED_ELEMENTS
-Structure T_A3MS_EQUIVALENCE_CRITERION_WITH_SPECIFIED_ELEMENTS Extends TStepBase ; ID= 28
-  
+Structure T_A3MS_EQUIVALENCE_CRITERION_WITH_SPECIFIED_ELEMENTS Extends TStepEntityBase ; ID= 28
+  ; no more entries      
 EndStructure 
  
  ; 29 : A3MS_EQUIVALENCE_INSPECTION_RESULT
-Structure T_A3MS_EQUIVALENCE_INSPECTION_RESULT Extends TStepBase ; ID= 29
-  
+Structure T_A3MS_EQUIVALENCE_INSPECTION_RESULT Extends TStepEntityBase ; ID= 29
+  ; no more entries        
 EndStructure 
  
  ; 30 : ABRUPT_CHANGE_OF_SURFACE_NORMAL
-Structure T_ABRUPT_CHANGE_OF_SURFACE_NORMAL Extends TStepBase ; ID= 30
-  
+Structure T_ABRUPT_CHANGE_OF_SURFACE_NORMAL Extends TStepEntityBase ; ID= 30
+  Small_Vector_Tolerance.f        ; : Type length_measure = REAL;
+  Test_Point_Distance_Tolerance.f ; : Type length_measure = REAL; 
 EndStructure 
  
  ; 31 : ABS_FUNCTION
-Structure T_ABS_FUNCTION Extends TStepBase ; ID= 31
-  
+Structure T_ABS_FUNCTION Extends TStepEntityBase ; ID= 31
+  ; no more Entries : SUBTYPE OF ENTITY unary_function_call
 EndStructure 
  
  ; 32 : ABSORBED_DOSE_MEASURE_WITH_UNIT
-Structure T_ABSORBED_DOSE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 32
-  
+Structure T_ABSORBED_DOSE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 32
+  ; no more Entries : SUBTYPE OF ENTITY measure_with_unit
 EndStructure 
  
  ; 33 : ABSORBED_DOSE_UNIT
-Structure T_ABSORBED_DOSE_UNIT Extends TStepBase ; ID= 33
-  
+Structure T_ABSORBED_DOSE_UNIT Extends TStepEntityBase ; ID= 33
+  ; no more Entries : SUBTYPE OF ENTITY derived_unit
 EndStructure 
  
  ; 34 : ABSTRACT_VARIABLE
-Structure T_ABSTRACT_VARIABLE Extends TStepBase ; ID= 34
-  
+Structure T_ABSTRACT_VARIABLE Extends TStepEntityBase ; ID= 34
+  ; no more Entries : SUBTYPE OF  (property_definition, property_definition_representation, representation, representation_item)
 EndStructure 
  
  ; 35 : ABSTRACTED_EXPRESSION_FUNCTION
-Structure T_ABSTRACTED_EXPRESSION_FUNCTION Extends TStepBase ; ID= 35
-  
+Structure T_ABSTRACTED_EXPRESSION_FUNCTION Extends TStepEntityBase ; ID= 35
+ ; no more Entries : SUBTYPE OF (maths_function, quantifier_expression) 
 EndStructure 
  
  ; 36 : ACCELERATION_MEASURE_WITH_UNIT
-Structure T_ACCELERATION_MEASURE_WITH_UNIT Extends TStepBase ; ID= 36
-  
+Structure T_ACCELERATION_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 36
+  ; no more Entries : SUBTYPE OF (measure_with_unit);
 EndStructure 
  
  ; 37 : ACCELERATION_UNIT
-Structure T_ACCELERATION_UNIT Extends TStepBase ; ID= 37
-  
+Structure T_ACCELERATION_UNIT Extends TStepEntityBase ; ID= 37
+  ; no more Entries : SUBTYPE OFSUBTYPE OF (derived_unit);
 EndStructure 
  
  ; 38 : ACOS_FUNCTION
-Structure T_ACOS_FUNCTION Extends TStepBase ; ID= 38
-  
+Structure T_ACOS_FUNCTION Extends TStepEntityBase ; ID= 38
+  ; no more Entries : SUBTYPE OF (unary_function_call);  
 EndStructure 
  
  ; 39 : ACTION
-Structure T_ACTION Extends TStepBase ; ID= 39
-  
+Structure T_ACTION Extends TStepEntityBase ; ID= 39
+  Text.s                                ; Description Text
+  *Chosen_Method.T_ACTION_METHOD        ; ENTITY action_method
 EndStructure 
  
  ; 40 : ACTION_ACTUAL
-Structure T_ACTION_ACTUAL Extends TStepBase ; ID= 40
-  
+Structure T_ACTION_ACTUAL Extends TStepEntityBase ; ID= 40
+  ; no more Entries : SUBTYPE OF ENTITY action_actual
 EndStructure 
  
  ; 41 : ACTION_ASSIGNMENT
-Structure T_ACTION_ASSIGNMENT Extends TStepBase ; ID= 41
-  
+Structure T_ACTION_ASSIGNMENT Extends TStepEntityBase ; ID= 41
+  *Assigned_Action.T_ACTION   ; ENTITY action
 EndStructure 
  
  ; 42 : ACTION_DIRECTIVE
-Structure T_ACTION_DIRECTIVE Extends TStepBase ; ID= 42
-  
+Structure T_ACTION_DIRECTIVE Extends TStepEntityBase ; ID= 42
+  Text.s                                ; Description Text
+  Analysis.s 
+  Comment.s 
+  List lst_Rrequests.i()  ; Pointer to ENTITY versioned_action_request 
 EndStructure 
  
  ; 43 : ACTION_DIRECTIVE_RELATIONSHIP
-Structure T_ACTION_DIRECTIVE_RELATIONSHIP Extends TStepBase ; ID= 43
-  
+Structure T_ACTION_DIRECTIVE_RELATIONSHIP Extends TStepEntityBase ; ID= 43
+  Text.s                            ; Description Text
+  *Relating.T_ACTION_DIRECTIVE     ; Pointer to ENTITY action_directive
+  *Related.T_ACTION_DIRECTIVE      ; Pointer to ENTITY action_directive
+  Relation_Type.s   
 EndStructure 
  
  ; 44 : ACTION_HAPPENING
-Structure T_ACTION_HAPPENING Extends TStepBase ; ID= 44
-  
+Structure T_ACTION_HAPPENING Extends TStepEntityBase ; ID= 44
+  ; no more Entries : SUBTYPE OF (action_relationship);
 EndStructure 
  
  ; 45 : ACTION_METHOD
-Structure T_ACTION_METHOD Extends TStepBase ; ID= 45
-  
+Structure T_ACTION_METHOD Extends TStepEntityBase ; ID= 45
+  Text.s                            ; Description Text
+  Consequence.s
+  Purpose.s   
 EndStructure 
  
  ; 46 : ACTION_METHOD_ASSIGNMENT
-Structure T_ACTION_METHOD_ASSIGNMENT Extends TStepBase ; ID= 46
-  
+Structure T_ACTION_METHOD_ASSIGNMENT Extends TStepEntityBase ; ID= 46
+  *Assigned.T_ACTION_METHOD             ; Pointer To ENTITY action_method
+  *Role.T_ACTION_METHOD_ROLE            ; Pointer To ENTITY action_method_role 
 EndStructure 
  
  ; 47 : ACTION_METHOD_RELATIONSHIP
-Structure T_ACTION_METHOD_RELATIONSHIP Extends TStepBase ; ID= 47
-  
+Structure T_ACTION_METHOD_RELATIONSHIP Extends TStepEntityBase ; ID= 47
+  Text.s                          ; Description Text
+  *Relating.T_ACTION_METHOD       ; Pointer To ENTITY action_method
+  *Related.T_ACTION_METHOD        ; Pointer To ENTITY action_method 
 EndStructure 
  
  ; 48 : ACTION_METHOD_ROLE
-Structure T_ACTION_METHOD_ROLE Extends TStepBase ; ID= 48
-  
+Structure T_ACTION_METHOD_ROLE Extends TStepEntityBase ; ID= 48
+  Text.s                         ; Description Text  
 EndStructure 
  
  ; 49 : ACTION_METHOD_WITH_ASSOCIATED_DOCUMENTS
-Structure T_ACTION_METHOD_WITH_ASSOCIATED_DOCUMENTS Extends TStepBase ; ID= 49
-  
+Structure T_ACTION_METHOD_WITH_ASSOCIATED_DOCUMENTS Extends TStepEntityBase ; ID= 49
+  List lst_Documents.i()        ; Pointers to ENTITY document 
 EndStructure 
  
  ; 50 : ACTION_PROPERTY
-Structure T_ACTION_PROPERTY Extends TStepBase ; ID= 50
-  
+Structure T_ACTION_PROPERTY Extends TStepEntityBase ; ID= 50
+  Text.s                        ; Description Text  
+  Definition.i                  ; TYPE characterized_action_definition;
 EndStructure 
  
  ; 51 : ACTION_PROPERTY_REPRESENTATION
-Structure T_ACTION_PROPERTY_REPRESENTATION Extends TStepBase ; ID= 51
-  
+Structure T_ACTION_PROPERTY_REPRESENTATION Extends TStepEntityBase ; ID= 51
+  Text.s                            ; Description Text  
+  *Property.T_ACTION_PROPERTY       ;  Pointer to ENTITY action_property
+  *Representation.T_REPRESENTATION  ; Pointer to ENTITY representation
 EndStructure 
  
  ; 52 : ACTION_RELATIONSHIP
-Structure T_ACTION_RELATIONSHIP Extends TStepBase ; ID= 52
-  
+Structure T_ACTION_RELATIONSHIP Extends TStepEntityBase ; ID= 52
+  Text.s                          ; Description Text
+  *Relating.T_ACTION              ; Pointer to ENTITY action
+  *Related.T_ACTION               ; Pointer to ENTITY action  
 EndStructure 
  
  ; 53 : ACTION_REQUEST_ASSIGNMENT
-Structure T_ACTION_REQUEST_ASSIGNMENT Extends TStepBase ; ID= 53
-  
+Structure T_ACTION_REQUEST_ASSIGNMENT Extends TStepEntityBase ; ID= 53
+  *Assigned_Action_Request.T_VERSIONED_ACTION_REQUEST  ; Pointer to ENTITY versioned_action_request
 EndStructure 
  
  ; 54 : ACTION_REQUEST_SOLUTION
-Structure T_ACTION_REQUEST_SOLUTION Extends TStepBase ; ID= 54
-  
+Structure T_ACTION_REQUEST_SOLUTION Extends TStepEntityBase ; ID= 54
+  Text.s                                ; Description Text
+  *Method.T_ACTION_METHOD               ; Pointer to ENTITY action_method
+  *Request.T_VERSIONED_ACTION_REQUEST   ; Pointer To ENTITY versioned_action_request  
 EndStructure 
  
  ; 55 : ACTION_REQUEST_STATUS
-Structure T_ACTION_REQUEST_STATUS Extends TStepBase ; ID= 55
-  
+Structure T_ACTION_REQUEST_STATUS Extends TStepEntityBase ; ID= 55
+  Status.s 
+  *Assigned_Request.T_VERSIONED_ACTION_REQUEST   ; Pointer To ENTITY versioned_action_request  
 EndStructure 
  
  ; 56 : ACTION_RESOURCE
-Structure T_ACTION_RESOURCE Extends TStepBase ; ID= 56
-  
+Structure T_ACTION_RESOURCE Extends TStepEntityBase ; ID= 56
+  Text.s                            ; Description Text
+  List lst_Usage.i()                ; TYPE supported_item  (action, action_directive, action_method);
+  *Kind.T_ACTION_RESOURCE_TYPE      ; Pointer To ENTITY  action_resource_type 
 EndStructure 
  
  ; 57 : ACTION_RESOURCE_RELATIONSHIP
-Structure T_ACTION_RESOURCE_RELATIONSHIP Extends TStepBase ; ID= 57
-  
+Structure T_ACTION_RESOURCE_RELATIONSHIP Extends TStepEntityBase ; ID= 57
+  Text.s                          ; Description Text
+  *Relating.T_ACTION_RESOURCE     ; Pointer to ENTITY action_resource
+  *Related.T_ACTION_RESOURCE      ; Pointer to ENTITY action_resource    
 EndStructure 
- 
+
+ ; 1760 : RESOURCE_REQUIREMENT_TYPE
+Structure T_RESOURCE_REQUIREMENT_TYPE Extends TStepEntityBase ; ID= 1760
+  Text.s                          ; Description Text  
+EndStructure 
+
  ; 58 : ACTION_RESOURCE_REQUIREMENT
-Structure T_ACTION_RESOURCE_REQUIREMENT Extends TStepBase ; ID= 58
-  
+Structure T_ACTION_RESOURCE_REQUIREMENT Extends TStepEntityBase ; ID= 58
+  Text.s                            ; Description Text
+  *Kind.T_RESOURCE_REQUIREMENT_TYPE      ; Pointer To ENTITY resource_requirement_type
+  List lst_Operations.i()                ; TYPE characterized_action_definition
 EndStructure 
- 
+
  ; 59 : ACTION_RESOURCE_TYPE
-Structure T_ACTION_RESOURCE_TYPE Extends TStepBase ; ID= 59
-  
+Structure T_ACTION_RESOURCE_TYPE Extends TStepEntityBase ; ID= 59
+  ; no more Entries : SUBTYPE OF Nothing
 EndStructure 
  
  ; 60 : ACTION_STATUS
-Structure T_ACTION_STATUS Extends TStepBase ; ID= 60
-  
+Structure T_ACTION_STATUS Extends TStepEntityBase ; ID= 60
+  Status.s
+  *Assigned_Action.T_EXECUTED_ACTION  ; Pointer to ENTITY executed_action  
 EndStructure 
  
  ; 61 : ACTUATED_KINEMATIC_PAIR
-Structure T_ACTUATED_KINEMATIC_PAIR Extends TStepBase ; ID= 61
-  
+Structure T_ACTUATED_KINEMATIC_PAIR Extends TStepEntityBase ; ID= 61
+  ; SUBTYPE OF (kinematic_pair);
+  T_x.i   ; TYPE actuated_direction (bidirectional, positive_only, negative_only, not_actuated)
+  T_y.i   ; OPTIONAL actuated_direction;
+  T_z.i 
+  R_x.i 
+  R_y.i 
+  R_z.i 
 EndStructure 
  
  ; 62 : ADD_ELEMENT
-Structure T_ADD_ELEMENT Extends TStepBase ; ID= 62
-  
+Structure T_ADD_ELEMENT Extends TStepEntityBase ; ID= 62
+  ; no more Entries : SUBTYPE OF (change_element);
 EndStructure 
  
  ; 63 : ADDITIVE_MANUFACTURING_ATOM
-Structure T_ADDITIVE_MANUFACTURING_ATOM Extends TStepBase ; ID= 63
-  
+Structure T_ADDITIVE_MANUFACTURING_ATOM Extends TStepEntityBase ; ID= 63
+  ; no more Entries : SUBTYPE OF (shape_aspect);  
 EndStructure 
  
  ; 64 : ADDITIVE_MANUFACTURING_BUILD_PLATE_RELATIONSHIP
-Structure T_ADDITIVE_MANUFACTURING_BUILD_PLATE_RELATIONSHIP Extends TStepBase ; ID= 64
-  
+Structure T_ADDITIVE_MANUFACTURING_BUILD_PLATE_RELATIONSHIP Extends TStepEntityBase ; ID= 64
+  ; no more Entries : SUBTYPE OF (additive_manufacturing_setup_relationship); 
 EndStructure 
  
  ; 65 : ADDITIVE_MANUFACTURING_CONSTRUCTION
-Structure T_ADDITIVE_MANUFACTURING_CONSTRUCTION Extends TStepBase ; ID= 65
-  
+Structure T_ADDITIVE_MANUFACTURING_CONSTRUCTION Extends TStepEntityBase ; ID= 65
+  ; no more Entries : SUBTYPE OF SUBTYPE OF (shape_aspect);   
 EndStructure 
  
  ; 66 : ADDITIVE_MANUFACTURING_FEATURE
-Structure T_ADDITIVE_MANUFACTURING_FEATURE Extends TStepBase ; ID= 66
-  
+Structure T_ADDITIVE_MANUFACTURING_FEATURE Extends TStepEntityBase ; ID= 66
+  ; no more Entries : SUBTYPE OF (feature_definition);   
 EndStructure 
  
  ; 67 : ADDITIVE_MANUFACTURING_SETUP
-Structure T_ADDITIVE_MANUFACTURING_SETUP Extends TStepBase ; ID= 67
-  
+Structure T_ADDITIVE_MANUFACTURING_SETUP Extends TStepEntityBase ; ID= 67
+  ; no more Entries : SUBTYPE OF (product) 
 EndStructure 
  
  ; 68 : ADDITIVE_MANUFACTURING_SETUP_RELATIONSHIP
-Structure T_ADDITIVE_MANUFACTURING_SETUP_RELATIONSHIP Extends TStepBase ; ID= 68
-  
+Structure T_ADDITIVE_MANUFACTURING_SETUP_RELATIONSHIP Extends TStepEntityBase ; ID= 68
+  ; no more Entries : SUBTYPE OF (next_assembly_usage_occurrence); 
 EndStructure 
  
  ; 69 : ADDITIVE_MANUFACTURING_SETUP_WORKPIECE_RELATIONSHIP
-Structure T_ADDITIVE_MANUFACTURING_SETUP_WORKPIECE_RELATIONSHIP Extends TStepBase ; ID= 69
-  
+Structure T_ADDITIVE_MANUFACTURING_SETUP_WORKPIECE_RELATIONSHIP Extends TStepEntityBase ; ID= 69
+  ; no more Entries : SUBTYPE OF (additive_manufacturing_setup_relationship);
 EndStructure 
  
  ; 70 : ADDITIVE_MANUFACTURING_SUPPORT_STRUCTURE_GEOMETRY_RELATIONSHIP
-Structure T_ADDITIVE_MANUFACTURING_SUPPORT_STRUCTURE_GEOMETRY_RELATIONSHIP Extends TStepBase ; ID= 70
-  
+Structure T_ADDITIVE_MANUFACTURING_SUPPORT_STRUCTURE_GEOMETRY_RELATIONSHIP Extends TStepEntityBase ; ID= 70
+  ; no more Entries : SUBTYPE OF (additive_manufacturing_setup_relationship);  
 EndStructure 
  
  ; 71 : ADDITIVE_TYPE_OPERATION
-Structure T_ADDITIVE_TYPE_OPERATION Extends TStepBase ; ID= 71
-  
+Structure T_ADDITIVE_TYPE_OPERATION Extends TStepEntityBase ; ID= 71
+  ; no more Entries : SUBTYPE OF (machining_operation);  
 EndStructure 
  
  ; 72 : ADDRESS
-Structure T_ADDRESS Extends TStepBase ; ID= 72
-  
+Structure T_ADDRESS Extends TStepEntityBase ; ID= 72
+  Internal_Location.s
+  Street_Number.s
+  Street.s
+  Postal_Vox.s
+  Town.s
+  Region.s
+  Postal_code.s
+  Country.s
+  Facsimile_Number.s
+  Telephone_Number.s;
+  EMail_Address.s
+  Telex_Number.s
+  URL.s 
 EndStructure 
  
  ; 73 : ADVANCED_BREP_SHAPE_REPRESENTATION
-Structure T_ADVANCED_BREP_SHAPE_REPRESENTATION Extends TStepBase ; ID= 73
-  
+Structure T_ADVANCED_BREP_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 73
+  ; no more Entries : SUBTYPE OF (shape_representation);   
 EndStructure 
  
  ; 74 : ADVANCED_FACE
-Structure T_ADVANCED_FACE Extends TStepBase ; ID= 74
-  ; TODO
-  *Bound          ; Pointer to Bound Element
-  *Surface        ; Pointer to Surface Element
-  same_sense.w    ; Boolean
-  
+Structure T_ADVANCED_FACE Extends TStepEntityBase ; ID= 74
+  ; no more Entries : SUBTYPE OF (face_surface);   
 EndStructure 
  
  ; 75 : AGC_WITH_DIMENSION
-Structure T_AGC_WITH_DIMENSION Extends TStepBase ; ID= 75
-  
+Structure T_AGC_WITH_DIMENSION Extends TStepEntityBase ; ID= 75
+  ; SUBTYPE OF (angle_geometric_constraint);
+  Angle_Value.f   ; TYPE plane_angle_measure = REAL;
 EndStructure 
  
  ; 76 : AGGREGATE_ID_ATTRIBUTE
-Structure T_AGGREGATE_ID_ATTRIBUTE Extends TStepBase ; ID= 76
-  
+Structure T_AGGREGATE_ID_ATTRIBUTE Extends TStepEntityBase ; ID= 76
+  Attribute_Value.s  ; TYPE identifier = STRING;
+  List lst_Identified_Item.i();  TYPE id_attribute_select = Enity_ID  
 EndStructure 
  
  ; 77 : ALL_AROUND_SHAPE_ASPECT
-Structure T_ALL_AROUND_SHAPE_ASPECT Extends TStepBase ; ID= 77
-  
+Structure T_ALL_AROUND_SHAPE_ASPECT Extends TStepEntityBase ; ID= 77
+  ; no more Entries : SUBTYPE OF (continuous_shape_aspect);  
 EndStructure 
  
  ; 78 : ALTERNATE_PRODUCT_RELATIONSHIP
-Structure T_ALTERNATE_PRODUCT_RELATIONSHIP Extends TStepBase ; ID= 78
-  
+Structure T_ALTERNATE_PRODUCT_RELATIONSHIP Extends TStepEntityBase ; ID= 78
+  Text.s                          ; Description Text
+  *Alternate.T_PRODUCT    ; Pointer to ENTITY product (unique)
+  *Base.T_PRODUCT         ; Pointer to ENTITY product (unique) & (Base <> Alterante)
+  Basis.s 
 EndStructure 
  
  ; 79 : ALTERNATIVE_SOLUTION_RELATIONSHIP
-Structure T_ALTERNATIVE_SOLUTION_RELATIONSHIP Extends TStepBase ; ID= 79
-  
+Structure T_ALTERNATIVE_SOLUTION_RELATIONSHIP Extends TStepEntityBase ; ID= 79
+  ; SUBTYPE OF (product_definition_formation_relationship); 
+  Relation_Type.s ;   STRING;
 EndStructure 
  
  ; 80 : AMOUNT_OF_SUBSTANCE_MEASURE_WITH_UNIT
-Structure T_AMOUNT_OF_SUBSTANCE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 80
-  
+Structure T_AMOUNT_OF_SUBSTANCE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 80
+ ; no more Entries : SUBTYPE OF (measure_with_unit); 
 EndStructure 
  
  ; 81 : AMOUNT_OF_SUBSTANCE_UNIT
-Structure T_AMOUNT_OF_SUBSTANCE_UNIT Extends TStepBase ; ID= 81
-  
+Structure T_AMOUNT_OF_SUBSTANCE_UNIT Extends TStepEntityBase ; ID= 81
+ ; no more Entries : SUBTYPE OF (named_unit);  
 EndStructure 
  
  ; 82 : ANALYSIS_ASSIGNMENT
-Structure T_ANALYSIS_ASSIGNMENT Extends TStepBase ; ID= 82
-  
+Structure T_ANALYSIS_ASSIGNMENT Extends TStepEntityBase ; ID= 82
+ ; no more Entries : SUBTYPE OF (group); 
 EndStructure 
  
  ; 83 : ANALYSIS_ITEM
-Structure T_ANALYSIS_ITEM Extends TStepBase ; ID= 83
-  
+Structure T_ANALYSIS_ITEM Extends TStepEntityBase ; ID= 83
+  ; SUBTYPE OF (group_assignment)                   ;
+  List lst_Items.i()                    ; TYPE analysed_item (a Entity_ID-List)
+  *Assigned_Group.T_ANALYSIS_ASSIGNMENT ; Pointer to ENTITY analysis_assignment (SELF\group_assignment.assigned_group : analysis_assignment;=
 EndStructure 
- 
- ; 84 : ANALYSIS_MODEL
-Structure T_ANALYSIS_MODEL Extends TStepBase ; ID= 84
-  
-EndStructure 
- 
+
  ; 85 : ANALYSIS_REPRESENTATION_CONTEXT
-Structure T_ANALYSIS_REPRESENTATION_CONTEXT Extends TStepBase ; ID= 85
-  
+Structure T_ANALYSIS_REPRESENTATION_CONTEXT Extends TStepEntityBase ; ID= 85
+  ; no more Entries : SUBTYPE OF (representation_context); 
+EndStructure 
+
+ ; 84 : ANALYSIS_MODEL
+Structure T_ANALYSIS_MODEL Extends TStepEntityBase ; ID= 84
+  ; SUBTYPE OF (representation);  
+  Representaion.T_ANALYSIS_REPRESENTATION_CONTEXT ; Pointer to ENTITY analysis_representation_context
 EndStructure 
  
  ; 86 : AND_EXPRESSION
-Structure T_AND_EXPRESSION Extends TStepBase ; ID= 86
-  
+Structure T_AND_EXPRESSION Extends TStepEntityBase ; ID= 86
+  ; no more Entries : SUBTYPE OF (multiple_arity_boolean_expression);
 EndStructure 
  
  ; 87 : ANGLE_ASSEMBLY_CONSTRAINT_WITH_DIMENSION
-Structure T_ANGLE_ASSEMBLY_CONSTRAINT_WITH_DIMENSION Extends TStepBase ; ID= 87
-  
+Structure T_ANGLE_ASSEMBLY_CONSTRAINT_WITH_DIMENSION Extends TStepEntityBase ; ID= 87
+  ; no more Entries : SUBTYPE OF (binary_assembly_constraint, agc_with_dimension);
 EndStructure 
  
  ; 88 : ANGLE_DIRECTION_REFERENCE
-Structure T_ANGLE_DIRECTION_REFERENCE Extends TStepBase ; ID= 88
-  
+Structure T_ANGLE_DIRECTION_REFERENCE Extends TStepEntityBase ; ID= 88
+  ; SUBTYPE OF (representation_item_relationship, geometric_representation_item);  
+ *Relating_Representation_item.i ; TYPE orientation_basis_select = Entity_ID
+ *Related_Representation_item.i  ; TYPE angle_direction_reference_select = Entity_ID
 EndStructure 
  
  ; 89 : ANGLE_GEOMETRIC_CONSTRAINT
-Structure T_ANGLE_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 89
-  
+Structure T_ANGLE_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 89
+  ; SUBTYPE OF (explicit_geometric_constraint);  
+  List lst_Constrained_Elements.i() ; TYPE linear_geometry_constraint_element = Entity_ID
+  List lst_Reference_Elements.i()   ; TYPE linear_geometry_constraint_element = Entity_ID 
 EndStructure 
  
  ; 90 : ANGULAR_DIMENSION
-Structure T_ANGULAR_DIMENSION Extends TStepBase ; ID= 90
-  
+Structure T_ANGULAR_DIMENSION Extends TStepEntityBase ; ID= 90
+  ; no more Entries : SUBTYPE OF (dimension_curve_directed_callout);
 EndStructure 
  
  ; 91 : ANGULAR_LOCATION
-Structure T_ANGULAR_LOCATION Extends TStepBase ; ID= 91
-  
+Structure T_ANGULAR_LOCATION Extends TStepEntityBase ; ID= 91
+  ; SUBTYPE OF (dimensional_location);  
+  Angle_Selection.i     ; TYPE angle_relator (equal large, small);
 EndStructure 
  
  ; 92 : ANGULAR_SIZE
-Structure T_ANGULAR_SIZE Extends TStepBase ; ID= 92
-  
+Structure T_ANGULAR_SIZE Extends TStepEntityBase ; ID= 92
+  ; SUBTYPE OF (dimensional_size);  
+  Angle_Selection.i     ; TYPE angle_relator (equal large, small);  
 EndStructure 
  
  ; 93 : ANGULARITY_TOLERANCE
-Structure T_ANGULARITY_TOLERANCE Extends TStepBase ; ID= 93
-  
+Structure T_ANGULARITY_TOLERANCE Extends TStepEntityBase ; ID= 93
+  ; no more Entries : UBTYPE OF (geometric_tolerance_with_datum_reference);  
 EndStructure 
  
  ; 94 : ANNOTATION_CURVE_OCCURRENCE
-Structure T_ANNOTATION_CURVE_OCCURRENCE Extends TStepBase ; ID= 94
-  
+Structure T_ANNOTATION_CURVE_OCCURRENCE Extends TStepEntityBase ; ID= 94
+  CurveItem.i   ; TYPE curve_or_curve_set (curve, geometric_curve_set) = Entity_ID
 EndStructure 
  
  ; 95 : ANNOTATION_FILL_AREA
-Structure T_ANNOTATION_FILL_AREA Extends TStepBase ; ID= 95
-  
+Structure T_ANNOTATION_FILL_AREA Extends TStepEntityBase ; ID= 95
+  ;SUBTYPE OF (geometric_representation_item);
+  List lst_Boundaries.i()   ; List of Pointers to ENTITY Curve  
 EndStructure 
  
  ; 96 : ANNOTATION_FILL_AREA_OCCURRENCE
-Structure T_ANNOTATION_FILL_AREA_OCCURRENCE Extends TStepBase ; ID= 96
-  
+Structure T_ANNOTATION_FILL_AREA_OCCURRENCE Extends TStepEntityBase ; ID= 96
+  ; SUBTYPE OF (annotation_occurrence);
+  *Fill_Style_Target.T_POINT          ;  Pointer to ENTITY Point
+  *FillArea.T_ANNOTATION_FILL_AREA    ;  Pointer to ENTITY annotation_fill_area
 EndStructure 
  
  ; 97 : ANNOTATION_OCCURRENCE
-Structure T_ANNOTATION_OCCURRENCE Extends TStepBase ; ID= 97
-  
+Structure T_ANNOTATION_OCCURRENCE Extends TStepEntityBase ; ID= 97
+   ; no more Entries : SUBTYPE OF (styled_item);
 EndStructure 
  
  ; 98 : ANNOTATION_OCCURRENCE_ASSOCIATIVITY
-Structure T_ANNOTATION_OCCURRENCE_ASSOCIATIVITY Extends TStepBase ; ID= 98
-  
+Structure T_ANNOTATION_OCCURRENCE_ASSOCIATIVITY Extends TStepEntityBase ; ID= 98
+   ; no more Entries : SUBTYPE OF (annotation_occurrence_relationship);  
 EndStructure 
  
  ; 99 : ANNOTATION_OCCURRENCE_RELATIONSHIP
-Structure T_ANNOTATION_OCCURRENCE_RELATIONSHIP Extends TStepBase ; ID= 99
-  
+Structure T_ANNOTATION_OCCURRENCE_RELATIONSHIP Extends TStepEntityBase ; ID= 99
+  Text.s                          ; Description Text
+  *Relating_Annotation_Occurrence.T_ANNOTATION_OCCURRENCE ; Pointer To ENTITY annotation_occurrence
+  *Telated_Annotation_Occurrence.T_ANNOTATION_OCCURRENCE ; Pointer To ENTITY annotation_occurrence
 EndStructure 
  
  ; 100 : ANNOTATION_PLACEHOLDER_OCCURRENCE
-Structure T_ANNOTATION_PLACEHOLDER_OCCURRENCE Extends TStepBase ; ID= 100
-  
+Structure T_ANNOTATION_PLACEHOLDER_OCCURRENCE Extends TStepEntityBase ; ID= 100
+  ; SUBTYPE OF (annotation_occurrence, geometric_representation_item);  
+  *Geometric_Set.T_GEOMETRIC_SET ; Pointer to ENTITY geometric_set
+  Role.i                         ; TYPE annotation_placeholder_occurrence_role (annotation_text, gps_data)
+  Line_Spacing.f                 ; TYPE positive_length_measure Ends in length_measre = REAL
+  ; Inverse
+  *Callout.T_DRAUGHTING_CALLOUT  ; Pointer to ENTITY draughting_callout
+  List lst_Draughting_Model_Item.i() ; List of Pointers toENTITY draughting_model_item_association_with_placeholder
 EndStructure 
  
  ; 101 : ANNOTATION_PLANE
-Structure T_ANNOTATION_PLANE Extends TStepBase ; ID= 101
-  
+Structure T_ANNOTATION_PLANE Extends TStepEntityBase ; ID= 101
+  ; SUBTYPE OF (annotation_occurrence, geometric_representation_item);  
+  List lst_Elements.i() ; TYPE annotation_plane_element (draughting_callout, styled_item) 
+  ItemType.i  ;  TYPE plane_or_planar_box (planar_box, pane) = Entity_ID
 EndStructure 
  
  ; 102 : ANNOTATION_POINT_OCCURRENCE
-Structure T_ANNOTATION_POINT_OCCURRENCE Extends TStepBase ; ID= 102
-  
+Structure T_ANNOTATION_POINT_OCCURRENCE Extends TStepEntityBase ; ID= 102
+  ;SUBTYPE OF (annotation_occurrence);
+  *Point.T_POINT    ; Pointer ot ENITY Point     
 EndStructure 
  
  ; 103 : ANNOTATION_SUBFIGURE_OCCURRENCE
-Structure T_ANNOTATION_SUBFIGURE_OCCURRENCE Extends TStepBase ; ID= 103
-  
+Structure T_ANNOTATION_SUBFIGURE_OCCURRENCE Extends TStepEntityBase ; ID= 103
+  ; no more Entries : SUBTYPE OF (annotation_symbol_occurrence);
 EndStructure 
  
  ; 104 : ANNOTATION_SYMBOL
-Structure T_ANNOTATION_SYMBOL Extends TStepBase ; ID= 104
-  
+Structure T_ANNOTATION_SYMBOL Extends TStepEntityBase ; ID= 104
+  ; SUBTYPE OF (mapped_item);  
+  *Mapping_Soure.T_SYMBOL_REPRESENTATION_MAP  ; Pointer to ENTITY symbol_representation_map
+  *Mapping_Target-T_SYMBOL_TARGET             ; Pointer to ENTITY symbol_target
 EndStructure 
  
  ; 105 : ANNOTATION_SYMBOL_OCCURRENCE
-Structure T_ANNOTATION_SYMBOL_OCCURRENCE Extends TStepBase ; ID= 105
-  
+Structure T_ANNOTATION_SYMBOL_OCCURRENCE Extends TStepEntityBase ; ID= 105
+  ; SUBTYPE OF (annotation_occurrence);
+  Annotation_Symbol.i ; TYPE annotation_symbol_occurrence_item (annotation_symbol, defined_symbol) = Entity_ID
 EndStructure 
  
  ; 106 : ANNOTATION_TEXT
-Structure T_ANNOTATION_TEXT Extends TStepBase ; ID= 106
-  
+Structure T_ANNOTATION_TEXT Extends TStepEntityBase ; ID= 106
+  ; SUBTYPE OF (mapped_item);  
+  Mapping_Target.i  ; TYPE axis2_placement (axis2_placement_2d, axis2_placement_3d) = Entity_ID
 EndStructure 
  
  ; 107 : ANNOTATION_TEXT_CHARACTER
-Structure T_ANNOTATION_TEXT_CHARACTER Extends TStepBase ; ID= 107
-  
+Structure T_ANNOTATION_TEXT_CHARACTER Extends TStepEntityBase ; ID= 107
+  ; SUBTYPE OF (mapped_item);  
+  Mapping_Target.i  ; TYPE axis2_placement (axis2_placement_2d, axis2_placement_3d) = Entity_ID  
 EndStructure 
  
  ; 108 : ANNOTATION_TEXT_OCCURRENCE
-Structure T_ANNOTATION_TEXT_OCCURRENCE Extends TStepBase ; ID= 108
-  
+Structure T_ANNOTATION_TEXT_OCCURRENCE Extends TStepEntityBase ; ID= 108
+  ; SUBTYPE OF (annotation_occurrence);  
+  Item.i ; TYPE annotation_text_occurrence_item (annotation_text, annotation_text_character,	composite_text, defined_character_glyph, text_literal) = Entity_ID
 EndStructure 
  
  ; 109 : AP242_ASSIGNMENT_OBJECT_RELATIONSHIP
-Structure T_AP242_ASSIGNMENT_OBJECT_RELATIONSHIP Extends TStepBase ; ID= 109
-  
+Structure T_AP242_ASSIGNMENT_OBJECT_RELATIONSHIP Extends TStepEntityBase ; ID= 109
+  ; SUBTYPE OF (assignment_object_relationship); 
+  Relating.i  ; TYPE ap242_assignment_object_select = Entity_ID
+  Related.i   ; TYPE ap242_assignment_object_select = Entity_ID
 EndStructure 
  
  ; 110 : APEX
-Structure T_APEX Extends TStepBase ; ID= 110
-  
+Structure T_APEX Extends TStepEntityBase ; ID= 110
+  ; no more Entries : SUBTYPE OF (derived_shape_aspect);  
 EndStructure 
  
  ; 111 : APPLICATION_CONTEXT
-Structure T_APPLICATION_CONTEXT Extends TStepBase ; ID= 111
-  
+Structure T_APPLICATION_CONTEXT Extends TStepEntityBase ; ID= 111
+  Application.s   ; label 
+  Text.s          ; Description Text
+  ; Inverse
+  List lst_Context_Elements.i()   ; Pointers To ENTITY application_context_element
 EndStructure 
  
  ; 112 : APPLICATION_CONTEXT_ELEMENT
-Structure T_APPLICATION_CONTEXT_ELEMENT Extends TStepBase ; ID= 112
-  
+Structure T_APPLICATION_CONTEXT_ELEMENT Extends TStepEntityBase ; ID= 112
+  *Frame_Of_Reference.T_APPLICATION_CONTEXT;  Pointer to ENTITY application_context 
 EndStructure 
  
  ; 113 : APPLICATION_CONTEXT_RELATIONSHIP
-Structure T_APPLICATION_CONTEXT_RELATIONSHIP Extends TStepBase ; ID= 113
-  
+Structure T_APPLICATION_CONTEXT_RELATIONSHIP Extends TStepEntityBase ; ID= 113
+  Text.s          ; Description Text
+  *Relating.T_APPLICATION_CONTEXT   ; Pointer to ENTITY application_context
+  *Related.T_APPLICATION_CONTEXT    ; Pointer to ENTITY application_context
 EndStructure 
  
  ; 114 : APPLICATION_DEFINED_FUNCTION
-Structure T_APPLICATION_DEFINED_FUNCTION Extends TStepBase ; ID= 114
-  
+Structure T_APPLICATION_DEFINED_FUNCTION Extends TStepEntityBase ; ID= 114
+  ; SUBTYPE OF (maths_function); 
+  Explicit_Domain.i ; TYPE tuple_space (ENTITY extended_tuple_space, TYPE product_space)
+  Explicit_Range.i  ; TYPE tuple_space (ENTITY extended_tuple_space, TYPE product_space) 
+  List lst_Parameters.i() ; TYPE maths_value
 EndStructure 
  
  ; 115 : APPLICATION_PROTOCOL_DEFINITION
-Structure T_APPLICATION_PROTOCOL_DEFINITION Extends TStepBase ; ID= 115
-  
+Structure T_APPLICATION_PROTOCOL_DEFINITION Extends TStepEntityBase ; ID= 115
+  Status.s ;  label;
+  Application_Interpreted_Model_Schema_Name.s ;  label;
+  Application_Protocol_Year.i                 ; TYPE year_number = Integer 
+  *Application.T_APPLICATION_CONTEXT          ; Pointter to ENTITY application_context
 EndStructure 
  
  ; 116 : APPLIED_ACTION_ASSIGNMENT
-Structure T_APPLIED_ACTION_ASSIGNMENT Extends TStepBase ; ID= 116
-  
+Structure T_APPLIED_ACTION_ASSIGNMENT Extends TStepEntityBase ; ID= 116
+   ; SUBTYPE OF (action_assignment);
+  List lst_Items.i() ; TYPE action_item = Entity_ID
 EndStructure 
  
  ; 117 : APPLIED_ACTION_METHOD_ASSIGNMENT
-Structure T_APPLIED_ACTION_METHOD_ASSIGNMENT Extends TStepBase ; ID= 117
-  
+Structure T_APPLIED_ACTION_METHOD_ASSIGNMENT Extends TStepEntityBase ; ID= 117
+  ; SUBTYPE OF (action_method_assignment);
+  List lst_Items.i() ; TYPE action_method_items = Entity_ID  
 EndStructure 
  
  ; 118 : APPLIED_ACTION_REQUEST_ASSIGNMENT
-Structure T_APPLIED_ACTION_REQUEST_ASSIGNMENT Extends TStepBase ; ID= 118
-  
+Structure T_APPLIED_ACTION_REQUEST_ASSIGNMENT Extends TStepEntityBase ; ID= 118
+  ; SUBTYPE OF (action_request_assignment);
+  List lst_Items.i() ; TYPE action_request_item = Entity_ID  
 EndStructure 
  
  ; 119 : APPLIED_APPROVAL_ASSIGNMENT
-Structure T_APPLIED_APPROVAL_ASSIGNMENT Extends TStepBase ; ID= 119
-  
+Structure T_APPLIED_APPROVAL_ASSIGNMENT Extends TStepEntityBase ; ID= 119
+  ; SUBTYPE OF (approval_assignment);
+  List lst_Items.i() ; TYPE approval_item = Entity_ID   
 EndStructure 
  
  ; 120 : APPLIED_AREA
-Structure T_APPLIED_AREA Extends TStepBase ; ID= 120
-  
+Structure T_APPLIED_AREA Extends TStepEntityBase ; ID= 120
+  ; no more Entries : SUBTYPE OF (shape_aspect);  
 EndStructure 
  
  ; 121 : APPLIED_ATTRIBUTE_CLASSIFICATION_ASSIGNMENT
-Structure T_APPLIED_ATTRIBUTE_CLASSIFICATION_ASSIGNMENT Extends TStepBase ; ID= 121
-  
+Structure T_APPLIED_ATTRIBUTE_CLASSIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 121
+  ; SUBTYPE OF (attribute_classification_assignment);  
+  *Assigned_class     ; Pointer to ENTITY class
+  List lst_Items.i()  ; TYPE attribute_classification_item = Entity_ID  
 EndStructure 
  
  ; 122 : APPLIED_CERTIFICATION_ASSIGNMENT
-Structure T_APPLIED_CERTIFICATION_ASSIGNMENT Extends TStepBase ; ID= 122
-  
+Structure T_APPLIED_CERTIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 122
+  ; SUBTYPE OF (certification_assignment);
+  List lst_Items.i()  ; TYPE certification_item = Entity_ID   
 EndStructure 
  
  ; 123 : APPLIED_CLASSIFICATION_ASSIGNMENT
-Structure T_APPLIED_CLASSIFICATION_ASSIGNMENT Extends TStepBase ; ID= 123
-  
+Structure T_APPLIED_CLASSIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 123
+  ; SUBTYPE OF (classification_assignment);
+  List lst_Items.i()  ; TYPE classification_item = Entity_ID   
 EndStructure 
  
  ; 124 : APPLIED_CLASSIFICATION_ASSIGNMENT_RELATIONSHIP
-Structure T_APPLIED_CLASSIFICATION_ASSIGNMENT_RELATIONSHIP Extends TStepBase ; ID= 124
-  
+Structure T_APPLIED_CLASSIFICATION_ASSIGNMENT_RELATIONSHIP Extends TStepEntityBase ; ID= 124
+  ; SUBTYPE OF (classification_assignment_relationship); 
+  *Relating.T_APPLIED_CLASSIFICATION_ASSIGNMENT   ; Pointer to ENTITY applied_classification_assignment
+  *Related.T_APPLIED_CLASSIFICATION_ASSIGNMENT    ; Pointer to ENTITY applied_classification_assignment
 EndStructure 
  
  ; 125 : APPLIED_CONTRACT_ASSIGNMENT
-Structure T_APPLIED_CONTRACT_ASSIGNMENT Extends TStepBase ; ID= 125
-  
+Structure T_APPLIED_CONTRACT_ASSIGNMENT Extends TStepEntityBase ; ID= 125
+  ; SUBTYPE OF (contract_assignment);
+  List lst_Items.i()  ; TYPE contract_item = Entity_ID     
 EndStructure 
  
  ; 126 : APPLIED_DATE_AND_TIME_ASSIGNMENT
-Structure T_APPLIED_DATE_AND_TIME_ASSIGNMENT Extends TStepBase ; ID= 126
-  
+Structure T_APPLIED_DATE_AND_TIME_ASSIGNMENT Extends TStepEntityBase ; ID= 126
+  ; SUBTYPE OF (date_and_time_assignment);
+  List lst_Items.i()  ; TYPE date_and_time_item = Entity_ID      
 EndStructure 
  
  ; 127 : APPLIED_DATE_ASSIGNMENT
-Structure T_APPLIED_DATE_ASSIGNMENT Extends TStepBase ; ID= 127
-  
+Structure T_APPLIED_DATE_ASSIGNMENT Extends TStepEntityBase ; ID= 127
+  ; SUBTYPE OF (date_assignment);
+  List lst_Items.i()  ; TYPE date_item = Entity_ID      
 EndStructure 
  
  ; 128 : APPLIED_DESCRIPTION_TEXT_ASSIGNMENT
-Structure T_APPLIED_DESCRIPTION_TEXT_ASSIGNMENT Extends TStepBase ; ID= 128
-  
+Structure T_APPLIED_DESCRIPTION_TEXT_ASSIGNMENT Extends TStepEntityBase ; ID= 128
+  ; SUBTYPE OF (description_text_assignment);
+  List lst_Items.i()  ; TYPE description_item = Entity_ID      
 EndStructure 
  
  ; 129 : APPLIED_DESCRIPTION_TEXT_ASSIGNMENT_RELATIONSHIP
-Structure T_APPLIED_DESCRIPTION_TEXT_ASSIGNMENT_RELATIONSHIP Extends TStepBase ; ID= 129
-  
+Structure T_APPLIED_DESCRIPTION_TEXT_ASSIGNMENT_RELATIONSHIP Extends TStepEntityBase ; ID= 129
+  ; SUBTYPE OF (description_text_assignment_relationship);
+  *Relating.T_APPLIED_DESCRIPTION_TEXT_ASSIGNMENT   ; Pointer to ENTITY applied_description_text_assignment
+  *Related.T_APPLIED_DESCRIPTION_TEXT_ASSIGNMENT    ; Pointer to ENTITY applied_description_text_assignment 
 EndStructure 
  
  ; 130 : APPLIED_DIRECTED_ACTION_ASSIGNMENT
-Structure T_APPLIED_DIRECTED_ACTION_ASSIGNMENT Extends TStepBase ; ID= 130
-  
+Structure T_APPLIED_DIRECTED_ACTION_ASSIGNMENT Extends TStepEntityBase ; ID= 130
+  ; SUBTYPE OF (directed_action_assignment);
+  List lst_Items.i()  ; TYPE action_request_item = Entity_ID        
 EndStructure 
  
  ; 131 : APPLIED_DOCUMENT_REFERENCE
-Structure T_APPLIED_DOCUMENT_REFERENCE Extends TStepBase ; ID= 131
-  
+Structure T_APPLIED_DOCUMENT_REFERENCE Extends TStepEntityBase ; ID= 131
+  ; SUBTYPE OF (document_reference);
+  List lst_Items.i()  ; TYPE document_reference_item = Entity_ID        
 EndStructure 
  
  ; 132 : APPLIED_DOCUMENT_USAGE_CONSTRAINT_ASSIGNMENT
-Structure T_APPLIED_DOCUMENT_USAGE_CONSTRAINT_ASSIGNMENT Extends TStepBase ; ID= 132
-  
+Structure T_APPLIED_DOCUMENT_USAGE_CONSTRAINT_ASSIGNMENT Extends TStepEntityBase ; ID= 132
+  ; SUBTYPE OF (document_usage_constraint_assignment);
+  List lst_Items.i()  ; TYPE applied_document_usage_constraint_assignment = Entity_ID          
 EndStructure 
  
  ; 133 : APPLIED_EFFECTIVITY_ASSIGNMENT
-Structure T_APPLIED_EFFECTIVITY_ASSIGNMENT Extends TStepBase ; ID= 133
-  
+Structure T_APPLIED_EFFECTIVITY_ASSIGNMENT Extends TStepEntityBase ; ID= 133
+  ; SUBTYPE OF (effectivity_assignment);
+  List lst_Items.i()  ; TYPE effectivity_item = Entity_ID           
 EndStructure 
  
  ; 134 : APPLIED_EFFECTIVITY_CONTEXT_ASSIGNMENT
-Structure T_APPLIED_EFFECTIVITY_CONTEXT_ASSIGNMENT Extends TStepBase ; ID= 134
-  
+Structure T_APPLIED_EFFECTIVITY_CONTEXT_ASSIGNMENT Extends TStepEntityBase ; ID= 134
+  ; SUBTYPE OF (event_occurrence_assignment);
+  List lst_Items.i()  ; TYPE effectivity_context_item = Entity_ID             
 EndStructure 
  
  ; 135 : APPLIED_EVENT_OCCURRENCE_ASSIGNMENT
-Structure T_APPLIED_EVENT_OCCURRENCE_ASSIGNMENT Extends TStepBase ; ID= 135
-  
+Structure T_APPLIED_EVENT_OCCURRENCE_ASSIGNMENT Extends TStepEntityBase ; ID= 135
+  ; SUBTYPE OF (event_occurrence_assignment);
+  List lst_Items.i()  ; TYPE event_occurrence_item = Entity_ID            
 EndStructure 
  
  ; 136 : APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT
-Structure T_APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT Extends TStepBase ; ID= 136
-  
+Structure T_APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 136
+  ; SUBTYPE OF (external_identification_assignment);
+  List lst_Items.i()  ; TYPE external_identification_item = Entity_ID              
 EndStructure 
  
  ; 137 : APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT_RELATIONSHIP
-Structure T_APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT_RELATIONSHIP Extends TStepBase ; ID= 137
-  
+Structure T_APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT_RELATIONSHIP Extends TStepEntityBase ; ID= 137
+  ; SUBTYPE OF (external_identification_assignment_relationship);
+  *Relating.T_APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT   ; Pointer to ENTITY applied_external_identification_assignment
+  *Related.T_APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT    ; Pointer to ENTITY applied_external_identification_assignment
 EndStructure 
  
  ; 138 : APPLIED_GROUP_ASSIGNMENT
-Structure T_APPLIED_GROUP_ASSIGNMENT Extends TStepBase ; ID= 138
-  
+Structure T_APPLIED_GROUP_ASSIGNMENT Extends TStepEntityBase ; ID= 138
+  ; SUBTYPE OF (group_assignment);
+  List lst_Items.i()  ; TYPE groupable_item = Entity_ID                
 EndStructure 
  
  ; 139 : APPLIED_IDENTIFICATION_ASSIGNMENT
-Structure T_APPLIED_IDENTIFICATION_ASSIGNMENT Extends TStepBase ; ID= 139
-  
+Structure T_APPLIED_IDENTIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 139
+  ; SUBTYPE OF (identification_assignment);
+  List lst_Items.i()  ; TYPE identification_item = Entity_ID                  
 EndStructure 
  
  ; 140 : APPLIED_INEFFECTIVITY_ASSIGNMENT
-Structure T_APPLIED_INEFFECTIVITY_ASSIGNMENT Extends TStepBase ; ID= 140
-  
+Structure T_APPLIED_INEFFECTIVITY_ASSIGNMENT Extends TStepEntityBase ; ID= 140
+  ; SUBTYPE OF (effectivity_assignment);
+  List lst_Items.i()  ; TYPE effectivity_item = Entity_ID                   
 EndStructure 
  
  ; 141 : APPLIED_LOCATION_ASSIGNMENT
-Structure T_APPLIED_LOCATION_ASSIGNMENT Extends TStepBase ; ID= 141
-  
+Structure T_APPLIED_LOCATION_ASSIGNMENT Extends TStepEntityBase ; ID= 141
+  ; SUBTYPE OF (location_assignment);
+  List lst_Items.i()  ; TYPE location_item = Entity_ID                    
 EndStructure 
  
  ; 142 : APPLIED_LOCATION_REPRESENTATION_ASSIGNMENT
-Structure T_APPLIED_LOCATION_REPRESENTATION_ASSIGNMENT Extends TStepBase ; ID= 142
-  
+Structure T_APPLIED_LOCATION_REPRESENTATION_ASSIGNMENT Extends TStepEntityBase ; ID= 142
+  ; SUBTYPE OF (location_representation_assignment);
+  List lst_Items.i()  ; TYPE location_representation_item = Entity_ID                     
 EndStructure 
  
  ; 143 : APPLIED_NAME_ASSIGNMENT
-Structure T_APPLIED_NAME_ASSIGNMENT Extends TStepBase ; ID= 143
-  
+Structure T_APPLIED_NAME_ASSIGNMENT Extends TStepEntityBase ; ID= 143
+  ; SUBTYPE OF (name_assignment);
+  Item.i ; TYPE name_item
 EndStructure 
  
  ; 144 : APPLIED_ORGANIZATION_ASSIGNMENT
-Structure T_APPLIED_ORGANIZATION_ASSIGNMENT Extends TStepBase ; ID= 144
-  
+Structure T_APPLIED_ORGANIZATION_ASSIGNMENT Extends TStepEntityBase ; ID= 144
+  ; SUBTYPE OF (organization_assignment);
+  List lst_Items.i()  ; TYPE organization_item = Entity_ID                       
 EndStructure 
  
  ; 145 : APPLIED_ORGANIZATION_TYPE_ASSIGNMENT
-Structure T_APPLIED_ORGANIZATION_TYPE_ASSIGNMENT Extends TStepBase ; ID= 145
-  
+Structure T_APPLIED_ORGANIZATION_TYPE_ASSIGNMENT Extends TStepEntityBase ; ID= 145
+  ; SUBTYPE OF (organization_type_assignment);
+  List lst_Items.i()  ; TYPE organization_type_item = Entity_ID                        
 EndStructure 
  
  ; 146 : APPLIED_ORGANIZATIONAL_PROJECT_ASSIGNMENT
-Structure T_APPLIED_ORGANIZATIONAL_PROJECT_ASSIGNMENT Extends TStepBase ; ID= 146
-  
+Structure T_APPLIED_ORGANIZATIONAL_PROJECT_ASSIGNMENT Extends TStepEntityBase ; ID= 146
+  ; SUBTYPE OF (organizational_project_assignment);
+  List lst_Items.i()  ; TYPE organization_type_item = Entity_ID                          
 EndStructure 
  
  ; 147 : APPLIED_PERSON_AND_ORGANIZATION_ASSIGNMENT
-Structure T_APPLIED_PERSON_AND_ORGANIZATION_ASSIGNMENT Extends TStepBase ; ID= 147
-  
+Structure T_APPLIED_PERSON_AND_ORGANIZATION_ASSIGNMENT Extends TStepEntityBase ; ID= 147
+  ; SUBTYPE OF (person_and_organization_assignment);
+  List lst_Items.i()  ; TYPE person_and_organization_item = Entity_ID                            
 EndStructure 
  
  ; 148 : APPLIED_PRESENTED_ITEM
-Structure T_APPLIED_PRESENTED_ITEM Extends TStepBase ; ID= 148
-  
+Structure T_APPLIED_PRESENTED_ITEM Extends TStepEntityBase ; ID= 148
+   ; SUBTYPE OF (presented_item);
+  List lst_Items.i()  ; TYPE presented_item_select = Entity_ID                             
 EndStructure 
  
  ; 149 : APPLIED_SECURITY_CLASSIFICATION_ASSIGNMENT
-Structure T_APPLIED_SECURITY_CLASSIFICATION_ASSIGNMENT Extends TStepBase ; ID= 149
-  
+Structure T_APPLIED_SECURITY_CLASSIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 149
+  ; SUBTYPE OF (security_classification_assignment);
+  List lst_Items.i()  ; TYPE security_classification_item = Entity_ID                               
 EndStructure 
  
  ; 150 : APPLIED_STATE_OBSERVED_ASSIGNMENT
-Structure T_APPLIED_STATE_OBSERVED_ASSIGNMENT Extends TStepBase ; ID= 150
+Structure T_APPLIED_STATE_OBSERVED_ASSIGNMENT Extends TStepEntityBase ; ID= 150
   
 EndStructure 
  
  ; 151 : APPLIED_STATE_TYPE_ASSIGNMENT
-Structure T_APPLIED_STATE_TYPE_ASSIGNMENT Extends TStepBase ; ID= 151
+Structure T_APPLIED_STATE_TYPE_ASSIGNMENT Extends TStepEntityBase ; ID= 151
   
 EndStructure 
  
  ; 152 : APPLIED_TIME_INTERVAL_ASSIGNMENT
-Structure T_APPLIED_TIME_INTERVAL_ASSIGNMENT Extends TStepBase ; ID= 152
+Structure T_APPLIED_TIME_INTERVAL_ASSIGNMENT Extends TStepEntityBase ; ID= 152
   
 EndStructure 
  
  ; 153 : APPLIED_USAGE_RIGHT
-Structure T_APPLIED_USAGE_RIGHT Extends TStepBase ; ID= 153
+Structure T_APPLIED_USAGE_RIGHT Extends TStepEntityBase ; ID= 153
   
 EndStructure 
  
  ; 154 : APPROVAL
-Structure T_APPROVAL Extends TStepBase ; ID= 154
+Structure T_APPROVAL Extends TStepEntityBase ; ID= 154
   
 EndStructure 
  
  ; 155 : APPROVAL_ASSIGNMENT
-Structure T_APPROVAL_ASSIGNMENT Extends TStepBase ; ID= 155
+Structure T_APPROVAL_ASSIGNMENT Extends TStepEntityBase ; ID= 155
   
 EndStructure 
  
  ; 156 : APPROVAL_DATE_TIME
-Structure T_APPROVAL_DATE_TIME Extends TStepBase ; ID= 156
+Structure T_APPROVAL_DATE_TIME Extends TStepEntityBase ; ID= 156
   
 EndStructure 
  
  ; 157 : APPROVAL_PERSON_ORGANIZATION
-Structure T_APPROVAL_PERSON_ORGANIZATION Extends TStepBase ; ID= 157
+Structure T_APPROVAL_PERSON_ORGANIZATION Extends TStepEntityBase ; ID= 157
   
 EndStructure 
  
  ; 158 : APPROVAL_RELATIONSHIP
-Structure T_APPROVAL_RELATIONSHIP Extends TStepBase ; ID= 158
+Structure T_APPROVAL_RELATIONSHIP Extends TStepEntityBase ; ID= 158
   
 EndStructure 
  
  ; 159 : APPROVAL_ROLE
-Structure T_APPROVAL_ROLE Extends TStepBase ; ID= 159
+Structure T_APPROVAL_ROLE Extends TStepEntityBase ; ID= 159
   
 EndStructure 
  
  ; 160 : APPROVAL_STATUS
-Structure T_APPROVAL_STATUS Extends TStepBase ; ID= 160
+Structure T_APPROVAL_STATUS Extends TStepEntityBase ; ID= 160
   
 EndStructure 
  
  ; 161 : APPROXIMATION_TOLERANCE
-Structure T_APPROXIMATION_TOLERANCE Extends TStepBase ; ID= 161
+Structure T_APPROXIMATION_TOLERANCE Extends TStepEntityBase ; ID= 161
   
 EndStructure 
  
  ; 162 : APPROXIMATION_TOLERANCE_DEVIATION
-Structure T_APPROXIMATION_TOLERANCE_DEVIATION Extends TStepBase ; ID= 162
+Structure T_APPROXIMATION_TOLERANCE_DEVIATION Extends TStepEntityBase ; ID= 162
   
 EndStructure 
  
  ; 163 : APPROXIMATION_TOLERANCE_PARAMETER
-Structure T_APPROXIMATION_TOLERANCE_PARAMETER Extends TStepBase ; ID= 163
+Structure T_APPROXIMATION_TOLERANCE_PARAMETER Extends TStepEntityBase ; ID= 163
   
 EndStructure 
  
  ; 164 : AREA_DEPENDENT_ANNOTATION_REPRESENTATION
-Structure T_AREA_DEPENDENT_ANNOTATION_REPRESENTATION Extends TStepBase ; ID= 164
+Structure T_AREA_DEPENDENT_ANNOTATION_REPRESENTATION Extends TStepEntityBase ; ID= 164
   
 EndStructure 
  
  ; 165 : AREA_IN_SET
-Structure T_AREA_IN_SET Extends TStepBase ; ID= 165
+Structure T_AREA_IN_SET Extends TStepEntityBase ; ID= 165
   
 EndStructure 
  
  ; 166 : AREA_MEASURE_WITH_UNIT
-Structure T_AREA_MEASURE_WITH_UNIT Extends TStepBase ; ID= 166
+Structure T_AREA_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 166
   
 EndStructure 
  
  ; 167 : AREA_UNIT
-Structure T_AREA_UNIT Extends TStepBase ; ID= 167
+Structure T_AREA_UNIT Extends TStepEntityBase ; ID= 167
   
 EndStructure 
  
  ; 168 : AREA_WITH_OUTER_BOUNDARY
-Structure T_AREA_WITH_OUTER_BOUNDARY Extends TStepBase ; ID= 168
+Structure T_AREA_WITH_OUTER_BOUNDARY Extends TStepEntityBase ; ID= 168
   
 EndStructure 
  
  ; 169 : ARRAY_PLACEMENT_GROUP
-Structure T_ARRAY_PLACEMENT_GROUP Extends TStepBase ; ID= 169
+Structure T_ARRAY_PLACEMENT_GROUP Extends TStepEntityBase ; ID= 169
   
 EndStructure 
  
  ; 170 : ASCRIBABLE_STATE
-Structure T_ASCRIBABLE_STATE Extends TStepBase ; ID= 170
+Structure T_ASCRIBABLE_STATE Extends TStepEntityBase ; ID= 170
   
 EndStructure 
  
  ; 171 : ASCRIBABLE_STATE_RELATIONSHIP
-Structure T_ASCRIBABLE_STATE_RELATIONSHIP Extends TStepBase ; ID= 171
+Structure T_ASCRIBABLE_STATE_RELATIONSHIP Extends TStepEntityBase ; ID= 171
   
 EndStructure 
  
  ; 172 : ASIN_FUNCTION
-Structure T_ASIN_FUNCTION Extends TStepBase ; ID= 172
+Structure T_ASIN_FUNCTION Extends TStepEntityBase ; ID= 172
   
 EndStructure 
  
  ; 173 : ASSEMBLY_BOND_DEFINITION
-Structure T_ASSEMBLY_BOND_DEFINITION Extends TStepBase ; ID= 173
+Structure T_ASSEMBLY_BOND_DEFINITION Extends TStepEntityBase ; ID= 173
   
 EndStructure 
  
  ; 174 : ASSEMBLY_COMPONENT
-Structure T_ASSEMBLY_COMPONENT Extends TStepBase ; ID= 174
+Structure T_ASSEMBLY_COMPONENT Extends TStepEntityBase ; ID= 174
   
 EndStructure 
  
  ; 175 : ASSEMBLY_COMPONENT_USAGE
-Structure T_ASSEMBLY_COMPONENT_USAGE Extends TStepBase ; ID= 175
+Structure T_ASSEMBLY_COMPONENT_USAGE Extends TStepEntityBase ; ID= 175
   
 EndStructure 
  
  ; 176 : ASSEMBLY_COMPONENT_USAGE_SUBSTITUTE
-Structure T_ASSEMBLY_COMPONENT_USAGE_SUBSTITUTE Extends TStepBase ; ID= 176
+Structure T_ASSEMBLY_COMPONENT_USAGE_SUBSTITUTE Extends TStepEntityBase ; ID= 176
   
 EndStructure 
  
  ; 177 : ASSEMBLY_COMPONENT_USAGE_SUBSTITUTE_WITH_RANKING
-Structure T_ASSEMBLY_COMPONENT_USAGE_SUBSTITUTE_WITH_RANKING Extends TStepBase ; ID= 177
+Structure T_ASSEMBLY_COMPONENT_USAGE_SUBSTITUTE_WITH_RANKING Extends TStepEntityBase ; ID= 177
   
 EndStructure 
  
  ; 178 : ASSEMBLY_GEOMETRIC_CONSTRAINT
-Structure T_ASSEMBLY_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 178
+Structure T_ASSEMBLY_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 178
   
 EndStructure 
  
  ; 179 : ASSEMBLY_GROUP_COMPONENT
-Structure T_ASSEMBLY_GROUP_COMPONENT Extends TStepBase ; ID= 179
+Structure T_ASSEMBLY_GROUP_COMPONENT Extends TStepEntityBase ; ID= 179
   
 EndStructure 
  
  ; 180 : ASSEMBLY_GROUP_COMPONENT_DEFINITION_PLACEMENT_LINK
-Structure T_ASSEMBLY_GROUP_COMPONENT_DEFINITION_PLACEMENT_LINK Extends TStepBase ; ID= 180
+Structure T_ASSEMBLY_GROUP_COMPONENT_DEFINITION_PLACEMENT_LINK Extends TStepEntityBase ; ID= 180
   
 EndStructure 
  
  ; 181 : ASSEMBLY_JOINT
-Structure T_ASSEMBLY_JOINT Extends TStepBase ; ID= 181
+Structure T_ASSEMBLY_JOINT Extends TStepEntityBase ; ID= 181
   
 EndStructure 
  
  ; 182 : ASSEMBLY_SHAPE_CONSTRAINT
-Structure T_ASSEMBLY_SHAPE_CONSTRAINT Extends TStepBase ; ID= 182
+Structure T_ASSEMBLY_SHAPE_CONSTRAINT Extends TStepEntityBase ; ID= 182
   
 EndStructure 
  
  ; 183 : ASSEMBLY_SHAPE_CONSTRAINT_ITEM_RELATIONSHIP
-Structure T_ASSEMBLY_SHAPE_CONSTRAINT_ITEM_RELATIONSHIP Extends TStepBase ; ID= 183
+Structure T_ASSEMBLY_SHAPE_CONSTRAINT_ITEM_RELATIONSHIP Extends TStepEntityBase ; ID= 183
   
 EndStructure 
  
  ; 184 : ASSEMBLY_SHAPE_JOINT
-Structure T_ASSEMBLY_SHAPE_JOINT Extends TStepBase ; ID= 184
+Structure T_ASSEMBLY_SHAPE_JOINT Extends TStepEntityBase ; ID= 184
   
 EndStructure 
  
  ; 185 : ASSEMBLY_SHAPE_JOINT_ITEM_RELATIONSHIP
-Structure T_ASSEMBLY_SHAPE_JOINT_ITEM_RELATIONSHIP Extends TStepBase ; ID= 185
+Structure T_ASSEMBLY_SHAPE_JOINT_ITEM_RELATIONSHIP Extends TStepEntityBase ; ID= 185
   
 EndStructure 
  
  ; 186 : ASSIGNED_ANALYSIS
-Structure T_ASSIGNED_ANALYSIS Extends TStepBase ; ID= 186
+Structure T_ASSIGNED_ANALYSIS Extends TStepEntityBase ; ID= 186
   
 EndStructure 
  
  ; 187 : ASSIGNED_REQUIREMENT
-Structure T_ASSIGNED_REQUIREMENT Extends TStepBase ; ID= 187
+Structure T_ASSIGNED_REQUIREMENT Extends TStepEntityBase ; ID= 187
   
 EndStructure 
  
  ; 188 : ASSIGNMENT_OBJECT_RELATIONSHIP
-Structure T_ASSIGNMENT_OBJECT_RELATIONSHIP Extends TStepBase ; ID= 188
+Structure T_ASSIGNMENT_OBJECT_RELATIONSHIP Extends TStepEntityBase ; ID= 188
   
 EndStructure 
  
  ; 189 : ATAN_FUNCTION
-Structure T_ATAN_FUNCTION Extends TStepBase ; ID= 189
+Structure T_ATAN_FUNCTION Extends TStepEntityBase ; ID= 189
   
 EndStructure 
  
  ; 190 : ATOM_BASED_LITERAL
-Structure T_ATOM_BASED_LITERAL Extends TStepBase ; ID= 190
+Structure T_ATOM_BASED_LITERAL Extends TStepEntityBase ; ID= 190
   
 EndStructure 
  
  ; 191 : ATOMIC_FORMULA
-Structure T_ATOMIC_FORMULA Extends TStepBase ; ID= 191
+Structure T_ATOMIC_FORMULA Extends TStepEntityBase ; ID= 191
   
 EndStructure 
  
  ; 192 : ATTACHMENT_SLOT_AS_PLANNED
-Structure T_ATTACHMENT_SLOT_AS_PLANNED Extends TStepBase ; ID= 192
+Structure T_ATTACHMENT_SLOT_AS_PLANNED Extends TStepEntityBase ; ID= 192
   
 EndStructure 
  
  ; 193 : ATTACHMENT_SLOT_AS_REALIZED
-Structure T_ATTACHMENT_SLOT_AS_REALIZED Extends TStepBase ; ID= 193
+Structure T_ATTACHMENT_SLOT_AS_REALIZED Extends TStepEntityBase ; ID= 193
   
 EndStructure 
  
  ; 194 : ATTACHMENT_SLOT_DESIGN
-Structure T_ATTACHMENT_SLOT_DESIGN Extends TStepBase ; ID= 194
+Structure T_ATTACHMENT_SLOT_DESIGN Extends TStepEntityBase ; ID= 194
   
 EndStructure 
  
  ; 195 : ATTACHMENT_SLOT_DESIGN_TO_PLANNED
-Structure T_ATTACHMENT_SLOT_DESIGN_TO_PLANNED Extends TStepBase ; ID= 195
+Structure T_ATTACHMENT_SLOT_DESIGN_TO_PLANNED Extends TStepEntityBase ; ID= 195
   
 EndStructure 
  
  ; 196 : ATTACHMENT_SLOT_DESIGN_TO_REALIZED
-Structure T_ATTACHMENT_SLOT_DESIGN_TO_REALIZED Extends TStepBase ; ID= 196
+Structure T_ATTACHMENT_SLOT_DESIGN_TO_REALIZED Extends TStepEntityBase ; ID= 196
   
 EndStructure 
  
  ; 197 : ATTACHMENT_SLOT_ON_PRODUCT
-Structure T_ATTACHMENT_SLOT_ON_PRODUCT Extends TStepBase ; ID= 197
+Structure T_ATTACHMENT_SLOT_ON_PRODUCT Extends TStepEntityBase ; ID= 197
   
 EndStructure 
  
  ; 198 : ATTACHMENT_SLOT_PLANNED_TO_REALIZED
-Structure T_ATTACHMENT_SLOT_PLANNED_TO_REALIZED Extends TStepBase ; ID= 198
+Structure T_ATTACHMENT_SLOT_PLANNED_TO_REALIZED Extends TStepEntityBase ; ID= 198
   
 EndStructure 
  
  ; 199 : ATTRIBUTE_ASSERTION
-Structure T_ATTRIBUTE_ASSERTION Extends TStepBase ; ID= 199
+Structure T_ATTRIBUTE_ASSERTION Extends TStepEntityBase ; ID= 199
   
 EndStructure 
  
  ; 200 : ATTRIBUTE_CLASSIFICATION_ASSIGNMENT
-Structure T_ATTRIBUTE_CLASSIFICATION_ASSIGNMENT Extends TStepBase ; ID= 200
+Structure T_ATTRIBUTE_CLASSIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 200
   
 EndStructure 
  
  ; 201 : ATTRIBUTE_LANGUAGE_ASSIGNMENT
-Structure T_ATTRIBUTE_LANGUAGE_ASSIGNMENT Extends TStepBase ; ID= 201
+Structure T_ATTRIBUTE_LANGUAGE_ASSIGNMENT Extends TStepEntityBase ; ID= 201
   
 EndStructure 
  
  ; 202 : ATTRIBUTE_VALUE_ASSIGNMENT
-Structure T_ATTRIBUTE_VALUE_ASSIGNMENT Extends TStepBase ; ID= 202
+Structure T_ATTRIBUTE_VALUE_ASSIGNMENT Extends TStepEntityBase ; ID= 202
   
 EndStructure 
  
  ; 203 : ATTRIBUTE_VALUE_ROLE
-Structure T_ATTRIBUTE_VALUE_ROLE Extends TStepBase ; ID= 203
+Structure T_ATTRIBUTE_VALUE_ROLE Extends TStepEntityBase ; ID= 203
   
 EndStructure 
  
  ; 204 : AUXILIARY_GEOMETRIC_REPRESENTATION_ITEM
-Structure T_AUXILIARY_GEOMETRIC_REPRESENTATION_ITEM Extends TStepBase ; ID= 204
+Structure T_AUXILIARY_GEOMETRIC_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 204
   
 EndStructure 
  
  ; 205 : AXIS1_PLACEMENT
-Structure T_AXIS1_PLACEMENT Extends TStepBase ; ID= 205
+Structure T_AXIS1_PLACEMENT Extends TStepEntityBase ; ID= 205
   
 EndStructure 
  
  ; 206 : AXIS2_PLACEMENT_2D
-Structure T_AXIS2_PLACEMENT_2D Extends TStepBase ; ID= 206
+Structure T_AXIS2_PLACEMENT_2D Extends TStepEntityBase ; ID= 206
   
 EndStructure 
  
  ; 207 : AXIS2_PLACEMENT_3D
-Structure T_AXIS2_PLACEMENT_3D Extends TStepBase ; ID= 207
+Structure T_AXIS2_PLACEMENT_3D Extends TStepEntityBase ; ID= 207
   *CPt.T_CARTESIAN_POINT
   *Axis1.T_DIRECTION
   *Axis2.T_DIRECTION  
 EndStructure 
  
  ; 208 : B_SPLINE_BASIS
-Structure T_B_SPLINE_BASIS Extends TStepBase ; ID= 208
+Structure T_B_SPLINE_BASIS Extends TStepEntityBase ; ID= 208
   
 EndStructure 
  
  ; 209 : B_SPLINE_CURVE
-Structure T_B_SPLINE_CURVE Extends TStepBase ; ID= 209
+Structure T_B_SPLINE_CURVE Extends TStepEntityBase ; ID= 209
   
 EndStructure 
  
  ; 210 : B_SPLINE_CURVE_KNOT_LOCATOR
-Structure T_B_SPLINE_CURVE_KNOT_LOCATOR Extends TStepBase ; ID= 210
+Structure T_B_SPLINE_CURVE_KNOT_LOCATOR Extends TStepEntityBase ; ID= 210
   
 EndStructure 
  
  ; 211 : B_SPLINE_CURVE_SEGMENT
-Structure T_B_SPLINE_CURVE_SEGMENT Extends TStepBase ; ID= 211
+Structure T_B_SPLINE_CURVE_SEGMENT Extends TStepEntityBase ; ID= 211
   
 EndStructure 
  
  ; 212 : B_SPLINE_CURVE_WITH_KNOTS
-Structure T_B_SPLINE_CURVE_WITH_KNOTS Extends TStepBase ; ID= 212
+Structure T_B_SPLINE_CURVE_WITH_KNOTS Extends TStepEntityBase ; ID= 212
   
 EndStructure 
  
  ; 213 : B_SPLINE_FUNCTION
-Structure T_B_SPLINE_FUNCTION Extends TStepBase ; ID= 213
+Structure T_B_SPLINE_FUNCTION Extends TStepEntityBase ; ID= 213
   
 EndStructure 
  
  ; 214 : B_SPLINE_SURFACE
-Structure T_B_SPLINE_SURFACE Extends TStepBase ; ID= 214
+Structure T_B_SPLINE_SURFACE Extends TStepEntityBase ; ID= 214
   
 EndStructure 
  
  ; 215 : B_SPLINE_SURFACE_KNOT_LOCATOR
-Structure T_B_SPLINE_SURFACE_KNOT_LOCATOR Extends TStepBase ; ID= 215
+Structure T_B_SPLINE_SURFACE_KNOT_LOCATOR Extends TStepEntityBase ; ID= 215
   
 EndStructure 
  
  ; 216 : B_SPLINE_SURFACE_PATCH
-Structure T_B_SPLINE_SURFACE_PATCH Extends TStepBase ; ID= 216
+Structure T_B_SPLINE_SURFACE_PATCH Extends TStepEntityBase ; ID= 216
   
 EndStructure 
  
  ; 217 : B_SPLINE_SURFACE_STRIP
-Structure T_B_SPLINE_SURFACE_STRIP Extends TStepBase ; ID= 217
+Structure T_B_SPLINE_SURFACE_STRIP Extends TStepEntityBase ; ID= 217
   
 EndStructure 
  
  ; 218 : B_SPLINE_SURFACE_WITH_KNOTS
-Structure T_B_SPLINE_SURFACE_WITH_KNOTS Extends TStepBase ; ID= 218
+Structure T_B_SPLINE_SURFACE_WITH_KNOTS Extends TStepEntityBase ; ID= 218
   
 EndStructure 
  
  ; 219 : B_SPLINE_VOLUME
-Structure T_B_SPLINE_VOLUME Extends TStepBase ; ID= 219
+Structure T_B_SPLINE_VOLUME Extends TStepEntityBase ; ID= 219
   
 EndStructure 
  
  ; 220 : B_SPLINE_VOLUME_WITH_KNOTS
-Structure T_B_SPLINE_VOLUME_WITH_KNOTS Extends TStepBase ; ID= 220
+Structure T_B_SPLINE_VOLUME_WITH_KNOTS Extends TStepEntityBase ; ID= 220
   
 EndStructure 
  
  ; 221 : BACK_BORING_OPERATION
-Structure T_BACK_BORING_OPERATION Extends TStepBase ; ID= 221
+Structure T_BACK_BORING_OPERATION Extends TStepEntityBase ; ID= 221
   
 EndStructure 
  
  ; 222 : BACK_CHAINING_RULE
-Structure T_BACK_CHAINING_RULE Extends TStepBase ; ID= 222
+Structure T_BACK_CHAINING_RULE Extends TStepEntityBase ; ID= 222
   
 EndStructure 
  
  ; 223 : BACK_CHAINING_RULE_BODY
-Structure T_BACK_CHAINING_RULE_BODY Extends TStepBase ; ID= 223
+Structure T_BACK_CHAINING_RULE_BODY Extends TStepEntityBase ; ID= 223
   
 EndStructure 
  
  ; 224 : BACKGROUND_COLOUR
-Structure T_BACKGROUND_COLOUR Extends TStepBase ; ID= 224
+Structure T_BACKGROUND_COLOUR Extends TStepEntityBase ; ID= 224
   
 EndStructure 
  
  ; 225 : BANDED_MATRIX
-Structure T_BANDED_MATRIX Extends TStepBase ; ID= 225
+Structure T_BANDED_MATRIX Extends TStepEntityBase ; ID= 225
   
 EndStructure 
  
  ; 226 : BARRING_HOLE
-Structure T_BARRING_HOLE Extends TStepBase ; ID= 226
+Structure T_BARRING_HOLE Extends TStepEntityBase ; ID= 226
   
 EndStructure 
  
  ; 227 : BASIC_ROUND_HOLE
-Structure T_BASIC_ROUND_HOLE Extends TStepBase ; ID= 227
+Structure T_BASIC_ROUND_HOLE Extends TStepEntityBase ; ID= 227
   
 EndStructure 
  
  ; 228 : BASIC_ROUND_HOLE_OCCURRENCE
-Structure T_BASIC_ROUND_HOLE_OCCURRENCE Extends TStepBase ; ID= 228
+Structure T_BASIC_ROUND_HOLE_OCCURRENCE Extends TStepEntityBase ; ID= 228
   
 EndStructure 
  
  ; 229 : BASIC_ROUND_HOLE_OCCURRENCE_IN_ASSEMBLY
-Structure T_BASIC_ROUND_HOLE_OCCURRENCE_IN_ASSEMBLY Extends TStepBase ; ID= 229
+Structure T_BASIC_ROUND_HOLE_OCCURRENCE_IN_ASSEMBLY Extends TStepEntityBase ; ID= 229
   
 EndStructure 
  
  ; 230 : BASIC_SPARSE_MATRIX
-Structure T_BASIC_SPARSE_MATRIX Extends TStepBase ; ID= 230
+Structure T_BASIC_SPARSE_MATRIX Extends TStepEntityBase ; ID= 230
   
 EndStructure 
  
  ; 231 : BEAD
-Structure T_BEAD Extends TStepBase ; ID= 231
+Structure T_BEAD Extends TStepEntityBase ; ID= 231
   
 EndStructure 
  
  ; 232 : BEAD_END
-Structure T_BEAD_END Extends TStepBase ; ID= 232
+Structure T_BEAD_END Extends TStepEntityBase ; ID= 232
   
 EndStructure 
  
  ; 233 : BETWEEN_SHAPE_ASPECT
-Structure T_BETWEEN_SHAPE_ASPECT Extends TStepBase ; ID= 233
+Structure T_BETWEEN_SHAPE_ASPECT Extends TStepEntityBase ; ID= 233
   
 EndStructure 
  
  ; 234 : BEVELED_SHEET_REPRESENTATION
-Structure T_BEVELED_SHEET_REPRESENTATION Extends TStepBase ; ID= 234
+Structure T_BEVELED_SHEET_REPRESENTATION Extends TStepEntityBase ; ID= 234
   
 EndStructure 
  
  ; 235 : BEZIER_CURVE
-Structure T_BEZIER_CURVE Extends TStepBase ; ID= 235
+Structure T_BEZIER_CURVE Extends TStepEntityBase ; ID= 235
   
 EndStructure 
  
  ; 236 : BEZIER_SURFACE
-Structure T_BEZIER_SURFACE Extends TStepBase ; ID= 236
+Structure T_BEZIER_SURFACE Extends TStepEntityBase ; ID= 236
   
 EndStructure 
  
  ; 237 : BEZIER_VOLUME
-Structure T_BEZIER_VOLUME Extends TStepBase ; ID= 237
+Structure T_BEZIER_VOLUME Extends TStepEntityBase ; ID= 237
   
 EndStructure 
  
  ; 238 : BINARY_ASSEMBLY_CONSTRAINT
-Structure T_BINARY_ASSEMBLY_CONSTRAINT Extends TStepBase ; ID= 238
+Structure T_BINARY_ASSEMBLY_CONSTRAINT Extends TStepEntityBase ; ID= 238
   
 EndStructure 
  
  ; 239 : BINARY_BOOLEAN_EXPRESSION
-Structure T_BINARY_BOOLEAN_EXPRESSION Extends TStepBase ; ID= 239
+Structure T_BINARY_BOOLEAN_EXPRESSION Extends TStepEntityBase ; ID= 239
   
 EndStructure 
  
  ; 240 : BINARY_FUNCTION_CALL
-Structure T_BINARY_FUNCTION_CALL Extends TStepBase ; ID= 240
+Structure T_BINARY_FUNCTION_CALL Extends TStepEntityBase ; ID= 240
   
 EndStructure 
  
  ; 241 : BINARY_GENERIC_EXPRESSION
-Structure T_BINARY_GENERIC_EXPRESSION Extends TStepBase ; ID= 241
+Structure T_BINARY_GENERIC_EXPRESSION Extends TStepEntityBase ; ID= 241
   
 EndStructure 
  
  ; 242 : BINARY_LITERAL
-Structure T_BINARY_LITERAL Extends TStepBase ; ID= 242
+Structure T_BINARY_LITERAL Extends TStepEntityBase ; ID= 242
   
 EndStructure 
  
  ; 243 : BINARY_NUMERIC_EXPRESSION
-Structure T_BINARY_NUMERIC_EXPRESSION Extends TStepBase ; ID= 243
+Structure T_BINARY_NUMERIC_EXPRESSION Extends TStepEntityBase ; ID= 243
   
 EndStructure 
  
  ; 244 : BINARY_REPRESENTATION_ITEM
-Structure T_BINARY_REPRESENTATION_ITEM Extends TStepBase ; ID= 244
+Structure T_BINARY_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 244
   
 EndStructure 
  
  ; 245 : BLOCK
-Structure T_BLOCK Extends TStepBase ; ID= 245
+Structure T_BLOCK Extends TStepEntityBase ; ID= 245
   
 EndStructure 
  
  ; 246 : BLOCK_SHAPE_REPRESENTATION
-Structure T_BLOCK_SHAPE_REPRESENTATION Extends TStepBase ; ID= 246
+Structure T_BLOCK_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 246
   
 EndStructure 
  
  ; 247 : BLOCK_VOLUME
-Structure T_BLOCK_VOLUME Extends TStepBase ; ID= 247
+Structure T_BLOCK_VOLUME Extends TStepEntityBase ; ID= 247
   
 EndStructure 
  
  ; 248 : BOOLEAN_DEFINED_FUNCTION
-Structure T_BOOLEAN_DEFINED_FUNCTION Extends TStepBase ; ID= 248
+Structure T_BOOLEAN_DEFINED_FUNCTION Extends TStepEntityBase ; ID= 248
   
 EndStructure 
  
  ; 249 : BOOLEAN_EXPRESSION
-Structure T_BOOLEAN_EXPRESSION Extends TStepBase ; ID= 249
+Structure T_BOOLEAN_EXPRESSION Extends TStepEntityBase ; ID= 249
   
 EndStructure 
  
  ; 250 : BOOLEAN_LITERAL
-Structure T_BOOLEAN_LITERAL Extends TStepBase ; ID= 250
+Structure T_BOOLEAN_LITERAL Extends TStepEntityBase ; ID= 250
   
 EndStructure 
  
  ; 251 : BOOLEAN_REPRESENTATION_ITEM
-Structure T_BOOLEAN_REPRESENTATION_ITEM Extends TStepBase ; ID= 251
+Structure T_BOOLEAN_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 251
   
 EndStructure 
  
  ; 252 : BOOLEAN_RESULT
-Structure T_BOOLEAN_RESULT Extends TStepBase ; ID= 252
+Structure T_BOOLEAN_RESULT Extends TStepEntityBase ; ID= 252
   
 EndStructure 
  
  ; 253 : BOOLEAN_RESULT_2D
-Structure T_BOOLEAN_RESULT_2D Extends TStepBase ; ID= 253
+Structure T_BOOLEAN_RESULT_2D Extends TStepEntityBase ; ID= 253
   
 EndStructure 
  
  ; 254 : BOOLEAN_VARIABLE
-Structure T_BOOLEAN_VARIABLE Extends TStepBase ; ID= 254
+Structure T_BOOLEAN_VARIABLE Extends TStepEntityBase ; ID= 254
   
 EndStructure 
  
  ; 255 : BORING_OPERATION
-Structure T_BORING_OPERATION Extends TStepBase ; ID= 255
+Structure T_BORING_OPERATION Extends TStepEntityBase ; ID= 255
   
 EndStructure 
  
  ; 256 : BOSS
-Structure T_BOSS Extends TStepBase ; ID= 256
+Structure T_BOSS Extends TStepEntityBase ; ID= 256
   
 EndStructure 
  
  ; 257 : BOSS_TOP
-Structure T_BOSS_TOP Extends TStepBase ; ID= 257
+Structure T_BOSS_TOP Extends TStepEntityBase ; ID= 257
   
 EndStructure 
  
  ; 258 : BOTTOM_AND_SIDE_MILLING_OPERATION
-Structure T_BOTTOM_AND_SIDE_MILLING_OPERATION Extends TStepBase ; ID= 258
+Structure T_BOTTOM_AND_SIDE_MILLING_OPERATION Extends TStepEntityBase ; ID= 258
   
 EndStructure 
  
  ; 259 : BOUND_PARAMETER_ENVIRONMENT
-Structure T_BOUND_PARAMETER_ENVIRONMENT Extends TStepBase ; ID= 259
+Structure T_BOUND_PARAMETER_ENVIRONMENT Extends TStepEntityBase ; ID= 259
   
 EndStructure 
  
  ; 260 : BOUND_VARIABLE_SEMANTICS
-Structure T_BOUND_VARIABLE_SEMANTICS Extends TStepBase ; ID= 260
+Structure T_BOUND_VARIABLE_SEMANTICS Extends TStepEntityBase ; ID= 260
   
 EndStructure 
  
  ; 261 : BOUND_VARIATIONAL_PARAMETER
-Structure T_BOUND_VARIATIONAL_PARAMETER Extends TStepBase ; ID= 261
+Structure T_BOUND_VARIATIONAL_PARAMETER Extends TStepEntityBase ; ID= 261
   
 EndStructure 
  
  ; 262 : BOUNDARY_CURVE
-Structure T_BOUNDARY_CURVE Extends TStepBase ; ID= 262
+Structure T_BOUNDARY_CURVE Extends TStepEntityBase ; ID= 262
   
 EndStructure 
  
  ; 263 : BOUNDARY_CURVE_OF_B_SPLINE_OR_RECTANGULAR_COMPOSITE_SURFACE
-Structure T_BOUNDARY_CURVE_OF_B_SPLINE_OR_RECTANGULAR_COMPOSITE_SURFACE Extends TStepBase ; ID= 263
+Structure T_BOUNDARY_CURVE_OF_B_SPLINE_OR_RECTANGULAR_COMPOSITE_SURFACE Extends TStepEntityBase ; ID= 263
   
 EndStructure 
  
  ; 264 : BOUNDED_CURVE
-Structure T_BOUNDED_CURVE Extends TStepBase ; ID= 264
+Structure T_BOUNDED_CURVE Extends TStepEntityBase ; ID= 264
   
 EndStructure 
  
  ; 265 : BOUNDED_PCURVE
-Structure T_BOUNDED_PCURVE Extends TStepBase ; ID= 265
+Structure T_BOUNDED_PCURVE Extends TStepEntityBase ; ID= 265
   
 EndStructure 
  
  ; 266 : BOUNDED_SURFACE
-Structure T_BOUNDED_SURFACE Extends TStepBase ; ID= 266
+Structure T_BOUNDED_SURFACE Extends TStepEntityBase ; ID= 266
   
 EndStructure 
  
  ; 267 : BOUNDED_SURFACE_CURVE
-Structure T_BOUNDED_SURFACE_CURVE Extends TStepBase ; ID= 267
+Structure T_BOUNDED_SURFACE_CURVE Extends TStepEntityBase ; ID= 267
   
 EndStructure 
  
  ; 268 : BOX_DOMAIN
-Structure T_BOX_DOMAIN Extends TStepBase ; ID= 268
+Structure T_BOX_DOMAIN Extends TStepEntityBase ; ID= 268
   
 EndStructure 
  
  ; 269 : BOXED_HALF_SPACE
-Structure T_BOXED_HALF_SPACE Extends TStepBase ; ID= 269
+Structure T_BOXED_HALF_SPACE Extends TStepEntityBase ; ID= 269
   
 EndStructure 
  
  ; 270 : BREAKDOWN_CONTEXT
-Structure T_BREAKDOWN_CONTEXT Extends TStepBase ; ID= 270
+Structure T_BREAKDOWN_CONTEXT Extends TStepEntityBase ; ID= 270
   
 EndStructure 
  
  ; 271 : BREAKDOWN_ELEMENT_GROUP_ASSIGNMENT
-Structure T_BREAKDOWN_ELEMENT_GROUP_ASSIGNMENT Extends TStepBase ; ID= 271
+Structure T_BREAKDOWN_ELEMENT_GROUP_ASSIGNMENT Extends TStepEntityBase ; ID= 271
   
 EndStructure 
  
  ; 272 : BREAKDOWN_ELEMENT_REALIZATION
-Structure T_BREAKDOWN_ELEMENT_REALIZATION Extends TStepBase ; ID= 272
+Structure T_BREAKDOWN_ELEMENT_REALIZATION Extends TStepEntityBase ; ID= 272
   
 EndStructure 
  
  ; 273 : BREAKDOWN_ELEMENT_USAGE
-Structure T_BREAKDOWN_ELEMENT_USAGE Extends TStepBase ; ID= 273
+Structure T_BREAKDOWN_ELEMENT_USAGE Extends TStepEntityBase ; ID= 273
   
 EndStructure 
  
  ; 274 : BREAKDOWN_OF
-Structure T_BREAKDOWN_OF Extends TStepBase ; ID= 274
+Structure T_BREAKDOWN_OF Extends TStepEntityBase ; ID= 274
   
 EndStructure 
  
  ; 275 : BREP_WITH_VOIDS
-Structure T_BREP_WITH_VOIDS Extends TStepBase ; ID= 275
+Structure T_BREP_WITH_VOIDS Extends TStepEntityBase ; ID= 275
   
 EndStructure 
  
  ; 276 : BYTES_REPRESENTATION_ITEM
-Structure T_BYTES_REPRESENTATION_ITEM Extends TStepBase ; ID= 276
+Structure T_BYTES_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 276
   
 EndStructure 
  
  ; 277 : CALENDAR_DATE
-Structure T_CALENDAR_DATE Extends TStepBase ; ID= 277
+Structure T_CALENDAR_DATE Extends TStepEntityBase ; ID= 277
   
 EndStructure 
  
  ; 278 : CAMERA_IMAGE
-Structure T_CAMERA_IMAGE Extends TStepBase ; ID= 278
+Structure T_CAMERA_IMAGE Extends TStepEntityBase ; ID= 278
   
 EndStructure 
  
  ; 279 : CAMERA_IMAGE_2D_WITH_SCALE
-Structure T_CAMERA_IMAGE_2D_WITH_SCALE Extends TStepBase ; ID= 279
+Structure T_CAMERA_IMAGE_2D_WITH_SCALE Extends TStepEntityBase ; ID= 279
   
 EndStructure 
  
  ; 280 : CAMERA_IMAGE_3D_WITH_SCALE
-Structure T_CAMERA_IMAGE_3D_WITH_SCALE Extends TStepBase ; ID= 280
+Structure T_CAMERA_IMAGE_3D_WITH_SCALE Extends TStepEntityBase ; ID= 280
   
 EndStructure 
  
  ; 281 : CAMERA_MODEL
-Structure T_CAMERA_MODEL Extends TStepBase ; ID= 281
+Structure T_CAMERA_MODEL Extends TStepEntityBase ; ID= 281
   
 EndStructure 
  
  ; 282 : CAMERA_MODEL_D2
-Structure T_CAMERA_MODEL_D2 Extends TStepBase ; ID= 282
+Structure T_CAMERA_MODEL_D2 Extends TStepEntityBase ; ID= 282
   
 EndStructure 
  
  ; 283 : CAMERA_MODEL_D3
-Structure T_CAMERA_MODEL_D3 Extends TStepBase ; ID= 283
+Structure T_CAMERA_MODEL_D3 Extends TStepEntityBase ; ID= 283
   
 EndStructure 
  
  ; 284 : CAMERA_MODEL_D3_MULTI_CLIPPING
-Structure T_CAMERA_MODEL_D3_MULTI_CLIPPING Extends TStepBase ; ID= 284
+Structure T_CAMERA_MODEL_D3_MULTI_CLIPPING Extends TStepEntityBase ; ID= 284
   
 EndStructure 
  
  ; 285 : CAMERA_MODEL_D3_MULTI_CLIPPING_INTERSECTION
-Structure T_CAMERA_MODEL_D3_MULTI_CLIPPING_INTERSECTION Extends TStepBase ; ID= 285
+Structure T_CAMERA_MODEL_D3_MULTI_CLIPPING_INTERSECTION Extends TStepEntityBase ; ID= 285
   
 EndStructure 
  
  ; 286 : CAMERA_MODEL_D3_MULTI_CLIPPING_UNION
-Structure T_CAMERA_MODEL_D3_MULTI_CLIPPING_UNION Extends TStepBase ; ID= 286
+Structure T_CAMERA_MODEL_D3_MULTI_CLIPPING_UNION Extends TStepEntityBase ; ID= 286
   
 EndStructure 
  
  ; 287 : CAMERA_MODEL_D3_WITH_HLHSR
-Structure T_CAMERA_MODEL_D3_WITH_HLHSR Extends TStepBase ; ID= 287
+Structure T_CAMERA_MODEL_D3_WITH_HLHSR Extends TStepEntityBase ; ID= 287
   
 EndStructure 
  
  ; 288 : CAMERA_MODEL_WITH_LIGHT_SOURCES
-Structure T_CAMERA_MODEL_WITH_LIGHT_SOURCES Extends TStepBase ; ID= 288
+Structure T_CAMERA_MODEL_WITH_LIGHT_SOURCES Extends TStepEntityBase ; ID= 288
   
 EndStructure 
  
  ; 289 : CAMERA_USAGE
-Structure T_CAMERA_USAGE Extends TStepBase ; ID= 289
+Structure T_CAMERA_USAGE Extends TStepEntityBase ; ID= 289
   
 EndStructure 
  
  ; 290 : CAPACITANCE_MEASURE_WITH_UNIT
-Structure T_CAPACITANCE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 290
+Structure T_CAPACITANCE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 290
   
 EndStructure 
  
  ; 291 : CAPACITANCE_UNIT
-Structure T_CAPACITANCE_UNIT Extends TStepBase ; ID= 291
+Structure T_CAPACITANCE_UNIT Extends TStepEntityBase ; ID= 291
   
 EndStructure 
  
  ; 292 : CARTESIAN_11
-Structure T_CARTESIAN_11 Extends TStepBase ; ID= 292
+Structure T_CARTESIAN_11 Extends TStepEntityBase ; ID= 292
   
 EndStructure 
  
  ; 293 : CARTESIAN_COMPLEX_NUMBER_REGION
-Structure T_CARTESIAN_COMPLEX_NUMBER_REGION Extends TStepBase ; ID= 293
+Structure T_CARTESIAN_COMPLEX_NUMBER_REGION Extends TStepEntityBase ; ID= 293
   
 EndStructure 
   
  ; 295 : CARTESIAN_TRANSFORMATION_OPERATOR
-Structure T_CARTESIAN_TRANSFORMATION_OPERATOR Extends TStepBase ; ID= 295
+Structure T_CARTESIAN_TRANSFORMATION_OPERATOR Extends TStepEntityBase ; ID= 295
   
 EndStructure 
  
  ; 296 : CARTESIAN_TRANSFORMATION_OPERATOR_2D
-Structure T_CARTESIAN_TRANSFORMATION_OPERATOR_2D Extends TStepBase ; ID= 296
+Structure T_CARTESIAN_TRANSFORMATION_OPERATOR_2D Extends TStepEntityBase ; ID= 296
   
 EndStructure 
  
  ; 297 : CARTESIAN_TRANSFORMATION_OPERATOR_3D
-Structure T_CARTESIAN_TRANSFORMATION_OPERATOR_3D Extends TStepBase ; ID= 297
+Structure T_CARTESIAN_TRANSFORMATION_OPERATOR_3D Extends TStepEntityBase ; ID= 297
   
 EndStructure 
  
  ; 298 : CDGC_WITH_DIMENSION
-Structure T_CDGC_WITH_DIMENSION Extends TStepBase ; ID= 298
+Structure T_CDGC_WITH_DIMENSION Extends TStepEntityBase ; ID= 298
   
 EndStructure 
  
  ; 299 : CELSIUS_TEMPERATURE_MEASURE_WITH_UNIT
-Structure T_CELSIUS_TEMPERATURE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 299
+Structure T_CELSIUS_TEMPERATURE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 299
   
 EndStructure 
  
  ; 300 : CENTRE_OF_SYMMETRY
-Structure T_CENTRE_OF_SYMMETRY Extends TStepBase ; ID= 300
+Structure T_CENTRE_OF_SYMMETRY Extends TStepEntityBase ; ID= 300
   
 EndStructure 
  
  ; 301 : CERTIFICATION
-Structure T_CERTIFICATION Extends TStepBase ; ID= 301
+Structure T_CERTIFICATION Extends TStepEntityBase ; ID= 301
   
 EndStructure 
  
  ; 302 : CERTIFICATION_ASSIGNMENT
-Structure T_CERTIFICATION_ASSIGNMENT Extends TStepBase ; ID= 302
+Structure T_CERTIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 302
   
 EndStructure 
  
  ; 303 : CERTIFICATION_TYPE
-Structure T_CERTIFICATION_TYPE Extends TStepBase ; ID= 303
+Structure T_CERTIFICATION_TYPE Extends TStepEntityBase ; ID= 303
   
 EndStructure 
  
  ; 304 : CHAIN_BASED_GEOMETRIC_ITEM_SPECIFIC_USAGE
-Structure T_CHAIN_BASED_GEOMETRIC_ITEM_SPECIFIC_USAGE Extends TStepBase ; ID= 304
+Structure T_CHAIN_BASED_GEOMETRIC_ITEM_SPECIFIC_USAGE Extends TStepEntityBase ; ID= 304
   
 EndStructure 
  
  ; 305 : CHAIN_BASED_ITEM_IDENTIFIED_REPRESENTATION_USAGE
-Structure T_CHAIN_BASED_ITEM_IDENTIFIED_REPRESENTATION_USAGE Extends TStepBase ; ID= 305
+Structure T_CHAIN_BASED_ITEM_IDENTIFIED_REPRESENTATION_USAGE Extends TStepEntityBase ; ID= 305
   
 EndStructure 
  
  ; 306 : CHAMFER
-Structure T_CHAMFER Extends TStepBase ; ID= 306
+Structure T_CHAMFER Extends TStepEntityBase ; ID= 306
   
 EndStructure 
  
  ; 307 : CHAMFER_OFFSET
-Structure T_CHAMFER_OFFSET Extends TStepBase ; ID= 307
+Structure T_CHAMFER_OFFSET Extends TStepEntityBase ; ID= 307
   
 EndStructure 
  
  ; 308 : CHANGE
-Structure T_CHANGE Extends TStepBase ; ID= 308
+Structure T_CHANGE Extends TStepEntityBase ; ID= 308
   
 EndStructure 
  
  ; 309 : CHANGE_COMPOSITION_RELATIONSHIP
-Structure T_CHANGE_COMPOSITION_RELATIONSHIP Extends TStepBase ; ID= 309
+Structure T_CHANGE_COMPOSITION_RELATIONSHIP Extends TStepEntityBase ; ID= 309
   
 EndStructure 
  
  ; 310 : CHANGE_ELEMENT
-Structure T_CHANGE_ELEMENT Extends TStepBase ; ID= 310
+Structure T_CHANGE_ELEMENT Extends TStepEntityBase ; ID= 310
   
 EndStructure 
  
  ; 311 : CHANGE_ELEMENT_SEQUENCE
-Structure T_CHANGE_ELEMENT_SEQUENCE Extends TStepBase ; ID= 311
+Structure T_CHANGE_ELEMENT_SEQUENCE Extends TStepEntityBase ; ID= 311
   
 EndStructure 
  
  ; 312 : CHANGE_GROUP
-Structure T_CHANGE_GROUP Extends TStepBase ; ID= 312
+Structure T_CHANGE_GROUP Extends TStepEntityBase ; ID= 312
   
 EndStructure 
  
  ; 313 : CHANGE_GROUP_ASSIGNMENT
-Structure T_CHANGE_GROUP_ASSIGNMENT Extends TStepBase ; ID= 313
+Structure T_CHANGE_GROUP_ASSIGNMENT Extends TStepEntityBase ; ID= 313
   
 EndStructure 
  
  ; 314 : CHANGE_REQUEST
-Structure T_CHANGE_REQUEST Extends TStepBase ; ID= 314
+Structure T_CHANGE_REQUEST Extends TStepEntityBase ; ID= 314
   
 EndStructure 
  
  ; 315 : CHARACTER_GLYPH_FONT_USAGE
-Structure T_CHARACTER_GLYPH_FONT_USAGE Extends TStepBase ; ID= 315
+Structure T_CHARACTER_GLYPH_FONT_USAGE Extends TStepEntityBase ; ID= 315
   
 EndStructure 
  
  ; 316 : CHARACTER_GLYPH_STYLE_OUTLINE
-Structure T_CHARACTER_GLYPH_STYLE_OUTLINE Extends TStepBase ; ID= 316
+Structure T_CHARACTER_GLYPH_STYLE_OUTLINE Extends TStepEntityBase ; ID= 316
   
 EndStructure 
  
  ; 317 : CHARACTER_GLYPH_STYLE_STROKE
-Structure T_CHARACTER_GLYPH_STYLE_STROKE Extends TStepBase ; ID= 317
+Structure T_CHARACTER_GLYPH_STYLE_STROKE Extends TStepEntityBase ; ID= 317
   
 EndStructure 
  
  ; 318 : CHARACTER_GLYPH_SYMBOL
-Structure T_CHARACTER_GLYPH_SYMBOL Extends TStepBase ; ID= 318
+Structure T_CHARACTER_GLYPH_SYMBOL Extends TStepEntityBase ; ID= 318
   
 EndStructure 
  
  ; 319 : CHARACTER_GLYPH_SYMBOL_OUTLINE
-Structure T_CHARACTER_GLYPH_SYMBOL_OUTLINE Extends TStepBase ; ID= 319
+Structure T_CHARACTER_GLYPH_SYMBOL_OUTLINE Extends TStepEntityBase ; ID= 319
   
 EndStructure 
  
  ; 320 : CHARACTER_GLYPH_SYMBOL_STROKE
-Structure T_CHARACTER_GLYPH_SYMBOL_STROKE Extends TStepBase ; ID= 320
+Structure T_CHARACTER_GLYPH_SYMBOL_STROKE Extends TStepEntityBase ; ID= 320
   
 EndStructure 
  
  ; 321 : CHARACTERISTIC_DATA_COLUMN_HEADER
-Structure T_CHARACTERISTIC_DATA_COLUMN_HEADER Extends TStepBase ; ID= 321
+Structure T_CHARACTERISTIC_DATA_COLUMN_HEADER Extends TStepEntityBase ; ID= 321
   
 EndStructure 
  
  ; 322 : CHARACTERISTIC_DATA_COLUMN_HEADER_LINK
-Structure T_CHARACTERISTIC_DATA_COLUMN_HEADER_LINK Extends TStepBase ; ID= 322
+Structure T_CHARACTERISTIC_DATA_COLUMN_HEADER_LINK Extends TStepEntityBase ; ID= 322
   
 EndStructure 
  
  ; 323 : CHARACTERISTIC_DATA_TABLE_HEADER
-Structure T_CHARACTERISTIC_DATA_TABLE_HEADER Extends TStepBase ; ID= 323
+Structure T_CHARACTERISTIC_DATA_TABLE_HEADER Extends TStepEntityBase ; ID= 323
   
 EndStructure 
  
  ; 324 : CHARACTERISTIC_DATA_TABLE_HEADER_DECOMPOSITION
-Structure T_CHARACTERISTIC_DATA_TABLE_HEADER_DECOMPOSITION Extends TStepBase ; ID= 324
+Structure T_CHARACTERISTIC_DATA_TABLE_HEADER_DECOMPOSITION Extends TStepEntityBase ; ID= 324
   
 EndStructure 
  
  ; 325 : CHARACTERISTIC_TYPE
-Structure T_CHARACTERISTIC_TYPE Extends TStepBase ; ID= 325
+Structure T_CHARACTERISTIC_TYPE Extends TStepEntityBase ; ID= 325
   
 EndStructure 
  
  ; 326 : CHARACTERIZED_CHAIN_BASED_ITEM_WITHIN_REPRESENTATION
-Structure T_CHARACTERIZED_CHAIN_BASED_ITEM_WITHIN_REPRESENTATION Extends TStepBase ; ID= 326
+Structure T_CHARACTERIZED_CHAIN_BASED_ITEM_WITHIN_REPRESENTATION Extends TStepEntityBase ; ID= 326
   
 EndStructure 
  
  ; 327 : CHARACTERIZED_CLASS
-Structure T_CHARACTERIZED_CLASS Extends TStepBase ; ID= 327
+Structure T_CHARACTERIZED_CLASS Extends TStepEntityBase ; ID= 327
   
 EndStructure 
  
  ; 328 : CHARACTERIZED_ITEM_WITHIN_REPRESENTATION
-Structure T_CHARACTERIZED_ITEM_WITHIN_REPRESENTATION Extends TStepBase ; ID= 328
+Structure T_CHARACTERIZED_ITEM_WITHIN_REPRESENTATION Extends TStepEntityBase ; ID= 328
   
 EndStructure 
  
  ; 329 : CHARACTERIZED_LOCATION_OBJECT
-Structure T_CHARACTERIZED_LOCATION_OBJECT Extends TStepBase ; ID= 329
+Structure T_CHARACTERIZED_LOCATION_OBJECT Extends TStepEntityBase ; ID= 329
   
 EndStructure 
  
  ; 330 : CHARACTERIZED_OBJECT
-Structure T_CHARACTERIZED_OBJECT Extends TStepBase ; ID= 330
+Structure T_CHARACTERIZED_OBJECT Extends TStepEntityBase ; ID= 330
   
 EndStructure 
  
  ; 331 : CHARACTERIZED_OBJECT_RELATIONSHIP
-Structure T_CHARACTERIZED_OBJECT_RELATIONSHIP Extends TStepBase ; ID= 331
+Structure T_CHARACTERIZED_OBJECT_RELATIONSHIP Extends TStepEntityBase ; ID= 331
   
 EndStructure 
  
  ; 332 : CHARACTERIZED_PRODUCT_CONCEPT_FEATURE
-Structure T_CHARACTERIZED_PRODUCT_CONCEPT_FEATURE Extends TStepBase ; ID= 332
+Structure T_CHARACTERIZED_PRODUCT_CONCEPT_FEATURE Extends TStepEntityBase ; ID= 332
   
 EndStructure 
  
  ; 333 : CHARACTERIZED_PRODUCT_CONCEPT_FEATURE_CATEGORY
-Structure T_CHARACTERIZED_PRODUCT_CONCEPT_FEATURE_CATEGORY Extends TStepBase ; ID= 333
+Structure T_CHARACTERIZED_PRODUCT_CONCEPT_FEATURE_CATEGORY Extends TStepEntityBase ; ID= 333
   
 EndStructure 
  
  ; 334 : CHARACTERIZED_REPRESENTATION
-Structure T_CHARACTERIZED_REPRESENTATION Extends TStepBase ; ID= 334
+Structure T_CHARACTERIZED_REPRESENTATION Extends TStepEntityBase ; ID= 334
   
 EndStructure 
  
  ; 335 : CIRCLE
-Structure T_CIRCLE Extends TStepBase ; ID= 335
+Structure T_CIRCLE Extends TStepEntityBase ; ID= 335
   *CPt.T_CARTESIAN_POINT 
   r.d
   
 EndStructure 
  
  ; 336 : CIRCULAR_AREA
-Structure T_CIRCULAR_AREA Extends TStepBase ; ID= 336
+Structure T_CIRCULAR_AREA Extends TStepEntityBase ; ID= 336
   *CPt.T_CARTESIAN_POINT 
   r.d    
 EndStructure 
  
  ; 337 : CIRCULAR_CLOSED_PROFILE
-Structure T_CIRCULAR_CLOSED_PROFILE Extends TStepBase ; ID= 337
+Structure T_CIRCULAR_CLOSED_PROFILE Extends TStepEntityBase ; ID= 337
   
 EndStructure 
  
  ; 338 : CIRCULAR_INVOLUTE
-Structure T_CIRCULAR_INVOLUTE Extends TStepBase ; ID= 338
+Structure T_CIRCULAR_INVOLUTE Extends TStepEntityBase ; ID= 338
   *CPt.T_CARTESIAN_POINT 
   r.d      
 EndStructure 
  
  ; 339 : CIRCULAR_PATH
-Structure T_CIRCULAR_PATH Extends TStepBase ; ID= 339
+Structure T_CIRCULAR_PATH Extends TStepEntityBase ; ID= 339
   
 EndStructure 
  
  ; 340 : CIRCULAR_PATTERN
-Structure T_CIRCULAR_PATTERN Extends TStepBase ; ID= 340
+Structure T_CIRCULAR_PATTERN Extends TStepEntityBase ; ID= 340
   
 EndStructure 
  
  ; 341 : CIRCULAR_RUNOUT_TOLERANCE
-Structure T_CIRCULAR_RUNOUT_TOLERANCE Extends TStepBase ; ID= 341
+Structure T_CIRCULAR_RUNOUT_TOLERANCE Extends TStepEntityBase ; ID= 341
   
 EndStructure 
  
  ; 342 : CLASS
-Structure T_CLASS Extends TStepBase ; ID= 342
+Structure T_CLASS Extends TStepEntityBase ; ID= 342
   
 EndStructure 
  
  ; 343 : CLASS_BY_EXTENSION
-Structure T_CLASS_BY_EXTENSION Extends TStepBase ; ID= 343
+Structure T_CLASS_BY_EXTENSION Extends TStepEntityBase ; ID= 343
   
 EndStructure 
  
  ; 344 : CLASS_BY_INTENSION
-Structure T_CLASS_BY_INTENSION Extends TStepBase ; ID= 344
+Structure T_CLASS_BY_INTENSION Extends TStepEntityBase ; ID= 344
   
 EndStructure 
  
  ; 345 : CLASS_SYSTEM
-Structure T_CLASS_SYSTEM Extends TStepBase ; ID= 345
+Structure T_CLASS_SYSTEM Extends TStepEntityBase ; ID= 345
   
 EndStructure 
  
  ; 346 : CLASS_USAGE_EFFECTIVITY_CONTEXT_ASSIGNMENT
-Structure T_CLASS_USAGE_EFFECTIVITY_CONTEXT_ASSIGNMENT Extends TStepBase ; ID= 346
+Structure T_CLASS_USAGE_EFFECTIVITY_CONTEXT_ASSIGNMENT Extends TStepEntityBase ; ID= 346
   
 EndStructure 
  
  ; 347 : CLASSIFICATION_ASSIGNMENT
-Structure T_CLASSIFICATION_ASSIGNMENT Extends TStepBase ; ID= 347
+Structure T_CLASSIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 347
   
 EndStructure 
  
  ; 348 : CLASSIFICATION_ASSIGNMENT_RELATIONSHIP
-Structure T_CLASSIFICATION_ASSIGNMENT_RELATIONSHIP Extends TStepBase ; ID= 348
+Structure T_CLASSIFICATION_ASSIGNMENT_RELATIONSHIP Extends TStepEntityBase ; ID= 348
   
 EndStructure 
  
  ; 349 : CLASSIFICATION_ROLE
-Structure T_CLASSIFICATION_ROLE Extends TStepBase ; ID= 349
+Structure T_CLASSIFICATION_ROLE Extends TStepEntityBase ; ID= 349
   
 EndStructure 
  
  ; 350 : CLGC_WITH_DIMENSION
-Structure T_CLGC_WITH_DIMENSION Extends TStepBase ; ID= 350
+Structure T_CLGC_WITH_DIMENSION Extends TStepEntityBase ; ID= 350
   
 EndStructure 
  
  ; 351 : CLOSED_CURVE_STYLE_PARAMETERS
-Structure T_CLOSED_CURVE_STYLE_PARAMETERS Extends TStepBase ; ID= 351
+Structure T_CLOSED_CURVE_STYLE_PARAMETERS Extends TStepEntityBase ; ID= 351
   
 EndStructure 
  
  ; 352 : CLOSED_PATH_PROFILE
-Structure T_CLOSED_PATH_PROFILE Extends TStepBase ; ID= 352
+Structure T_CLOSED_PATH_PROFILE Extends TStepEntityBase ; ID= 352
   
 EndStructure 
  
  ; 353 : CLOSED_SHELL
-Structure T_CLOSED_SHELL Extends TStepBase ; ID= 353
+Structure T_CLOSED_SHELL Extends TStepEntityBase ; ID= 353
   
 EndStructure 
  
  ; 354 : CLOTHOID
-Structure T_CLOTHOID Extends TStepBase ; ID= 354
+Structure T_CLOTHOID Extends TStepEntityBase ; ID= 354
   
 EndStructure 
  
  ; 355 : COAXIAL_ASSEMBLY_CONSTRAINT
-Structure T_COAXIAL_ASSEMBLY_CONSTRAINT Extends TStepBase ; ID= 355
+Structure T_COAXIAL_ASSEMBLY_CONSTRAINT Extends TStepEntityBase ; ID= 355
   
 EndStructure 
  
  ; 356 : COAXIAL_GEOMETRIC_CONSTRAINT
-Structure T_COAXIAL_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 356
+Structure T_COAXIAL_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 356
   
 EndStructure 
  
  ; 357 : COAXIALITY_TOLERANCE
-Structure T_COAXIALITY_TOLERANCE Extends TStepBase ; ID= 357
+Structure T_COAXIALITY_TOLERANCE Extends TStepEntityBase ; ID= 357
   
 EndStructure 
  
  ; 358 : COLLECTION
-Structure T_COLLECTION Extends TStepBase ; ID= 358
+Structure T_COLLECTION Extends TStepEntityBase ; ID= 358
   
 EndStructure 
  
  ; 359 : COLLECTION_ASSIGNMENT
-Structure T_COLLECTION_ASSIGNMENT Extends TStepBase ; ID= 359
+Structure T_COLLECTION_ASSIGNMENT Extends TStepEntityBase ; ID= 359
   
 EndStructure 
  
  ; 360 : COLLECTION_MEMBERSHIP
-Structure T_COLLECTION_MEMBERSHIP Extends TStepBase ; ID= 360
+Structure T_COLLECTION_MEMBERSHIP Extends TStepEntityBase ; ID= 360
   
 EndStructure 
  
  ; 361 : COLLECTION_RELATIONSHIP
-Structure T_COLLECTION_RELATIONSHIP Extends TStepBase ; ID= 361
+Structure T_COLLECTION_RELATIONSHIP Extends TStepEntityBase ; ID= 361
   
 EndStructure 
  
  ; 362 : COLLECTION_VERSION
-Structure T_COLLECTION_VERSION Extends TStepBase ; ID= 362
+Structure T_COLLECTION_VERSION Extends TStepEntityBase ; ID= 362
   
 EndStructure 
  
  ; 363 : COLLECTION_VERSION_RELATIONSHIP
-Structure T_COLLECTION_VERSION_RELATIONSHIP Extends TStepBase ; ID= 363
+Structure T_COLLECTION_VERSION_RELATIONSHIP Extends TStepEntityBase ; ID= 363
   
 EndStructure 
  
  ; 364 : COLLECTION_VERSION_SEQUENCE_RELATIONSHIP
-Structure T_COLLECTION_VERSION_SEQUENCE_RELATIONSHIP Extends TStepBase ; ID= 364
+Structure T_COLLECTION_VERSION_SEQUENCE_RELATIONSHIP Extends TStepEntityBase ; ID= 364
   
 EndStructure 
  
  ; 365 : COLLECTION_VIEW_DEFINITION
-Structure T_COLLECTION_VIEW_DEFINITION Extends TStepBase ; ID= 365
+Structure T_COLLECTION_VIEW_DEFINITION Extends TStepEntityBase ; ID= 365
   
 EndStructure 
  
  ; 366 : COLOUR
-Structure T_COLOUR Extends TStepBase ; ID= 366
-  
+Structure T_COLOUR Extends TStepEntityBase ; ID= 366
+  *Obj      ; Pointer to the bound Object/Entity
 EndStructure 
  
  ; 367 : COLOUR_RGB
-Structure T_COLOUR_RGB Extends TStepBase ; ID= 367
-  
+Structure T_COLOUR_RGB Extends TStepEntityBase ; ID= 367
+  Red.f       ; 0..1
+  Green.f     ; 0..1
+  Blue.f      ; 0..1
 EndStructure 
  
  ; 368 : COLOUR_SPECIFICATION
-Structure T_COLOUR_SPECIFICATION Extends TStepBase ; ID= 368
-  
+Structure T_COLOUR_SPECIFICATION Extends TStepEntityBase ; ID= 368
+  *SuperType.TStepEntityBase  
+  *SubType.TStepEntityBase
+  ColorName.s
 EndStructure 
  
  ; 369 : COMMON_DATUM
-Structure T_COMMON_DATUM Extends TStepBase ; ID= 369
+Structure T_COMMON_DATUM Extends TStepEntityBase ; ID= 369
   
 EndStructure 
  
  ; 370 : COMPARISON_EQUAL
-Structure T_COMPARISON_EQUAL Extends TStepBase ; ID= 370
+Structure T_COMPARISON_EQUAL Extends TStepEntityBase ; ID= 370
   
 EndStructure 
  
  ; 371 : COMPARISON_EXPRESSION
-Structure T_COMPARISON_EXPRESSION Extends TStepBase ; ID= 371
+Structure T_COMPARISON_EXPRESSION Extends TStepEntityBase ; ID= 371
   
 EndStructure 
  
  ; 372 : COMPARISON_GREATER
-Structure T_COMPARISON_GREATER Extends TStepBase ; ID= 372
+Structure T_COMPARISON_GREATER Extends TStepEntityBase ; ID= 372
   
 EndStructure 
  
  ; 373 : COMPARISON_GREATER_EQUAL
-Structure T_COMPARISON_GREATER_EQUAL Extends TStepBase ; ID= 373
+Structure T_COMPARISON_GREATER_EQUAL Extends TStepEntityBase ; ID= 373
   
 EndStructure 
  
  ; 374 : COMPARISON_LESS
-Structure T_COMPARISON_LESS Extends TStepBase ; ID= 374
+Structure T_COMPARISON_LESS Extends TStepEntityBase ; ID= 374
   
 EndStructure 
  
  ; 375 : COMPARISON_LESS_EQUAL
-Structure T_COMPARISON_LESS_EQUAL Extends TStepBase ; ID= 375
+Structure T_COMPARISON_LESS_EQUAL Extends TStepEntityBase ; ID= 375
   
 EndStructure 
  
  ; 376 : COMPARISON_NOT_EQUAL
-Structure T_COMPARISON_NOT_EQUAL Extends TStepBase ; ID= 376
+Structure T_COMPARISON_NOT_EQUAL Extends TStepEntityBase ; ID= 376
   
 EndStructure 
  
  ; 377 : COMPLEX_AREA
-Structure T_COMPLEX_AREA Extends TStepBase ; ID= 377
+Structure T_COMPLEX_AREA Extends TStepEntityBase ; ID= 377
   
 EndStructure 
  
  ; 378 : COMPLEX_CLAUSE
-Structure T_COMPLEX_CLAUSE Extends TStepBase ; ID= 378
+Structure T_COMPLEX_CLAUSE Extends TStepEntityBase ; ID= 378
   
 EndStructure 
  
  ; 379 : COMPLEX_CONJUNCTIVE_CLAUSE
-Structure T_COMPLEX_CONJUNCTIVE_CLAUSE Extends TStepBase ; ID= 379
+Structure T_COMPLEX_CONJUNCTIVE_CLAUSE Extends TStepEntityBase ; ID= 379
   
 EndStructure 
  
  ; 380 : COMPLEX_DISJUNCTIVE_CLAUSE
-Structure T_COMPLEX_DISJUNCTIVE_CLAUSE Extends TStepBase ; ID= 380
+Structure T_COMPLEX_DISJUNCTIVE_CLAUSE Extends TStepEntityBase ; ID= 380
   
 EndStructure 
  
  ; 381 : COMPLEX_NUMBER_LITERAL
-Structure T_COMPLEX_NUMBER_LITERAL Extends TStepBase ; ID= 381
+Structure T_COMPLEX_NUMBER_LITERAL Extends TStepEntityBase ; ID= 381
   
 EndStructure 
  
  ; 382 : COMPLEX_NUMBER_LITERAL_POLAR
-Structure T_COMPLEX_NUMBER_LITERAL_POLAR Extends TStepBase ; ID= 382
+Structure T_COMPLEX_NUMBER_LITERAL_POLAR Extends TStepEntityBase ; ID= 382
   
 EndStructure 
  
  ; 383 : COMPLEX_SHELLED_SOLID
-Structure T_COMPLEX_SHELLED_SOLID Extends TStepBase ; ID= 383
+Structure T_COMPLEX_SHELLED_SOLID Extends TStepEntityBase ; ID= 383
   
 EndStructure 
  
  ; 384 : COMPLEX_TRIANGULATED_FACE
-Structure T_COMPLEX_TRIANGULATED_FACE Extends TStepBase ; ID= 384
+Structure T_COMPLEX_TRIANGULATED_FACE Extends TStepEntityBase ; ID= 384
   
 EndStructure 
  
  ; 385 : COMPLEX_TRIANGULATED_SURFACE_SET
-Structure T_COMPLEX_TRIANGULATED_SURFACE_SET Extends TStepBase ; ID= 385
+Structure T_COMPLEX_TRIANGULATED_SURFACE_SET Extends TStepEntityBase ; ID= 385
   
 EndStructure 
  
  ; 386 : COMPONENT_DEFINITION
-Structure T_COMPONENT_DEFINITION Extends TStepBase ; ID= 386
+Structure T_COMPONENT_DEFINITION Extends TStepEntityBase ; ID= 386
   
 EndStructure 
  
  ; 387 : COMPONENT_FEATURE
-Structure T_COMPONENT_FEATURE Extends TStepBase ; ID= 387
+Structure T_COMPONENT_FEATURE Extends TStepEntityBase ; ID= 387
   
 EndStructure 
  
  ; 388 : COMPONENT_FEATURE_JOINT
-Structure T_COMPONENT_FEATURE_JOINT Extends TStepBase ; ID= 388
+Structure T_COMPONENT_FEATURE_JOINT Extends TStepEntityBase ; ID= 388
   
 EndStructure 
  
  ; 389 : COMPONENT_FEATURE_RELATIONSHIP
-Structure T_COMPONENT_FEATURE_RELATIONSHIP Extends TStepBase ; ID= 389
+Structure T_COMPONENT_FEATURE_RELATIONSHIP Extends TStepEntityBase ; ID= 389
   
 EndStructure 
  
  ; 390 : COMPONENT_MATING_CONSTRAINT_CONDITION
-Structure T_COMPONENT_MATING_CONSTRAINT_CONDITION Extends TStepBase ; ID= 390
+Structure T_COMPONENT_MATING_CONSTRAINT_CONDITION Extends TStepEntityBase ; ID= 390
   
 EndStructure 
  
  ; 391 : COMPONENT_PATH_SHAPE_ASPECT
-Structure T_COMPONENT_PATH_SHAPE_ASPECT Extends TStepBase ; ID= 391
+Structure T_COMPONENT_PATH_SHAPE_ASPECT Extends TStepEntityBase ; ID= 391
   
 EndStructure 
  
  ; 392 : COMPONENT_TERMINAL
-Structure T_COMPONENT_TERMINAL Extends TStepBase ; ID= 392
+Structure T_COMPONENT_TERMINAL Extends TStepEntityBase ; ID= 392
   
 EndStructure 
  
  ; 393 : COMPOSITE_ASSEMBLY_DEFINITION
-Structure T_COMPOSITE_ASSEMBLY_DEFINITION Extends TStepBase ; ID= 393
+Structure T_COMPOSITE_ASSEMBLY_DEFINITION Extends TStepEntityBase ; ID= 393
   
 EndStructure 
  
  ; 394 : COMPOSITE_ASSEMBLY_SEQUENCE_DEFINITION
-Structure T_COMPOSITE_ASSEMBLY_SEQUENCE_DEFINITION Extends TStepBase ; ID= 394
+Structure T_COMPOSITE_ASSEMBLY_SEQUENCE_DEFINITION Extends TStepEntityBase ; ID= 394
   
 EndStructure 
  
  ; 395 : COMPOSITE_ASSEMBLY_TABLE
-Structure T_COMPOSITE_ASSEMBLY_TABLE Extends TStepBase ; ID= 395
+Structure T_COMPOSITE_ASSEMBLY_TABLE Extends TStepEntityBase ; ID= 395
   
 EndStructure 
  
  ; 396 : COMPOSITE_CURVE
-Structure T_COMPOSITE_CURVE Extends TStepBase ; ID= 396
+Structure T_COMPOSITE_CURVE Extends TStepEntityBase ; ID= 396
   
 EndStructure 
  
  ; 397 : COMPOSITE_CURVE_ON_SURFACE
-Structure T_COMPOSITE_CURVE_ON_SURFACE Extends TStepBase ; ID= 397
+Structure T_COMPOSITE_CURVE_ON_SURFACE Extends TStepEntityBase ; ID= 397
   
 EndStructure 
  
  ; 398 : COMPOSITE_CURVE_SEGMENT
-Structure T_COMPOSITE_CURVE_SEGMENT Extends TStepBase ; ID= 398
+Structure T_COMPOSITE_CURVE_SEGMENT Extends TStepEntityBase ; ID= 398
   
 EndStructure 
  
  ; 399 : COMPOSITE_CURVE_TRANSITION_LOCATOR
-Structure T_COMPOSITE_CURVE_TRANSITION_LOCATOR Extends TStepBase ; ID= 399
+Structure T_COMPOSITE_CURVE_TRANSITION_LOCATOR Extends TStepEntityBase ; ID= 399
   
 EndStructure 
  
  ; 400 : COMPOSITE_GROUP_SHAPE_ASPECT
-Structure T_COMPOSITE_GROUP_SHAPE_ASPECT Extends TStepBase ; ID= 400
+Structure T_COMPOSITE_GROUP_SHAPE_ASPECT Extends TStepEntityBase ; ID= 400
   
 EndStructure 
  
  ; 401 : COMPOSITE_HOLE
-Structure T_COMPOSITE_HOLE Extends TStepBase ; ID= 401
+Structure T_COMPOSITE_HOLE Extends TStepEntityBase ; ID= 401
   
 EndStructure 
  
  ; 402 : COMPOSITE_MATERIAL_DESIGNATION
-Structure T_COMPOSITE_MATERIAL_DESIGNATION Extends TStepBase ; ID= 402
+Structure T_COMPOSITE_MATERIAL_DESIGNATION Extends TStepEntityBase ; ID= 402
   
 EndStructure 
  
  ; 403 : COMPOSITE_SHAPE_ASPECT
-Structure T_COMPOSITE_SHAPE_ASPECT Extends TStepBase ; ID= 403
+Structure T_COMPOSITE_SHAPE_ASPECT Extends TStepEntityBase ; ID= 403
   
 EndStructure 
  
  ; 404 : COMPOSITE_SHEET_REPRESENTATION
-Structure T_COMPOSITE_SHEET_REPRESENTATION Extends TStepBase ; ID= 404
+Structure T_COMPOSITE_SHEET_REPRESENTATION Extends TStepEntityBase ; ID= 404
   
 EndStructure 
  
  ; 405 : COMPOSITE_TEXT
-Structure T_COMPOSITE_TEXT Extends TStepBase ; ID= 405
+Structure T_COMPOSITE_TEXT Extends TStepEntityBase ; ID= 405
   
 EndStructure 
  
  ; 406 : COMPOSITE_TEXT_WITH_ASSOCIATED_CURVES
-Structure T_COMPOSITE_TEXT_WITH_ASSOCIATED_CURVES Extends TStepBase ; ID= 406
+Structure T_COMPOSITE_TEXT_WITH_ASSOCIATED_CURVES Extends TStepEntityBase ; ID= 406
   
 EndStructure 
  
  ; 407 : COMPOSITE_TEXT_WITH_BLANKING_BOX
-Structure T_COMPOSITE_TEXT_WITH_BLANKING_BOX Extends TStepBase ; ID= 407
+Structure T_COMPOSITE_TEXT_WITH_BLANKING_BOX Extends TStepEntityBase ; ID= 407
   
 EndStructure 
  
  ; 408 : COMPOSITE_TEXT_WITH_DELINEATION
-Structure T_COMPOSITE_TEXT_WITH_DELINEATION Extends TStepBase ; ID= 408
+Structure T_COMPOSITE_TEXT_WITH_DELINEATION Extends TStepEntityBase ; ID= 408
   
 EndStructure 
  
  ; 409 : COMPOSITE_TEXT_WITH_EXTENT
-Structure T_COMPOSITE_TEXT_WITH_EXTENT Extends TStepBase ; ID= 409
+Structure T_COMPOSITE_TEXT_WITH_EXTENT Extends TStepEntityBase ; ID= 409
   
 EndStructure 
  
  ; 410 : COMPOSITE_UNIT_SHAPE_ASPECT
-Structure T_COMPOSITE_UNIT_SHAPE_ASPECT Extends TStepBase ; ID= 410
+Structure T_COMPOSITE_UNIT_SHAPE_ASPECT Extends TStepEntityBase ; ID= 410
   
 EndStructure 
  
  ; 411 : COMPOUND_FEATURE
-Structure T_COMPOUND_FEATURE Extends TStepBase ; ID= 411
+Structure T_COMPOUND_FEATURE Extends TStepEntityBase ; ID= 411
   
 EndStructure 
  
  ; 412 : COMPOUND_REPRESENTATION_ITEM
-Structure T_COMPOUND_REPRESENTATION_ITEM Extends TStepBase ; ID= 412
+Structure T_COMPOUND_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 412
   
 EndStructure 
  
  ; 413 : COMPOUND_SHAPE_REPRESENTATION
-Structure T_COMPOUND_SHAPE_REPRESENTATION Extends TStepBase ; ID= 413
+Structure T_COMPOUND_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 413
   
 EndStructure 
  
  ; 414 : CONCAT_EXPRESSION
-Structure T_CONCAT_EXPRESSION Extends TStepBase ; ID= 414
+Structure T_CONCAT_EXPRESSION Extends TStepEntityBase ; ID= 414
   
 EndStructure 
  
  ; 415 : CONCENTRICITY_TOLERANCE
-Structure T_CONCENTRICITY_TOLERANCE Extends TStepBase ; ID= 415
+Structure T_CONCENTRICITY_TOLERANCE Extends TStepEntityBase ; ID= 415
   
 EndStructure 
  
  ; 416 : CONCEPT_FEATURE_OPERATOR
-Structure T_CONCEPT_FEATURE_OPERATOR Extends TStepBase ; ID= 416
+Structure T_CONCEPT_FEATURE_OPERATOR Extends TStepEntityBase ; ID= 416
   
 EndStructure 
  
  ; 417 : CONCEPT_FEATURE_RELATIONSHIP
-Structure T_CONCEPT_FEATURE_RELATIONSHIP Extends TStepBase ; ID= 417
+Structure T_CONCEPT_FEATURE_RELATIONSHIP Extends TStepEntityBase ; ID= 417
   
 EndStructure 
  
  ; 418 : CONCEPT_FEATURE_RELATIONSHIP_WITH_CONDITION
-Structure T_CONCEPT_FEATURE_RELATIONSHIP_WITH_CONDITION Extends TStepBase ; ID= 418
+Structure T_CONCEPT_FEATURE_RELATIONSHIP_WITH_CONDITION Extends TStepEntityBase ; ID= 418
   
 EndStructure 
  
  ; 419 : CONCURRENT_ACTION_METHOD
-Structure T_CONCURRENT_ACTION_METHOD Extends TStepBase ; ID= 419
+Structure T_CONCURRENT_ACTION_METHOD Extends TStepEntityBase ; ID= 419
   
 EndStructure 
  
  ; 420 : CONDITION
-Structure T_CONDITION Extends TStepBase ; ID= 420
+Structure T_CONDITION Extends TStepEntityBase ; ID= 420
   
 EndStructure 
  
  ; 421 : CONDITIONAL_CONCEPT_FEATURE
-Structure T_CONDITIONAL_CONCEPT_FEATURE Extends TStepBase ; ID= 421
+Structure T_CONDITIONAL_CONCEPT_FEATURE Extends TStepEntityBase ; ID= 421
   
 EndStructure 
  
  ; 422 : CONDITIONAL_EFFECTIVITY
-Structure T_CONDITIONAL_EFFECTIVITY Extends TStepBase ; ID= 422
+Structure T_CONDITIONAL_EFFECTIVITY Extends TStepEntityBase ; ID= 422
   
 EndStructure 
  
  ; 423 : CONDUCTANCE_MEASURE_WITH_UNIT
-Structure T_CONDUCTANCE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 423
+Structure T_CONDUCTANCE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 423
   
 EndStructure 
  
  ; 424 : CONDUCTANCE_UNIT
-Structure T_CONDUCTANCE_UNIT Extends TStepBase ; ID= 424
+Structure T_CONDUCTANCE_UNIT Extends TStepEntityBase ; ID= 424
   
 EndStructure 
  
  ; 425 : CONFIGURABLE_ITEM
-Structure T_CONFIGURABLE_ITEM Extends TStepBase ; ID= 425
+Structure T_CONFIGURABLE_ITEM Extends TStepEntityBase ; ID= 425
   
 EndStructure 
  
  ; 426 : CONFIGURATION_DEFINITION
-Structure T_CONFIGURATION_DEFINITION Extends TStepBase ; ID= 426
+Structure T_CONFIGURATION_DEFINITION Extends TStepEntityBase ; ID= 426
   
 EndStructure 
  
  ; 427 : CONFIGURATION_DESIGN
-Structure T_CONFIGURATION_DESIGN Extends TStepBase ; ID= 427
+Structure T_CONFIGURATION_DESIGN Extends TStepEntityBase ; ID= 427
   
 EndStructure 
  
  ; 428 : CONFIGURATION_EFFECTIVITY
-Structure T_CONFIGURATION_EFFECTIVITY Extends TStepBase ; ID= 428
+Structure T_CONFIGURATION_EFFECTIVITY Extends TStepEntityBase ; ID= 428
   
 EndStructure 
  
  ; 429 : CONFIGURATION_INTERPOLATION
-Structure T_CONFIGURATION_INTERPOLATION Extends TStepBase ; ID= 429
+Structure T_CONFIGURATION_INTERPOLATION Extends TStepEntityBase ; ID= 429
   
 EndStructure 
  
  ; 430 : CONFIGURATION_ITEM
-Structure T_CONFIGURATION_ITEM Extends TStepBase ; ID= 430
+Structure T_CONFIGURATION_ITEM Extends TStepEntityBase ; ID= 430
   
 EndStructure 
  
  ; 431 : CONFIGURATION_ITEM_HIERARCHICAL_RELATIONSHIP
-Structure T_CONFIGURATION_ITEM_HIERARCHICAL_RELATIONSHIP Extends TStepBase ; ID= 431
+Structure T_CONFIGURATION_ITEM_HIERARCHICAL_RELATIONSHIP Extends TStepEntityBase ; ID= 431
   
 EndStructure 
  
  ; 432 : CONFIGURATION_ITEM_RELATIONSHIP
-Structure T_CONFIGURATION_ITEM_RELATIONSHIP Extends TStepBase ; ID= 432
+Structure T_CONFIGURATION_ITEM_RELATIONSHIP Extends TStepEntityBase ; ID= 432
   
 EndStructure 
  
  ; 433 : CONFIGURATION_ITEM_REVISION_SEQUENCE
-Structure T_CONFIGURATION_ITEM_REVISION_SEQUENCE Extends TStepBase ; ID= 433
+Structure T_CONFIGURATION_ITEM_REVISION_SEQUENCE Extends TStepEntityBase ; ID= 433
   
 EndStructure 
  
  ; 434 : CONFIGURED_EFFECTIVITY_ASSIGNMENT
-Structure T_CONFIGURED_EFFECTIVITY_ASSIGNMENT Extends TStepBase ; ID= 434
+Structure T_CONFIGURED_EFFECTIVITY_ASSIGNMENT Extends TStepEntityBase ; ID= 434
   
 EndStructure 
  
  ; 435 : CONFIGURED_EFFECTIVITY_CONTEXT_ASSIGNMENT
-Structure T_CONFIGURED_EFFECTIVITY_CONTEXT_ASSIGNMENT Extends TStepBase ; ID= 435
+Structure T_CONFIGURED_EFFECTIVITY_CONTEXT_ASSIGNMENT Extends TStepEntityBase ; ID= 435
   
 EndStructure 
  
  ; 436 : CONIC
-Structure T_CONIC Extends TStepBase ; ID= 436
+Structure T_CONIC Extends TStepEntityBase ; ID= 436
   
 EndStructure 
  
  ; 437 : CONICAL_STEPPED_HOLE_TRANSITION
-Structure T_CONICAL_STEPPED_HOLE_TRANSITION Extends TStepBase ; ID= 437
+Structure T_CONICAL_STEPPED_HOLE_TRANSITION Extends TStepEntityBase ; ID= 437
   
 EndStructure 
  
  ; 438 : CONICAL_SURFACE
-Structure T_CONICAL_SURFACE Extends TStepBase ; ID= 438
+Structure T_CONICAL_SURFACE Extends TStepEntityBase ; ID= 438
   
 EndStructure 
  
  ; 439 : CONNECTED_EDGE_SET
-Structure T_CONNECTED_EDGE_SET Extends TStepBase ; ID= 439
+Structure T_CONNECTED_EDGE_SET Extends TStepEntityBase ; ID= 439
   
 EndStructure 
  
  ; 440 : CONNECTED_EDGE_SUB_SET
-Structure T_CONNECTED_EDGE_SUB_SET Extends TStepBase ; ID= 440
+Structure T_CONNECTED_EDGE_SUB_SET Extends TStepEntityBase ; ID= 440
   
 EndStructure 
  
  ; 441 : CONNECTED_EDGE_WITH_LENGTH_SET_REPRESENTATION
-Structure T_CONNECTED_EDGE_WITH_LENGTH_SET_REPRESENTATION Extends TStepBase ; ID= 441
+Structure T_CONNECTED_EDGE_WITH_LENGTH_SET_REPRESENTATION Extends TStepEntityBase ; ID= 441
   
 EndStructure 
  
  ; 442 : CONNECTED_FACE_SET
-Structure T_CONNECTED_FACE_SET Extends TStepBase ; ID= 442
+Structure T_CONNECTED_FACE_SET Extends TStepEntityBase ; ID= 442
   
 EndStructure 
  
  ; 443 : CONNECTED_FACE_SUB_SET
-Structure T_CONNECTED_FACE_SUB_SET Extends TStepBase ; ID= 443
+Structure T_CONNECTED_FACE_SUB_SET Extends TStepEntityBase ; ID= 443
   
 EndStructure 
  
  ; 444 : CONNECTED_VOLUME_SET
-Structure T_CONNECTED_VOLUME_SET Extends TStepBase ; ID= 444
+Structure T_CONNECTED_VOLUME_SET Extends TStepEntityBase ; ID= 444
   
 EndStructure 
  
  ; 445 : CONNECTED_VOLUME_SUB_SET
-Structure T_CONNECTED_VOLUME_SUB_SET Extends TStepBase ; ID= 445
+Structure T_CONNECTED_VOLUME_SUB_SET Extends TStepEntityBase ; ID= 445
   
 EndStructure 
  
  ; 446 : CONNECTION_ZONE_BASED_ASSEMBLY_JOINT
-Structure T_CONNECTION_ZONE_BASED_ASSEMBLY_JOINT Extends TStepBase ; ID= 446
+Structure T_CONNECTION_ZONE_BASED_ASSEMBLY_JOINT Extends TStepEntityBase ; ID= 446
   
 EndStructure 
  
  ; 447 : CONNECTION_ZONE_INTERFACE_PLANE_RELATIONSHIP
-Structure T_CONNECTION_ZONE_INTERFACE_PLANE_RELATIONSHIP Extends TStepBase ; ID= 447
+Structure T_CONNECTION_ZONE_INTERFACE_PLANE_RELATIONSHIP Extends TStepEntityBase ; ID= 447
   
 EndStructure 
  
  ; 448 : CONNECTIVITY_DEFINITION
-Structure T_CONNECTIVITY_DEFINITION Extends TStepBase ; ID= 448
+Structure T_CONNECTIVITY_DEFINITION Extends TStepEntityBase ; ID= 448
   
 EndStructure 
  
  ; 449 : CONNECTIVITY_DEFINITION_ITEM_RELATIONSHIP
-Structure T_CONNECTIVITY_DEFINITION_ITEM_RELATIONSHIP Extends TStepBase ; ID= 449
+Structure T_CONNECTIVITY_DEFINITION_ITEM_RELATIONSHIP Extends TStepEntityBase ; ID= 449
   
 EndStructure 
  
  ; 450 : CONSTANT_FUNCTION
-Structure T_CONSTANT_FUNCTION Extends TStepBase ; ID= 450
+Structure T_CONSTANT_FUNCTION Extends TStepEntityBase ; ID= 450
   
 EndStructure 
  
  ; 451 : CONSTITUENT_SHAPE_ASPECT
-Structure T_CONSTITUENT_SHAPE_ASPECT Extends TStepBase ; ID= 451
+Structure T_CONSTITUENT_SHAPE_ASPECT Extends TStepEntityBase ; ID= 451
   
 EndStructure 
  
  ; 452 : CONSTRAINED_KINEMATIC_MOTION_REPRESENTATION
-Structure T_CONSTRAINED_KINEMATIC_MOTION_REPRESENTATION Extends TStepBase ; ID= 452
+Structure T_CONSTRAINED_KINEMATIC_MOTION_REPRESENTATION Extends TStepEntityBase ; ID= 452
   
 EndStructure 
  
  ; 453 : CONSTRUCTIVE_GEOMETRY_REPRESENTATION
-Structure T_CONSTRUCTIVE_GEOMETRY_REPRESENTATION Extends TStepBase ; ID= 453
+Structure T_CONSTRUCTIVE_GEOMETRY_REPRESENTATION Extends TStepEntityBase ; ID= 453
   
 EndStructure 
  
  ; 454 : CONSTRUCTIVE_GEOMETRY_REPRESENTATION_RELATIONSHIP
-Structure T_CONSTRUCTIVE_GEOMETRY_REPRESENTATION_RELATIONSHIP Extends TStepBase ; ID= 454
+Structure T_CONSTRUCTIVE_GEOMETRY_REPRESENTATION_RELATIONSHIP Extends TStepEntityBase ; ID= 454
   
 EndStructure 
  
  ; 455 : CONTACT_FEATURE
-Structure T_CONTACT_FEATURE Extends TStepBase ; ID= 455
+Structure T_CONTACT_FEATURE Extends TStepEntityBase ; ID= 455
   
 EndStructure 
  
  ; 456 : CONTACT_FEATURE_DEFINITION
-Structure T_CONTACT_FEATURE_DEFINITION Extends TStepBase ; ID= 456
+Structure T_CONTACT_FEATURE_DEFINITION Extends TStepEntityBase ; ID= 456
   
 EndStructure 
  
  ; 457 : CONTACT_FEATURE_DEFINITION_FIT_RELATIONSHIP
-Structure T_CONTACT_FEATURE_DEFINITION_FIT_RELATIONSHIP Extends TStepBase ; ID= 457
+Structure T_CONTACT_FEATURE_DEFINITION_FIT_RELATIONSHIP Extends TStepEntityBase ; ID= 457
   
 EndStructure 
  
  ; 458 : CONTACT_FEATURE_FIT_RELATIONSHIP
-Structure T_CONTACT_FEATURE_FIT_RELATIONSHIP Extends TStepBase ; ID= 458
+Structure T_CONTACT_FEATURE_FIT_RELATIONSHIP Extends TStepEntityBase ; ID= 458
   
 EndStructure 
  
  ; 459 : CONTACT_RATIO_REPRESENTATION
-Structure T_CONTACT_RATIO_REPRESENTATION Extends TStepBase ; ID= 459
+Structure T_CONTACT_RATIO_REPRESENTATION Extends TStepEntityBase ; ID= 459
   
 EndStructure 
  
  ; 460 : CONTACTING_FEATURE
-Structure T_CONTACTING_FEATURE Extends TStepBase ; ID= 460
+Structure T_CONTACTING_FEATURE Extends TStepEntityBase ; ID= 460
   
 EndStructure 
  
  ; 461 : CONTAINING_MESSAGE
-Structure T_CONTAINING_MESSAGE Extends TStepBase ; ID= 461
+Structure T_CONTAINING_MESSAGE Extends TStepEntityBase ; ID= 461
   
 EndStructure 
  
  ; 462 : CONTEXT_DEPENDENT_INVISIBILITY
-Structure T_CONTEXT_DEPENDENT_INVISIBILITY Extends TStepBase ; ID= 462
+Structure T_CONTEXT_DEPENDENT_INVISIBILITY Extends TStepEntityBase ; ID= 462
   
 EndStructure 
  
  ; 463 : CONTEXT_DEPENDENT_KINEMATIC_LINK_REPRESENTATION
-Structure T_CONTEXT_DEPENDENT_KINEMATIC_LINK_REPRESENTATION Extends TStepBase ; ID= 463
+Structure T_CONTEXT_DEPENDENT_KINEMATIC_LINK_REPRESENTATION Extends TStepEntityBase ; ID= 463
   
 EndStructure 
  
  ; 464 : CONTEXT_DEPENDENT_OVER_RIDING_STYLED_ITEM
-Structure T_CONTEXT_DEPENDENT_OVER_RIDING_STYLED_ITEM Extends TStepBase ; ID= 464
+Structure T_CONTEXT_DEPENDENT_OVER_RIDING_STYLED_ITEM Extends TStepEntityBase ; ID= 464
   
 EndStructure 
  
  ; 465 : CONTEXT_DEPENDENT_SHAPE_REPRESENTATION
-Structure T_CONTEXT_DEPENDENT_SHAPE_REPRESENTATION Extends TStepBase ; ID= 465
+Structure T_CONTEXT_DEPENDENT_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 465
   
 EndStructure 
  
  ; 466 : CONTEXT_DEPENDENT_UNIT
-Structure T_CONTEXT_DEPENDENT_UNIT Extends TStepBase ; ID= 466
+Structure T_CONTEXT_DEPENDENT_UNIT Extends TStepEntityBase ; ID= 466
   
 EndStructure 
  
  ; 467 : CONTINUOUS_SHAPE_ASPECT
-Structure T_CONTINUOUS_SHAPE_ASPECT Extends TStepBase ; ID= 467
+Structure T_CONTINUOUS_SHAPE_ASPECT Extends TStepEntityBase ; ID= 467
   
 EndStructure 
  
  ; 468 : CONTOURING_TURNING_OPERATION
-Structure T_CONTOURING_TURNING_OPERATION Extends TStepBase ; ID= 468
+Structure T_CONTOURING_TURNING_OPERATION Extends TStepEntityBase ; ID= 468
   
 EndStructure 
  
  ; 469 : CONTRACT
-Structure T_CONTRACT Extends TStepBase ; ID= 469
+Structure T_CONTRACT Extends TStepEntityBase ; ID= 469
   
 EndStructure 
  
  ; 470 : CONTRACT_ASSIGNMENT
-Structure T_CONTRACT_ASSIGNMENT Extends TStepBase ; ID= 470
+Structure T_CONTRACT_ASSIGNMENT Extends TStepEntityBase ; ID= 470
   
 EndStructure 
  
  ; 471 : CONTRACT_RELATIONSHIP
-Structure T_CONTRACT_RELATIONSHIP Extends TStepBase ; ID= 471
+Structure T_CONTRACT_RELATIONSHIP Extends TStepEntityBase ; ID= 471
   
 EndStructure 
  
  ; 472 : CONTRACT_TYPE
-Structure T_CONTRACT_TYPE Extends TStepBase ; ID= 472
+Structure T_CONTRACT_TYPE Extends TStepEntityBase ; ID= 472
   
 EndStructure 
  
  ; 473 : CONVERSION_BASED_UNIT
-Structure T_CONVERSION_BASED_UNIT Extends TStepBase ; ID= 473
+Structure T_CONVERSION_BASED_UNIT Extends TStepEntityBase ; ID= 473
   
 EndStructure 
  
  ; 474 : CONVEX_HEXAHEDRON
-Structure T_CONVEX_HEXAHEDRON Extends TStepBase ; ID= 474
+Structure T_CONVEX_HEXAHEDRON Extends TStepEntityBase ; ID= 474
   
 EndStructure 
  
  ; 475 : COORDINATED_UNIVERSAL_TIME_OFFSET
-Structure T_COORDINATED_UNIVERSAL_TIME_OFFSET Extends TStepBase ; ID= 475
+Structure T_COORDINATED_UNIVERSAL_TIME_OFFSET Extends TStepEntityBase ; ID= 475
   
 EndStructure 
  
  ; 476 : COORDINATES_LIST
-Structure T_COORDINATES_LIST Extends TStepBase ; ID= 476
+Structure T_COORDINATES_LIST Extends TStepEntityBase ; ID= 476
   
 EndStructure 
  
  ; 477 : COS_FUNCTION
-Structure T_COS_FUNCTION Extends TStepBase ; ID= 477
+Structure T_COS_FUNCTION Extends TStepEntityBase ; ID= 477
   
 EndStructure 
  
  ; 478 : COUNTERBORE_HOLE_DEFINITION
-Structure T_COUNTERBORE_HOLE_DEFINITION Extends TStepBase ; ID= 478
+Structure T_COUNTERBORE_HOLE_DEFINITION Extends TStepEntityBase ; ID= 478
   
 EndStructure 
  
  ; 479 : COUNTERBORE_HOLE_OCCURRENCE
-Structure T_COUNTERBORE_HOLE_OCCURRENCE Extends TStepBase ; ID= 479
+Structure T_COUNTERBORE_HOLE_OCCURRENCE Extends TStepEntityBase ; ID= 479
   
 EndStructure 
  
  ; 480 : COUNTERBORE_HOLE_OCCURRENCE_IN_ASSEMBLY
-Structure T_COUNTERBORE_HOLE_OCCURRENCE_IN_ASSEMBLY Extends TStepBase ; ID= 480
+Structure T_COUNTERBORE_HOLE_OCCURRENCE_IN_ASSEMBLY Extends TStepEntityBase ; ID= 480
   
 EndStructure 
  
  ; 481 : COUNTERDRILL_HOLE_DEFINITION
-Structure T_COUNTERDRILL_HOLE_DEFINITION Extends TStepBase ; ID= 481
+Structure T_COUNTERDRILL_HOLE_DEFINITION Extends TStepEntityBase ; ID= 481
   
 EndStructure 
  
  ; 482 : COUNTERDRILL_HOLE_OCCURRENCE
-Structure T_COUNTERDRILL_HOLE_OCCURRENCE Extends TStepBase ; ID= 482
+Structure T_COUNTERDRILL_HOLE_OCCURRENCE Extends TStepEntityBase ; ID= 482
   
 EndStructure 
  
  ; 483 : COUNTERDRILL_HOLE_OCCURRENCE_IN_ASSEMBLY
-Structure T_COUNTERDRILL_HOLE_OCCURRENCE_IN_ASSEMBLY Extends TStepBase ; ID= 483
+Structure T_COUNTERDRILL_HOLE_OCCURRENCE_IN_ASSEMBLY Extends TStepEntityBase ; ID= 483
   
 EndStructure 
  
  ; 484 : COUNTERSINK_HOLE_DEFINITION
-Structure T_COUNTERSINK_HOLE_DEFINITION Extends TStepBase ; ID= 484
+Structure T_COUNTERSINK_HOLE_DEFINITION Extends TStepEntityBase ; ID= 484
   
 EndStructure 
  
  ; 485 : COUNTERSINK_HOLE_OCCURRENCE
-Structure T_COUNTERSINK_HOLE_OCCURRENCE Extends TStepBase ; ID= 485
+Structure T_COUNTERSINK_HOLE_OCCURRENCE Extends TStepEntityBase ; ID= 485
   
 EndStructure 
  
  ; 486 : COUNTERSINK_HOLE_OCCURRENCE_IN_ASSEMBLY
-Structure T_COUNTERSINK_HOLE_OCCURRENCE_IN_ASSEMBLY Extends TStepBase ; ID= 486
+Structure T_COUNTERSINK_HOLE_OCCURRENCE_IN_ASSEMBLY Extends TStepEntityBase ; ID= 486
   
 EndStructure 
  
  ; 487 : CRITERION_REPORT_ITEM_WITH_NUMBER_OF_INSTANCES
-Structure T_CRITERION_REPORT_ITEM_WITH_NUMBER_OF_INSTANCES Extends TStepBase ; ID= 487
+Structure T_CRITERION_REPORT_ITEM_WITH_NUMBER_OF_INSTANCES Extends TStepEntityBase ; ID= 487
   
 EndStructure 
  
  ; 488 : CRITERION_REPORT_ITEM_WITH_VALUE
-Structure T_CRITERION_REPORT_ITEM_WITH_VALUE Extends TStepBase ; ID= 488
+Structure T_CRITERION_REPORT_ITEM_WITH_VALUE Extends TStepEntityBase ; ID= 488
   
 EndStructure 
  
  ; 489 : CROSS_SECTIONAL_ALTERNATIVE_SHAPE_ELEMENT
-Structure T_CROSS_SECTIONAL_ALTERNATIVE_SHAPE_ELEMENT Extends TStepBase ; ID= 489
+Structure T_CROSS_SECTIONAL_ALTERNATIVE_SHAPE_ELEMENT Extends TStepEntityBase ; ID= 489
   
 EndStructure 
  
  ; 490 : CROSS_SECTIONAL_GROUP_SHAPE_ELEMENT
-Structure T_CROSS_SECTIONAL_GROUP_SHAPE_ELEMENT Extends TStepBase ; ID= 490
+Structure T_CROSS_SECTIONAL_GROUP_SHAPE_ELEMENT Extends TStepEntityBase ; ID= 490
   
 EndStructure 
  
  ; 491 : CROSS_SECTIONAL_GROUP_SHAPE_ELEMENT_WITH_LACING
-Structure T_CROSS_SECTIONAL_GROUP_SHAPE_ELEMENT_WITH_LACING Extends TStepBase ; ID= 491
+Structure T_CROSS_SECTIONAL_GROUP_SHAPE_ELEMENT_WITH_LACING Extends TStepEntityBase ; ID= 491
   
 EndStructure 
  
  ; 492 : CROSS_SECTIONAL_GROUP_SHAPE_ELEMENT_WITH_TUBULAR_COVER
-Structure T_CROSS_SECTIONAL_GROUP_SHAPE_ELEMENT_WITH_TUBULAR_COVER Extends TStepBase ; ID= 492
+Structure T_CROSS_SECTIONAL_GROUP_SHAPE_ELEMENT_WITH_TUBULAR_COVER Extends TStepEntityBase ; ID= 492
   
 EndStructure 
  
  ; 493 : CROSS_SECTIONAL_OCCURRENCE_SHAPE_ELEMENT
-Structure T_CROSS_SECTIONAL_OCCURRENCE_SHAPE_ELEMENT Extends TStepBase ; ID= 493
+Structure T_CROSS_SECTIONAL_OCCURRENCE_SHAPE_ELEMENT Extends TStepEntityBase ; ID= 493
   
 EndStructure 
  
  ; 494 : CROSS_SECTIONAL_PART_SHAPE_ELEMENT
-Structure T_CROSS_SECTIONAL_PART_SHAPE_ELEMENT Extends TStepBase ; ID= 494
+Structure T_CROSS_SECTIONAL_PART_SHAPE_ELEMENT Extends TStepEntityBase ; ID= 494
   
 EndStructure 
  
  ; 495 : CSG_2D_SHAPE_REPRESENTATION
-Structure T_CSG_2D_SHAPE_REPRESENTATION Extends TStepBase ; ID= 495
+Structure T_CSG_2D_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 495
   
 EndStructure 
  
  ; 496 : CSG_PRIMITIVE_SOLID_2D
-Structure T_CSG_PRIMITIVE_SOLID_2D Extends TStepBase ; ID= 496
+Structure T_CSG_PRIMITIVE_SOLID_2D Extends TStepEntityBase ; ID= 496
   
 EndStructure 
  
  ; 497 : CSG_SHAPE_REPRESENTATION
-Structure T_CSG_SHAPE_REPRESENTATION Extends TStepBase ; ID= 497
+Structure T_CSG_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 497
   
 EndStructure 
  
  ; 498 : CSG_SOLID
-Structure T_CSG_SOLID Extends TStepBase ; ID= 498
+Structure T_CSG_SOLID Extends TStepEntityBase ; ID= 498
   
 EndStructure 
  
  ; 499 : CSG_SOLID_2D
-Structure T_CSG_SOLID_2D Extends TStepBase ; ID= 499
+Structure T_CSG_SOLID_2D Extends TStepEntityBase ; ID= 499
   
 EndStructure 
  
  ; 500 : CUBIC_BEZIER_TESSELLATED_EDGE
-Structure T_CUBIC_BEZIER_TESSELLATED_EDGE Extends TStepBase ; ID= 500
+Structure T_CUBIC_BEZIER_TESSELLATED_EDGE Extends TStepEntityBase ; ID= 500
   
 EndStructure 
  
  ; 501 : CUBIC_BEZIER_TRIANGULATED_FACE
-Structure T_CUBIC_BEZIER_TRIANGULATED_FACE Extends TStepBase ; ID= 501
+Structure T_CUBIC_BEZIER_TRIANGULATED_FACE Extends TStepEntityBase ; ID= 501
   
 EndStructure 
  
  ; 502 : CUBIC_TESSELLATED_CONNECTING_EDGE
-Structure T_CUBIC_TESSELLATED_CONNECTING_EDGE Extends TStepBase ; ID= 502
+Structure T_CUBIC_TESSELLATED_CONNECTING_EDGE Extends TStepEntityBase ; ID= 502
   
 EndStructure 
  
  ; 503 : CURRENCY
-Structure T_CURRENCY Extends TStepBase ; ID= 503
+Structure T_CURRENCY Extends TStepEntityBase ; ID= 503
   
 EndStructure 
  
  ; 504 : CURRENCY_MEASURE_WITH_UNIT
-Structure T_CURRENCY_MEASURE_WITH_UNIT Extends TStepBase ; ID= 504
+Structure T_CURRENCY_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 504
   
 EndStructure 
  
  ; 505 : CURRENT_CHANGE_ELEMENT_ASSIGNMENT
-Structure T_CURRENT_CHANGE_ELEMENT_ASSIGNMENT Extends TStepBase ; ID= 505
+Structure T_CURRENT_CHANGE_ELEMENT_ASSIGNMENT Extends TStepEntityBase ; ID= 505
   
 EndStructure 
  
  ; 506 : CURVE
-Structure T_CURVE Extends TStepBase ; ID= 506
+Structure T_CURVE Extends TStepEntityBase ; ID= 506
   
 EndStructure 
  
  ; 507 : CURVE_11
-Structure T_CURVE_11 Extends TStepBase ; ID= 507
+Structure T_CURVE_11 Extends TStepEntityBase ; ID= 507
   
 EndStructure 
  
  ; 508 : CURVE_BASED_PATH
-Structure T_CURVE_BASED_PATH Extends TStepBase ; ID= 508
+Structure T_CURVE_BASED_PATH Extends TStepEntityBase ; ID= 508
   
 EndStructure 
  
  ; 509 : CURVE_BASED_PATH_WITH_ORIENTATION
-Structure T_CURVE_BASED_PATH_WITH_ORIENTATION Extends TStepBase ; ID= 509
+Structure T_CURVE_BASED_PATH_WITH_ORIENTATION Extends TStepEntityBase ; ID= 509
   
 EndStructure 
  
  ; 510 : CURVE_BASED_PATH_WITH_ORIENTATION_AND_PARAMETERS
-Structure T_CURVE_BASED_PATH_WITH_ORIENTATION_AND_PARAMETERS Extends TStepBase ; ID= 510
+Structure T_CURVE_BASED_PATH_WITH_ORIENTATION_AND_PARAMETERS Extends TStepEntityBase ; ID= 510
   
 EndStructure 
  
  ; 511 : CURVE_BOUNDED_SURFACE
-Structure T_CURVE_BOUNDED_SURFACE Extends TStepBase ; ID= 511
+Structure T_CURVE_BOUNDED_SURFACE Extends TStepEntityBase ; ID= 511
   
 EndStructure 
  
  ; 512 : CURVE_DIMENSION
-Structure T_CURVE_DIMENSION Extends TStepBase ; ID= 512
+Structure T_CURVE_DIMENSION Extends TStepEntityBase ; ID= 512
   
 EndStructure 
  
  ; 513 : CURVE_DISTANCE_GEOMETRIC_CONSTRAINT
-Structure T_CURVE_DISTANCE_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 513
+Structure T_CURVE_DISTANCE_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 513
   
 EndStructure 
  
  ; 514 : CURVE_LENGTH_GEOMETRIC_CONSTRAINT
-Structure T_CURVE_LENGTH_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 514
+Structure T_CURVE_LENGTH_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 514
   
 EndStructure 
  
  ; 515 : CURVE_REPLICA
-Structure T_CURVE_REPLICA Extends TStepBase ; ID= 515
+Structure T_CURVE_REPLICA Extends TStepEntityBase ; ID= 515
   
 EndStructure 
  
  ; 516 : CURVE_SEGMENT_SET
-Structure T_CURVE_SEGMENT_SET Extends TStepBase ; ID= 516
+Structure T_CURVE_SEGMENT_SET Extends TStepEntityBase ; ID= 516
   
 EndStructure 
  
  ; 517 : CURVE_SMOOTHNESS_GEOMETRIC_CONSTRAINT
-Structure T_CURVE_SMOOTHNESS_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 517
+Structure T_CURVE_SMOOTHNESS_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 517
   
 EndStructure 
  
  ; 518 : CURVE_STYLE
-Structure T_CURVE_STYLE Extends TStepBase ; ID= 518
+Structure T_CURVE_STYLE Extends TStepEntityBase ; ID= 518
   
 EndStructure 
  
  ; 519 : CURVE_STYLE_FONT
-Structure T_CURVE_STYLE_FONT Extends TStepBase ; ID= 519
+Structure T_CURVE_STYLE_FONT Extends TStepEntityBase ; ID= 519
   
 EndStructure 
  
  ; 520 : CURVE_STYLE_FONT_AND_SCALING
-Structure T_CURVE_STYLE_FONT_AND_SCALING Extends TStepBase ; ID= 520
+Structure T_CURVE_STYLE_FONT_AND_SCALING Extends TStepEntityBase ; ID= 520
   
 EndStructure 
  
  ; 521 : CURVE_STYLE_FONT_PATTERN
-Structure T_CURVE_STYLE_FONT_PATTERN Extends TStepBase ; ID= 521
+Structure T_CURVE_STYLE_FONT_PATTERN Extends TStepEntityBase ; ID= 521
   
 EndStructure 
  
  ; 522 : CURVE_STYLE_PARAMETERS_REPRESENTATION
-Structure T_CURVE_STYLE_PARAMETERS_REPRESENTATION Extends TStepBase ; ID= 522
+Structure T_CURVE_STYLE_PARAMETERS_REPRESENTATION Extends TStepEntityBase ; ID= 522
   
 EndStructure 
  
  ; 523 : CURVE_STYLE_PARAMETERS_WITH_ENDS
-Structure T_CURVE_STYLE_PARAMETERS_WITH_ENDS Extends TStepBase ; ID= 523
+Structure T_CURVE_STYLE_PARAMETERS_WITH_ENDS Extends TStepEntityBase ; ID= 523
   
 EndStructure 
  
  ; 524 : CURVE_STYLE_RENDERING
-Structure T_CURVE_STYLE_RENDERING Extends TStepBase ; ID= 524
+Structure T_CURVE_STYLE_RENDERING Extends TStepEntityBase ; ID= 524
   
 EndStructure 
  
  ; 525 : CURVE_SWEPT_SOLID_SHAPE_REPRESENTATION
-Structure T_CURVE_SWEPT_SOLID_SHAPE_REPRESENTATION Extends TStepBase ; ID= 525
+Structure T_CURVE_SWEPT_SOLID_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 525
   
 EndStructure 
  
  ; 526 : CURVE_WITH_EXCESSIVE_SEGMENTS
-Structure T_CURVE_WITH_EXCESSIVE_SEGMENTS Extends TStepBase ; ID= 526
+Structure T_CURVE_WITH_EXCESSIVE_SEGMENTS Extends TStepEntityBase ; ID= 526
   
 EndStructure 
  
  ; 527 : CURVE_WITH_SMALL_CURVATURE_RADIUS
-Structure T_CURVE_WITH_SMALL_CURVATURE_RADIUS Extends TStepBase ; ID= 527
+Structure T_CURVE_WITH_SMALL_CURVATURE_RADIUS Extends TStepEntityBase ; ID= 527
   
 EndStructure 
  
  ; 528 : CYCLIDE_SEGMENT_SOLID
-Structure T_CYCLIDE_SEGMENT_SOLID Extends TStepBase ; ID= 528
+Structure T_CYCLIDE_SEGMENT_SOLID Extends TStepEntityBase ; ID= 528
   
 EndStructure 
  
  ; 529 : CYLINDRICAL_11
-Structure T_CYLINDRICAL_11 Extends TStepBase ; ID= 529
+Structure T_CYLINDRICAL_11 Extends TStepEntityBase ; ID= 529
   
 EndStructure 
  
  ; 530 : CYLINDRICAL_PAIR
-Structure T_CYLINDRICAL_PAIR Extends TStepBase ; ID= 530
+Structure T_CYLINDRICAL_PAIR Extends TStepEntityBase ; ID= 530
   
 EndStructure 
  
  ; 531 : CYLINDRICAL_PAIR_RANGE
-Structure T_CYLINDRICAL_PAIR_RANGE Extends TStepBase ; ID= 531
+Structure T_CYLINDRICAL_PAIR_RANGE Extends TStepEntityBase ; ID= 531
   
 EndStructure 
  
  ; 532 : CYLINDRICAL_PAIR_VALUE
-Structure T_CYLINDRICAL_PAIR_VALUE Extends TStepBase ; ID= 532
+Structure T_CYLINDRICAL_PAIR_VALUE Extends TStepEntityBase ; ID= 532
   
 EndStructure 
  
  ; 533 : CYLINDRICAL_PAIR_WITH_RANGE
-Structure T_CYLINDRICAL_PAIR_WITH_RANGE Extends TStepBase ; ID= 533
+Structure T_CYLINDRICAL_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 533
   
 EndStructure 
  
  ; 534 : CYLINDRICAL_POINT
-Structure T_CYLINDRICAL_POINT Extends TStepBase ; ID= 534
+Structure T_CYLINDRICAL_POINT Extends TStepEntityBase ; ID= 534
   
 EndStructure 
  
  ; 535 : CYLINDRICAL_SHAPE_REPRESENTATION
-Structure T_CYLINDRICAL_SHAPE_REPRESENTATION Extends TStepBase ; ID= 535
+Structure T_CYLINDRICAL_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 535
   
 EndStructure 
  
  ; 536 : CYLINDRICAL_SURFACE
-Structure T_CYLINDRICAL_SURFACE Extends TStepBase ; ID= 536
+Structure T_CYLINDRICAL_SURFACE Extends TStepEntityBase ; ID= 536
   
 EndStructure 
  
  ; 537 : CYLINDRICAL_VOLUME
-Structure T_CYLINDRICAL_VOLUME Extends TStepBase ; ID= 537
+Structure T_CYLINDRICAL_VOLUME Extends TStepEntityBase ; ID= 537
   
 EndStructure 
  
  ; 538 : CYLINDRICITY_TOLERANCE
-Structure T_CYLINDRICITY_TOLERANCE Extends TStepBase ; ID= 538
+Structure T_CYLINDRICITY_TOLERANCE Extends TStepEntityBase ; ID= 538
   
 EndStructure 
  
  ; 539 : DATA_ENVIRONMENT
-Structure T_DATA_ENVIRONMENT Extends TStepBase ; ID= 539
+Structure T_DATA_ENVIRONMENT Extends TStepEntityBase ; ID= 539
   
 EndStructure 
  
- ; 540 : DATA_EQUIVALENCE_ASSESSMENT_SPECIFICATION
-Structure T_DATA_EQUIVALENCE_ASSESSMENT_SPECIFICATION Extends TStepBase ; ID= 540
-  
+ ; 540 : DATA_EQUIVALENCE_ASSESSMENT_SPECIFICATION  -- IN AP242
+Structure T_DATA_EQUIVALENCE_ASSESSMENT_SPECIFICATION Extends TStepEntityBase ; ID= 540
+  Text.s    ; Description Text  
 EndStructure 
  
  ; 541 : DATA_EQUIVALENCE_CRITERIA_REPRESENTATION
-Structure T_DATA_EQUIVALENCE_CRITERIA_REPRESENTATION Extends TStepBase ; ID= 541
+Structure T_DATA_EQUIVALENCE_CRITERIA_REPRESENTATION Extends TStepEntityBase ; ID= 541
   
 EndStructure 
  
  ; 542 : DATA_EQUIVALENCE_CRITERION
-Structure T_DATA_EQUIVALENCE_CRITERION Extends TStepBase ; ID= 542
+Structure T_DATA_EQUIVALENCE_CRITERION Extends TStepEntityBase ; ID= 542
   
 EndStructure 
  
  ; 543 : DATA_EQUIVALENCE_DEFINITION
-Structure T_DATA_EQUIVALENCE_DEFINITION Extends TStepBase ; ID= 543
+Structure T_DATA_EQUIVALENCE_DEFINITION Extends TStepEntityBase ; ID= 543
   
 EndStructure 
  
  ; 544 : DATA_EQUIVALENCE_DEFINITION_RELATIONSHIP
-Structure T_DATA_EQUIVALENCE_DEFINITION_RELATIONSHIP Extends TStepBase ; ID= 544
+Structure T_DATA_EQUIVALENCE_DEFINITION_RELATIONSHIP Extends TStepEntityBase ; ID= 544
   
 EndStructure 
  
  ; 545 : DATA_EQUIVALENCE_DEFINITION_REPRESENTATION_RELATIONSHIP
-Structure T_DATA_EQUIVALENCE_DEFINITION_REPRESENTATION_RELATIONSHIP Extends TStepBase ; ID= 545
+Structure T_DATA_EQUIVALENCE_DEFINITION_REPRESENTATION_RELATIONSHIP Extends TStepEntityBase ; ID= 545
   
 EndStructure 
  
  ; 546 : DATA_EQUIVALENCE_INSPECTED_ELEMENT_PAIR
-Structure T_DATA_EQUIVALENCE_INSPECTED_ELEMENT_PAIR Extends TStepBase ; ID= 546
+Structure T_DATA_EQUIVALENCE_INSPECTED_ELEMENT_PAIR Extends TStepEntityBase ; ID= 546
   
 EndStructure 
  
  ; 547 : DATA_EQUIVALENCE_INSPECTION_CRITERION_REPORT
-Structure T_DATA_EQUIVALENCE_INSPECTION_CRITERION_REPORT Extends TStepBase ; ID= 547
+Structure T_DATA_EQUIVALENCE_INSPECTION_CRITERION_REPORT Extends TStepEntityBase ; ID= 547
   
 EndStructure 
  
  ; 548 : DATA_EQUIVALENCE_INSPECTION_CRITERION_REPORT_ITEM
-Structure T_DATA_EQUIVALENCE_INSPECTION_CRITERION_REPORT_ITEM Extends TStepBase ; ID= 548
+Structure T_DATA_EQUIVALENCE_INSPECTION_CRITERION_REPORT_ITEM Extends TStepEntityBase ; ID= 548
   
 EndStructure 
  
  ; 549 : DATA_EQUIVALENCE_INSPECTION_INSTANCE_REPORT
-Structure T_DATA_EQUIVALENCE_INSPECTION_INSTANCE_REPORT Extends TStepBase ; ID= 549
+Structure T_DATA_EQUIVALENCE_INSPECTION_INSTANCE_REPORT Extends TStepEntityBase ; ID= 549
   
 EndStructure 
  
  ; 550 : DATA_EQUIVALENCE_INSPECTION_INSTANCE_REPORT_ITEM
-Structure T_DATA_EQUIVALENCE_INSPECTION_INSTANCE_REPORT_ITEM Extends TStepBase ; ID= 550
+Structure T_DATA_EQUIVALENCE_INSPECTION_INSTANCE_REPORT_ITEM Extends TStepEntityBase ; ID= 550
   
 EndStructure 
  
  ; 551 : DATA_EQUIVALENCE_INSPECTION_REPORT
-Structure T_DATA_EQUIVALENCE_INSPECTION_REPORT Extends TStepBase ; ID= 551
+Structure T_DATA_EQUIVALENCE_INSPECTION_REPORT Extends TStepEntityBase ; ID= 551
   
 EndStructure 
  
  ; 552 : DATA_EQUIVALENCE_INSPECTION_REQUIREMENT
-Structure T_DATA_EQUIVALENCE_INSPECTION_REQUIREMENT Extends TStepBase ; ID= 552
+Structure T_DATA_EQUIVALENCE_INSPECTION_REQUIREMENT Extends TStepEntityBase ; ID= 552
   
 EndStructure 
  
  ; 553 : DATA_EQUIVALENCE_INSPECTION_RESULT
-Structure T_DATA_EQUIVALENCE_INSPECTION_RESULT Extends TStepBase ; ID= 553
+Structure T_DATA_EQUIVALENCE_INSPECTION_RESULT Extends TStepEntityBase ; ID= 553
   
 EndStructure 
  
  ; 554 : DATA_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION
-Structure T_DATA_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION Extends TStepBase ; ID= 554
+Structure T_DATA_EQUIVALENCE_INSPECTION_RESULT_REPRESENTATION Extends TStepEntityBase ; ID= 554
   
 EndStructure 
  
  ; 555 : DATA_EQUIVALENCE_INSPECTION_RESULT_WITH_JUDGEMENT
-Structure T_DATA_EQUIVALENCE_INSPECTION_RESULT_WITH_JUDGEMENT Extends TStepBase ; ID= 555
+Structure T_DATA_EQUIVALENCE_INSPECTION_RESULT_WITH_JUDGEMENT Extends TStepEntityBase ; ID= 555
   
 EndStructure 
  
  ; 556 : DATA_EQUIVALENCE_REPORT_REQUEST
-Structure T_DATA_EQUIVALENCE_REPORT_REQUEST Extends TStepBase ; ID= 556
+Structure T_DATA_EQUIVALENCE_REPORT_REQUEST Extends TStepEntityBase ; ID= 556
   
 EndStructure 
  
  ; 557 : DATA_QUALITY_ASSESSMENT_MEASUREMENT_ASSOCIATION
-Structure T_DATA_QUALITY_ASSESSMENT_MEASUREMENT_ASSOCIATION Extends TStepBase ; ID= 557
+Structure T_DATA_QUALITY_ASSESSMENT_MEASUREMENT_ASSOCIATION Extends TStepEntityBase ; ID= 557
   
 EndStructure 
  
  ; 558 : DATA_QUALITY_ASSESSMENT_SPECIFICATION
-Structure T_DATA_QUALITY_ASSESSMENT_SPECIFICATION Extends TStepBase ; ID= 558
+Structure T_DATA_QUALITY_ASSESSMENT_SPECIFICATION Extends TStepEntityBase ; ID= 558
   
 EndStructure 
  
  ; 559 : DATA_QUALITY_CRITERIA_REPRESENTATION
-Structure T_DATA_QUALITY_CRITERIA_REPRESENTATION Extends TStepBase ; ID= 559
+Structure T_DATA_QUALITY_CRITERIA_REPRESENTATION Extends TStepEntityBase ; ID= 559
   
 EndStructure 
  
  ; 560 : DATA_QUALITY_CRITERION
-Structure T_DATA_QUALITY_CRITERION Extends TStepBase ; ID= 560
+Structure T_DATA_QUALITY_CRITERION Extends TStepEntityBase ; ID= 560
   
 EndStructure 
  
  ; 561 : DATA_QUALITY_CRITERION_ASSESSMENT_ASSOCIATION
-Structure T_DATA_QUALITY_CRITERION_ASSESSMENT_ASSOCIATION Extends TStepBase ; ID= 561
+Structure T_DATA_QUALITY_CRITERION_ASSESSMENT_ASSOCIATION Extends TStepEntityBase ; ID= 561
   
 EndStructure 
  
  ; 562 : DATA_QUALITY_CRITERION_MEASUREMENT_ASSOCIATION
-Structure T_DATA_QUALITY_CRITERION_MEASUREMENT_ASSOCIATION Extends TStepBase ; ID= 562
+Structure T_DATA_QUALITY_CRITERION_MEASUREMENT_ASSOCIATION Extends TStepEntityBase ; ID= 562
   
 EndStructure 
  
  ; 563 : DATA_QUALITY_DEFINITION
-Structure T_DATA_QUALITY_DEFINITION Extends TStepBase ; ID= 563
+Structure T_DATA_QUALITY_DEFINITION Extends TStepEntityBase ; ID= 563
   
 EndStructure 
  
  ; 564 : DATA_QUALITY_DEFINITION_RELATIONSHIP
-Structure T_DATA_QUALITY_DEFINITION_RELATIONSHIP Extends TStepBase ; ID= 564
+Structure T_DATA_QUALITY_DEFINITION_RELATIONSHIP Extends TStepEntityBase ; ID= 564
   
 EndStructure 
  
  ; 565 : DATA_QUALITY_DEFINITION_REPRESENTATION_RELATIONSHIP
-Structure T_DATA_QUALITY_DEFINITION_REPRESENTATION_RELATIONSHIP Extends TStepBase ; ID= 565
+Structure T_DATA_QUALITY_DEFINITION_REPRESENTATION_RELATIONSHIP Extends TStepEntityBase ; ID= 565
   
 EndStructure 
  
  ; 566 : DATA_QUALITY_INSPECTION_CRITERION_REPORT
-Structure T_DATA_QUALITY_INSPECTION_CRITERION_REPORT Extends TStepBase ; ID= 566
+Structure T_DATA_QUALITY_INSPECTION_CRITERION_REPORT Extends TStepEntityBase ; ID= 566
   
 EndStructure 
  
  ; 567 : DATA_QUALITY_INSPECTION_CRITERION_REPORT_ITEM
-Structure T_DATA_QUALITY_INSPECTION_CRITERION_REPORT_ITEM Extends TStepBase ; ID= 567
+Structure T_DATA_QUALITY_INSPECTION_CRITERION_REPORT_ITEM Extends TStepEntityBase ; ID= 567
   
 EndStructure 
  
  ; 568 : DATA_QUALITY_INSPECTION_INSTANCE_REPORT
-Structure T_DATA_QUALITY_INSPECTION_INSTANCE_REPORT Extends TStepBase ; ID= 568
+Structure T_DATA_QUALITY_INSPECTION_INSTANCE_REPORT Extends TStepEntityBase ; ID= 568
   
 EndStructure 
  
  ; 569 : DATA_QUALITY_INSPECTION_INSTANCE_REPORT_ITEM
-Structure T_DATA_QUALITY_INSPECTION_INSTANCE_REPORT_ITEM Extends TStepBase ; ID= 569
+Structure T_DATA_QUALITY_INSPECTION_INSTANCE_REPORT_ITEM Extends TStepEntityBase ; ID= 569
   
 EndStructure 
  
  ; 570 : DATA_QUALITY_INSPECTION_REPORT
-Structure T_DATA_QUALITY_INSPECTION_REPORT Extends TStepBase ; ID= 570
+Structure T_DATA_QUALITY_INSPECTION_REPORT Extends TStepEntityBase ; ID= 570
   
 EndStructure 
  
  ; 571 : DATA_QUALITY_INSPECTION_RESULT
-Structure T_DATA_QUALITY_INSPECTION_RESULT Extends TStepBase ; ID= 571
+Structure T_DATA_QUALITY_INSPECTION_RESULT Extends TStepEntityBase ; ID= 571
   
 EndStructure 
  
  ; 572 : DATA_QUALITY_INSPECTION_RESULT_REPRESENTATION
-Structure T_DATA_QUALITY_INSPECTION_RESULT_REPRESENTATION Extends TStepBase ; ID= 572
+Structure T_DATA_QUALITY_INSPECTION_RESULT_REPRESENTATION Extends TStepEntityBase ; ID= 572
   
 EndStructure 
  
  ; 573 : DATA_QUALITY_INSPECTION_RESULT_WITH_JUDGEMENT
-Structure T_DATA_QUALITY_INSPECTION_RESULT_WITH_JUDGEMENT Extends TStepBase ; ID= 573
+Structure T_DATA_QUALITY_INSPECTION_RESULT_WITH_JUDGEMENT Extends TStepEntityBase ; ID= 573
   
 EndStructure 
  
  ; 574 : DATA_QUALITY_MEASUREMENT_REQUIREMENT
-Structure T_DATA_QUALITY_MEASUREMENT_REQUIREMENT Extends TStepBase ; ID= 574
+Structure T_DATA_QUALITY_MEASUREMENT_REQUIREMENT Extends TStepEntityBase ; ID= 574
   
 EndStructure 
  
  ; 575 : DATA_QUALITY_REPORT_MEASUREMENT_ASSOCIATION
-Structure T_DATA_QUALITY_REPORT_MEASUREMENT_ASSOCIATION Extends TStepBase ; ID= 575
+Structure T_DATA_QUALITY_REPORT_MEASUREMENT_ASSOCIATION Extends TStepEntityBase ; ID= 575
   
 EndStructure 
  
  ; 576 : DATA_QUALITY_REPORT_REQUEST
-Structure T_DATA_QUALITY_REPORT_REQUEST Extends TStepBase ; ID= 576
+Structure T_DATA_QUALITY_REPORT_REQUEST Extends TStepEntityBase ; ID= 576
   
 EndStructure 
  
  ; 577 : DATE
-Structure T_DATE Extends TStepBase ; ID= 577
+Structure T_DATE Extends TStepEntityBase ; ID= 577
   
 EndStructure 
  
  ; 578 : DATE_AND_TIME
-Structure T_DATE_AND_TIME Extends TStepBase ; ID= 578
+Structure T_DATE_AND_TIME Extends TStepEntityBase ; ID= 578
   
 EndStructure 
  
  ; 579 : DATE_AND_TIME_ASSIGNMENT
-Structure T_DATE_AND_TIME_ASSIGNMENT Extends TStepBase ; ID= 579
+Structure T_DATE_AND_TIME_ASSIGNMENT Extends TStepEntityBase ; ID= 579
   
 EndStructure 
  
  ; 580 : DATE_ASSIGNMENT
-Structure T_DATE_ASSIGNMENT Extends TStepBase ; ID= 580
+Structure T_DATE_ASSIGNMENT Extends TStepEntityBase ; ID= 580
   
 EndStructure 
  
  ; 581 : DATE_REPRESENTATION_ITEM
-Structure T_DATE_REPRESENTATION_ITEM Extends TStepBase ; ID= 581
+Structure T_DATE_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 581
   
 EndStructure 
  
  ; 582 : DATE_ROLE
-Structure T_DATE_ROLE Extends TStepBase ; ID= 582
+Structure T_DATE_ROLE Extends TStepEntityBase ; ID= 582
   
 EndStructure 
  
  ; 583 : DATE_TIME_REPRESENTATION_ITEM
-Structure T_DATE_TIME_REPRESENTATION_ITEM Extends TStepBase ; ID= 583
+Structure T_DATE_TIME_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 583
   
 EndStructure 
  
  ; 584 : DATE_TIME_ROLE
-Structure T_DATE_TIME_ROLE Extends TStepBase ; ID= 584
+Structure T_DATE_TIME_ROLE Extends TStepEntityBase ; ID= 584
   
 EndStructure 
  
  ; 585 : DATED_EFFECTIVITY
-Structure T_DATED_EFFECTIVITY Extends TStepBase ; ID= 585
+Structure T_DATED_EFFECTIVITY Extends TStepEntityBase ; ID= 585
   
 EndStructure 
  
  ; 586 : DATUM
-Structure T_DATUM Extends TStepBase ; ID= 586
+Structure T_DATUM Extends TStepEntityBase ; ID= 586
   
 EndStructure 
  
  ; 587 : DATUM_FEATURE
-Structure T_DATUM_FEATURE Extends TStepBase ; ID= 587
+Structure T_DATUM_FEATURE Extends TStepEntityBase ; ID= 587
   
 EndStructure 
  
  ; 588 : DATUM_FEATURE_CALLOUT
-Structure T_DATUM_FEATURE_CALLOUT Extends TStepBase ; ID= 588
+Structure T_DATUM_FEATURE_CALLOUT Extends TStepEntityBase ; ID= 588
   
 EndStructure 
  
  ; 589 : DATUM_REFERENCE
-Structure T_DATUM_REFERENCE Extends TStepBase ; ID= 589
+Structure T_DATUM_REFERENCE Extends TStepEntityBase ; ID= 589
   
 EndStructure 
  
  ; 590 : DATUM_REFERENCE_COMPARTMENT
-Structure T_DATUM_REFERENCE_COMPARTMENT Extends TStepBase ; ID= 590
+Structure T_DATUM_REFERENCE_COMPARTMENT Extends TStepEntityBase ; ID= 590
   
 EndStructure 
  
  ; 591 : DATUM_REFERENCE_ELEMENT
-Structure T_DATUM_REFERENCE_ELEMENT Extends TStepBase ; ID= 591
+Structure T_DATUM_REFERENCE_ELEMENT Extends TStepEntityBase ; ID= 591
   
 EndStructure 
  
  ; 592 : DATUM_REFERENCE_MODIFIER_WITH_VALUE
-Structure T_DATUM_REFERENCE_MODIFIER_WITH_VALUE Extends TStepBase ; ID= 592
+Structure T_DATUM_REFERENCE_MODIFIER_WITH_VALUE Extends TStepEntityBase ; ID= 592
   
 EndStructure 
  
  ; 593 : DATUM_SYSTEM
-Structure T_DATUM_SYSTEM Extends TStepBase ; ID= 593
+Structure T_DATUM_SYSTEM Extends TStepEntityBase ; ID= 593
   
 EndStructure 
  
  ; 594 : DATUM_TARGET
-Structure T_DATUM_TARGET Extends TStepBase ; ID= 594
+Structure T_DATUM_TARGET Extends TStepEntityBase ; ID= 594
   
 EndStructure 
  
  ; 595 : DATUM_TARGET_CALLOUT
-Structure T_DATUM_TARGET_CALLOUT Extends TStepBase ; ID= 595
+Structure T_DATUM_TARGET_CALLOUT Extends TStepEntityBase ; ID= 595
   
 EndStructure 
  
  ; 596 : DEFAULT_MODEL_GEOMETRIC_VIEW
-Structure T_DEFAULT_MODEL_GEOMETRIC_VIEW Extends TStepBase ; ID= 596
+Structure T_DEFAULT_MODEL_GEOMETRIC_VIEW Extends TStepEntityBase ; ID= 596
   
 EndStructure 
  
  ; 597 : DEFAULT_TOLERANCE_TABLE
-Structure T_DEFAULT_TOLERANCE_TABLE Extends TStepBase ; ID= 597
+Structure T_DEFAULT_TOLERANCE_TABLE Extends TStepEntityBase ; ID= 597
   
 EndStructure 
  
  ; 598 : DEFAULT_TOLERANCE_TABLE_CELL
-Structure T_DEFAULT_TOLERANCE_TABLE_CELL Extends TStepBase ; ID= 598
+Structure T_DEFAULT_TOLERANCE_TABLE_CELL Extends TStepEntityBase ; ID= 598
   
 EndStructure 
  
  ; 599 : DEFINED_CHARACTER_GLYPH
-Structure T_DEFINED_CHARACTER_GLYPH Extends TStepBase ; ID= 599
+Structure T_DEFINED_CHARACTER_GLYPH Extends TStepEntityBase ; ID= 599
   
 EndStructure 
  
  ; 600 : DEFINED_CONSTRAINT
-Structure T_DEFINED_CONSTRAINT Extends TStepBase ; ID= 600
+Structure T_DEFINED_CONSTRAINT Extends TStepEntityBase ; ID= 600
   
 EndStructure 
  
  ; 601 : DEFINED_FUNCTION
-Structure T_DEFINED_FUNCTION Extends TStepBase ; ID= 601
+Structure T_DEFINED_FUNCTION Extends TStepEntityBase ; ID= 601
   
 EndStructure 
  
  ; 602 : DEFINED_SYMBOL
-Structure T_DEFINED_SYMBOL Extends TStepBase ; ID= 602
+Structure T_DEFINED_SYMBOL Extends TStepEntityBase ; ID= 602
   
 EndStructure 
  
  ; 603 : DEFINITE_INTEGRAL_EXPRESSION
-Structure T_DEFINITE_INTEGRAL_EXPRESSION Extends TStepBase ; ID= 603
+Structure T_DEFINITE_INTEGRAL_EXPRESSION Extends TStepEntityBase ; ID= 603
   
 EndStructure 
  
  ; 604 : DEFINITE_INTEGRAL_FUNCTION
-Structure T_DEFINITE_INTEGRAL_FUNCTION Extends TStepBase ; ID= 604
+Structure T_DEFINITE_INTEGRAL_FUNCTION Extends TStepEntityBase ; ID= 604
   
 EndStructure 
  
  ; 605 : DEFINITIONAL_PRODUCT_DEFINITION_USAGE
-Structure T_DEFINITIONAL_PRODUCT_DEFINITION_USAGE Extends TStepBase ; ID= 605
+Structure T_DEFINITIONAL_PRODUCT_DEFINITION_USAGE Extends TStepEntityBase ; ID= 605
   
 EndStructure 
  
  ; 606 : DEFINITIONAL_REPRESENTATION
-Structure T_DEFINITIONAL_REPRESENTATION Extends TStepBase ; ID= 606
+Structure T_DEFINITIONAL_REPRESENTATION Extends TStepEntityBase ; ID= 606
   
 EndStructure 
  
  ; 607 : DEFINITIONAL_REPRESENTATION_RELATIONSHIP
-Structure T_DEFINITIONAL_REPRESENTATION_RELATIONSHIP Extends TStepBase ; ID= 607
+Structure T_DEFINITIONAL_REPRESENTATION_RELATIONSHIP Extends TStepEntityBase ; ID= 607
   
 EndStructure 
  
  ; 608 : DEFINITIONAL_REPRESENTATION_RELATIONSHIP_WITH_SAME_CONTEXT
-Structure T_DEFINITIONAL_REPRESENTATION_RELATIONSHIP_WITH_SAME_CONTEXT Extends TStepBase ; ID= 608
+Structure T_DEFINITIONAL_REPRESENTATION_RELATIONSHIP_WITH_SAME_CONTEXT Extends TStepEntityBase ; ID= 608
   
 EndStructure 
  
  ; 609 : DEGENERATE_PCURVE
-Structure T_DEGENERATE_PCURVE Extends TStepBase ; ID= 609
+Structure T_DEGENERATE_PCURVE Extends TStepEntityBase ; ID= 609
   
 EndStructure 
  
  ; 610 : DEGENERATE_TOROIDAL_SURFACE
-Structure T_DEGENERATE_TOROIDAL_SURFACE Extends TStepBase ; ID= 610
+Structure T_DEGENERATE_TOROIDAL_SURFACE Extends TStepEntityBase ; ID= 610
   
 EndStructure 
  
  ; 611 : DELETE_ELEMENT
-Structure T_DELETE_ELEMENT Extends TStepBase ; ID= 611
+Structure T_DELETE_ELEMENT Extends TStepEntityBase ; ID= 611
   
 EndStructure 
  
  ; 612 : DEPENDENT_VARIABLE_DEFINITION
-Structure T_DEPENDENT_VARIABLE_DEFINITION Extends TStepBase ; ID= 612
+Structure T_DEPENDENT_VARIABLE_DEFINITION Extends TStepEntityBase ; ID= 612
   
 EndStructure 
  
  ; 613 : DERIVED_SHAPE_ASPECT
-Structure T_DERIVED_SHAPE_ASPECT Extends TStepBase ; ID= 613
+Structure T_DERIVED_SHAPE_ASPECT Extends TStepEntityBase ; ID= 613
   
 EndStructure 
  
  ; 614 : DERIVED_UNIT
-Structure T_DERIVED_UNIT Extends TStepBase ; ID= 614
+Structure T_DERIVED_UNIT Extends TStepEntityBase ; ID= 614
   
 EndStructure 
  
  ; 615 : DERIVED_UNIT_ELEMENT
-Structure T_DERIVED_UNIT_ELEMENT Extends TStepBase ; ID= 615
+Structure T_DERIVED_UNIT_ELEMENT Extends TStepEntityBase ; ID= 615
   
 EndStructure 
  
  ; 616 : DERIVED_UNIT_VARIABLE
-Structure T_DERIVED_UNIT_VARIABLE Extends TStepBase ; ID= 616
+Structure T_DERIVED_UNIT_VARIABLE Extends TStepEntityBase ; ID= 616
   
 EndStructure 
  
  ; 617 : DESCRIPTION_ATTRIBUTE
-Structure T_DESCRIPTION_ATTRIBUTE Extends TStepBase ; ID= 617
+Structure T_DESCRIPTION_ATTRIBUTE Extends TStepEntityBase ; ID= 617
   
 EndStructure 
  
  ; 618 : DESCRIPTION_TEXT
-Structure T_DESCRIPTION_TEXT Extends TStepBase ; ID= 618
+Structure T_DESCRIPTION_TEXT Extends TStepEntityBase ; ID= 618
   
 EndStructure 
  
  ; 619 : DESCRIPTION_TEXT_ASSIGNMENT
-Structure T_DESCRIPTION_TEXT_ASSIGNMENT Extends TStepBase ; ID= 619
+Structure T_DESCRIPTION_TEXT_ASSIGNMENT Extends TStepEntityBase ; ID= 619
   
 EndStructure 
  
  ; 620 : DESCRIPTION_TEXT_ASSIGNMENT_RELATIONSHIP
-Structure T_DESCRIPTION_TEXT_ASSIGNMENT_RELATIONSHIP Extends TStepBase ; ID= 620
+Structure T_DESCRIPTION_TEXT_ASSIGNMENT_RELATIONSHIP Extends TStepEntityBase ; ID= 620
   
 EndStructure 
  
  ; 621 : DESCRIPTIVE_REPRESENTATION_ITEM
-Structure T_DESCRIPTIVE_REPRESENTATION_ITEM Extends TStepBase ; ID= 621
+Structure T_DESCRIPTIVE_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 621
   
 EndStructure 
  
  ; 622 : DESIGN_MAKE_FROM_RELATIONSHIP
-Structure T_DESIGN_MAKE_FROM_RELATIONSHIP Extends TStepBase ; ID= 622
+Structure T_DESIGN_MAKE_FROM_RELATIONSHIP Extends TStepEntityBase ; ID= 622
   
 EndStructure 
  
  ; 623 : DESIGN_REFERENCE
-Structure T_DESIGN_REFERENCE Extends TStepBase ; ID= 623
+Structure T_DESIGN_REFERENCE Extends TStepEntityBase ; ID= 623
   
 EndStructure 
  
  ; 624 : DETAILED_EQUIVALENCE_REPORT_REQUEST
-Structure T_DETAILED_EQUIVALENCE_REPORT_REQUEST Extends TStepBase ; ID= 624
+Structure T_DETAILED_EQUIVALENCE_REPORT_REQUEST Extends TStepEntityBase ; ID= 624
   
 EndStructure 
  
  ; 625 : DETAILED_EQUIVALENCE_REPORT_REQUEST_WITH_NUMBER_OF_INSTANCES
-Structure T_DETAILED_EQUIVALENCE_REPORT_REQUEST_WITH_NUMBER_OF_INSTANCES Extends TStepBase ; ID= 625
+Structure T_DETAILED_EQUIVALENCE_REPORT_REQUEST_WITH_NUMBER_OF_INSTANCES Extends TStepEntityBase ; ID= 625
   
 EndStructure 
  
  ; 626 : DETAILED_REPORT_REQUEST
-Structure T_DETAILED_REPORT_REQUEST Extends TStepBase ; ID= 626
+Structure T_DETAILED_REPORT_REQUEST Extends TStepEntityBase ; ID= 626
   
 EndStructure 
  
  ; 627 : DETAILED_REPORT_REQUEST_WITH_NUMBER_OF_DATA
-Structure T_DETAILED_REPORT_REQUEST_WITH_NUMBER_OF_DATA Extends TStepBase ; ID= 627
+Structure T_DETAILED_REPORT_REQUEST_WITH_NUMBER_OF_DATA Extends TStepEntityBase ; ID= 627
   
 EndStructure 
  
  ; 628 : DIAMETER_DIMENSION
-Structure T_DIAMETER_DIMENSION Extends TStepBase ; ID= 628
+Structure T_DIAMETER_DIMENSION Extends TStepEntityBase ; ID= 628
   
 EndStructure 
  
  ; 629 : DIELECTRIC_CONSTANT_MEASURE_WITH_UNIT
-Structure T_DIELECTRIC_CONSTANT_MEASURE_WITH_UNIT Extends TStepBase ; ID= 629
+Structure T_DIELECTRIC_CONSTANT_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 629
   
 EndStructure 
  
  ; 630 : DIFFERENT_ANGLE_OF_ASSEMBLY_CONSTRAINT
-Structure T_DIFFERENT_ANGLE_OF_ASSEMBLY_CONSTRAINT Extends TStepBase ; ID= 630
+Structure T_DIFFERENT_ANGLE_OF_ASSEMBLY_CONSTRAINT Extends TStepEntityBase ; ID= 630
   
 EndStructure 
  
  ; 631 : DIFFERENT_ASSEMBLY_CENTROID
-Structure T_DIFFERENT_ASSEMBLY_CENTROID Extends TStepBase ; ID= 631
+Structure T_DIFFERENT_ASSEMBLY_CENTROID Extends TStepEntityBase ; ID= 631
   
 EndStructure 
  
  ; 632 : DIFFERENT_ASSEMBLY_CENTROID_USING_NOTIONAL_SOLID
-Structure T_DIFFERENT_ASSEMBLY_CENTROID_USING_NOTIONAL_SOLID Extends TStepBase ; ID= 632
+Structure T_DIFFERENT_ASSEMBLY_CENTROID_USING_NOTIONAL_SOLID Extends TStepEntityBase ; ID= 632
   
 EndStructure 
  
  ; 633 : DIFFERENT_ASSEMBLY_CONSTRAINT_TYPE
-Structure T_DIFFERENT_ASSEMBLY_CONSTRAINT_TYPE Extends TStepBase ; ID= 633
+Structure T_DIFFERENT_ASSEMBLY_CONSTRAINT_TYPE Extends TStepEntityBase ; ID= 633
   
 EndStructure 
  
  ; 634 : DIFFERENT_ASSEMBLY_VOLUME
-Structure T_DIFFERENT_ASSEMBLY_VOLUME Extends TStepBase ; ID= 634
+Structure T_DIFFERENT_ASSEMBLY_VOLUME Extends TStepEntityBase ; ID= 634
   
 EndStructure 
  
  ; 635 : DIFFERENT_BOUNDING_BOX
-Structure T_DIFFERENT_BOUNDING_BOX Extends TStepBase ; ID= 635
+Structure T_DIFFERENT_BOUNDING_BOX Extends TStepEntityBase ; ID= 635
   
 EndStructure 
  
  ; 636 : DIFFERENT_CENTROID
-Structure T_DIFFERENT_CENTROID Extends TStepBase ; ID= 636
+Structure T_DIFFERENT_CENTROID Extends TStepEntityBase ; ID= 636
   
 EndStructure 
  
  ; 637 : DIFFERENT_COMPONENT_IDENTIFICATION_VIA_MULTI_LEVEL_REFERENCE
-Structure T_DIFFERENT_COMPONENT_IDENTIFICATION_VIA_MULTI_LEVEL_REFERENCE Extends TStepBase ; ID= 637
+Structure T_DIFFERENT_COMPONENT_IDENTIFICATION_VIA_MULTI_LEVEL_REFERENCE Extends TStepEntityBase ; ID= 637
   
 EndStructure 
  
  ; 638 : DIFFERENT_COMPONENT_SHAPE
-Structure T_DIFFERENT_COMPONENT_SHAPE Extends TStepBase ; ID= 638
+Structure T_DIFFERENT_COMPONENT_SHAPE Extends TStepEntityBase ; ID= 638
   
 EndStructure 
  
  ; 639 : DIFFERENT_COMPONENT_TYPE
-Structure T_DIFFERENT_COMPONENT_TYPE Extends TStepBase ; ID= 639
+Structure T_DIFFERENT_COMPONENT_TYPE Extends TStepEntityBase ; ID= 639
   
 EndStructure 
  
  ; 640 : DIFFERENT_CURVE_LENGTH
-Structure T_DIFFERENT_CURVE_LENGTH Extends TStepBase ; ID= 640
+Structure T_DIFFERENT_CURVE_LENGTH Extends TStepEntityBase ; ID= 640
   
 EndStructure 
  
  ; 641 : DIFFERENT_LENGTH_OF_ASSEMBLY_CONSTRAINT
-Structure T_DIFFERENT_LENGTH_OF_ASSEMBLY_CONSTRAINT Extends TStepBase ; ID= 641
+Structure T_DIFFERENT_LENGTH_OF_ASSEMBLY_CONSTRAINT Extends TStepEntityBase ; ID= 641
   
 EndStructure 
  
  ; 642 : DIFFERENT_NUMBER_OF_CLOSED_SHELL
-Structure T_DIFFERENT_NUMBER_OF_CLOSED_SHELL Extends TStepBase ; ID= 642
+Structure T_DIFFERENT_NUMBER_OF_CLOSED_SHELL Extends TStepEntityBase ; ID= 642
   
 EndStructure 
  
  ; 643 : DIFFERENT_NUMBER_OF_COMPONENTS
-Structure T_DIFFERENT_NUMBER_OF_COMPONENTS Extends TStepBase ; ID= 643
+Structure T_DIFFERENT_NUMBER_OF_COMPONENTS Extends TStepEntityBase ; ID= 643
   
 EndStructure 
  
  ; 644 : DIFFERENT_NUMBER_OF_GEOMETRIC_ELEMENTS
-Structure T_DIFFERENT_NUMBER_OF_GEOMETRIC_ELEMENTS Extends TStepBase ; ID= 644
+Structure T_DIFFERENT_NUMBER_OF_GEOMETRIC_ELEMENTS Extends TStepEntityBase ; ID= 644
   
 EndStructure 
  
  ; 645 : DIFFERENT_NUMBER_OF_GEOMETRIC_ELEMENTS_WIREFRAME_MODEL
-Structure T_DIFFERENT_NUMBER_OF_GEOMETRIC_ELEMENTS_WIREFRAME_MODEL Extends TStepBase ; ID= 645
+Structure T_DIFFERENT_NUMBER_OF_GEOMETRIC_ELEMENTS_WIREFRAME_MODEL Extends TStepEntityBase ; ID= 645
   
 EndStructure 
  
  ; 646 : DIFFERENT_NUMBER_OF_TOPOLOGICAL_ELEMENTS
-Structure T_DIFFERENT_NUMBER_OF_TOPOLOGICAL_ELEMENTS Extends TStepBase ; ID= 646
+Structure T_DIFFERENT_NUMBER_OF_TOPOLOGICAL_ELEMENTS Extends TStepEntityBase ; ID= 646
   
 EndStructure 
  
  ; 647 : DIFFERENT_NUMBER_OF_TOPOLOGICAL_ELEMENTS_WIREFRAME_MODEL
-Structure T_DIFFERENT_NUMBER_OF_TOPOLOGICAL_ELEMENTS_WIREFRAME_MODEL Extends TStepBase ; ID= 647
+Structure T_DIFFERENT_NUMBER_OF_TOPOLOGICAL_ELEMENTS_WIREFRAME_MODEL Extends TStepEntityBase ; ID= 647
   
 EndStructure 
  
  ; 648 : DIFFERENT_PLACEMENT_OF_COMPONENT
-Structure T_DIFFERENT_PLACEMENT_OF_COMPONENT Extends TStepBase ; ID= 648
+Structure T_DIFFERENT_PLACEMENT_OF_COMPONENT Extends TStepEntityBase ; ID= 648
   
 EndStructure 
  
  ; 649 : DIFFERENT_SURFACE_AREA
-Structure T_DIFFERENT_SURFACE_AREA Extends TStepBase ; ID= 649
+Structure T_DIFFERENT_SURFACE_AREA Extends TStepEntityBase ; ID= 649
   
 EndStructure 
  
  ; 650 : DIFFERENT_SURFACE_NORMAL
-Structure T_DIFFERENT_SURFACE_NORMAL Extends TStepBase ; ID= 650
+Structure T_DIFFERENT_SURFACE_NORMAL Extends TStepEntityBase ; ID= 650
   
 EndStructure 
  
  ; 651 : DIFFERENT_VOLUME
-Structure T_DIFFERENT_VOLUME Extends TStepBase ; ID= 651
+Structure T_DIFFERENT_VOLUME Extends TStepEntityBase ; ID= 651
   
 EndStructure 
  
  ; 652 : DIMENSION_CALLOUT
-Structure T_DIMENSION_CALLOUT Extends TStepBase ; ID= 652
+Structure T_DIMENSION_CALLOUT Extends TStepEntityBase ; ID= 652
   
 EndStructure 
  
  ; 653 : DIMENSION_CALLOUT_COMPONENT_RELATIONSHIP
-Structure T_DIMENSION_CALLOUT_COMPONENT_RELATIONSHIP Extends TStepBase ; ID= 653
+Structure T_DIMENSION_CALLOUT_COMPONENT_RELATIONSHIP Extends TStepEntityBase ; ID= 653
   
 EndStructure 
  
  ; 654 : DIMENSION_CALLOUT_RELATIONSHIP
-Structure T_DIMENSION_CALLOUT_RELATIONSHIP Extends TStepBase ; ID= 654
+Structure T_DIMENSION_CALLOUT_RELATIONSHIP Extends TStepEntityBase ; ID= 654
   
 EndStructure 
  
  ; 655 : DIMENSION_CURVE
-Structure T_DIMENSION_CURVE Extends TStepBase ; ID= 655
+Structure T_DIMENSION_CURVE Extends TStepEntityBase ; ID= 655
   
 EndStructure 
  
  ; 656 : DIMENSION_CURVE_DIRECTED_CALLOUT
-Structure T_DIMENSION_CURVE_DIRECTED_CALLOUT Extends TStepBase ; ID= 656
+Structure T_DIMENSION_CURVE_DIRECTED_CALLOUT Extends TStepEntityBase ; ID= 656
   
 EndStructure 
  
  ; 657 : DIMENSION_CURVE_TERMINATOR
-Structure T_DIMENSION_CURVE_TERMINATOR Extends TStepBase ; ID= 657
+Structure T_DIMENSION_CURVE_TERMINATOR Extends TStepEntityBase ; ID= 657
   
 EndStructure 
  
  ; 658 : DIMENSION_CURVE_TERMINATOR_TO_PROJECTION_CURVE_ASSOCIATIVITY
-Structure T_DIMENSION_CURVE_TERMINATOR_TO_PROJECTION_CURVE_ASSOCIATIVITY Extends TStepBase ; ID= 658
+Structure T_DIMENSION_CURVE_TERMINATOR_TO_PROJECTION_CURVE_ASSOCIATIVITY Extends TStepEntityBase ; ID= 658
   
 EndStructure 
  
  ; 659 : DIMENSION_PAIR
-Structure T_DIMENSION_PAIR Extends TStepBase ; ID= 659
+Structure T_DIMENSION_PAIR Extends TStepEntityBase ; ID= 659
   
 EndStructure 
  
  ; 660 : DIMENSION_RELATED_TOLERANCE_ZONE_ELEMENT
-Structure T_DIMENSION_RELATED_TOLERANCE_ZONE_ELEMENT Extends TStepBase ; ID= 660
+Structure T_DIMENSION_RELATED_TOLERANCE_ZONE_ELEMENT Extends TStepEntityBase ; ID= 660
   
 EndStructure 
  
  ; 661 : DIMENSION_TEXT_ASSOCIATIVITY
-Structure T_DIMENSION_TEXT_ASSOCIATIVITY Extends TStepBase ; ID= 661
+Structure T_DIMENSION_TEXT_ASSOCIATIVITY Extends TStepEntityBase ; ID= 661
   
 EndStructure 
  
  ; 662 : DIMENSIONAL_CHARACTERISTIC_REPRESENTATION
-Structure T_DIMENSIONAL_CHARACTERISTIC_REPRESENTATION Extends TStepBase ; ID= 662
+Structure T_DIMENSIONAL_CHARACTERISTIC_REPRESENTATION Extends TStepEntityBase ; ID= 662
   
 EndStructure 
  
  ; 663 : DIMENSIONAL_EXPONENTS
-Structure T_DIMENSIONAL_EXPONENTS Extends TStepBase ; ID= 663
+Structure T_DIMENSIONAL_EXPONENTS Extends TStepEntityBase ; ID= 663
   
 EndStructure 
  
  ; 664 : DIMENSIONAL_LOCATION
-Structure T_DIMENSIONAL_LOCATION Extends TStepBase ; ID= 664
+Structure T_DIMENSIONAL_LOCATION Extends TStepEntityBase ; ID= 664
   
 EndStructure 
  
  ; 665 : DIMENSIONAL_LOCATION_WITH_DATUM_FEATURE
-Structure T_DIMENSIONAL_LOCATION_WITH_DATUM_FEATURE Extends TStepBase ; ID= 665
+Structure T_DIMENSIONAL_LOCATION_WITH_DATUM_FEATURE Extends TStepEntityBase ; ID= 665
   
 EndStructure 
  
  ; 666 : DIMENSIONAL_LOCATION_WITH_PATH
-Structure T_DIMENSIONAL_LOCATION_WITH_PATH Extends TStepBase ; ID= 666
+Structure T_DIMENSIONAL_LOCATION_WITH_PATH Extends TStepEntityBase ; ID= 666
   
 EndStructure 
  
  ; 667 : DIMENSIONAL_SIZE
-Structure T_DIMENSIONAL_SIZE Extends TStepBase ; ID= 667
+Structure T_DIMENSIONAL_SIZE Extends TStepEntityBase ; ID= 667
   
 EndStructure 
  
  ; 668 : DIMENSIONAL_SIZE_WITH_DATUM_FEATURE
-Structure T_DIMENSIONAL_SIZE_WITH_DATUM_FEATURE Extends TStepBase ; ID= 668
+Structure T_DIMENSIONAL_SIZE_WITH_DATUM_FEATURE Extends TStepEntityBase ; ID= 668
   
 EndStructure 
  
  ; 669 : DIMENSIONAL_SIZE_WITH_PATH
-Structure T_DIMENSIONAL_SIZE_WITH_PATH Extends TStepBase ; ID= 669
+Structure T_DIMENSIONAL_SIZE_WITH_PATH Extends TStepEntityBase ; ID= 669
   
 EndStructure 
  
  ; 670 : DIRECTED_ACTION
-Structure T_DIRECTED_ACTION Extends TStepBase ; ID= 670
+Structure T_DIRECTED_ACTION Extends TStepEntityBase ; ID= 670
   
 EndStructure 
  
  ; 671 : DIRECTED_ACTION_ASSIGNMENT
-Structure T_DIRECTED_ACTION_ASSIGNMENT Extends TStepBase ; ID= 671
+Structure T_DIRECTED_ACTION_ASSIGNMENT Extends TStepEntityBase ; ID= 671
   
 EndStructure 
  
  ; 672 : DIRECTED_ANGLE
-Structure T_DIRECTED_ANGLE Extends TStepBase ; ID= 672
+Structure T_DIRECTED_ANGLE Extends TStepEntityBase ; ID= 672
   
 EndStructure 
  
  ; 673 : DIRECTED_DIMENSIONAL_LOCATION
-Structure T_DIRECTED_DIMENSIONAL_LOCATION Extends TStepBase ; ID= 673
+Structure T_DIRECTED_DIMENSIONAL_LOCATION Extends TStepEntityBase ; ID= 673
   
 EndStructure 
  
  ; 674 : DIRECTED_TOLERANCE_ZONE
-Structure T_DIRECTED_TOLERANCE_ZONE Extends TStepBase ; ID= 674
+Structure T_DIRECTED_TOLERANCE_ZONE Extends TStepEntityBase ; ID= 674
   
 EndStructure 
  
   
  ; 676 : DIRECTION_SHAPE_REPRESENTATION
-Structure T_DIRECTION_SHAPE_REPRESENTATION Extends TStepBase ; ID= 676
+Structure T_DIRECTION_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 676
   
 EndStructure 
  
  ; 677 : DISALLOWED_ASSEMBLY_RELATIONSHIP_USAGE
-Structure T_DISALLOWED_ASSEMBLY_RELATIONSHIP_USAGE Extends TStepBase ; ID= 677
+Structure T_DISALLOWED_ASSEMBLY_RELATIONSHIP_USAGE Extends TStepEntityBase ; ID= 677
   
 EndStructure 
  
  ; 678 : DISCONNECTED_FACE_SET
-Structure T_DISCONNECTED_FACE_SET Extends TStepBase ; ID= 678
+Structure T_DISCONNECTED_FACE_SET Extends TStepEntityBase ; ID= 678
   
 EndStructure 
  
  ; 679 : DISCONTINUOUS_GEOMETRY
-Structure T_DISCONTINUOUS_GEOMETRY Extends TStepBase ; ID= 679
+Structure T_DISCONTINUOUS_GEOMETRY Extends TStepEntityBase ; ID= 679
   
 EndStructure 
  
  ; 680 : DIV_EXPRESSION
-Structure T_DIV_EXPRESSION Extends TStepBase ; ID= 680
+Structure T_DIV_EXPRESSION Extends TStepEntityBase ; ID= 680
   
 EndStructure 
  
  ; 681 : DOCUMENT
-Structure T_DOCUMENT Extends TStepBase ; ID= 681
+Structure T_DOCUMENT Extends TStepEntityBase ; ID= 681
   
 EndStructure 
  
  ; 682 : DOCUMENT_FILE
-Structure T_DOCUMENT_FILE Extends TStepBase ; ID= 682
+Structure T_DOCUMENT_FILE Extends TStepEntityBase ; ID= 682
   
 EndStructure 
  
  ; 683 : DOCUMENT_IDENTIFIER
-Structure T_DOCUMENT_IDENTIFIER Extends TStepBase ; ID= 683
+Structure T_DOCUMENT_IDENTIFIER Extends TStepEntityBase ; ID= 683
   
 EndStructure 
  
  ; 684 : DOCUMENT_IDENTIFIER_ASSIGNMENT
-Structure T_DOCUMENT_IDENTIFIER_ASSIGNMENT Extends TStepBase ; ID= 684
+Structure T_DOCUMENT_IDENTIFIER_ASSIGNMENT Extends TStepEntityBase ; ID= 684
   
 EndStructure 
  
  ; 685 : DOCUMENT_PRODUCT_ASSOCIATION
-Structure T_DOCUMENT_PRODUCT_ASSOCIATION Extends TStepBase ; ID= 685
+Structure T_DOCUMENT_PRODUCT_ASSOCIATION Extends TStepEntityBase ; ID= 685
   
 EndStructure 
  
  ; 686 : DOCUMENT_PRODUCT_EQUIVALENCE
-Structure T_DOCUMENT_PRODUCT_EQUIVALENCE Extends TStepBase ; ID= 686
+Structure T_DOCUMENT_PRODUCT_EQUIVALENCE Extends TStepEntityBase ; ID= 686
   
 EndStructure 
  
  ; 687 : DOCUMENT_REFERENCE
-Structure T_DOCUMENT_REFERENCE Extends TStepBase ; ID= 687
+Structure T_DOCUMENT_REFERENCE Extends TStepEntityBase ; ID= 687
   
 EndStructure 
  
  ; 688 : DOCUMENT_RELATIONSHIP
-Structure T_DOCUMENT_RELATIONSHIP Extends TStepBase ; ID= 688
+Structure T_DOCUMENT_RELATIONSHIP Extends TStepEntityBase ; ID= 688
   
 EndStructure 
  
  ; 689 : DOCUMENT_REPRESENTATION_TYPE
-Structure T_DOCUMENT_REPRESENTATION_TYPE Extends TStepBase ; ID= 689
+Structure T_DOCUMENT_REPRESENTATION_TYPE Extends TStepEntityBase ; ID= 689
   
 EndStructure 
  
  ; 690 : DOCUMENT_TYPE
-Structure T_DOCUMENT_TYPE Extends TStepBase ; ID= 690
+Structure T_DOCUMENT_TYPE Extends TStepEntityBase ; ID= 690
   
 EndStructure 
  
  ; 691 : DOCUMENT_USAGE_CONSTRAINT
-Structure T_DOCUMENT_USAGE_CONSTRAINT Extends TStepBase ; ID= 691
+Structure T_DOCUMENT_USAGE_CONSTRAINT Extends TStepEntityBase ; ID= 691
   
 EndStructure 
  
  ; 692 : DOCUMENT_USAGE_CONSTRAINT_ASSIGNMENT
-Structure T_DOCUMENT_USAGE_CONSTRAINT_ASSIGNMENT Extends TStepBase ; ID= 692
+Structure T_DOCUMENT_USAGE_CONSTRAINT_ASSIGNMENT Extends TStepEntityBase ; ID= 692
   
 EndStructure 
  
  ; 693 : DOCUMENT_USAGE_ROLE
-Structure T_DOCUMENT_USAGE_ROLE Extends TStepBase ; ID= 693
+Structure T_DOCUMENT_USAGE_ROLE Extends TStepEntityBase ; ID= 693
   
 EndStructure 
  
  ; 694 : DOCUMENT_WITH_CLASS
-Structure T_DOCUMENT_WITH_CLASS Extends TStepBase ; ID= 694
+Structure T_DOCUMENT_WITH_CLASS Extends TStepEntityBase ; ID= 694
   
 EndStructure 
  
  ; 695 : DOSE_EQUIVALENT_MEASURE_WITH_UNIT
-Structure T_DOSE_EQUIVALENT_MEASURE_WITH_UNIT Extends TStepBase ; ID= 695
+Structure T_DOSE_EQUIVALENT_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 695
   
 EndStructure 
  
  ; 696 : DOSE_EQUIVALENT_UNIT
-Structure T_DOSE_EQUIVALENT_UNIT Extends TStepBase ; ID= 696
+Structure T_DOSE_EQUIVALENT_UNIT Extends TStepEntityBase ; ID= 696
   
 EndStructure 
  
  ; 697 : DOUBLE_OFFSET_SHELLED_SOLID
-Structure T_DOUBLE_OFFSET_SHELLED_SOLID Extends TStepBase ; ID= 697
+Structure T_DOUBLE_OFFSET_SHELLED_SOLID Extends TStepEntityBase ; ID= 697
   
 EndStructure 
  
  ; 698 : DRAPED_DEFINED_TRANSFORMATION
-Structure T_DRAPED_DEFINED_TRANSFORMATION Extends TStepBase ; ID= 698
+Structure T_DRAPED_DEFINED_TRANSFORMATION Extends TStepEntityBase ; ID= 698
   
 EndStructure 
  
  ; 699 : DRAPED_ORIENTATION_ANGLE
-Structure T_DRAPED_ORIENTATION_ANGLE Extends TStepBase ; ID= 699
+Structure T_DRAPED_ORIENTATION_ANGLE Extends TStepEntityBase ; ID= 699
   
 EndStructure 
  
  ; 700 : DRAUGHTING_ANNOTATION_OCCURRENCE
-Structure T_DRAUGHTING_ANNOTATION_OCCURRENCE Extends TStepBase ; ID= 700
+Structure T_DRAUGHTING_ANNOTATION_OCCURRENCE Extends TStepEntityBase ; ID= 700
   
 EndStructure 
  
  ; 701 : DRAUGHTING_APPROVAL_ASSIGNMENT
-Structure T_DRAUGHTING_APPROVAL_ASSIGNMENT Extends TStepBase ; ID= 701
+Structure T_DRAUGHTING_APPROVAL_ASSIGNMENT Extends TStepEntityBase ; ID= 701
   
 EndStructure 
  
  ; 702 : DRAUGHTING_CALLOUT
-Structure T_DRAUGHTING_CALLOUT Extends TStepBase ; ID= 702
+Structure T_DRAUGHTING_CALLOUT Extends TStepEntityBase ; ID= 702
   
 EndStructure 
  
  ; 703 : DRAUGHTING_CALLOUT_RELATIONSHIP
-Structure T_DRAUGHTING_CALLOUT_RELATIONSHIP Extends TStepBase ; ID= 703
+Structure T_DRAUGHTING_CALLOUT_RELATIONSHIP Extends TStepEntityBase ; ID= 703
   
 EndStructure 
  
  ; 704 : DRAUGHTING_DRAWING_REVISION
-Structure T_DRAUGHTING_DRAWING_REVISION Extends TStepBase ; ID= 704
+Structure T_DRAUGHTING_DRAWING_REVISION Extends TStepEntityBase ; ID= 704
   
 EndStructure 
  
  ; 705 : DRAUGHTING_ELEMENTS
-Structure T_DRAUGHTING_ELEMENTS Extends TStepBase ; ID= 705
+Structure T_DRAUGHTING_ELEMENTS Extends TStepEntityBase ; ID= 705
   
 EndStructure 
  
  ; 706 : DRAUGHTING_MODEL
-Structure T_DRAUGHTING_MODEL Extends TStepBase ; ID= 706
+Structure T_DRAUGHTING_MODEL Extends TStepEntityBase ; ID= 706
   
 EndStructure 
  
  ; 707 : DRAUGHTING_MODEL_ITEM_ASSOCIATION
-Structure T_DRAUGHTING_MODEL_ITEM_ASSOCIATION Extends TStepBase ; ID= 707
+Structure T_DRAUGHTING_MODEL_ITEM_ASSOCIATION Extends TStepEntityBase ; ID= 707
   
 EndStructure 
  
  ; 708 : DRAUGHTING_MODEL_ITEM_ASSOCIATION_WITH_PLACEHOLDER
-Structure T_DRAUGHTING_MODEL_ITEM_ASSOCIATION_WITH_PLACEHOLDER Extends TStepBase ; ID= 708
+Structure T_DRAUGHTING_MODEL_ITEM_ASSOCIATION_WITH_PLACEHOLDER Extends TStepEntityBase ; ID= 708
   
 EndStructure 
  
  ; 709 : DRAUGHTING_PRE_DEFINED_COLOUR
-Structure T_DRAUGHTING_PRE_DEFINED_COLOUR Extends TStepBase ; ID= 709
+Structure T_DRAUGHTING_PRE_DEFINED_COLOUR Extends TStepEntityBase ; ID= 709
   
 EndStructure 
  
  ; 710 : DRAUGHTING_PRE_DEFINED_CURVE_FONT
-Structure T_DRAUGHTING_PRE_DEFINED_CURVE_FONT Extends TStepBase ; ID= 710
+Structure T_DRAUGHTING_PRE_DEFINED_CURVE_FONT Extends TStepEntityBase ; ID= 710
   
 EndStructure 
  
  ; 711 : DRAUGHTING_PRE_DEFINED_TEXT_FONT
-Structure T_DRAUGHTING_PRE_DEFINED_TEXT_FONT Extends TStepBase ; ID= 711
+Structure T_DRAUGHTING_PRE_DEFINED_TEXT_FONT Extends TStepEntityBase ; ID= 711
   
 EndStructure 
  
  ; 712 : DRAUGHTING_SPECIFICATION_REFERENCE
-Structure T_DRAUGHTING_SPECIFICATION_REFERENCE Extends TStepBase ; ID= 712
+Structure T_DRAUGHTING_SPECIFICATION_REFERENCE Extends TStepEntityBase ; ID= 712
   
 EndStructure 
  
  ; 713 : DRAUGHTING_SUBFIGURE_REPRESENTATION
-Structure T_DRAUGHTING_SUBFIGURE_REPRESENTATION Extends TStepBase ; ID= 713
+Structure T_DRAUGHTING_SUBFIGURE_REPRESENTATION Extends TStepEntityBase ; ID= 713
   
 EndStructure 
  
  ; 714 : DRAUGHTING_SYMBOL_REPRESENTATION
-Structure T_DRAUGHTING_SYMBOL_REPRESENTATION Extends TStepBase ; ID= 714
+Structure T_DRAUGHTING_SYMBOL_REPRESENTATION Extends TStepEntityBase ; ID= 714
   
 EndStructure 
  
  ; 715 : DRAUGHTING_TEXT_LITERAL_WITH_DELINEATION
-Structure T_DRAUGHTING_TEXT_LITERAL_WITH_DELINEATION Extends TStepBase ; ID= 715
+Structure T_DRAUGHTING_TEXT_LITERAL_WITH_DELINEATION Extends TStepEntityBase ; ID= 715
   
 EndStructure 
  
  ; 716 : DRAUGHTING_TITLE
-Structure T_DRAUGHTING_TITLE Extends TStepBase ; ID= 716
+Structure T_DRAUGHTING_TITLE Extends TStepEntityBase ; ID= 716
   
 EndStructure 
  
  ; 717 : DRAWING_DEFINITION
-Structure T_DRAWING_DEFINITION Extends TStepBase ; ID= 717
+Structure T_DRAWING_DEFINITION Extends TStepEntityBase ; ID= 717
   
 EndStructure 
  
  ; 718 : DRAWING_REVISION
-Structure T_DRAWING_REVISION Extends TStepBase ; ID= 718
+Structure T_DRAWING_REVISION Extends TStepEntityBase ; ID= 718
   
 EndStructure 
  
  ; 719 : DRAWING_REVISION_SEQUENCE
-Structure T_DRAWING_REVISION_SEQUENCE Extends TStepBase ; ID= 719
+Structure T_DRAWING_REVISION_SEQUENCE Extends TStepEntityBase ; ID= 719
   
 EndStructure 
  
  ; 720 : DRAWING_SHEET_LAYOUT
-Structure T_DRAWING_SHEET_LAYOUT Extends TStepBase ; ID= 720
+Structure T_DRAWING_SHEET_LAYOUT Extends TStepEntityBase ; ID= 720
   
 EndStructure 
  
  ; 721 : DRAWING_SHEET_REVISION
-Structure T_DRAWING_SHEET_REVISION Extends TStepBase ; ID= 721
+Structure T_DRAWING_SHEET_REVISION Extends TStepEntityBase ; ID= 721
   
 EndStructure 
  
  ; 722 : DRAWING_SHEET_REVISION_SEQUENCE
-Structure T_DRAWING_SHEET_REVISION_SEQUENCE Extends TStepBase ; ID= 722
+Structure T_DRAWING_SHEET_REVISION_SEQUENCE Extends TStepEntityBase ; ID= 722
   
 EndStructure 
  
  ; 723 : DRAWING_SHEET_REVISION_USAGE
-Structure T_DRAWING_SHEET_REVISION_USAGE Extends TStepBase ; ID= 723
+Structure T_DRAWING_SHEET_REVISION_USAGE Extends TStepEntityBase ; ID= 723
   
 EndStructure 
  
  ; 724 : DRILLING_OPERATION
-Structure T_DRILLING_OPERATION Extends TStepBase ; ID= 724
+Structure T_DRILLING_OPERATION Extends TStepEntityBase ; ID= 724
   
 EndStructure 
  
  ; 725 : DRILLING_TYPE_OPERATION
-Structure T_DRILLING_TYPE_OPERATION Extends TStepBase ; ID= 725
+Structure T_DRILLING_TYPE_OPERATION Extends TStepEntityBase ; ID= 725
   
 EndStructure 
  
  ; 726 : DRILLING_TYPE_STRATEGY
-Structure T_DRILLING_TYPE_STRATEGY Extends TStepBase ; ID= 726
+Structure T_DRILLING_TYPE_STRATEGY Extends TStepEntityBase ; ID= 726
   
 EndStructure 
  
  ; 727 : DUPIN_CYCLIDE_SURFACE
-Structure T_DUPIN_CYCLIDE_SURFACE Extends TStepBase ; ID= 727
+Structure T_DUPIN_CYCLIDE_SURFACE Extends TStepEntityBase ; ID= 727
   
 EndStructure 
  
  ; 728 : ECCENTRIC_CONE
-Structure T_ECCENTRIC_CONE Extends TStepBase ; ID= 728
+Structure T_ECCENTRIC_CONE Extends TStepEntityBase ; ID= 728
   
 EndStructure 
  
  ; 729 : ECCENTRIC_CONICAL_VOLUME
-Structure T_ECCENTRIC_CONICAL_VOLUME Extends TStepBase ; ID= 729
+Structure T_ECCENTRIC_CONICAL_VOLUME Extends TStepEntityBase ; ID= 729
   
 EndStructure 
  
  ; 730 : EDGE
-Structure T_EDGE Extends TStepBase ; ID= 730
+Structure T_EDGE Extends TStepEntityBase ; ID= 730
   *Start.T_VERTEX  
   *End.T_VERTEX    
 EndStructure 
  
  ; 731 : EDGE_BASED_WIREFRAME_MODEL
-Structure T_EDGE_BASED_WIREFRAME_MODEL Extends TStepBase ; ID= 731
+Structure T_EDGE_BASED_WIREFRAME_MODEL Extends TStepEntityBase ; ID= 731
   
 EndStructure 
  
  ; 732 : EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION
-Structure T_EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION Extends TStepBase ; ID= 732
+Structure T_EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 732
   
 EndStructure 
  
  ; 733 : EDGE_BLENDED_SOLID
-Structure T_EDGE_BLENDED_SOLID Extends TStepBase ; ID= 733
+Structure T_EDGE_BLENDED_SOLID Extends TStepEntityBase ; ID= 733
   
 EndStructure 
  
  ; 734 : EDGE_CURVE
-Structure T_EDGE_CURVE Extends TStepBase ; ID= 734
+Structure T_EDGE_CURVE Extends TStepEntityBase ; ID= 734
   *VPt1.T_VERTEX_POINT  ; Pointer to T_VERTEX_POINTs;  : curves
   *VPt2.T_VERTEX_POINT
   *Vertex.T_VERTEX
@@ -3704,115 +3897,115 @@ Structure T_EDGE_CURVE Extends TStepBase ; ID= 734
 EndStructure 
  
  ; 735 : EDGE_LOOP
-Structure T_EDGE_LOOP Extends TStepBase ; ID= 735
+Structure T_EDGE_LOOP Extends TStepEntityBase ; ID= 735
   List lstEdge.i()    ; Pointer to T_ORIENTED_EDGE
   List lstAP.i()      ; Pointer to T_AXIS2_PLACEMENT_3D  
 EndStructure 
  
  ; 736 : EDGE_ROUND
-Structure T_EDGE_ROUND Extends TStepBase ; ID= 736
+Structure T_EDGE_ROUND Extends TStepEntityBase ; ID= 736
   
 EndStructure 
  
  ; 737 : EDGE_WITH_EXCESSIVE_SEGMENTS
-Structure T_EDGE_WITH_EXCESSIVE_SEGMENTS Extends TStepBase ; ID= 737
+Structure T_EDGE_WITH_EXCESSIVE_SEGMENTS Extends TStepEntityBase ; ID= 737
   
 EndStructure 
  
  ; 738 : EDGE_WITH_LENGTH
-Structure T_EDGE_WITH_LENGTH Extends TStepBase ; ID= 738
+Structure T_EDGE_WITH_LENGTH Extends TStepEntityBase ; ID= 738
   
 EndStructure 
  
  ; 739 : EFFECTIVITY
-Structure T_EFFECTIVITY Extends TStepBase ; ID= 739
+Structure T_EFFECTIVITY Extends TStepEntityBase ; ID= 739
   
 EndStructure 
  
  ; 740 : EFFECTIVITY_ASSIGNMENT
-Structure T_EFFECTIVITY_ASSIGNMENT Extends TStepBase ; ID= 740
+Structure T_EFFECTIVITY_ASSIGNMENT Extends TStepEntityBase ; ID= 740
   
 EndStructure 
  
  ; 741 : EFFECTIVITY_CONTEXT_ASSIGNMENT
-Structure T_EFFECTIVITY_CONTEXT_ASSIGNMENT Extends TStepBase ; ID= 741
+Structure T_EFFECTIVITY_CONTEXT_ASSIGNMENT Extends TStepEntityBase ; ID= 741
   
 EndStructure 
  
  ; 742 : EFFECTIVITY_CONTEXT_ROLE
-Structure T_EFFECTIVITY_CONTEXT_ROLE Extends TStepBase ; ID= 742
+Structure T_EFFECTIVITY_CONTEXT_ROLE Extends TStepEntityBase ; ID= 742
   
 EndStructure 
  
  ; 743 : EFFECTIVITY_RELATIONSHIP
-Structure T_EFFECTIVITY_RELATIONSHIP Extends TStepBase ; ID= 743
+Structure T_EFFECTIVITY_RELATIONSHIP Extends TStepEntityBase ; ID= 743
   
 EndStructure 
  
  ; 744 : ELECTRIC_CHARGE_MEASURE_WITH_UNIT
-Structure T_ELECTRIC_CHARGE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 744
+Structure T_ELECTRIC_CHARGE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 744
   
 EndStructure 
  
  ; 745 : ELECTRIC_CHARGE_UNIT
-Structure T_ELECTRIC_CHARGE_UNIT Extends TStepBase ; ID= 745
+Structure T_ELECTRIC_CHARGE_UNIT Extends TStepEntityBase ; ID= 745
   
 EndStructure 
  
  ; 746 : ELECTRIC_CURRENT_MEASURE_WITH_UNIT
-Structure T_ELECTRIC_CURRENT_MEASURE_WITH_UNIT Extends TStepBase ; ID= 746
+Structure T_ELECTRIC_CURRENT_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 746
   
 EndStructure 
  
  ; 747 : ELECTRIC_CURRENT_UNIT
-Structure T_ELECTRIC_CURRENT_UNIT Extends TStepBase ; ID= 747
+Structure T_ELECTRIC_CURRENT_UNIT Extends TStepEntityBase ; ID= 747
   
 EndStructure 
  
  ; 748 : ELECTRIC_POTENTIAL_MEASURE_WITH_UNIT
-Structure T_ELECTRIC_POTENTIAL_MEASURE_WITH_UNIT Extends TStepBase ; ID= 748
+Structure T_ELECTRIC_POTENTIAL_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 748
   
 EndStructure 
  
  ; 749 : ELECTRIC_POTENTIAL_UNIT
-Structure T_ELECTRIC_POTENTIAL_UNIT Extends TStepBase ; ID= 749
+Structure T_ELECTRIC_POTENTIAL_UNIT Extends TStepEntityBase ; ID= 749
   
 EndStructure 
  
  ; 750 : ELEMENT_DELIVERY
-Structure T_ELEMENT_DELIVERY Extends TStepBase ; ID= 750
+Structure T_ELEMENT_DELIVERY Extends TStepEntityBase ; ID= 750
   
 EndStructure 
  
  ; 751 : ELEMENTARY_BREP_SHAPE_REPRESENTATION
-Structure T_ELEMENTARY_BREP_SHAPE_REPRESENTATION Extends TStepBase ; ID= 751
+Structure T_ELEMENTARY_BREP_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 751
   
 EndStructure 
  
  ; 752 : ELEMENTARY_FUNCTION
-Structure T_ELEMENTARY_FUNCTION Extends TStepBase ; ID= 752
+Structure T_ELEMENTARY_FUNCTION Extends TStepEntityBase ; ID= 752
   
 EndStructure 
  
  ; 753 : ELEMENTARY_SPACE
-Structure T_ELEMENTARY_SPACE Extends TStepBase ; ID= 753
+Structure T_ELEMENTARY_SPACE Extends TStepEntityBase ; ID= 753
   
 EndStructure 
  
  ; 754 : ELEMENTARY_SURFACE
-Structure T_ELEMENTARY_SURFACE Extends TStepBase ; ID= 754
+Structure T_ELEMENTARY_SURFACE Extends TStepEntityBase ; ID= 754
   
 EndStructure 
  
  ; 755 : ELLIPSE
-Structure T_ELLIPSE Extends TStepBase ; ID= 755
+Structure T_ELLIPSE Extends TStepEntityBase ; ID= 755
   *Pos.T_AXIS2_PLACEMENT_3D
   rx.f
   ry.f  
 EndStructure 
  
  ; 756 : ELLIPSOID
-Structure T_ELLIPSOID Extends TStepBase ; ID= 756
+Structure T_ELLIPSOID Extends TStepEntityBase ; ID= 756
   *Pos.T_AXIS2_PLACEMENT_3D 
   rx.f
   ry.f
@@ -3820,2036 +4013,2036 @@ Structure T_ELLIPSOID Extends TStepBase ; ID= 756
 EndStructure 
  
  ; 757 : ELLIPSOID_VOLUME
-Structure T_ELLIPSOID_VOLUME Extends TStepBase ; ID= 757
+Structure T_ELLIPSOID_VOLUME Extends TStepEntityBase ; ID= 757
   
 EndStructure 
  
  ; 758 : ELLIPTIC_AREA
-Structure T_ELLIPTIC_AREA Extends TStepBase ; ID= 758
+Structure T_ELLIPTIC_AREA Extends TStepEntityBase ; ID= 758
   
 EndStructure 
  
  ; 759 : ENERGY_MEASURE_WITH_UNIT
-Structure T_ENERGY_MEASURE_WITH_UNIT Extends TStepBase ; ID= 759
+Structure T_ENERGY_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 759
   
 EndStructure 
  
  ; 760 : ENERGY_UNIT
-Structure T_ENERGY_UNIT Extends TStepBase ; ID= 760
+Structure T_ENERGY_UNIT Extends TStepEntityBase ; ID= 760
   
 EndStructure 
  
  ; 761 : ENTIRELY_NARROW_FACE
-Structure T_ENTIRELY_NARROW_FACE Extends TStepBase ; ID= 761
+Structure T_ENTIRELY_NARROW_FACE Extends TStepEntityBase ; ID= 761
   
 EndStructure 
  
  ; 762 : ENTIRELY_NARROW_SOLID
-Structure T_ENTIRELY_NARROW_SOLID Extends TStepBase ; ID= 762
+Structure T_ENTIRELY_NARROW_SOLID Extends TStepEntityBase ; ID= 762
   
 EndStructure 
  
  ; 763 : ENTIRELY_NARROW_SURFACE
-Structure T_ENTIRELY_NARROW_SURFACE Extends TStepBase ; ID= 763
+Structure T_ENTIRELY_NARROW_SURFACE Extends TStepEntityBase ; ID= 763
   
 EndStructure 
  
  ; 764 : ENTITY_ASSERTION
-Structure T_ENTITY_ASSERTION Extends TStepBase ; ID= 764
+Structure T_ENTITY_ASSERTION Extends TStepEntityBase ; ID= 764
   
 EndStructure 
  
  ; 765 : ENUM_REFERENCE_PREFIX
-Structure T_ENUM_REFERENCE_PREFIX Extends TStepBase ; ID= 765
+Structure T_ENUM_REFERENCE_PREFIX Extends TStepEntityBase ; ID= 765
   
 EndStructure 
  
  ; 766 : ENVELOPE
-Structure T_ENVELOPE Extends TStepBase ; ID= 766
+Structure T_ENVELOPE Extends TStepEntityBase ; ID= 766
   
 EndStructure 
  
  ; 767 : ENVELOPE_RELATIONSHIP
-Structure T_ENVELOPE_RELATIONSHIP Extends TStepBase ; ID= 767
+Structure T_ENVELOPE_RELATIONSHIP Extends TStepEntityBase ; ID= 767
   
 EndStructure 
  
  ; 768 : ENVIRONMENT
-Structure T_ENVIRONMENT Extends TStepBase ; ID= 768
+Structure T_ENVIRONMENT Extends TStepEntityBase ; ID= 768
   
 EndStructure 
  
  ; 769 : EQUAL_PARAMETER_CONSTRAINT
-Structure T_EQUAL_PARAMETER_CONSTRAINT Extends TStepBase ; ID= 769
+Structure T_EQUAL_PARAMETER_CONSTRAINT Extends TStepEntityBase ; ID= 769
   
 EndStructure 
  
  ; 770 : EQUALS_EXPRESSION
-Structure T_EQUALS_EXPRESSION Extends TStepBase ; ID= 770
+Structure T_EQUALS_EXPRESSION Extends TStepEntityBase ; ID= 770
   
 EndStructure 
  
  ; 771 : EQUIVALENCE_INSTANCE_REPORT_ITEM_WITH_NOTABLE_INSTANCES
-Structure T_EQUIVALENCE_INSTANCE_REPORT_ITEM_WITH_NOTABLE_INSTANCES Extends TStepBase ; ID= 771
+Structure T_EQUIVALENCE_INSTANCE_REPORT_ITEM_WITH_NOTABLE_INSTANCES Extends TStepEntityBase ; ID= 771
   
 EndStructure 
  
  ; 772 : EQUIVALENCE_NOTABLE_INSTANCE
-Structure T_EQUIVALENCE_NOTABLE_INSTANCE Extends TStepBase ; ID= 772
+Structure T_EQUIVALENCE_NOTABLE_INSTANCE Extends TStepEntityBase ; ID= 772
   
 EndStructure 
  
  ; 773 : ERRONEOUS_B_SPLINE_CURVE_DEFINITION
-Structure T_ERRONEOUS_B_SPLINE_CURVE_DEFINITION Extends TStepBase ; ID= 773
+Structure T_ERRONEOUS_B_SPLINE_CURVE_DEFINITION Extends TStepEntityBase ; ID= 773
   
 EndStructure 
  
  ; 774 : ERRONEOUS_B_SPLINE_SURFACE_DEFINITION
-Structure T_ERRONEOUS_B_SPLINE_SURFACE_DEFINITION Extends TStepBase ; ID= 774
+Structure T_ERRONEOUS_B_SPLINE_SURFACE_DEFINITION Extends TStepEntityBase ; ID= 774
   
 EndStructure 
  
  ; 775 : ERRONEOUS_DATA
-Structure T_ERRONEOUS_DATA Extends TStepBase ; ID= 775
+Structure T_ERRONEOUS_DATA Extends TStepEntityBase ; ID= 775
   
 EndStructure 
  
  ; 776 : ERRONEOUS_GEOMETRY
-Structure T_ERRONEOUS_GEOMETRY Extends TStepBase ; ID= 776
+Structure T_ERRONEOUS_GEOMETRY Extends TStepEntityBase ; ID= 776
   
 EndStructure 
  
  ; 777 : ERRONEOUS_MANIFOLD_SOLID_BREP
-Structure T_ERRONEOUS_MANIFOLD_SOLID_BREP Extends TStepBase ; ID= 777
+Structure T_ERRONEOUS_MANIFOLD_SOLID_BREP Extends TStepEntityBase ; ID= 777
   
 EndStructure 
  
  ; 778 : ERRONEOUS_TOPOLOGY
-Structure T_ERRONEOUS_TOPOLOGY Extends TStepBase ; ID= 778
+Structure T_ERRONEOUS_TOPOLOGY Extends TStepEntityBase ; ID= 778
   
 EndStructure 
  
  ; 779 : ERRONEOUS_TOPOLOGY_AND_GEOMETRY_RELATIONSHIP
-Structure T_ERRONEOUS_TOPOLOGY_AND_GEOMETRY_RELATIONSHIP Extends TStepBase ; ID= 779
+Structure T_ERRONEOUS_TOPOLOGY_AND_GEOMETRY_RELATIONSHIP Extends TStepEntityBase ; ID= 779
   
 EndStructure 
  
  ; 780 : EVALUATED_CHARACTERISTIC
-Structure T_EVALUATED_CHARACTERISTIC Extends TStepBase ; ID= 780
+Structure T_EVALUATED_CHARACTERISTIC Extends TStepEntityBase ; ID= 780
   
 EndStructure 
  
  ; 781 : EVALUATED_CHARACTERISTIC_OF_PRODUCT_AS_INDIVIDUAL_TEST_RESULT
-Structure T_EVALUATED_CHARACTERISTIC_OF_PRODUCT_AS_INDIVIDUAL_TEST_RESULT Extends TStepBase ; ID= 781
+Structure T_EVALUATED_CHARACTERISTIC_OF_PRODUCT_AS_INDIVIDUAL_TEST_RESULT Extends TStepEntityBase ; ID= 781
   
 EndStructure 
  
  ; 782 : EVALUATED_DEGENERATE_PCURVE
-Structure T_EVALUATED_DEGENERATE_PCURVE Extends TStepBase ; ID= 782
+Structure T_EVALUATED_DEGENERATE_PCURVE Extends TStepEntityBase ; ID= 782
   
 EndStructure 
  
  ; 783 : EVALUATION_PRODUCT_DEFINITION
-Structure T_EVALUATION_PRODUCT_DEFINITION Extends TStepBase ; ID= 783
+Structure T_EVALUATION_PRODUCT_DEFINITION Extends TStepEntityBase ; ID= 783
   
 EndStructure 
  
  ; 784 : EVENT_OCCURRENCE
-Structure T_EVENT_OCCURRENCE Extends TStepBase ; ID= 784
+Structure T_EVENT_OCCURRENCE Extends TStepEntityBase ; ID= 784
   
 EndStructure 
  
  ; 785 : EVENT_OCCURRENCE_ASSIGNMENT
-Structure T_EVENT_OCCURRENCE_ASSIGNMENT Extends TStepBase ; ID= 785
+Structure T_EVENT_OCCURRENCE_ASSIGNMENT Extends TStepEntityBase ; ID= 785
   
 EndStructure 
  
  ; 786 : EVENT_OCCURRENCE_CONTEXT_ASSIGNMENT
-Structure T_EVENT_OCCURRENCE_CONTEXT_ASSIGNMENT Extends TStepBase ; ID= 786
+Structure T_EVENT_OCCURRENCE_CONTEXT_ASSIGNMENT Extends TStepEntityBase ; ID= 786
   
 EndStructure 
  
  ; 787 : EVENT_OCCURRENCE_CONTEXT_ROLE
-Structure T_EVENT_OCCURRENCE_CONTEXT_ROLE Extends TStepBase ; ID= 787
+Structure T_EVENT_OCCURRENCE_CONTEXT_ROLE Extends TStepEntityBase ; ID= 787
   
 EndStructure 
  
  ; 788 : EVENT_OCCURRENCE_RELATIONSHIP
-Structure T_EVENT_OCCURRENCE_RELATIONSHIP Extends TStepBase ; ID= 788
+Structure T_EVENT_OCCURRENCE_RELATIONSHIP Extends TStepEntityBase ; ID= 788
   
 EndStructure 
  
  ; 789 : EVENT_OCCURRENCE_ROLE
-Structure T_EVENT_OCCURRENCE_ROLE Extends TStepBase ; ID= 789
+Structure T_EVENT_OCCURRENCE_ROLE Extends TStepEntityBase ; ID= 789
   
 EndStructure 
  
  ; 790 : EVIDENCE
-Structure T_EVIDENCE Extends TStepBase ; ID= 790
+Structure T_EVIDENCE Extends TStepEntityBase ; ID= 790
   
 EndStructure 
  
  ; 791 : EXCESSIVE_USE_OF_GROUPS
-Structure T_EXCESSIVE_USE_OF_GROUPS Extends TStepBase ; ID= 791
+Structure T_EXCESSIVE_USE_OF_GROUPS Extends TStepEntityBase ; ID= 791
   
 EndStructure 
  
  ; 792 : EXCESSIVE_USE_OF_LAYERS
-Structure T_EXCESSIVE_USE_OF_LAYERS Extends TStepBase ; ID= 792
+Structure T_EXCESSIVE_USE_OF_LAYERS Extends TStepEntityBase ; ID= 792
   
 EndStructure 
  
  ; 793 : EXCESSIVELY_HIGH_DEGREE_CURVE
-Structure T_EXCESSIVELY_HIGH_DEGREE_CURVE Extends TStepBase ; ID= 793
+Structure T_EXCESSIVELY_HIGH_DEGREE_CURVE Extends TStepEntityBase ; ID= 793
   
 EndStructure 
  
  ; 794 : EXCESSIVELY_HIGH_DEGREE_SURFACE
-Structure T_EXCESSIVELY_HIGH_DEGREE_SURFACE Extends TStepBase ; ID= 794
+Structure T_EXCESSIVELY_HIGH_DEGREE_SURFACE Extends TStepEntityBase ; ID= 794
   
 EndStructure 
  
  ; 795 : EXCLUSIVE_PRODUCT_CONCEPT_FEATURE_CATEGORY
-Structure T_EXCLUSIVE_PRODUCT_CONCEPT_FEATURE_CATEGORY Extends TStepBase ; ID= 795
+Structure T_EXCLUSIVE_PRODUCT_CONCEPT_FEATURE_CATEGORY Extends TStepEntityBase ; ID= 795
   
 EndStructure 
  
  ; 796 : EXECUTED_ACTION
-Structure T_EXECUTED_ACTION Extends TStepBase ; ID= 796
+Structure T_EXECUTED_ACTION Extends TStepEntityBase ; ID= 796
   
 EndStructure 
  
  ; 797 : EXP_FUNCTION
-Structure T_EXP_FUNCTION Extends TStepBase ; ID= 797
+Structure T_EXP_FUNCTION Extends TStepEntityBase ; ID= 797
   
 EndStructure 
  
  ; 798 : EXPANDED_UNCERTAINTY
-Structure T_EXPANDED_UNCERTAINTY Extends TStepBase ; ID= 798
+Structure T_EXPANDED_UNCERTAINTY Extends TStepEntityBase ; ID= 798
   
 EndStructure 
  
  ; 799 : EXPLICIT_COMPOSITE_HOLE
-Structure T_EXPLICIT_COMPOSITE_HOLE Extends TStepBase ; ID= 799
+Structure T_EXPLICIT_COMPOSITE_HOLE Extends TStepEntityBase ; ID= 799
   
 EndStructure 
  
  ; 800 : EXPLICIT_CONSTRAINT
-Structure T_EXPLICIT_CONSTRAINT Extends TStepBase ; ID= 800
+Structure T_EXPLICIT_CONSTRAINT Extends TStepEntityBase ; ID= 800
   
 EndStructure 
  
  ; 801 : EXPLICIT_GEOMETRIC_CONSTRAINT
-Structure T_EXPLICIT_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 801
+Structure T_EXPLICIT_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 801
   
 EndStructure 
  
  ; 802 : EXPLICIT_PROCEDURAL_GEOMETRIC_REPRESENTATION_ITEM_RELATIONSHIP
-Structure T_EXPLICIT_PROCEDURAL_GEOMETRIC_REPRESENTATION_ITEM_RELATIONSHIP Extends TStepBase ; ID= 802
+Structure T_EXPLICIT_PROCEDURAL_GEOMETRIC_REPRESENTATION_ITEM_RELATIONSHIP Extends TStepEntityBase ; ID= 802
   
 EndStructure 
  
  ; 803 : EXPLICIT_PROCEDURAL_REPRESENTATION_ITEM_RELATIONSHIP
-Structure T_EXPLICIT_PROCEDURAL_REPRESENTATION_ITEM_RELATIONSHIP Extends TStepBase ; ID= 803
+Structure T_EXPLICIT_PROCEDURAL_REPRESENTATION_ITEM_RELATIONSHIP Extends TStepEntityBase ; ID= 803
   
 EndStructure 
  
  ; 804 : EXPLICIT_PROCEDURAL_REPRESENTATION_RELATIONSHIP
-Structure T_EXPLICIT_PROCEDURAL_REPRESENTATION_RELATIONSHIP Extends TStepBase ; ID= 804
+Structure T_EXPLICIT_PROCEDURAL_REPRESENTATION_RELATIONSHIP Extends TStepEntityBase ; ID= 804
   
 EndStructure 
  
  ; 805 : EXPLICIT_PROCEDURAL_SHAPE_REPRESENTATION_RELATIONSHIP
-Structure T_EXPLICIT_PROCEDURAL_SHAPE_REPRESENTATION_RELATIONSHIP Extends TStepBase ; ID= 805
+Structure T_EXPLICIT_PROCEDURAL_SHAPE_REPRESENTATION_RELATIONSHIP Extends TStepEntityBase ; ID= 805
   
 EndStructure 
  
  ; 806 : EXPLICIT_ROUND_HOLE
-Structure T_EXPLICIT_ROUND_HOLE Extends TStepBase ; ID= 806
+Structure T_EXPLICIT_ROUND_HOLE Extends TStepEntityBase ; ID= 806
   
 EndStructure 
  
  ; 807 : EXPLICIT_TABLE_FUNCTION
-Structure T_EXPLICIT_TABLE_FUNCTION Extends TStepBase ; ID= 807
+Structure T_EXPLICIT_TABLE_FUNCTION Extends TStepEntityBase ; ID= 807
   
 EndStructure 
  
  ; 808 : EXPRESSION
-Structure T_EXPRESSION Extends TStepBase ; ID= 808
+Structure T_EXPRESSION Extends TStepEntityBase ; ID= 808
   
 EndStructure 
  
  ; 809 : EXPRESSION_CONVERSION_BASED_UNIT
-Structure T_EXPRESSION_CONVERSION_BASED_UNIT Extends TStepBase ; ID= 809
+Structure T_EXPRESSION_CONVERSION_BASED_UNIT Extends TStepEntityBase ; ID= 809
   
 EndStructure 
  
  ; 810 : EXPRESSION_DENOTED_FUNCTION
-Structure T_EXPRESSION_DENOTED_FUNCTION Extends TStepBase ; ID= 810
+Structure T_EXPRESSION_DENOTED_FUNCTION Extends TStepEntityBase ; ID= 810
   
 EndStructure 
  
  ; 811 : EXPRESSION_EXTENSION_NUMERIC
-Structure T_EXPRESSION_EXTENSION_NUMERIC Extends TStepBase ; ID= 811
+Structure T_EXPRESSION_EXTENSION_NUMERIC Extends TStepEntityBase ; ID= 811
   
 EndStructure 
  
  ; 812 : EXPRESSION_EXTENSION_STRING
-Structure T_EXPRESSION_EXTENSION_STRING Extends TStepBase ; ID= 812
+Structure T_EXPRESSION_EXTENSION_STRING Extends TStepEntityBase ; ID= 812
   
 EndStructure 
  
  ; 813 : EXPRESSION_EXTENSION_TO_SELECT
-Structure T_EXPRESSION_EXTENSION_TO_SELECT Extends TStepBase ; ID= 813
+Structure T_EXPRESSION_EXTENSION_TO_SELECT Extends TStepEntityBase ; ID= 813
   
 EndStructure 
  
  ; 814 : EXPRESSION_ITEM_REPRESENTATION_ITEM
-Structure T_EXPRESSION_ITEM_REPRESENTATION_ITEM Extends TStepBase ; ID= 814
+Structure T_EXPRESSION_ITEM_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 814
   
 EndStructure 
  
  ; 815 : EXPRESSION_REPRESENTATION_ITEM
-Structure T_EXPRESSION_REPRESENTATION_ITEM Extends TStepBase ; ID= 815
+Structure T_EXPRESSION_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 815
   
 EndStructure 
  
  ; 816 : EXTENDED_TUPLE_SPACE
-Structure T_EXTENDED_TUPLE_SPACE Extends TStepBase ; ID= 816
+Structure T_EXTENDED_TUPLE_SPACE Extends TStepEntityBase ; ID= 816
   
 EndStructure 
  
  ; 817 : EXTENDED_TYPE_OPERATION
-Structure T_EXTENDED_TYPE_OPERATION Extends TStepBase ; ID= 817
+Structure T_EXTENDED_TYPE_OPERATION Extends TStepEntityBase ; ID= 817
   
 EndStructure 
  
  ; 818 : EXTENSION
-Structure T_EXTENSION Extends TStepBase ; ID= 818
+Structure T_EXTENSION Extends TStepEntityBase ; ID= 818
   
 EndStructure 
  
  ; 819 : EXTENT
-Structure T_EXTENT Extends TStepBase ; ID= 819
+Structure T_EXTENT Extends TStepEntityBase ; ID= 819
   
 EndStructure 
  
  ; 820 : EXTERNAL_CLASS_LIBRARY
-Structure T_EXTERNAL_CLASS_LIBRARY Extends TStepBase ; ID= 820
+Structure T_EXTERNAL_CLASS_LIBRARY Extends TStepEntityBase ; ID= 820
   
 EndStructure 
  
  ; 821 : EXTERNAL_IDENTIFICATION_ASSIGNMENT
-Structure T_EXTERNAL_IDENTIFICATION_ASSIGNMENT Extends TStepBase ; ID= 821
+Structure T_EXTERNAL_IDENTIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 821
   
 EndStructure 
  
  ; 822 : EXTERNAL_IDENTIFICATION_ASSIGNMENT_RELATIONSHIP
-Structure T_EXTERNAL_IDENTIFICATION_ASSIGNMENT_RELATIONSHIP Extends TStepBase ; ID= 822
+Structure T_EXTERNAL_IDENTIFICATION_ASSIGNMENT_RELATIONSHIP Extends TStepEntityBase ; ID= 822
   
 EndStructure 
  
  ; 823 : EXTERNAL_SOURCE
-Structure T_EXTERNAL_SOURCE Extends TStepBase ; ID= 823
+Structure T_EXTERNAL_SOURCE Extends TStepEntityBase ; ID= 823
   
 EndStructure 
  
  ; 824 : EXTERNAL_SOURCE_RELATIONSHIP
-Structure T_EXTERNAL_SOURCE_RELATIONSHIP Extends TStepBase ; ID= 824
+Structure T_EXTERNAL_SOURCE_RELATIONSHIP Extends TStepEntityBase ; ID= 824
   
 EndStructure 
  
  ; 825 : EXTERNALLY_CONDITIONED_DATA_QUALITY_CRITERIA_REPRESENTATION
-Structure T_EXTERNALLY_CONDITIONED_DATA_QUALITY_CRITERIA_REPRESENTATION Extends TStepBase ; ID= 825
+Structure T_EXTERNALLY_CONDITIONED_DATA_QUALITY_CRITERIA_REPRESENTATION Extends TStepEntityBase ; ID= 825
   
 EndStructure 
  
  ; 826 : EXTERNALLY_CONDITIONED_DATA_QUALITY_CRITERION
-Structure T_EXTERNALLY_CONDITIONED_DATA_QUALITY_CRITERION Extends TStepBase ; ID= 826
+Structure T_EXTERNALLY_CONDITIONED_DATA_QUALITY_CRITERION Extends TStepEntityBase ; ID= 826
   
 EndStructure 
  
  ; 827 : EXTERNALLY_CONDITIONED_DATA_QUALITY_INSPECTION_INSTANCE_REPORT_ITEM
-Structure T_EXTERNALLY_CONDITIONED_DATA_QUALITY_INSPECTION_INSTANCE_REPORT_ITEM Extends TStepBase ; ID= 827
+Structure T_EXTERNALLY_CONDITIONED_DATA_QUALITY_INSPECTION_INSTANCE_REPORT_ITEM Extends TStepEntityBase ; ID= 827
   
 EndStructure 
  
  ; 828 : EXTERNALLY_CONDITIONED_DATA_QUALITY_INSPECTION_RESULT
-Structure T_EXTERNALLY_CONDITIONED_DATA_QUALITY_INSPECTION_RESULT Extends TStepBase ; ID= 828
+Structure T_EXTERNALLY_CONDITIONED_DATA_QUALITY_INSPECTION_RESULT Extends TStepEntityBase ; ID= 828
   
 EndStructure 
  
  ; 829 : EXTERNALLY_CONDITIONED_DATA_QUALITY_INSPECTION_RESULT_REPRESENTATION
-Structure T_EXTERNALLY_CONDITIONED_DATA_QUALITY_INSPECTION_RESULT_REPRESENTATION Extends TStepBase ; ID= 829
+Structure T_EXTERNALLY_CONDITIONED_DATA_QUALITY_INSPECTION_RESULT_REPRESENTATION Extends TStepEntityBase ; ID= 829
   
 EndStructure 
  
  ; 830 : EXTERNALLY_DEFINED_CHARACTER_GLYPH
-Structure T_EXTERNALLY_DEFINED_CHARACTER_GLYPH Extends TStepBase ; ID= 830
+Structure T_EXTERNALLY_DEFINED_CHARACTER_GLYPH Extends TStepEntityBase ; ID= 830
   
 EndStructure 
  
  ; 831 : EXTERNALLY_DEFINED_CLASS
-Structure T_EXTERNALLY_DEFINED_CLASS Extends TStepBase ; ID= 831
+Structure T_EXTERNALLY_DEFINED_CLASS Extends TStepEntityBase ; ID= 831
   
 EndStructure 
  
  ; 832 : EXTERNALLY_DEFINED_COLOUR
-Structure T_EXTERNALLY_DEFINED_COLOUR Extends TStepBase ; ID= 832
+Structure T_EXTERNALLY_DEFINED_COLOUR Extends TStepEntityBase ; ID= 832
   
 EndStructure 
  
  ; 833 : EXTERNALLY_DEFINED_CONTEXT_DEPENDENT_UNIT
-Structure T_EXTERNALLY_DEFINED_CONTEXT_DEPENDENT_UNIT Extends TStepBase ; ID= 833
+Structure T_EXTERNALLY_DEFINED_CONTEXT_DEPENDENT_UNIT Extends TStepEntityBase ; ID= 833
   
 EndStructure 
  
  ; 834 : EXTERNALLY_DEFINED_CONVERSION_BASED_UNIT
-Structure T_EXTERNALLY_DEFINED_CONVERSION_BASED_UNIT Extends TStepBase ; ID= 834
+Structure T_EXTERNALLY_DEFINED_CONVERSION_BASED_UNIT Extends TStepEntityBase ; ID= 834
   
 EndStructure 
  
  ; 835 : EXTERNALLY_DEFINED_CURRENCY
-Structure T_EXTERNALLY_DEFINED_CURRENCY Extends TStepBase ; ID= 835
+Structure T_EXTERNALLY_DEFINED_CURRENCY Extends TStepEntityBase ; ID= 835
   
 EndStructure 
  
  ; 836 : EXTERNALLY_DEFINED_CURVE_FONT
-Structure T_EXTERNALLY_DEFINED_CURVE_FONT Extends TStepBase ; ID= 836
+Structure T_EXTERNALLY_DEFINED_CURVE_FONT Extends TStepEntityBase ; ID= 836
   
 EndStructure 
  
  ; 837 : EXTERNALLY_DEFINED_DIMENSION_DEFINITION
-Structure T_EXTERNALLY_DEFINED_DIMENSION_DEFINITION Extends TStepBase ; ID= 837
+Structure T_EXTERNALLY_DEFINED_DIMENSION_DEFINITION Extends TStepEntityBase ; ID= 837
   
 EndStructure 
  
  ; 838 : EXTERNALLY_DEFINED_FEATURE_DEFINITION
-Structure T_EXTERNALLY_DEFINED_FEATURE_DEFINITION Extends TStepBase ; ID= 838
+Structure T_EXTERNALLY_DEFINED_FEATURE_DEFINITION Extends TStepEntityBase ; ID= 838
   
 EndStructure 
  
  ; 839 : EXTERNALLY_DEFINED_GENERAL_PROPERTY
-Structure T_EXTERNALLY_DEFINED_GENERAL_PROPERTY Extends TStepBase ; ID= 839
+Structure T_EXTERNALLY_DEFINED_GENERAL_PROPERTY Extends TStepEntityBase ; ID= 839
   
 EndStructure 
  
  ; 840 : EXTERNALLY_DEFINED_HATCH_STYLE
-Structure T_EXTERNALLY_DEFINED_HATCH_STYLE Extends TStepBase ; ID= 840
+Structure T_EXTERNALLY_DEFINED_HATCH_STYLE Extends TStepEntityBase ; ID= 840
   
 EndStructure 
  
  ; 841 : EXTERNALLY_DEFINED_ITEM
-Structure T_EXTERNALLY_DEFINED_ITEM Extends TStepBase ; ID= 841
+Structure T_EXTERNALLY_DEFINED_ITEM Extends TStepEntityBase ; ID= 841
   
 EndStructure 
  
  ; 842 : EXTERNALLY_DEFINED_ITEM_RELATIONSHIP
-Structure T_EXTERNALLY_DEFINED_ITEM_RELATIONSHIP Extends TStepBase ; ID= 842
+Structure T_EXTERNALLY_DEFINED_ITEM_RELATIONSHIP Extends TStepEntityBase ; ID= 842
   
 EndStructure 
  
  ; 843 : EXTERNALLY_DEFINED_ITEM_WITH_MULTIPLE_REFERENCES
-Structure T_EXTERNALLY_DEFINED_ITEM_WITH_MULTIPLE_REFERENCES Extends TStepBase ; ID= 843
+Structure T_EXTERNALLY_DEFINED_ITEM_WITH_MULTIPLE_REFERENCES Extends TStepEntityBase ; ID= 843
   
 EndStructure 
  
  ; 844 : EXTERNALLY_DEFINED_MARKER
-Structure T_EXTERNALLY_DEFINED_MARKER Extends TStepBase ; ID= 844
+Structure T_EXTERNALLY_DEFINED_MARKER Extends TStepEntityBase ; ID= 844
   
 EndStructure 
  
  ; 845 : EXTERNALLY_DEFINED_PICTURE_REPRESENTATION_ITEM
-Structure T_EXTERNALLY_DEFINED_PICTURE_REPRESENTATION_ITEM Extends TStepBase ; ID= 845
+Structure T_EXTERNALLY_DEFINED_PICTURE_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 845
   
 EndStructure 
  
  ; 846 : EXTERNALLY_DEFINED_PLANAR_BOX
-Structure T_EXTERNALLY_DEFINED_PLANAR_BOX Extends TStepBase ; ID= 846
+Structure T_EXTERNALLY_DEFINED_PLANAR_BOX Extends TStepEntityBase ; ID= 846
   
 EndStructure 
  
  ; 847 : EXTERNALLY_DEFINED_REPRESENTATION
-Structure T_EXTERNALLY_DEFINED_REPRESENTATION Extends TStepBase ; ID= 847
+Structure T_EXTERNALLY_DEFINED_REPRESENTATION Extends TStepEntityBase ; ID= 847
   
 EndStructure 
  
  ; 848 : EXTERNALLY_DEFINED_REPRESENTATION_ITEM
-Structure T_EXTERNALLY_DEFINED_REPRESENTATION_ITEM Extends TStepBase ; ID= 848
+Structure T_EXTERNALLY_DEFINED_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 848
   
 EndStructure 
  
  ; 849 : EXTERNALLY_DEFINED_REPRESENTATION_WITH_PARAMETERS
-Structure T_EXTERNALLY_DEFINED_REPRESENTATION_WITH_PARAMETERS Extends TStepBase ; ID= 849
+Structure T_EXTERNALLY_DEFINED_REPRESENTATION_WITH_PARAMETERS Extends TStepEntityBase ; ID= 849
   
 EndStructure 
  
  ; 850 : EXTERNALLY_DEFINED_STRING
-Structure T_EXTERNALLY_DEFINED_STRING Extends TStepBase ; ID= 850
+Structure T_EXTERNALLY_DEFINED_STRING Extends TStepEntityBase ; ID= 850
   
 EndStructure 
  
  ; 851 : EXTERNALLY_DEFINED_STYLE
-Structure T_EXTERNALLY_DEFINED_STYLE Extends TStepBase ; ID= 851
+Structure T_EXTERNALLY_DEFINED_STYLE Extends TStepEntityBase ; ID= 851
   
 EndStructure 
  
  ; 852 : EXTERNALLY_DEFINED_SYMBOL
-Structure T_EXTERNALLY_DEFINED_SYMBOL Extends TStepBase ; ID= 852
+Structure T_EXTERNALLY_DEFINED_SYMBOL Extends TStepEntityBase ; ID= 852
   
 EndStructure 
  
  ; 853 : EXTERNALLY_DEFINED_SYMBOL_AND_PLACEMENT
-Structure T_EXTERNALLY_DEFINED_SYMBOL_AND_PLACEMENT Extends TStepBase ; ID= 853
+Structure T_EXTERNALLY_DEFINED_SYMBOL_AND_PLACEMENT Extends TStepEntityBase ; ID= 853
   
 EndStructure 
  
  ; 854 : EXTERNALLY_DEFINED_TERMINATOR_SYMBOL
-Structure T_EXTERNALLY_DEFINED_TERMINATOR_SYMBOL Extends TStepBase ; ID= 854
+Structure T_EXTERNALLY_DEFINED_TERMINATOR_SYMBOL Extends TStepEntityBase ; ID= 854
   
 EndStructure 
  
  ; 855 : EXTERNALLY_DEFINED_TEXT_FONT
-Structure T_EXTERNALLY_DEFINED_TEXT_FONT Extends TStepBase ; ID= 855
+Structure T_EXTERNALLY_DEFINED_TEXT_FONT Extends TStepEntityBase ; ID= 855
   
 EndStructure 
  
  ; 856 : EXTERNALLY_DEFINED_TILE
-Structure T_EXTERNALLY_DEFINED_TILE Extends TStepBase ; ID= 856
+Structure T_EXTERNALLY_DEFINED_TILE Extends TStepEntityBase ; ID= 856
   
 EndStructure 
  
  ; 857 : EXTERNALLY_DEFINED_TILE_STYLE
-Structure T_EXTERNALLY_DEFINED_TILE_STYLE Extends TStepBase ; ID= 857
+Structure T_EXTERNALLY_DEFINED_TILE_STYLE Extends TStepEntityBase ; ID= 857
   
 EndStructure 
  
  ; 858 : EXTERNALLY_LISTED_DATA
-Structure T_EXTERNALLY_LISTED_DATA Extends TStepBase ; ID= 858
+Structure T_EXTERNALLY_LISTED_DATA Extends TStepEntityBase ; ID= 858
   
 EndStructure 
  
  ; 859 : EXTREME_INSTANCE
-Structure T_EXTREME_INSTANCE Extends TStepBase ; ID= 859
+Structure T_EXTREME_INSTANCE Extends TStepEntityBase ; ID= 859
   
 EndStructure 
  
  ; 860 : EXTREME_PATCH_WIDTH_VARIATION
-Structure T_EXTREME_PATCH_WIDTH_VARIATION Extends TStepBase ; ID= 860
+Structure T_EXTREME_PATCH_WIDTH_VARIATION Extends TStepEntityBase ; ID= 860
   
 EndStructure 
  
  ; 861 : EXTRUDED_AREA_SOLID
-Structure T_EXTRUDED_AREA_SOLID Extends TStepBase ; ID= 861
+Structure T_EXTRUDED_AREA_SOLID Extends TStepEntityBase ; ID= 861
   
 EndStructure 
  
  ; 862 : EXTRUDED_FACE_SOLID
-Structure T_EXTRUDED_FACE_SOLID Extends TStepBase ; ID= 862
+Structure T_EXTRUDED_FACE_SOLID Extends TStepEntityBase ; ID= 862
   
 EndStructure 
  
  ; 863 : EXTRUDED_FACE_SOLID_WITH_DRAFT_ANGLE
-Structure T_EXTRUDED_FACE_SOLID_WITH_DRAFT_ANGLE Extends TStepBase ; ID= 863
+Structure T_EXTRUDED_FACE_SOLID_WITH_DRAFT_ANGLE Extends TStepEntityBase ; ID= 863
   
 EndStructure 
  
  ; 864 : EXTRUDED_FACE_SOLID_WITH_MULTIPLE_DRAFT_ANGLES
-Structure T_EXTRUDED_FACE_SOLID_WITH_MULTIPLE_DRAFT_ANGLES Extends TStepBase ; ID= 864
+Structure T_EXTRUDED_FACE_SOLID_WITH_MULTIPLE_DRAFT_ANGLES Extends TStepEntityBase ; ID= 864
   
 EndStructure 
  
  ; 865 : EXTRUDED_FACE_SOLID_WITH_TRIM_CONDITIONS
-Structure T_EXTRUDED_FACE_SOLID_WITH_TRIM_CONDITIONS Extends TStepBase ; ID= 865
+Structure T_EXTRUDED_FACE_SOLID_WITH_TRIM_CONDITIONS Extends TStepEntityBase ; ID= 865
   
 EndStructure 
  
  ; 866 : FACE
-Structure T_FACE Extends TStepBase ; ID= 866
+Structure T_FACE Extends TStepEntityBase ; ID= 866
   List lstFaceBound.i()  ; Pointer to FACE_BOUND
   
 EndStructure 
  
  ; 867 : FACE_BASED_SURFACE_MODEL
-Structure T_FACE_BASED_SURFACE_MODEL Extends TStepBase ; ID= 867
+Structure T_FACE_BASED_SURFACE_MODEL Extends TStepEntityBase ; ID= 867
   
 EndStructure 
  
  ; 868 : FACE_BOUND
-Structure T_FACE_BOUND Extends TStepBase ; ID= 868
+Structure T_FACE_BOUND Extends TStepEntityBase ; ID= 868
   ; TODO
   *Bound
   Orientation.w     ; Boolean   
 EndStructure 
  
  ; 869 : FACE_OUTER_BOUND
-Structure T_FACE_OUTER_BOUND Extends TStepBase ; ID= 869
+Structure T_FACE_OUTER_BOUND Extends TStepEntityBase ; ID= 869
   
 EndStructure 
  
  ; 870 : FACE_SHAPE_REPRESENTATION
-Structure T_FACE_SHAPE_REPRESENTATION Extends TStepBase ; ID= 870
+Structure T_FACE_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 870
   
 EndStructure 
  
  ; 871 : FACE_SHAPE_REPRESENTATION_RELATIONSHIP
-Structure T_FACE_SHAPE_REPRESENTATION_RELATIONSHIP Extends TStepBase ; ID= 871
+Structure T_FACE_SHAPE_REPRESENTATION_RELATIONSHIP Extends TStepEntityBase ; ID= 871
   
 EndStructure 
  
  ; 872 : FACE_SURFACE
-Structure T_FACE_SURFACE Extends TStepBase ; ID= 872
+Structure T_FACE_SURFACE Extends TStepEntityBase ; ID= 872
   ; TODO!
   same_sense.w  ; Boolean
 EndStructure 
  
  ; 873 : FACE_SURFACE_WITH_EXCESSIVE_PATCHES_IN_ONE_DIRECTION
-Structure T_FACE_SURFACE_WITH_EXCESSIVE_PATCHES_IN_ONE_DIRECTION Extends TStepBase ; ID= 873
+Structure T_FACE_SURFACE_WITH_EXCESSIVE_PATCHES_IN_ONE_DIRECTION Extends TStepEntityBase ; ID= 873
   
 EndStructure 
  
  ; 874 : FACETED_BREP
-Structure T_FACETED_BREP Extends TStepBase ; ID= 874
+Structure T_FACETED_BREP Extends TStepEntityBase ; ID= 874
   
 EndStructure 
  
  ; 875 : FACETED_BREP_SHAPE_REPRESENTATION
-Structure T_FACETED_BREP_SHAPE_REPRESENTATION Extends TStepBase ; ID= 875
+Structure T_FACETED_BREP_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 875
   
 EndStructure 
  
  ; 876 : FACETED_PRIMITIVE
-Structure T_FACETED_PRIMITIVE Extends TStepBase ; ID= 876
+Structure T_FACETED_PRIMITIVE Extends TStepEntityBase ; ID= 876
   
 EndStructure 
  
  ; 877 : FACING_TURNING_OPERATION
-Structure T_FACING_TURNING_OPERATION Extends TStepBase ; ID= 877
+Structure T_FACING_TURNING_OPERATION Extends TStepEntityBase ; ID= 877
   
 EndStructure 
  
  ; 878 : FACT_TYPE
-Structure T_FACT_TYPE Extends TStepBase ; ID= 878
+Structure T_FACT_TYPE Extends TStepEntityBase ; ID= 878
   
 EndStructure 
  
  ; 879 : FEATURE_COMPONENT_DEFINITION
-Structure T_FEATURE_COMPONENT_DEFINITION Extends TStepBase ; ID= 879
+Structure T_FEATURE_COMPONENT_DEFINITION Extends TStepEntityBase ; ID= 879
   
 EndStructure 
  
  ; 880 : FEATURE_COMPONENT_RELATIONSHIP
-Structure T_FEATURE_COMPONENT_RELATIONSHIP Extends TStepBase ; ID= 880
+Structure T_FEATURE_COMPONENT_RELATIONSHIP Extends TStepEntityBase ; ID= 880
   
 EndStructure 
  
  ; 881 : FEATURE_DEFINITION
-Structure T_FEATURE_DEFINITION Extends TStepBase ; ID= 881
+Structure T_FEATURE_DEFINITION Extends TStepEntityBase ; ID= 881
   
 EndStructure 
  
  ; 882 : FEATURE_DEFINITION_WITH_CONNECTION_AREA
-Structure T_FEATURE_DEFINITION_WITH_CONNECTION_AREA Extends TStepBase ; ID= 882
+Structure T_FEATURE_DEFINITION_WITH_CONNECTION_AREA Extends TStepEntityBase ; ID= 882
   
 EndStructure 
  
  ; 883 : FEATURE_FOR_DATUM_TARGET_RELATIONSHIP
-Structure T_FEATURE_FOR_DATUM_TARGET_RELATIONSHIP Extends TStepBase ; ID= 883
+Structure T_FEATURE_FOR_DATUM_TARGET_RELATIONSHIP Extends TStepEntityBase ; ID= 883
   
 EndStructure 
  
  ; 884 : FEATURE_IN_PANEL
-Structure T_FEATURE_IN_PANEL Extends TStepBase ; ID= 884
+Structure T_FEATURE_IN_PANEL Extends TStepEntityBase ; ID= 884
   
 EndStructure 
  
  ; 885 : FEATURE_PATTERN
-Structure T_FEATURE_PATTERN Extends TStepBase ; ID= 885
+Structure T_FEATURE_PATTERN Extends TStepEntityBase ; ID= 885
   
 EndStructure 
  
  ; 886 : FEATURED_SHAPE
-Structure T_FEATURED_SHAPE Extends TStepBase ; ID= 886
+Structure T_FEATURED_SHAPE Extends TStepEntityBase ; ID= 886
   
 EndStructure 
  
  ; 887 : FILL_AREA_STYLE
-Structure T_FILL_AREA_STYLE Extends TStepBase ; ID= 887
+Structure T_FILL_AREA_STYLE Extends TStepEntityBase ; ID= 887
   
 EndStructure 
  
  ; 888 : FILL_AREA_STYLE_COLOUR
-Structure T_FILL_AREA_STYLE_COLOUR Extends TStepBase ; ID= 888
+Structure T_FILL_AREA_STYLE_COLOUR Extends TStepEntityBase ; ID= 888
   
 EndStructure 
  
  ; 889 : FILL_AREA_STYLE_HATCHING
-Structure T_FILL_AREA_STYLE_HATCHING Extends TStepBase ; ID= 889
+Structure T_FILL_AREA_STYLE_HATCHING Extends TStepEntityBase ; ID= 889
   
 EndStructure 
  
  ; 890 : FILL_AREA_STYLE_TILE_COLOURED_REGION
-Structure T_FILL_AREA_STYLE_TILE_COLOURED_REGION Extends TStepBase ; ID= 890
+Structure T_FILL_AREA_STYLE_TILE_COLOURED_REGION Extends TStepEntityBase ; ID= 890
   
 EndStructure 
  
  ; 891 : FILL_AREA_STYLE_TILE_CURVE_WITH_STYLE
-Structure T_FILL_AREA_STYLE_TILE_CURVE_WITH_STYLE Extends TStepBase ; ID= 891
+Structure T_FILL_AREA_STYLE_TILE_CURVE_WITH_STYLE Extends TStepEntityBase ; ID= 891
   
 EndStructure 
  
  ; 892 : FILL_AREA_STYLE_TILE_SYMBOL_WITH_STYLE
-Structure T_FILL_AREA_STYLE_TILE_SYMBOL_WITH_STYLE Extends TStepBase ; ID= 892
+Structure T_FILL_AREA_STYLE_TILE_SYMBOL_WITH_STYLE Extends TStepEntityBase ; ID= 892
   
 EndStructure 
  
  ; 893 : FILL_AREA_STYLE_TILES
-Structure T_FILL_AREA_STYLE_TILES Extends TStepBase ; ID= 893
+Structure T_FILL_AREA_STYLE_TILES Extends TStepEntityBase ; ID= 893
   
 EndStructure 
  
  ; 894 : FILLET
-Structure T_FILLET Extends TStepBase ; ID= 894
+Structure T_FILLET Extends TStepEntityBase ; ID= 894
   
 EndStructure 
  
  ; 895 : FINAL_SOLUTION
-Structure T_FINAL_SOLUTION Extends TStepBase ; ID= 895
+Structure T_FINAL_SOLUTION Extends TStepEntityBase ; ID= 895
   
 EndStructure 
  
  ; 896 : FINITE_FUNCTION
-Structure T_FINITE_FUNCTION Extends TStepBase ; ID= 896
+Structure T_FINITE_FUNCTION Extends TStepEntityBase ; ID= 896
   
 EndStructure 
  
  ; 897 : FINITE_INTEGER_INTERVAL
-Structure T_FINITE_INTEGER_INTERVAL Extends TStepBase ; ID= 897
+Structure T_FINITE_INTEGER_INTERVAL Extends TStepEntityBase ; ID= 897
   
 EndStructure 
  
  ; 898 : FINITE_REAL_INTERVAL
-Structure T_FINITE_REAL_INTERVAL Extends TStepBase ; ID= 898
+Structure T_FINITE_REAL_INTERVAL Extends TStepEntityBase ; ID= 898
   
 EndStructure 
  
  ; 899 : FINITE_SPACE
-Structure T_FINITE_SPACE Extends TStepBase ; ID= 899
+Structure T_FINITE_SPACE Extends TStepEntityBase ; ID= 899
   
 EndStructure 
  
  ; 900 : FIXED_CONSTITUENT_ASSEMBLY_CONSTRAINT
-Structure T_FIXED_CONSTITUENT_ASSEMBLY_CONSTRAINT Extends TStepBase ; ID= 900
+Structure T_FIXED_CONSTITUENT_ASSEMBLY_CONSTRAINT Extends TStepEntityBase ; ID= 900
   
 EndStructure 
  
  ; 901 : FIXED_ELEMENT_GEOMETRIC_CONSTRAINT
-Structure T_FIXED_ELEMENT_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 901
+Structure T_FIXED_ELEMENT_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 901
   
 EndStructure 
  
  ; 902 : FIXED_INSTANCE_ATTRIBUTE_SET
-Structure T_FIXED_INSTANCE_ATTRIBUTE_SET Extends TStepBase ; ID= 902
+Structure T_FIXED_INSTANCE_ATTRIBUTE_SET Extends TStepEntityBase ; ID= 902
   
 EndStructure 
  
  ; 903 : FIXED_REFERENCE_SWEPT_SURFACE
-Structure T_FIXED_REFERENCE_SWEPT_SURFACE Extends TStepBase ; ID= 903
+Structure T_FIXED_REFERENCE_SWEPT_SURFACE Extends TStepEntityBase ; ID= 903
   
 EndStructure 
  
  ; 904 : FLAT_FACE
-Structure T_FLAT_FACE Extends TStepBase ; ID= 904
+Structure T_FLAT_FACE Extends TStepEntityBase ; ID= 904
   
 EndStructure 
  
  ; 905 : FLAT_PATTERN_PLY_REPRESENTATION_RELATIONSHIP
-Structure T_FLAT_PATTERN_PLY_REPRESENTATION_RELATIONSHIP Extends TStepBase ; ID= 905
+Structure T_FLAT_PATTERN_PLY_REPRESENTATION_RELATIONSHIP Extends TStepEntityBase ; ID= 905
   
 EndStructure 
  
  ; 906 : FLATNESS_TOLERANCE
-Structure T_FLATNESS_TOLERANCE Extends TStepBase ; ID= 906
+Structure T_FLATNESS_TOLERANCE Extends TStepEntityBase ; ID= 906
   
 EndStructure 
  
  ; 907 : FORCE_MEASURE_WITH_UNIT
-Structure T_FORCE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 907
+Structure T_FORCE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 907
   
 EndStructure 
  
  ; 908 : FORCE_UNIT
-Structure T_FORCE_UNIT Extends TStepBase ; ID= 908
+Structure T_FORCE_UNIT Extends TStepEntityBase ; ID= 908
   
 EndStructure 
  
  ; 909 : FORMAT_FUNCTION
-Structure T_FORMAT_FUNCTION Extends TStepBase ; ID= 909
+Structure T_FORMAT_FUNCTION Extends TStepEntityBase ; ID= 909
   
 EndStructure 
  
  ; 910 : FORWARD_CHAINING_RULE
-Structure T_FORWARD_CHAINING_RULE Extends TStepBase ; ID= 910
+Structure T_FORWARD_CHAINING_RULE Extends TStepEntityBase ; ID= 910
   
 EndStructure 
  
  ; 911 : FORWARD_CHAINING_RULE_PREMISE
-Structure T_FORWARD_CHAINING_RULE_PREMISE Extends TStepBase ; ID= 911
+Structure T_FORWARD_CHAINING_RULE_PREMISE Extends TStepEntityBase ; ID= 911
   
 EndStructure 
  
  ; 912 : FOUNDED_ITEM
-Structure T_FOUNDED_ITEM Extends TStepBase ; ID= 912
+Structure T_FOUNDED_ITEM Extends TStepEntityBase ; ID= 912
   
 EndStructure 
  
  ; 913 : FOUNDED_KINEMATIC_PATH
-Structure T_FOUNDED_KINEMATIC_PATH Extends TStepBase ; ID= 913
+Structure T_FOUNDED_KINEMATIC_PATH Extends TStepEntityBase ; ID= 913
   
 EndStructure 
  
  ; 914 : FREE_EDGE
-Structure T_FREE_EDGE Extends TStepBase ; ID= 914
+Structure T_FREE_EDGE Extends TStepEntityBase ; ID= 914
   
 EndStructure 
  
  ; 915 : FREE_FORM_ASSIGNMENT
-Structure T_FREE_FORM_ASSIGNMENT Extends TStepBase ; ID= 915
+Structure T_FREE_FORM_ASSIGNMENT Extends TStepEntityBase ; ID= 915
   
 EndStructure 
  
  ; 916 : FREE_FORM_CONSTRAINT
-Structure T_FREE_FORM_CONSTRAINT Extends TStepBase ; ID= 916
+Structure T_FREE_FORM_CONSTRAINT Extends TStepEntityBase ; ID= 916
   
 EndStructure 
  
  ; 917 : FREE_FORM_RELATION
-Structure T_FREE_FORM_RELATION Extends TStepBase ; ID= 917
+Structure T_FREE_FORM_RELATION Extends TStepEntityBase ; ID= 917
   
 EndStructure 
  
  ; 918 : FREE_KINEMATIC_MOTION_REPRESENTATION
-Structure T_FREE_KINEMATIC_MOTION_REPRESENTATION Extends TStepBase ; ID= 918
+Structure T_FREE_KINEMATIC_MOTION_REPRESENTATION Extends TStepEntityBase ; ID= 918
   
 EndStructure 
  
  ; 919 : FREE_VARIABLE_SEMANTICS
-Structure T_FREE_VARIABLE_SEMANTICS Extends TStepBase ; ID= 919
+Structure T_FREE_VARIABLE_SEMANTICS Extends TStepEntityBase ; ID= 919
   
 EndStructure 
  
  ; 920 : FREEFORM_MILLING_OPERATION
-Structure T_FREEFORM_MILLING_OPERATION Extends TStepBase ; ID= 920
+Structure T_FREEFORM_MILLING_OPERATION Extends TStepEntityBase ; ID= 920
   
 EndStructure 
  
  ; 921 : FREEFORM_MILLING_STRATEGY
-Structure T_FREEFORM_MILLING_STRATEGY Extends TStepBase ; ID= 921
+Structure T_FREEFORM_MILLING_STRATEGY Extends TStepEntityBase ; ID= 921
   
 EndStructure 
  
  ; 922 : FREEFORM_MILLING_TOLERANCE_REPRESENTATION
-Structure T_FREEFORM_MILLING_TOLERANCE_REPRESENTATION Extends TStepBase ; ID= 922
+Structure T_FREEFORM_MILLING_TOLERANCE_REPRESENTATION Extends TStepEntityBase ; ID= 922
   
 EndStructure 
  
  ; 923 : FREQUENCY_MEASURE_WITH_UNIT
-Structure T_FREQUENCY_MEASURE_WITH_UNIT Extends TStepBase ; ID= 923
+Structure T_FREQUENCY_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 923
   
 EndStructure 
  
  ; 924 : FREQUENCY_UNIT
-Structure T_FREQUENCY_UNIT Extends TStepBase ; ID= 924
+Structure T_FREQUENCY_UNIT Extends TStepEntityBase ; ID= 924
   
 EndStructure 
  
  ; 925 : FROZEN_ASSIGNMENT
-Structure T_FROZEN_ASSIGNMENT Extends TStepBase ; ID= 925
+Structure T_FROZEN_ASSIGNMENT Extends TStepEntityBase ; ID= 925
   
 EndStructure 
  
  ; 926 : FULLY_CONSTRAINED_PAIR
-Structure T_FULLY_CONSTRAINED_PAIR Extends TStepBase ; ID= 926
+Structure T_FULLY_CONSTRAINED_PAIR Extends TStepEntityBase ; ID= 926
   
 EndStructure 
  
  ; 927 : FUNC
-Structure T_FUNC Extends TStepBase ; ID= 927
+Structure T_FUNC Extends TStepEntityBase ; ID= 927
   
 EndStructure 
  
  ; 928 : FUNCTION_APPLICATION
-Structure T_FUNCTION_APPLICATION Extends TStepBase ; ID= 928
+Structure T_FUNCTION_APPLICATION Extends TStepEntityBase ; ID= 928
   
 EndStructure 
  
  ; 929 : FUNCTION_SPACE
-Structure T_FUNCTION_SPACE Extends TStepBase ; ID= 929
+Structure T_FUNCTION_SPACE Extends TStepEntityBase ; ID= 929
   
 EndStructure 
  
  ; 930 : FUNCTIONAL_BREAKDOWN_CONTEXT
-Structure T_FUNCTIONAL_BREAKDOWN_CONTEXT Extends TStepBase ; ID= 930
+Structure T_FUNCTIONAL_BREAKDOWN_CONTEXT Extends TStepEntityBase ; ID= 930
   
 EndStructure 
  
  ; 931 : FUNCTIONAL_ELEMENT_USAGE
-Structure T_FUNCTIONAL_ELEMENT_USAGE Extends TStepBase ; ID= 931
+Structure T_FUNCTIONAL_ELEMENT_USAGE Extends TStepEntityBase ; ID= 931
   
 EndStructure 
  
  ; 932 : FUNCTIONALLY_DEFINED_TRANSFORMATION
-Structure T_FUNCTIONALLY_DEFINED_TRANSFORMATION Extends TStepBase ; ID= 932
+Structure T_FUNCTIONALLY_DEFINED_TRANSFORMATION Extends TStepEntityBase ; ID= 932
   
 EndStructure 
  
  ; 933 : G1_DISCONTINUITY_BETWEEN_ADJACENT_FACES
-Structure T_G1_DISCONTINUITY_BETWEEN_ADJACENT_FACES Extends TStepBase ; ID= 933
+Structure T_G1_DISCONTINUITY_BETWEEN_ADJACENT_FACES Extends TStepEntityBase ; ID= 933
   
 EndStructure 
  
  ; 934 : G1_DISCONTINUOUS_CURVE
-Structure T_G1_DISCONTINUOUS_CURVE Extends TStepBase ; ID= 934
+Structure T_G1_DISCONTINUOUS_CURVE Extends TStepEntityBase ; ID= 934
   
 EndStructure 
  
  ; 935 : G1_DISCONTINUOUS_SURFACE
-Structure T_G1_DISCONTINUOUS_SURFACE Extends TStepBase ; ID= 935
+Structure T_G1_DISCONTINUOUS_SURFACE Extends TStepEntityBase ; ID= 935
   
 EndStructure 
  
  ; 936 : G2_DISCONTINUITY_BETWEEN_ADJACENT_FACES
-Structure T_G2_DISCONTINUITY_BETWEEN_ADJACENT_FACES Extends TStepBase ; ID= 936
+Structure T_G2_DISCONTINUITY_BETWEEN_ADJACENT_FACES Extends TStepEntityBase ; ID= 936
   
 EndStructure 
  
  ; 937 : G2_DISCONTINUOUS_CURVE
-Structure T_G2_DISCONTINUOUS_CURVE Extends TStepBase ; ID= 937
+Structure T_G2_DISCONTINUOUS_CURVE Extends TStepEntityBase ; ID= 937
   
 EndStructure 
  
  ; 938 : G2_DISCONTINUOUS_SURFACE
-Structure T_G2_DISCONTINUOUS_SURFACE Extends TStepBase ; ID= 938
+Structure T_G2_DISCONTINUOUS_SURFACE Extends TStepEntityBase ; ID= 938
   
 EndStructure 
  
  ; 939 : GAP_BETWEEN_ADJACENT_EDGES_IN_LOOP
-Structure T_GAP_BETWEEN_ADJACENT_EDGES_IN_LOOP Extends TStepBase ; ID= 939
+Structure T_GAP_BETWEEN_ADJACENT_EDGES_IN_LOOP Extends TStepEntityBase ; ID= 939
   
 EndStructure 
  
  ; 940 : GAP_BETWEEN_EDGE_AND_BASE_SURFACE
-Structure T_GAP_BETWEEN_EDGE_AND_BASE_SURFACE Extends TStepBase ; ID= 940
+Structure T_GAP_BETWEEN_EDGE_AND_BASE_SURFACE Extends TStepEntityBase ; ID= 940
   
 EndStructure 
  
  ; 941 : GAP_BETWEEN_FACES_RELATED_TO_AN_EDGE
-Structure T_GAP_BETWEEN_FACES_RELATED_TO_AN_EDGE Extends TStepBase ; ID= 941
+Structure T_GAP_BETWEEN_FACES_RELATED_TO_AN_EDGE Extends TStepEntityBase ; ID= 941
   
 EndStructure 
  
  ; 942 : GAP_BETWEEN_PCURVES_RELATED_TO_AN_EDGE
-Structure T_GAP_BETWEEN_PCURVES_RELATED_TO_AN_EDGE Extends TStepBase ; ID= 942
+Structure T_GAP_BETWEEN_PCURVES_RELATED_TO_AN_EDGE Extends TStepEntityBase ; ID= 942
   
 EndStructure 
  
  ; 943 : GAP_BETWEEN_VERTEX_AND_BASE_SURFACE
-Structure T_GAP_BETWEEN_VERTEX_AND_BASE_SURFACE Extends TStepBase ; ID= 943
+Structure T_GAP_BETWEEN_VERTEX_AND_BASE_SURFACE Extends TStepEntityBase ; ID= 943
   
 EndStructure 
  
  ; 944 : GAP_BETWEEN_VERTEX_AND_EDGE
-Structure T_GAP_BETWEEN_VERTEX_AND_EDGE Extends TStepBase ; ID= 944
+Structure T_GAP_BETWEEN_VERTEX_AND_EDGE Extends TStepEntityBase ; ID= 944
   
 EndStructure 
  
  ; 945 : GEAR
-Structure T_GEAR Extends TStepBase ; ID= 945
+Structure T_GEAR Extends TStepEntityBase ; ID= 945
   
 EndStructure 
  
  ; 946 : GEAR_PAIR
-Structure T_GEAR_PAIR Extends TStepBase ; ID= 946
+Structure T_GEAR_PAIR Extends TStepEntityBase ; ID= 946
   
 EndStructure 
  
  ; 947 : GEAR_PAIR_RANGE
-Structure T_GEAR_PAIR_RANGE Extends TStepBase ; ID= 947
+Structure T_GEAR_PAIR_RANGE Extends TStepEntityBase ; ID= 947
   
 EndStructure 
  
  ; 948 : GEAR_PAIR_VALUE
-Structure T_GEAR_PAIR_VALUE Extends TStepBase ; ID= 948
+Structure T_GEAR_PAIR_VALUE Extends TStepEntityBase ; ID= 948
   
 EndStructure 
  
  ; 949 : GEAR_PAIR_WITH_RANGE
-Structure T_GEAR_PAIR_WITH_RANGE Extends TStepBase ; ID= 949
+Structure T_GEAR_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 949
   
 EndStructure 
  
  ; 950 : GENERAL_DATUM_REFERENCE
-Structure T_GENERAL_DATUM_REFERENCE Extends TStepBase ; ID= 950
+Structure T_GENERAL_DATUM_REFERENCE Extends TStepEntityBase ; ID= 950
   
 EndStructure 
  
  ; 951 : GENERAL_FEATURE
-Structure T_GENERAL_FEATURE Extends TStepBase ; ID= 951
+Structure T_GENERAL_FEATURE Extends TStepEntityBase ; ID= 951
   
 EndStructure 
  
  ; 952 : GENERAL_LINEAR_FUNCTION
-Structure T_GENERAL_LINEAR_FUNCTION Extends TStepBase ; ID= 952
+Structure T_GENERAL_LINEAR_FUNCTION Extends TStepEntityBase ; ID= 952
   
 EndStructure 
  
  ; 953 : GENERAL_MATERIAL_PROPERTY
-Structure T_GENERAL_MATERIAL_PROPERTY Extends TStepBase ; ID= 953
+Structure T_GENERAL_MATERIAL_PROPERTY Extends TStepEntityBase ; ID= 953
   
 EndStructure 
  
  ; 954 : GENERAL_PROPERTY
-Structure T_GENERAL_PROPERTY Extends TStepBase ; ID= 954
+Structure T_GENERAL_PROPERTY Extends TStepEntityBase ; ID= 954
   
 EndStructure 
  
  ; 955 : GENERAL_PROPERTY_ASSOCIATION
-Structure T_GENERAL_PROPERTY_ASSOCIATION Extends TStepBase ; ID= 955
+Structure T_GENERAL_PROPERTY_ASSOCIATION Extends TStepEntityBase ; ID= 955
   
 EndStructure 
  
  ; 956 : GENERAL_PROPERTY_RELATIONSHIP
-Structure T_GENERAL_PROPERTY_RELATIONSHIP Extends TStepBase ; ID= 956
+Structure T_GENERAL_PROPERTY_RELATIONSHIP Extends TStepEntityBase ; ID= 956
   
 EndStructure 
  
  ; 957 : GENERATED_FINITE_NUMERIC_SPACE
-Structure T_GENERATED_FINITE_NUMERIC_SPACE Extends TStepBase ; ID= 957
+Structure T_GENERATED_FINITE_NUMERIC_SPACE Extends TStepEntityBase ; ID= 957
   
 EndStructure 
  
  ; 958 : GENERIC_CHARACTER_GLYPH_SYMBOL
-Structure T_GENERIC_CHARACTER_GLYPH_SYMBOL Extends TStepBase ; ID= 958
+Structure T_GENERIC_CHARACTER_GLYPH_SYMBOL Extends TStepEntityBase ; ID= 958
   
 EndStructure 
  
  ; 959 : GENERIC_EXPRESSION
-Structure T_GENERIC_EXPRESSION Extends TStepBase ; ID= 959
+Structure T_GENERIC_EXPRESSION Extends TStepEntityBase ; ID= 959
   
 EndStructure 
  
  ; 960 : GENERIC_LITERAL
-Structure T_GENERIC_LITERAL Extends TStepBase ; ID= 960
+Structure T_GENERIC_LITERAL Extends TStepEntityBase ; ID= 960
   
 EndStructure 
  
  ; 961 : GENERIC_PRODUCT_DEFINITION_REFERENCE
-Structure T_GENERIC_PRODUCT_DEFINITION_REFERENCE Extends TStepBase ; ID= 961
+Structure T_GENERIC_PRODUCT_DEFINITION_REFERENCE Extends TStepEntityBase ; ID= 961
   
 EndStructure 
  
  ; 962 : GENERIC_PROPERTY_RELATIONSHIP
-Structure T_GENERIC_PROPERTY_RELATIONSHIP Extends TStepBase ; ID= 962
+Structure T_GENERIC_PROPERTY_RELATIONSHIP Extends TStepEntityBase ; ID= 962
   
 EndStructure 
  
  ; 963 : GENERIC_VARIABLE
-Structure T_GENERIC_VARIABLE Extends TStepBase ; ID= 963
+Structure T_GENERIC_VARIABLE Extends TStepEntityBase ; ID= 963
   
 EndStructure 
  
  ; 964 : GEOMETRIC_ALIGNMENT
-Structure T_GEOMETRIC_ALIGNMENT Extends TStepBase ; ID= 964
+Structure T_GEOMETRIC_ALIGNMENT Extends TStepEntityBase ; ID= 964
   
 EndStructure 
  
  ; 965 : GEOMETRIC_CONTACT
-Structure T_GEOMETRIC_CONTACT Extends TStepBase ; ID= 965
+Structure T_GEOMETRIC_CONTACT Extends TStepEntityBase ; ID= 965
   
 EndStructure 
  
  ; 966 : GEOMETRIC_CURVE_SET
-Structure T_GEOMETRIC_CURVE_SET Extends TStepBase ; ID= 966
+Structure T_GEOMETRIC_CURVE_SET Extends TStepEntityBase ; ID= 966
   
 EndStructure 
  
  ; 967 : GEOMETRIC_GAP_IN_TOPOLOGY
-Structure T_GEOMETRIC_GAP_IN_TOPOLOGY Extends TStepBase ; ID= 967
+Structure T_GEOMETRIC_GAP_IN_TOPOLOGY Extends TStepEntityBase ; ID= 967
   
 EndStructure 
  
  ; 968 : GEOMETRIC_INTERSECTION
-Structure T_GEOMETRIC_INTERSECTION Extends TStepBase ; ID= 968
+Structure T_GEOMETRIC_INTERSECTION Extends TStepEntityBase ; ID= 968
   
 EndStructure 
  
  ; 969 : GEOMETRIC_ITEM_SPECIFIC_USAGE
-Structure T_GEOMETRIC_ITEM_SPECIFIC_USAGE Extends TStepBase ; ID= 969
+Structure T_GEOMETRIC_ITEM_SPECIFIC_USAGE Extends TStepEntityBase ; ID= 969
   
 EndStructure 
  
  ; 970 : GEOMETRIC_MODEL_ELEMENT_RELATIONSHIP
-Structure T_GEOMETRIC_MODEL_ELEMENT_RELATIONSHIP Extends TStepBase ; ID= 970
+Structure T_GEOMETRIC_MODEL_ELEMENT_RELATIONSHIP Extends TStepEntityBase ; ID= 970
   
 EndStructure 
  
  ; 971 : GEOMETRIC_REPRESENTATION_CONTEXT
-Structure T_GEOMETRIC_REPRESENTATION_CONTEXT Extends TStepBase ; ID= 971
+Structure T_GEOMETRIC_REPRESENTATION_CONTEXT Extends TStepEntityBase ; ID= 971
   
 EndStructure 
  
  ; 972 : GEOMETRIC_REPRESENTATION_CONTEXT_WITH_PARAMETER
-Structure T_GEOMETRIC_REPRESENTATION_CONTEXT_WITH_PARAMETER Extends TStepBase ; ID= 972
+Structure T_GEOMETRIC_REPRESENTATION_CONTEXT_WITH_PARAMETER Extends TStepEntityBase ; ID= 972
   
 EndStructure 
  
  ; 973 : GEOMETRIC_REPRESENTATION_ITEM
-Structure T_GEOMETRIC_REPRESENTATION_ITEM Extends TStepBase ; ID= 973
+Structure T_GEOMETRIC_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 973
   
 EndStructure 
  
  ; 974 : GEOMETRIC_SET
-Structure T_GEOMETRIC_SET Extends TStepBase ; ID= 974
+Structure T_GEOMETRIC_SET Extends TStepEntityBase ; ID= 974
   
 EndStructure 
  
  ; 975 : GEOMETRIC_TOLERANCE
-Structure T_GEOMETRIC_TOLERANCE Extends TStepBase ; ID= 975
+Structure T_GEOMETRIC_TOLERANCE Extends TStepEntityBase ; ID= 975
   
 EndStructure 
  
  ; 976 : GEOMETRIC_TOLERANCE_AUXILIARY_CLASSIFICATION
-Structure T_GEOMETRIC_TOLERANCE_AUXILIARY_CLASSIFICATION Extends TStepBase ; ID= 976
+Structure T_GEOMETRIC_TOLERANCE_AUXILIARY_CLASSIFICATION Extends TStepEntityBase ; ID= 976
   
 EndStructure 
  
  ; 977 : GEOMETRIC_TOLERANCE_RELATIONSHIP
-Structure T_GEOMETRIC_TOLERANCE_RELATIONSHIP Extends TStepBase ; ID= 977
+Structure T_GEOMETRIC_TOLERANCE_RELATIONSHIP Extends TStepEntityBase ; ID= 977
   
 EndStructure 
  
  ; 978 : GEOMETRIC_TOLERANCE_WITH_DATUM_REFERENCE
-Structure T_GEOMETRIC_TOLERANCE_WITH_DATUM_REFERENCE Extends TStepBase ; ID= 978
+Structure T_GEOMETRIC_TOLERANCE_WITH_DATUM_REFERENCE Extends TStepEntityBase ; ID= 978
   
 EndStructure 
  
  ; 979 : GEOMETRIC_TOLERANCE_WITH_DEFINED_AREA_UNIT
-Structure T_GEOMETRIC_TOLERANCE_WITH_DEFINED_AREA_UNIT Extends TStepBase ; ID= 979
+Structure T_GEOMETRIC_TOLERANCE_WITH_DEFINED_AREA_UNIT Extends TStepEntityBase ; ID= 979
   
 EndStructure 
  
  ; 980 : GEOMETRIC_TOLERANCE_WITH_DEFINED_UNIT
-Structure T_GEOMETRIC_TOLERANCE_WITH_DEFINED_UNIT Extends TStepBase ; ID= 980
+Structure T_GEOMETRIC_TOLERANCE_WITH_DEFINED_UNIT Extends TStepEntityBase ; ID= 980
   
 EndStructure 
  
  ; 981 : GEOMETRIC_TOLERANCE_WITH_MAXIMUM_TOLERANCE
-Structure T_GEOMETRIC_TOLERANCE_WITH_MAXIMUM_TOLERANCE Extends TStepBase ; ID= 981
+Structure T_GEOMETRIC_TOLERANCE_WITH_MAXIMUM_TOLERANCE Extends TStepEntityBase ; ID= 981
   
 EndStructure 
  
  ; 982 : GEOMETRIC_TOLERANCE_WITH_MODIFIERS
-Structure T_GEOMETRIC_TOLERANCE_WITH_MODIFIERS Extends TStepBase ; ID= 982
+Structure T_GEOMETRIC_TOLERANCE_WITH_MODIFIERS Extends TStepEntityBase ; ID= 982
   
 EndStructure 
  
  ; 983 : GEOMETRICAL_TOLERANCE_CALLOUT
-Structure T_GEOMETRICAL_TOLERANCE_CALLOUT Extends TStepBase ; ID= 983
+Structure T_GEOMETRICAL_TOLERANCE_CALLOUT Extends TStepEntityBase ; ID= 983
   
 EndStructure 
  
  ; 984 : GEOMETRICALLY_BOUNDED_2D_WIREFRAME_REPRESENTATION
-Structure T_GEOMETRICALLY_BOUNDED_2D_WIREFRAME_REPRESENTATION Extends TStepBase ; ID= 984
+Structure T_GEOMETRICALLY_BOUNDED_2D_WIREFRAME_REPRESENTATION Extends TStepEntityBase ; ID= 984
   
 EndStructure 
  
  ; 985 : GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION
-Structure T_GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION Extends TStepBase ; ID= 985
+Structure T_GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 985
   
 EndStructure 
  
  ; 986 : GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION
-Structure T_GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION Extends TStepBase ; ID= 986
+Structure T_GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 986
   
 EndStructure 
  
  ; 987 : GEOMETRY_WITH_LOCAL_IRREGULARITY
-Structure T_GEOMETRY_WITH_LOCAL_IRREGULARITY Extends TStepBase ; ID= 987
+Structure T_GEOMETRY_WITH_LOCAL_IRREGULARITY Extends TStepEntityBase ; ID= 987
   
 EndStructure 
  
  ; 988 : GEOMETRY_WITH_LOCAL_NEAR_DEGENERACY
-Structure T_GEOMETRY_WITH_LOCAL_NEAR_DEGENERACY Extends TStepBase ; ID= 988
+Structure T_GEOMETRY_WITH_LOCAL_NEAR_DEGENERACY Extends TStepEntityBase ; ID= 988
   
 EndStructure 
  
  ; 989 : GLOBAL_ASSIGNMENT
-Structure T_GLOBAL_ASSIGNMENT Extends TStepBase ; ID= 989
+Structure T_GLOBAL_ASSIGNMENT Extends TStepEntityBase ; ID= 989
   
 EndStructure 
  
  ; 990 : GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT
-Structure T_GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT Extends TStepBase ; ID= 990
+Structure T_GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT Extends TStepEntityBase ; ID= 990
   
 EndStructure 
  
  ; 991 : GLOBAL_UNIT_ASSIGNED_CONTEXT
-Structure T_GLOBAL_UNIT_ASSIGNED_CONTEXT Extends TStepBase ; ID= 991
+Structure T_GLOBAL_UNIT_ASSIGNED_CONTEXT Extends TStepEntityBase ; ID= 991
   
 EndStructure 
  
  ; 992 : GPS_FILTER
-Structure T_GPS_FILTER Extends TStepBase ; ID= 992
+Structure T_GPS_FILTER Extends TStepEntityBase ; ID= 992
   
 EndStructure 
  
  ; 993 : GPS_FILTRATION_SPECIFICATION
-Structure T_GPS_FILTRATION_SPECIFICATION Extends TStepBase ; ID= 993
+Structure T_GPS_FILTRATION_SPECIFICATION Extends TStepEntityBase ; ID= 993
   
 EndStructure 
  
  ; 994 : GROOVING_TURNING_OPERATION
-Structure T_GROOVING_TURNING_OPERATION Extends TStepBase ; ID= 994
+Structure T_GROOVING_TURNING_OPERATION Extends TStepEntityBase ; ID= 994
   
 EndStructure 
  
  ; 995 : GROUND_FACT
-Structure T_GROUND_FACT Extends TStepBase ; ID= 995
+Structure T_GROUND_FACT Extends TStepEntityBase ; ID= 995
   
 EndStructure 
  
  ; 996 : GROUP
-Structure T_GROUP Extends TStepBase ; ID= 996
+Structure T_GROUP Extends TStepEntityBase ; ID= 996
   
 EndStructure 
  
  ; 997 : GROUP_ASSIGNMENT
-Structure T_GROUP_ASSIGNMENT Extends TStepBase ; ID= 997
+Structure T_GROUP_ASSIGNMENT Extends TStepEntityBase ; ID= 997
   
 EndStructure 
  
  ; 998 : GROUP_RELATIONSHIP
-Structure T_GROUP_RELATIONSHIP Extends TStepBase ; ID= 998
+Structure T_GROUP_RELATIONSHIP Extends TStepEntityBase ; ID= 998
   
 EndStructure 
  
  ; 999 : HALF_SPACE_2D
-Structure T_HALF_SPACE_2D Extends TStepBase ; ID= 999
+Structure T_HALF_SPACE_2D Extends TStepEntityBase ; ID= 999
   
 EndStructure 
  
  ; 1000 : HALF_SPACE_SOLID
-Structure T_HALF_SPACE_SOLID Extends TStepBase ; ID= 1000
+Structure T_HALF_SPACE_SOLID Extends TStepEntityBase ; ID= 1000
   
 EndStructure 
  
  ; 1001 : HARDNESS_REPRESENTATION
-Structure T_HARDNESS_REPRESENTATION Extends TStepBase ; ID= 1001
+Structure T_HARDNESS_REPRESENTATION Extends TStepEntityBase ; ID= 1001
   
 EndStructure 
  
  ; 1002 : HARNESS_NODE
-Structure T_HARNESS_NODE Extends TStepBase ; ID= 1002
+Structure T_HARNESS_NODE Extends TStepEntityBase ; ID= 1002
   
 EndStructure 
  
  ; 1003 : HARNESS_SEGMENT
-Structure T_HARNESS_SEGMENT Extends TStepBase ; ID= 1003
+Structure T_HARNESS_SEGMENT Extends TStepEntityBase ; ID= 1003
   
 EndStructure 
  
  ; 1004 : HEXAHEDRON_VOLUME
-Structure T_HEXAHEDRON_VOLUME Extends TStepBase ; ID= 1004
+Structure T_HEXAHEDRON_VOLUME Extends TStepEntityBase ; ID= 1004
   
 EndStructure 
  
  ; 1005 : HIDDEN_ELEMENT_OVER_RIDING_STYLED_ITEM
-Structure T_HIDDEN_ELEMENT_OVER_RIDING_STYLED_ITEM Extends TStepBase ; ID= 1005
+Structure T_HIDDEN_ELEMENT_OVER_RIDING_STYLED_ITEM Extends TStepEntityBase ; ID= 1005
   
 EndStructure 
  
  ; 1006 : HIERARCHICAL_INTERFACE_CONNECTION
-Structure T_HIERARCHICAL_INTERFACE_CONNECTION Extends TStepBase ; ID= 1006
+Structure T_HIERARCHICAL_INTERFACE_CONNECTION Extends TStepEntityBase ; ID= 1006
   
 EndStructure 
  
  ; 1007 : HIGH_DEGREE_AXI_SYMMETRIC_SURFACE
-Structure T_HIGH_DEGREE_AXI_SYMMETRIC_SURFACE Extends TStepBase ; ID= 1007
+Structure T_HIGH_DEGREE_AXI_SYMMETRIC_SURFACE Extends TStepEntityBase ; ID= 1007
   
 EndStructure 
  
  ; 1008 : HIGH_DEGREE_CONIC
-Structure T_HIGH_DEGREE_CONIC Extends TStepBase ; ID= 1008
+Structure T_HIGH_DEGREE_CONIC Extends TStepEntityBase ; ID= 1008
   
 EndStructure 
  
  ; 1009 : HIGH_DEGREE_LINEAR_CURVE
-Structure T_HIGH_DEGREE_LINEAR_CURVE Extends TStepBase ; ID= 1009
+Structure T_HIGH_DEGREE_LINEAR_CURVE Extends TStepEntityBase ; ID= 1009
   
 EndStructure 
  
  ; 1010 : HIGH_DEGREE_PLANAR_SURFACE
-Structure T_HIGH_DEGREE_PLANAR_SURFACE Extends TStepBase ; ID= 1010
+Structure T_HIGH_DEGREE_PLANAR_SURFACE Extends TStepEntityBase ; ID= 1010
   
 EndStructure 
  
  ; 1011 : HIGH_ORDER_KINEMATIC_PAIR
-Structure T_HIGH_ORDER_KINEMATIC_PAIR Extends TStepBase ; ID= 1011
+Structure T_HIGH_ORDER_KINEMATIC_PAIR Extends TStepEntityBase ; ID= 1011
   
 EndStructure 
  
  ; 1012 : HOLE_BOTTOM
-Structure T_HOLE_BOTTOM Extends TStepBase ; ID= 1012
+Structure T_HOLE_BOTTOM Extends TStepEntityBase ; ID= 1012
   
 EndStructure 
  
  ; 1013 : HOLE_IN_PANEL
-Structure T_HOLE_IN_PANEL Extends TStepBase ; ID= 1013
+Structure T_HOLE_IN_PANEL Extends TStepEntityBase ; ID= 1013
   
 EndStructure 
  
  ; 1014 : HOMOGENEOUS_LINEAR_FUNCTION
-Structure T_HOMOGENEOUS_LINEAR_FUNCTION Extends TStepBase ; ID= 1014
+Structure T_HOMOGENEOUS_LINEAR_FUNCTION Extends TStepEntityBase ; ID= 1014
   
 EndStructure 
  
  ; 1015 : HOMOKINETIC_PAIR
-Structure T_HOMOKINETIC_PAIR Extends TStepBase ; ID= 1015
+Structure T_HOMOKINETIC_PAIR Extends TStepEntityBase ; ID= 1015
   
 EndStructure 
  
  ; 1016 : HYPERBOLA
-Structure T_HYPERBOLA Extends TStepBase ; ID= 1016
+Structure T_HYPERBOLA Extends TStepEntityBase ; ID= 1016
   
 EndStructure 
  
  ; 1017 : ID_ATTRIBUTE
-Structure T_ID_ATTRIBUTE Extends TStepBase ; ID= 1017
+Structure T_ID_ATTRIBUTE Extends TStepEntityBase ; ID= 1017
   
 EndStructure 
  
  ; 1018 : IDENTIFICATION_ASSIGNMENT
-Structure T_IDENTIFICATION_ASSIGNMENT Extends TStepBase ; ID= 1018
+Structure T_IDENTIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 1018
   
 EndStructure 
  
  ; 1019 : IDENTIFICATION_ASSIGNMENT_RELATIONSHIP
-Structure T_IDENTIFICATION_ASSIGNMENT_RELATIONSHIP Extends TStepBase ; ID= 1019
+Structure T_IDENTIFICATION_ASSIGNMENT_RELATIONSHIP Extends TStepEntityBase ; ID= 1019
   
 EndStructure 
  
  ; 1020 : IDENTIFICATION_ROLE
-Structure T_IDENTIFICATION_ROLE Extends TStepBase ; ID= 1020
+Structure T_IDENTIFICATION_ROLE Extends TStepEntityBase ; ID= 1020
   
 EndStructure 
  
  ; 1021 : IDRM_CLASSIFICATION_ASSIGNMENT
-Structure T_IDRM_CLASSIFICATION_ASSIGNMENT Extends TStepBase ; ID= 1021
+Structure T_IDRM_CLASSIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 1021
   
 EndStructure 
  
  ; 1022 : ILLUMINANCE_MEASURE_WITH_UNIT
-Structure T_ILLUMINANCE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1022
+Structure T_ILLUMINANCE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1022
   
 EndStructure 
  
  ; 1023 : ILLUMINANCE_UNIT
-Structure T_ILLUMINANCE_UNIT Extends TStepBase ; ID= 1023
+Structure T_ILLUMINANCE_UNIT Extends TStepEntityBase ; ID= 1023
   
 EndStructure 
  
  ; 1024 : IMPLICIT_EXPLICIT_POSITIONED_SKETCH_RELATIONSHIP
-Structure T_IMPLICIT_EXPLICIT_POSITIONED_SKETCH_RELATIONSHIP Extends TStepBase ; ID= 1024
+Structure T_IMPLICIT_EXPLICIT_POSITIONED_SKETCH_RELATIONSHIP Extends TStepEntityBase ; ID= 1024
   
 EndStructure 
  
  ; 1025 : IMPLICIT_INTERSECTION_CURVE
-Structure T_IMPLICIT_INTERSECTION_CURVE Extends TStepBase ; ID= 1025
+Structure T_IMPLICIT_INTERSECTION_CURVE Extends TStepEntityBase ; ID= 1025
   
 EndStructure 
  
  ; 1026 : IMPLICIT_MODEL_INTERSECTION_CURVE
-Structure T_IMPLICIT_MODEL_INTERSECTION_CURVE Extends TStepBase ; ID= 1026
+Structure T_IMPLICIT_MODEL_INTERSECTION_CURVE Extends TStepEntityBase ; ID= 1026
   
 EndStructure 
  
  ; 1027 : IMPLICIT_PLANAR_CURVE
-Structure T_IMPLICIT_PLANAR_CURVE Extends TStepBase ; ID= 1027
+Structure T_IMPLICIT_PLANAR_CURVE Extends TStepEntityBase ; ID= 1027
   
 EndStructure 
  
  ; 1028 : IMPLICIT_PLANAR_INTERSECTION_POINT
-Structure T_IMPLICIT_PLANAR_INTERSECTION_POINT Extends TStepBase ; ID= 1028
+Structure T_IMPLICIT_PLANAR_INTERSECTION_POINT Extends TStepEntityBase ; ID= 1028
   
 EndStructure 
  
  ; 1029 : IMPLICIT_PLANAR_PROJECTION_POINT
-Structure T_IMPLICIT_PLANAR_PROJECTION_POINT Extends TStepBase ; ID= 1029
+Structure T_IMPLICIT_PLANAR_PROJECTION_POINT Extends TStepEntityBase ; ID= 1029
   
 EndStructure 
  
  ; 1030 : IMPLICIT_POINT_ON_PLANE
-Structure T_IMPLICIT_POINT_ON_PLANE Extends TStepBase ; ID= 1030
+Structure T_IMPLICIT_POINT_ON_PLANE Extends TStepEntityBase ; ID= 1030
   
 EndStructure 
  
  ; 1031 : IMPLICIT_PROJECTED_CURVE
-Structure T_IMPLICIT_PROJECTED_CURVE Extends TStepBase ; ID= 1031
+Structure T_IMPLICIT_PROJECTED_CURVE Extends TStepEntityBase ; ID= 1031
   
 EndStructure 
  
  ; 1032 : IMPLICIT_SILHOUETTE_CURVE
-Structure T_IMPLICIT_SILHOUETTE_CURVE Extends TStepBase ; ID= 1032
+Structure T_IMPLICIT_SILHOUETTE_CURVE Extends TStepEntityBase ; ID= 1032
   
 EndStructure 
  
  ; 1033 : IMPORTED_CURVE_FUNCTION
-Structure T_IMPORTED_CURVE_FUNCTION Extends TStepBase ; ID= 1033
+Structure T_IMPORTED_CURVE_FUNCTION Extends TStepEntityBase ; ID= 1033
   
 EndStructure 
  
  ; 1034 : IMPORTED_POINT_FUNCTION
-Structure T_IMPORTED_POINT_FUNCTION Extends TStepBase ; ID= 1034
+Structure T_IMPORTED_POINT_FUNCTION Extends TStepEntityBase ; ID= 1034
   
 EndStructure 
  
  ; 1035 : IMPORTED_SURFACE_FUNCTION
-Structure T_IMPORTED_SURFACE_FUNCTION Extends TStepBase ; ID= 1035
+Structure T_IMPORTED_SURFACE_FUNCTION Extends TStepEntityBase ; ID= 1035
   
 EndStructure 
  
  ; 1036 : IMPORTED_VOLUME_FUNCTION
-Structure T_IMPORTED_VOLUME_FUNCTION Extends TStepBase ; ID= 1036
+Structure T_IMPORTED_VOLUME_FUNCTION Extends TStepEntityBase ; ID= 1036
   
 EndStructure 
  
  ; 1037 : IN_ZONE
-Structure T_IN_ZONE Extends TStepBase ; ID= 1037
+Structure T_IN_ZONE Extends TStepEntityBase ; ID= 1037
   
 EndStructure 
  
  ; 1038 : INAPPROPRIATE_ELEMENT_VISIBILITY
-Structure T_INAPPROPRIATE_ELEMENT_VISIBILITY Extends TStepBase ; ID= 1038
+Structure T_INAPPROPRIATE_ELEMENT_VISIBILITY Extends TStepEntityBase ; ID= 1038
   
 EndStructure 
  
  ; 1039 : INAPPROPRIATE_USE_OF_LAYER
-Structure T_INAPPROPRIATE_USE_OF_LAYER Extends TStepBase ; ID= 1039
+Structure T_INAPPROPRIATE_USE_OF_LAYER Extends TStepEntityBase ; ID= 1039
   
 EndStructure 
  
  ; 1040 : INAPT_DATA
-Structure T_INAPT_DATA Extends TStepBase ; ID= 1040
+Structure T_INAPT_DATA Extends TStepEntityBase ; ID= 1040
   
 EndStructure 
  
  ; 1041 : INAPT_GEOMETRY
-Structure T_INAPT_GEOMETRY Extends TStepBase ; ID= 1041
+Structure T_INAPT_GEOMETRY Extends TStepEntityBase ; ID= 1041
   
 EndStructure 
  
  ; 1042 : INAPT_MANIFOLD_SOLID_BREP
-Structure T_INAPT_MANIFOLD_SOLID_BREP Extends TStepBase ; ID= 1042
+Structure T_INAPT_MANIFOLD_SOLID_BREP Extends TStepEntityBase ; ID= 1042
   
 EndStructure 
  
  ; 1043 : INAPT_TOPOLOGY
-Structure T_INAPT_TOPOLOGY Extends TStepBase ; ID= 1043
+Structure T_INAPT_TOPOLOGY Extends TStepEntityBase ; ID= 1043
   
 EndStructure 
  
  ; 1044 : INAPT_TOPOLOGY_AND_GEOMETRY_RELATIONSHIP
-Structure T_INAPT_TOPOLOGY_AND_GEOMETRY_RELATIONSHIP Extends TStepBase ; ID= 1044
+Structure T_INAPT_TOPOLOGY_AND_GEOMETRY_RELATIONSHIP Extends TStepEntityBase ; ID= 1044
   
 EndStructure 
  
  ; 1045 : INCIDENCE_ASSEMBLY_CONSTRAINT
-Structure T_INCIDENCE_ASSEMBLY_CONSTRAINT Extends TStepBase ; ID= 1045
+Structure T_INCIDENCE_ASSEMBLY_CONSTRAINT Extends TStepEntityBase ; ID= 1045
   
 EndStructure 
  
  ; 1046 : INCIDENCE_GEOMETRIC_CONSTRAINT
-Structure T_INCIDENCE_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 1046
+Structure T_INCIDENCE_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 1046
   
 EndStructure 
  
  ; 1047 : INCLUDED_TEXT_BLOCK
-Structure T_INCLUDED_TEXT_BLOCK Extends TStepBase ; ID= 1047
+Structure T_INCLUDED_TEXT_BLOCK Extends TStepEntityBase ; ID= 1047
   
 EndStructure 
  
  ; 1048 : INCLUSION_PRODUCT_CONCEPT_FEATURE
-Structure T_INCLUSION_PRODUCT_CONCEPT_FEATURE Extends TStepBase ; ID= 1048
+Structure T_INCLUSION_PRODUCT_CONCEPT_FEATURE Extends TStepEntityBase ; ID= 1048
   
 EndStructure 
  
  ; 1049 : INCONSISTENT_ADJACENT_FACE_NORMALS
-Structure T_INCONSISTENT_ADJACENT_FACE_NORMALS Extends TStepBase ; ID= 1049
+Structure T_INCONSISTENT_ADJACENT_FACE_NORMALS Extends TStepEntityBase ; ID= 1049
   
 EndStructure 
  
  ; 1050 : INCONSISTENT_CURVE_TRANSITION_CODE
-Structure T_INCONSISTENT_CURVE_TRANSITION_CODE Extends TStepBase ; ID= 1050
+Structure T_INCONSISTENT_CURVE_TRANSITION_CODE Extends TStepEntityBase ; ID= 1050
   
 EndStructure 
  
  ; 1051 : INCONSISTENT_EDGE_AND_CURVE_DIRECTIONS
-Structure T_INCONSISTENT_EDGE_AND_CURVE_DIRECTIONS Extends TStepBase ; ID= 1051
+Structure T_INCONSISTENT_EDGE_AND_CURVE_DIRECTIONS Extends TStepEntityBase ; ID= 1051
   
 EndStructure 
  
  ; 1052 : INCONSISTENT_ELEMENT_REFERENCE
-Structure T_INCONSISTENT_ELEMENT_REFERENCE Extends TStepBase ; ID= 1052
+Structure T_INCONSISTENT_ELEMENT_REFERENCE Extends TStepEntityBase ; ID= 1052
   
 EndStructure 
  
  ; 1053 : INCONSISTENT_FACE_AND_CLOSED_SHELL_NORMALS
-Structure T_INCONSISTENT_FACE_AND_CLOSED_SHELL_NORMALS Extends TStepBase ; ID= 1053
+Structure T_INCONSISTENT_FACE_AND_CLOSED_SHELL_NORMALS Extends TStepEntityBase ; ID= 1053
   
 EndStructure 
  
  ; 1054 : INCONSISTENT_FACE_AND_SURFACE_NORMALS
-Structure T_INCONSISTENT_FACE_AND_SURFACE_NORMALS Extends TStepBase ; ID= 1054
+Structure T_INCONSISTENT_FACE_AND_SURFACE_NORMALS Extends TStepEntityBase ; ID= 1054
   
 EndStructure 
  
  ; 1055 : INCONSISTENT_SURFACE_TRANSITION_CODE
-Structure T_INCONSISTENT_SURFACE_TRANSITION_CODE Extends TStepBase ; ID= 1055
+Structure T_INCONSISTENT_SURFACE_TRANSITION_CODE Extends TStepEntityBase ; ID= 1055
   
 EndStructure 
  
  ; 1056 : INDEX_EXPRESSION
-Structure T_INDEX_EXPRESSION Extends TStepBase ; ID= 1056
+Structure T_INDEX_EXPRESSION Extends TStepEntityBase ; ID= 1056
   
 EndStructure 
  
  ; 1057 : INDIRECTLY_SELECTED_ELEMENTS
-Structure T_INDIRECTLY_SELECTED_ELEMENTS Extends TStepBase ; ID= 1057
+Structure T_INDIRECTLY_SELECTED_ELEMENTS Extends TStepEntityBase ; ID= 1057
   
 EndStructure 
  
  ; 1058 : INDIRECTLY_SELECTED_SHAPE_ELEMENTS
-Structure T_INDIRECTLY_SELECTED_SHAPE_ELEMENTS Extends TStepBase ; ID= 1058
+Structure T_INDIRECTLY_SELECTED_SHAPE_ELEMENTS Extends TStepEntityBase ; ID= 1058
   
 EndStructure 
  
  ; 1059 : INDISTINCT_CURVE_KNOTS
-Structure T_INDISTINCT_CURVE_KNOTS Extends TStepBase ; ID= 1059
+Structure T_INDISTINCT_CURVE_KNOTS Extends TStepEntityBase ; ID= 1059
   
 EndStructure 
  
  ; 1060 : INDISTINCT_SURFACE_KNOTS
-Structure T_INDISTINCT_SURFACE_KNOTS Extends TStepBase ; ID= 1060
+Structure T_INDISTINCT_SURFACE_KNOTS Extends TStepEntityBase ; ID= 1060
   
 EndStructure 
  
  ; 1061 : INDUCTANCE_MEASURE_WITH_UNIT
-Structure T_INDUCTANCE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1061
+Structure T_INDUCTANCE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1061
   
 EndStructure 
  
  ; 1062 : INDUCTANCE_UNIT
-Structure T_INDUCTANCE_UNIT Extends TStepBase ; ID= 1062
+Structure T_INDUCTANCE_UNIT Extends TStepEntityBase ; ID= 1062
   
 EndStructure 
  
  ; 1063 : INFORMATION_RIGHT
-Structure T_INFORMATION_RIGHT Extends TStepBase ; ID= 1063
+Structure T_INFORMATION_RIGHT Extends TStepEntityBase ; ID= 1063
   
 EndStructure 
  
  ; 1064 : INFORMATION_USAGE_RIGHT
-Structure T_INFORMATION_USAGE_RIGHT Extends TStepBase ; ID= 1064
+Structure T_INFORMATION_USAGE_RIGHT Extends TStepEntityBase ; ID= 1064
   
 EndStructure 
  
  ; 1065 : INITIAL_STATE
-Structure T_INITIAL_STATE Extends TStepBase ; ID= 1065
+Structure T_INITIAL_STATE Extends TStepEntityBase ; ID= 1065
   
 EndStructure 
  
  ; 1066 : INSTANCE_ATTRIBUTE_REFERENCE
-Structure T_INSTANCE_ATTRIBUTE_REFERENCE Extends TStepBase ; ID= 1066
+Structure T_INSTANCE_ATTRIBUTE_REFERENCE Extends TStepEntityBase ; ID= 1066
   
 EndStructure 
  
  ; 1067 : INSTANCE_REPORT_ITEM_WITH_EXTREME_INSTANCES
-Structure T_INSTANCE_REPORT_ITEM_WITH_EXTREME_INSTANCES Extends TStepBase ; ID= 1067
+Structure T_INSTANCE_REPORT_ITEM_WITH_EXTREME_INSTANCES Extends TStepEntityBase ; ID= 1067
   
 EndStructure 
  
  ; 1068 : INSTANCE_USAGE_CONTEXT_ASSIGNMENT
-Structure T_INSTANCE_USAGE_CONTEXT_ASSIGNMENT Extends TStepBase ; ID= 1068
+Structure T_INSTANCE_USAGE_CONTEXT_ASSIGNMENT Extends TStepEntityBase ; ID= 1068
   
 EndStructure 
  
  ; 1069 : INSTANCED_FEATURE
-Structure T_INSTANCED_FEATURE Extends TStepBase ; ID= 1069
+Structure T_INSTANCED_FEATURE Extends TStepEntityBase ; ID= 1069
   
 EndStructure 
  
  ; 1070 : INT_LITERAL
-Structure T_INT_LITERAL Extends TStepBase ; ID= 1070
+Structure T_INT_LITERAL Extends TStepEntityBase ; ID= 1070
   
 EndStructure 
  
  ; 1071 : INT_NUMERIC_VARIABLE
-Structure T_INT_NUMERIC_VARIABLE Extends TStepBase ; ID= 1071
+Structure T_INT_NUMERIC_VARIABLE Extends TStepEntityBase ; ID= 1071
   
 EndStructure 
  
  ; 1072 : INT_VALUE_FUNCTION
-Structure T_INT_VALUE_FUNCTION Extends TStepBase ; ID= 1072
+Structure T_INT_VALUE_FUNCTION Extends TStepEntityBase ; ID= 1072
   
 EndStructure 
  
  ; 1073 : INTEGER_DEFINED_FUNCTION
-Structure T_INTEGER_DEFINED_FUNCTION Extends TStepBase ; ID= 1073
+Structure T_INTEGER_DEFINED_FUNCTION Extends TStepEntityBase ; ID= 1073
   
 EndStructure 
  
  ; 1074 : INTEGER_INTERVAL_FROM_MIN
-Structure T_INTEGER_INTERVAL_FROM_MIN Extends TStepBase ; ID= 1074
+Structure T_INTEGER_INTERVAL_FROM_MIN Extends TStepEntityBase ; ID= 1074
   
 EndStructure 
  
  ; 1075 : INTEGER_INTERVAL_TO_MAX
-Structure T_INTEGER_INTERVAL_TO_MAX Extends TStepBase ; ID= 1075
+Structure T_INTEGER_INTERVAL_TO_MAX Extends TStepEntityBase ; ID= 1075
   
 EndStructure 
  
  ; 1076 : INTEGER_REPRESENTATION_ITEM
-Structure T_INTEGER_REPRESENTATION_ITEM Extends TStepBase ; ID= 1076
+Structure T_INTEGER_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 1076
   
 EndStructure 
  
  ; 1077 : INTEGER_TUPLE_LITERAL
-Structure T_INTEGER_TUPLE_LITERAL Extends TStepBase ; ID= 1077
+Structure T_INTEGER_TUPLE_LITERAL Extends TStepEntityBase ; ID= 1077
   
 EndStructure 
  
  ; 1078 : INTERFACE_COMPONENT
-Structure T_INTERFACE_COMPONENT Extends TStepBase ; ID= 1078
+Structure T_INTERFACE_COMPONENT Extends TStepEntityBase ; ID= 1078
   
 EndStructure 
  
  ; 1079 : INTERFACE_CONNECTION
-Structure T_INTERFACE_CONNECTION Extends TStepBase ; ID= 1079
+Structure T_INTERFACE_CONNECTION Extends TStepEntityBase ; ID= 1079
   
 EndStructure 
  
  ; 1080 : INTERFACE_CONNECTOR_AS_PLANNED
-Structure T_INTERFACE_CONNECTOR_AS_PLANNED Extends TStepBase ; ID= 1080
+Structure T_INTERFACE_CONNECTOR_AS_PLANNED Extends TStepEntityBase ; ID= 1080
   
 EndStructure 
  
  ; 1081 : INTERFACE_CONNECTOR_AS_REALIZED
-Structure T_INTERFACE_CONNECTOR_AS_REALIZED Extends TStepBase ; ID= 1081
+Structure T_INTERFACE_CONNECTOR_AS_REALIZED Extends TStepEntityBase ; ID= 1081
   
 EndStructure 
  
  ; 1082 : INTERFACE_CONNECTOR_DEFINITION
-Structure T_INTERFACE_CONNECTOR_DEFINITION Extends TStepBase ; ID= 1082
+Structure T_INTERFACE_CONNECTOR_DEFINITION Extends TStepEntityBase ; ID= 1082
   
 EndStructure 
  
  ; 1083 : INTERFACE_CONNECTOR_DESIGN
-Structure T_INTERFACE_CONNECTOR_DESIGN Extends TStepBase ; ID= 1083
+Structure T_INTERFACE_CONNECTOR_DESIGN Extends TStepEntityBase ; ID= 1083
   
 EndStructure 
  
  ; 1084 : INTERFACE_CONNECTOR_DESIGN_TO_PLANNED
-Structure T_INTERFACE_CONNECTOR_DESIGN_TO_PLANNED Extends TStepBase ; ID= 1084
+Structure T_INTERFACE_CONNECTOR_DESIGN_TO_PLANNED Extends TStepEntityBase ; ID= 1084
   
 EndStructure 
  
  ; 1085 : INTERFACE_CONNECTOR_DESIGN_TO_REALIZED
-Structure T_INTERFACE_CONNECTOR_DESIGN_TO_REALIZED Extends TStepBase ; ID= 1085
+Structure T_INTERFACE_CONNECTOR_DESIGN_TO_REALIZED Extends TStepEntityBase ; ID= 1085
   
 EndStructure 
  
  ; 1086 : INTERFACE_CONNECTOR_OCCURRENCE
-Structure T_INTERFACE_CONNECTOR_OCCURRENCE Extends TStepBase ; ID= 1086
+Structure T_INTERFACE_CONNECTOR_OCCURRENCE Extends TStepEntityBase ; ID= 1086
   
 EndStructure 
  
  ; 1087 : INTERFACE_CONNECTOR_PLANNED_TO_REALIZED
-Structure T_INTERFACE_CONNECTOR_PLANNED_TO_REALIZED Extends TStepBase ; ID= 1087
+Structure T_INTERFACE_CONNECTOR_PLANNED_TO_REALIZED Extends TStepEntityBase ; ID= 1087
   
 EndStructure 
  
  ; 1088 : INTERFACE_CONNECTOR_VERSION
-Structure T_INTERFACE_CONNECTOR_VERSION Extends TStepBase ; ID= 1088
+Structure T_INTERFACE_CONNECTOR_VERSION Extends TStepEntityBase ; ID= 1088
   
 EndStructure 
  
  ; 1089 : INTERFACE_DEFINITION_CONNECTION
-Structure T_INTERFACE_DEFINITION_CONNECTION Extends TStepBase ; ID= 1089
+Structure T_INTERFACE_DEFINITION_CONNECTION Extends TStepEntityBase ; ID= 1089
   
 EndStructure 
  
  ; 1090 : INTERFACE_DEFINITION_FOR
-Structure T_INTERFACE_DEFINITION_FOR Extends TStepBase ; ID= 1090
+Structure T_INTERFACE_DEFINITION_FOR Extends TStepEntityBase ; ID= 1090
   
 EndStructure 
  
  ; 1091 : INTERFACE_SPECIFICATION_DEFINITION
-Structure T_INTERFACE_SPECIFICATION_DEFINITION Extends TStepBase ; ID= 1091
+Structure T_INTERFACE_SPECIFICATION_DEFINITION Extends TStepEntityBase ; ID= 1091
   
 EndStructure 
  
  ; 1092 : INTERFACE_SPECIFICATION_VERSION
-Structure T_INTERFACE_SPECIFICATION_VERSION Extends TStepBase ; ID= 1092
+Structure T_INTERFACE_SPECIFICATION_VERSION Extends TStepEntityBase ; ID= 1092
   
 EndStructure 
  
  ; 1093 : INTERFACED_GROUP_COMPONENT
-Structure T_INTERFACED_GROUP_COMPONENT Extends TStepBase ; ID= 1093
+Structure T_INTERFACED_GROUP_COMPONENT Extends TStepEntityBase ; ID= 1093
   
 EndStructure 
  
  ; 1094 : INTERPOLATED_CONFIGURATION_REPRESENTATION
-Structure T_INTERPOLATED_CONFIGURATION_REPRESENTATION Extends TStepBase ; ID= 1094
+Structure T_INTERPOLATED_CONFIGURATION_REPRESENTATION Extends TStepEntityBase ; ID= 1094
   
 EndStructure 
  
  ; 1095 : INTERPOLATED_CONFIGURATION_SEGMENT
-Structure T_INTERPOLATED_CONFIGURATION_SEGMENT Extends TStepBase ; ID= 1095
+Structure T_INTERPOLATED_CONFIGURATION_SEGMENT Extends TStepEntityBase ; ID= 1095
   
 EndStructure 
  
  ; 1096 : INTERPOLATED_CONFIGURATION_SEQUENCE
-Structure T_INTERPOLATED_CONFIGURATION_SEQUENCE Extends TStepBase ; ID= 1096
+Structure T_INTERPOLATED_CONFIGURATION_SEQUENCE Extends TStepEntityBase ; ID= 1096
   
 EndStructure 
  
  ; 1097 : INTERSECTING_CONNECTED_FACE_SETS
-Structure T_INTERSECTING_CONNECTED_FACE_SETS Extends TStepBase ; ID= 1097
+Structure T_INTERSECTING_CONNECTED_FACE_SETS Extends TStepEntityBase ; ID= 1097
   
 EndStructure 
  
  ; 1098 : INTERSECTING_LOOPS_IN_FACE
-Structure T_INTERSECTING_LOOPS_IN_FACE Extends TStepBase ; ID= 1098
+Structure T_INTERSECTING_LOOPS_IN_FACE Extends TStepEntityBase ; ID= 1098
   
 EndStructure 
  
  ; 1099 : INTERSECTING_SHELLS_IN_SOLID
-Structure T_INTERSECTING_SHELLS_IN_SOLID Extends TStepBase ; ID= 1099
+Structure T_INTERSECTING_SHELLS_IN_SOLID Extends TStepEntityBase ; ID= 1099
   
 EndStructure 
  
  ; 1100 : INTERSECTION_CURVE
-Structure T_INTERSECTION_CURVE Extends TStepBase ; ID= 1100
+Structure T_INTERSECTION_CURVE Extends TStepEntityBase ; ID= 1100
   
 EndStructure 
  
  ; 1101 : INTERVAL_EXPRESSION
-Structure T_INTERVAL_EXPRESSION Extends TStepBase ; ID= 1101
+Structure T_INTERVAL_EXPRESSION Extends TStepEntityBase ; ID= 1101
   
 EndStructure 
  
  ; 1102 : INVISIBILITY
-Structure T_INVISIBILITY Extends TStepBase ; ID= 1102
+Structure T_INVISIBILITY Extends TStepEntityBase ; ID= 1102
   
 EndStructure 
  
  ; 1103 : ISO4217_CURRENCY
-Structure T_ISO4217_CURRENCY Extends TStepBase ; ID= 1103
+Structure T_ISO4217_CURRENCY Extends TStepEntityBase ; ID= 1103
   
 EndStructure 
  
  ; 1104 : ITEM_DEFINED_TRANSFORMATION
-Structure T_ITEM_DEFINED_TRANSFORMATION Extends TStepBase ; ID= 1104
+Structure T_ITEM_DEFINED_TRANSFORMATION Extends TStepEntityBase ; ID= 1104
   
 EndStructure 
  
  ; 1105 : ITEM_IDENTIFIED_REPRESENTATION_USAGE
-Structure T_ITEM_IDENTIFIED_REPRESENTATION_USAGE Extends TStepBase ; ID= 1105
+Structure T_ITEM_IDENTIFIED_REPRESENTATION_USAGE Extends TStepEntityBase ; ID= 1105
   
 EndStructure 
  
  ; 1106 : ITEM_LINK_MOTION_RELATIONSHIP
-Structure T_ITEM_LINK_MOTION_RELATIONSHIP Extends TStepBase ; ID= 1106
+Structure T_ITEM_LINK_MOTION_RELATIONSHIP Extends TStepEntityBase ; ID= 1106
   
 EndStructure 
  
  ; 1107 : JOGGLE
-Structure T_JOGGLE Extends TStepBase ; ID= 1107
+Structure T_JOGGLE Extends TStepEntityBase ; ID= 1107
   
 EndStructure 
  
  ; 1108 : JOGGLE_TERMINATION
-Structure T_JOGGLE_TERMINATION Extends TStepBase ; ID= 1108
+Structure T_JOGGLE_TERMINATION Extends TStepEntityBase ; ID= 1108
   
 EndStructure 
  
  ; 1109 : KINEMATIC_ANALYSIS_CONSISTENCY
-Structure T_KINEMATIC_ANALYSIS_CONSISTENCY Extends TStepBase ; ID= 1109
+Structure T_KINEMATIC_ANALYSIS_CONSISTENCY Extends TStepEntityBase ; ID= 1109
   
 EndStructure 
  
  ; 1110 : KINEMATIC_ANALYSIS_RESULT
-Structure T_KINEMATIC_ANALYSIS_RESULT Extends TStepBase ; ID= 1110
+Structure T_KINEMATIC_ANALYSIS_RESULT Extends TStepEntityBase ; ID= 1110
   
 EndStructure 
  
  ; 1111 : KINEMATIC_CONTROL
-Structure T_KINEMATIC_CONTROL Extends TStepBase ; ID= 1111
+Structure T_KINEMATIC_CONTROL Extends TStepEntityBase ; ID= 1111
   
 EndStructure 
  
  ; 1112 : KINEMATIC_FRAME_BACKGROUND_REPRESENTATION
-Structure T_KINEMATIC_FRAME_BACKGROUND_REPRESENTATION Extends TStepBase ; ID= 1112
+Structure T_KINEMATIC_FRAME_BACKGROUND_REPRESENTATION Extends TStepEntityBase ; ID= 1112
   
 EndStructure 
  
  ; 1113 : KINEMATIC_FRAME_BACKGROUND_REPRESENTATION_ASSOCIATION
-Structure T_KINEMATIC_FRAME_BACKGROUND_REPRESENTATION_ASSOCIATION Extends TStepBase ; ID= 1113
+Structure T_KINEMATIC_FRAME_BACKGROUND_REPRESENTATION_ASSOCIATION Extends TStepEntityBase ; ID= 1113
   
 EndStructure 
  
  ; 1114 : KINEMATIC_FRAME_BASED_TRANSFORMATION
-Structure T_KINEMATIC_FRAME_BASED_TRANSFORMATION Extends TStepBase ; ID= 1114
+Structure T_KINEMATIC_FRAME_BASED_TRANSFORMATION Extends TStepEntityBase ; ID= 1114
   
 EndStructure 
  
  ; 1115 : KINEMATIC_GROUND_REPRESENTATION
-Structure T_KINEMATIC_GROUND_REPRESENTATION Extends TStepBase ; ID= 1115
+Structure T_KINEMATIC_GROUND_REPRESENTATION Extends TStepEntityBase ; ID= 1115
   
 EndStructure 
  
  ; 1116 : KINEMATIC_JOINT
-Structure T_KINEMATIC_JOINT Extends TStepBase ; ID= 1116
+Structure T_KINEMATIC_JOINT Extends TStepEntityBase ; ID= 1116
   
 EndStructure 
  
  ; 1117 : KINEMATIC_LINK
-Structure T_KINEMATIC_LINK Extends TStepBase ; ID= 1117
+Structure T_KINEMATIC_LINK Extends TStepEntityBase ; ID= 1117
   
 EndStructure 
  
  ; 1118 : KINEMATIC_LINK_REPRESENTATION
-Structure T_KINEMATIC_LINK_REPRESENTATION Extends TStepBase ; ID= 1118
+Structure T_KINEMATIC_LINK_REPRESENTATION Extends TStepEntityBase ; ID= 1118
   
 EndStructure 
  
  ; 1119 : KINEMATIC_LINK_REPRESENTATION_ASSOCIATION
-Structure T_KINEMATIC_LINK_REPRESENTATION_ASSOCIATION Extends TStepBase ; ID= 1119
+Structure T_KINEMATIC_LINK_REPRESENTATION_ASSOCIATION Extends TStepEntityBase ; ID= 1119
   
 EndStructure 
  
  ; 1120 : KINEMATIC_LINK_REPRESENTATION_RELATION
-Structure T_KINEMATIC_LINK_REPRESENTATION_RELATION Extends TStepBase ; ID= 1120
+Structure T_KINEMATIC_LINK_REPRESENTATION_RELATION Extends TStepEntityBase ; ID= 1120
   
 EndStructure 
  
  ; 1121 : KINEMATIC_LOOP
-Structure T_KINEMATIC_LOOP Extends TStepBase ; ID= 1121
+Structure T_KINEMATIC_LOOP Extends TStepEntityBase ; ID= 1121
   
 EndStructure 
  
  ; 1122 : KINEMATIC_PAIR
-Structure T_KINEMATIC_PAIR Extends TStepBase ; ID= 1122
+Structure T_KINEMATIC_PAIR Extends TStepEntityBase ; ID= 1122
   
 EndStructure 
  
  ; 1123 : KINEMATIC_PATH
-Structure T_KINEMATIC_PATH Extends TStepBase ; ID= 1123
+Structure T_KINEMATIC_PATH Extends TStepEntityBase ; ID= 1123
   
 EndStructure 
  
  ; 1124 : KINEMATIC_PATH_DEFINED_BY_CURVES
-Structure T_KINEMATIC_PATH_DEFINED_BY_CURVES Extends TStepBase ; ID= 1124
+Structure T_KINEMATIC_PATH_DEFINED_BY_CURVES Extends TStepEntityBase ; ID= 1124
   
 EndStructure 
  
  ; 1125 : KINEMATIC_PATH_DEFINED_BY_NODES
-Structure T_KINEMATIC_PATH_DEFINED_BY_NODES Extends TStepBase ; ID= 1125
+Structure T_KINEMATIC_PATH_DEFINED_BY_NODES Extends TStepEntityBase ; ID= 1125
   
 EndStructure 
  
  ; 1126 : KINEMATIC_PATH_SEGMENT
-Structure T_KINEMATIC_PATH_SEGMENT Extends TStepBase ; ID= 1126
+Structure T_KINEMATIC_PATH_SEGMENT Extends TStepEntityBase ; ID= 1126
   
 EndStructure 
  
  ; 1127 : KINEMATIC_PROPERTY_DEFINITION
-Structure T_KINEMATIC_PROPERTY_DEFINITION Extends TStepBase ; ID= 1127
+Structure T_KINEMATIC_PROPERTY_DEFINITION Extends TStepEntityBase ; ID= 1127
   
 EndStructure 
  
  ; 1128 : KINEMATIC_PROPERTY_DEFINITION_REPRESENTATION
-Structure T_KINEMATIC_PROPERTY_DEFINITION_REPRESENTATION Extends TStepBase ; ID= 1128
+Structure T_KINEMATIC_PROPERTY_DEFINITION_REPRESENTATION Extends TStepEntityBase ; ID= 1128
   
 EndStructure 
  
  ; 1129 : KINEMATIC_PROPERTY_MECHANISM_REPRESENTATION
-Structure T_KINEMATIC_PROPERTY_MECHANISM_REPRESENTATION Extends TStepBase ; ID= 1129
+Structure T_KINEMATIC_PROPERTY_MECHANISM_REPRESENTATION Extends TStepEntityBase ; ID= 1129
   
 EndStructure 
  
  ; 1130 : KINEMATIC_PROPERTY_REPRESENTATION_RELATION
-Structure T_KINEMATIC_PROPERTY_REPRESENTATION_RELATION Extends TStepBase ; ID= 1130
+Structure T_KINEMATIC_PROPERTY_REPRESENTATION_RELATION Extends TStepEntityBase ; ID= 1130
   
 EndStructure 
  
  ; 1131 : KINEMATIC_PROPERTY_TOPOLOGY_REPRESENTATION
-Structure T_KINEMATIC_PROPERTY_TOPOLOGY_REPRESENTATION Extends TStepBase ; ID= 1131
+Structure T_KINEMATIC_PROPERTY_TOPOLOGY_REPRESENTATION Extends TStepEntityBase ; ID= 1131
   
 EndStructure 
  
  ; 1132 : KINEMATIC_STRUCTURE
-Structure T_KINEMATIC_STRUCTURE Extends TStepBase ; ID= 1132
+Structure T_KINEMATIC_STRUCTURE Extends TStepEntityBase ; ID= 1132
   
 EndStructure 
  
  ; 1133 : KINEMATIC_TOPOLOGY_DIRECTED_STRUCTURE
-Structure T_KINEMATIC_TOPOLOGY_DIRECTED_STRUCTURE Extends TStepBase ; ID= 1133
+Structure T_KINEMATIC_TOPOLOGY_DIRECTED_STRUCTURE Extends TStepEntityBase ; ID= 1133
   
 EndStructure 
  
  ; 1134 : KINEMATIC_TOPOLOGY_NETWORK_STRUCTURE
-Structure T_KINEMATIC_TOPOLOGY_NETWORK_STRUCTURE Extends TStepBase ; ID= 1134
+Structure T_KINEMATIC_TOPOLOGY_NETWORK_STRUCTURE Extends TStepEntityBase ; ID= 1134
   
 EndStructure 
  
  ; 1135 : KINEMATIC_TOPOLOGY_STRUCTURE
-Structure T_KINEMATIC_TOPOLOGY_STRUCTURE Extends TStepBase ; ID= 1135
+Structure T_KINEMATIC_TOPOLOGY_STRUCTURE Extends TStepEntityBase ; ID= 1135
   
 EndStructure 
  
  ; 1136 : KINEMATIC_TOPOLOGY_SUBSTRUCTURE
-Structure T_KINEMATIC_TOPOLOGY_SUBSTRUCTURE Extends TStepBase ; ID= 1136
+Structure T_KINEMATIC_TOPOLOGY_SUBSTRUCTURE Extends TStepEntityBase ; ID= 1136
   
 EndStructure 
  
  ; 1137 : KINEMATIC_TOPOLOGY_TREE_STRUCTURE
-Structure T_KINEMATIC_TOPOLOGY_TREE_STRUCTURE Extends TStepBase ; ID= 1137
+Structure T_KINEMATIC_TOPOLOGY_TREE_STRUCTURE Extends TStepEntityBase ; ID= 1137
   
 EndStructure 
  
  ; 1138 : KNOWN_SOURCE
-Structure T_KNOWN_SOURCE Extends TStepBase ; ID= 1138
+Structure T_KNOWN_SOURCE Extends TStepEntityBase ; ID= 1138
   
 EndStructure 
  
  ; 1139 : KNURLING_TURNING_OPERATION
-Structure T_KNURLING_TURNING_OPERATION Extends TStepBase ; ID= 1139
+Structure T_KNURLING_TURNING_OPERATION Extends TStepEntityBase ; ID= 1139
   
 EndStructure 
  
  ; 1140 : LAID_DEFINED_TRANSFORMATION
-Structure T_LAID_DEFINED_TRANSFORMATION Extends TStepBase ; ID= 1140
+Structure T_LAID_DEFINED_TRANSFORMATION Extends TStepEntityBase ; ID= 1140
   
 EndStructure 
  
  ; 1141 : LAID_ORIENTATION_ANGLE
-Structure T_LAID_ORIENTATION_ANGLE Extends TStepBase ; ID= 1141
+Structure T_LAID_ORIENTATION_ANGLE Extends TStepEntityBase ; ID= 1141
   
 EndStructure 
  
  ; 1142 : LAMINATE_TABLE
-Structure T_LAMINATE_TABLE Extends TStepBase ; ID= 1142
+Structure T_LAMINATE_TABLE Extends TStepEntityBase ; ID= 1142
   
 EndStructure 
  
  ; 1143 : LANGUAGE
-Structure T_LANGUAGE Extends TStepBase ; ID= 1143
+Structure T_LANGUAGE Extends TStepEntityBase ; ID= 1143
   
 EndStructure 
  
  ; 1144 : LANGUAGE_ASSIGNMENT
-Structure T_LANGUAGE_ASSIGNMENT Extends TStepBase ; ID= 1144
+Structure T_LANGUAGE_ASSIGNMENT Extends TStepEntityBase ; ID= 1144
   
 EndStructure 
  
  ; 1145 : LEADER_CURVE
-Structure T_LEADER_CURVE Extends TStepBase ; ID= 1145
+Structure T_LEADER_CURVE Extends TStepEntityBase ; ID= 1145
   
 EndStructure 
  
  ; 1146 : LEADER_DIRECTED_CALLOUT
-Structure T_LEADER_DIRECTED_CALLOUT Extends TStepBase ; ID= 1146
+Structure T_LEADER_DIRECTED_CALLOUT Extends TStepEntityBase ; ID= 1146
   
 EndStructure 
  
  ; 1147 : LEADER_DIRECTED_DIMENSION
-Structure T_LEADER_DIRECTED_DIMENSION Extends TStepBase ; ID= 1147
+Structure T_LEADER_DIRECTED_DIMENSION Extends TStepEntityBase ; ID= 1147
   
 EndStructure 
  
  ; 1148 : LEADER_TERMINATOR
-Structure T_LEADER_TERMINATOR Extends TStepBase ; ID= 1148
+Structure T_LEADER_TERMINATOR Extends TStepEntityBase ; ID= 1148
   
 EndStructure 
  
  ; 1149 : LENGTH_FUNCTION
-Structure T_LENGTH_FUNCTION Extends TStepBase ; ID= 1149
+Structure T_LENGTH_FUNCTION Extends TStepEntityBase ; ID= 1149
   
 EndStructure 
  
  ; 1150 : LENGTH_MEASURE_WITH_UNIT
-Structure T_LENGTH_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1150
+Structure T_LENGTH_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1150
   
 EndStructure 
  
  ; 1151 : LENGTH_UNIT
-Structure T_LENGTH_UNIT Extends TStepBase ; ID= 1151
+Structure T_LENGTH_UNIT Extends TStepEntityBase ; ID= 1151
   
 EndStructure 
  
  ; 1152 : LIBRARY_CLASS_VERSION_ASSIGNMENT
-Structure T_LIBRARY_CLASS_VERSION_ASSIGNMENT Extends TStepBase ; ID= 1152
+Structure T_LIBRARY_CLASS_VERSION_ASSIGNMENT Extends TStepEntityBase ; ID= 1152
   
 EndStructure 
  
  ; 1153 : LIBRARY_CONTEXT
-Structure T_LIBRARY_CONTEXT Extends TStepBase ; ID= 1153
+Structure T_LIBRARY_CONTEXT Extends TStepEntityBase ; ID= 1153
   
 EndStructure 
  
  ; 1154 : LIBRARY_PROPERTY_VERSION_ASSIGNMENT
-Structure T_LIBRARY_PROPERTY_VERSION_ASSIGNMENT Extends TStepBase ; ID= 1154
+Structure T_LIBRARY_PROPERTY_VERSION_ASSIGNMENT Extends TStepEntityBase ; ID= 1154
   
 EndStructure 
  
  ; 1155 : LIGHT_SOURCE
-Structure T_LIGHT_SOURCE Extends TStepBase ; ID= 1155
+Structure T_LIGHT_SOURCE Extends TStepEntityBase ; ID= 1155
   
 EndStructure 
  
  ; 1156 : LIGHT_SOURCE_AMBIENT
-Structure T_LIGHT_SOURCE_AMBIENT Extends TStepBase ; ID= 1156
+Structure T_LIGHT_SOURCE_AMBIENT Extends TStepEntityBase ; ID= 1156
   
 EndStructure 
  
  ; 1157 : LIGHT_SOURCE_DIRECTIONAL
-Structure T_LIGHT_SOURCE_DIRECTIONAL Extends TStepBase ; ID= 1157
+Structure T_LIGHT_SOURCE_DIRECTIONAL Extends TStepEntityBase ; ID= 1157
   
 EndStructure 
  
  ; 1158 : LIGHT_SOURCE_POSITIONAL
-Structure T_LIGHT_SOURCE_POSITIONAL Extends TStepBase ; ID= 1158
+Structure T_LIGHT_SOURCE_POSITIONAL Extends TStepEntityBase ; ID= 1158
   
 EndStructure 
  
  ; 1159 : LIGHT_SOURCE_SPOT
-Structure T_LIGHT_SOURCE_SPOT Extends TStepBase ; ID= 1159
+Structure T_LIGHT_SOURCE_SPOT Extends TStepEntityBase ; ID= 1159
   
 EndStructure 
  
  ; 1160 : LIKE_EXPRESSION
-Structure T_LIKE_EXPRESSION Extends TStepBase ; ID= 1160
+Structure T_LIKE_EXPRESSION Extends TStepEntityBase ; ID= 1160
   
 EndStructure 
  
  ; 1161 : LIMITS_AND_FITS
-Structure T_LIMITS_AND_FITS Extends TStepBase ; ID= 1161
+Structure T_LIMITS_AND_FITS Extends TStepEntityBase ; ID= 1161
   
 EndStructure 
  
  ; 1162 : LINE
-Structure T_LINE Extends TStepBase ; ID= 1162
+Structure T_LINE Extends TStepEntityBase ; ID= 1162
   ; TODO!
   *CPt.T_CARTESIAN_POINT
   *Vec.T_VECTOR
@@ -5857,5549 +6050,5546 @@ Structure T_LINE Extends TStepBase ; ID= 1162
 EndStructure 
  
  ; 1163 : LINE_PROFILE_TOLERANCE
-Structure T_LINE_PROFILE_TOLERANCE Extends TStepBase ; ID= 1163
+Structure T_LINE_PROFILE_TOLERANCE Extends TStepEntityBase ; ID= 1163
   
 EndStructure 
  
  ; 1164 : LINEAR_ARRAY_COMPONENT_DEFINITION_LINK
-Structure T_LINEAR_ARRAY_COMPONENT_DEFINITION_LINK Extends TStepBase ; ID= 1164
+Structure T_LINEAR_ARRAY_COMPONENT_DEFINITION_LINK Extends TStepEntityBase ; ID= 1164
   
 EndStructure 
  
  ; 1165 : LINEAR_ARRAY_PLACEMENT_GROUP_COMPONENT
-Structure T_LINEAR_ARRAY_PLACEMENT_GROUP_COMPONENT Extends TStepBase ; ID= 1165
+Structure T_LINEAR_ARRAY_PLACEMENT_GROUP_COMPONENT Extends TStepEntityBase ; ID= 1165
   
 EndStructure 
  
  ; 1166 : LINEAR_DIMENSION
-Structure T_LINEAR_DIMENSION Extends TStepBase ; ID= 1166
+Structure T_LINEAR_DIMENSION Extends TStepEntityBase ; ID= 1166
   
 EndStructure 
  
  ; 1167 : LINEAR_FLEXIBLE_AND_PINION_PAIR
-Structure T_LINEAR_FLEXIBLE_AND_PINION_PAIR Extends TStepBase ; ID= 1167
+Structure T_LINEAR_FLEXIBLE_AND_PINION_PAIR Extends TStepEntityBase ; ID= 1167
   
 EndStructure 
  
  ; 1168 : LINEAR_FLEXIBLE_AND_PLANAR_CURVE_PAIR
-Structure T_LINEAR_FLEXIBLE_AND_PLANAR_CURVE_PAIR Extends TStepBase ; ID= 1168
+Structure T_LINEAR_FLEXIBLE_AND_PLANAR_CURVE_PAIR Extends TStepEntityBase ; ID= 1168
   
 EndStructure 
  
  ; 1169 : LINEAR_FLEXIBLE_LINK_REPRESENTATION
-Structure T_LINEAR_FLEXIBLE_LINK_REPRESENTATION Extends TStepBase ; ID= 1169
+Structure T_LINEAR_FLEXIBLE_LINK_REPRESENTATION Extends TStepEntityBase ; ID= 1169
   
 EndStructure 
  
  ; 1170 : LINEAR_PATH
-Structure T_LINEAR_PATH Extends TStepBase ; ID= 1170
+Structure T_LINEAR_PATH Extends TStepEntityBase ; ID= 1170
   
 EndStructure 
  
  ; 1171 : LINEAR_PROFILE
-Structure T_LINEAR_PROFILE Extends TStepBase ; ID= 1171
+Structure T_LINEAR_PROFILE Extends TStepEntityBase ; ID= 1171
   
 EndStructure 
  
  ; 1172 : LINEARIZED_TABLE_FUNCTION
-Structure T_LINEARIZED_TABLE_FUNCTION Extends TStepBase ; ID= 1172
+Structure T_LINEARIZED_TABLE_FUNCTION Extends TStepEntityBase ; ID= 1172
   
 EndStructure 
  
  ; 1173 : LINK_MOTION_RELATIONSHIP
-Structure T_LINK_MOTION_RELATIONSHIP Extends TStepBase ; ID= 1173
+Structure T_LINK_MOTION_RELATIONSHIP Extends TStepEntityBase ; ID= 1173
   
 EndStructure 
  
  ; 1174 : LINK_MOTION_REPRESENTATION_ALONG_PATH
-Structure T_LINK_MOTION_REPRESENTATION_ALONG_PATH Extends TStepBase ; ID= 1174
+Structure T_LINK_MOTION_REPRESENTATION_ALONG_PATH Extends TStepEntityBase ; ID= 1174
   
 EndStructure 
  
  ; 1175 : LINK_MOTION_TRANSFORMATION
-Structure T_LINK_MOTION_TRANSFORMATION Extends TStepBase ; ID= 1175
+Structure T_LINK_MOTION_TRANSFORMATION Extends TStepEntityBase ; ID= 1175
   
 EndStructure 
  
  ; 1176 : LISTED_COMPLEX_NUMBER_DATA
-Structure T_LISTED_COMPLEX_NUMBER_DATA Extends TStepBase ; ID= 1176
+Structure T_LISTED_COMPLEX_NUMBER_DATA Extends TStepEntityBase ; ID= 1176
   
 EndStructure 
  
  ; 1177 : LISTED_DATA
-Structure T_LISTED_DATA Extends TStepBase ; ID= 1177
+Structure T_LISTED_DATA Extends TStepEntityBase ; ID= 1177
   
 EndStructure 
  
  ; 1178 : LISTED_INTEGER_DATA
-Structure T_LISTED_INTEGER_DATA Extends TStepBase ; ID= 1178
+Structure T_LISTED_INTEGER_DATA Extends TStepEntityBase ; ID= 1178
   
 EndStructure 
  
  ; 1179 : LISTED_LOGICAL_DATA
-Structure T_LISTED_LOGICAL_DATA Extends TStepBase ; ID= 1179
+Structure T_LISTED_LOGICAL_DATA Extends TStepEntityBase ; ID= 1179
   
 EndStructure 
  
  ; 1180 : LISTED_PRODUCT_SPACE
-Structure T_LISTED_PRODUCT_SPACE Extends TStepBase ; ID= 1180
+Structure T_LISTED_PRODUCT_SPACE Extends TStepEntityBase ; ID= 1180
   
 EndStructure 
  
  ; 1181 : LISTED_REAL_DATA
-Structure T_LISTED_REAL_DATA Extends TStepBase ; ID= 1181
+Structure T_LISTED_REAL_DATA Extends TStepEntityBase ; ID= 1181
   
 EndStructure 
  
  ; 1182 : LISTED_STRING_DATA
-Structure T_LISTED_STRING_DATA Extends TStepBase ; ID= 1182
+Structure T_LISTED_STRING_DATA Extends TStepEntityBase ; ID= 1182
   
 EndStructure 
  
  ; 1183 : LITERAL_CONJUNCTION
-Structure T_LITERAL_CONJUNCTION Extends TStepBase ; ID= 1183
+Structure T_LITERAL_CONJUNCTION Extends TStepEntityBase ; ID= 1183
   
 EndStructure 
  
  ; 1184 : LITERAL_DISJUNCTION
-Structure T_LITERAL_DISJUNCTION Extends TStepBase ; ID= 1184
+Structure T_LITERAL_DISJUNCTION Extends TStepEntityBase ; ID= 1184
   
 EndStructure 
  
  ; 1185 : LITERAL_NUMBER
-Structure T_LITERAL_NUMBER Extends TStepBase ; ID= 1185
+Structure T_LITERAL_NUMBER Extends TStepEntityBase ; ID= 1185
   
 EndStructure 
  
  ; 1186 : LOCAL_B_SPLINE
-Structure T_LOCAL_B_SPLINE Extends TStepBase ; ID= 1186
+Structure T_LOCAL_B_SPLINE Extends TStepEntityBase ; ID= 1186
   
 EndStructure 
  
  ; 1187 : LOCAL_TIME
-Structure T_LOCAL_TIME Extends TStepBase ; ID= 1187
+Structure T_LOCAL_TIME Extends TStepEntityBase ; ID= 1187
   
 EndStructure 
  
  ; 1188 : LOCALLY_REFINED_SPLINE_CURVE
-Structure T_LOCALLY_REFINED_SPLINE_CURVE Extends TStepBase ; ID= 1188
+Structure T_LOCALLY_REFINED_SPLINE_CURVE Extends TStepEntityBase ; ID= 1188
   
 EndStructure 
  
  ; 1189 : LOCALLY_REFINED_SPLINE_SURFACE
-Structure T_LOCALLY_REFINED_SPLINE_SURFACE Extends TStepBase ; ID= 1189
+Structure T_LOCALLY_REFINED_SPLINE_SURFACE Extends TStepEntityBase ; ID= 1189
   
 EndStructure 
  
  ; 1190 : LOCALLY_REFINED_SPLINE_VOLUME
-Structure T_LOCALLY_REFINED_SPLINE_VOLUME Extends TStepBase ; ID= 1190
+Structure T_LOCALLY_REFINED_SPLINE_VOLUME Extends TStepEntityBase ; ID= 1190
   
 EndStructure 
  
  ; 1191 : LOCATION
-Structure T_LOCATION Extends TStepBase ; ID= 1191
+Structure T_LOCATION Extends TStepEntityBase ; ID= 1191
   
 EndStructure 
  
  ; 1192 : LOCATION_ASSIGNMENT
-Structure T_LOCATION_ASSIGNMENT Extends TStepBase ; ID= 1192
+Structure T_LOCATION_ASSIGNMENT Extends TStepEntityBase ; ID= 1192
   
 EndStructure 
  
  ; 1193 : LOCATION_IN_AGGREGATE_REPRESENTATION_ITEM
-Structure T_LOCATION_IN_AGGREGATE_REPRESENTATION_ITEM Extends TStepBase ; ID= 1193
+Structure T_LOCATION_IN_AGGREGATE_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 1193
   
 EndStructure 
  
  ; 1194 : LOCATION_RELATIONSHIP
-Structure T_LOCATION_RELATIONSHIP Extends TStepBase ; ID= 1194
+Structure T_LOCATION_RELATIONSHIP Extends TStepEntityBase ; ID= 1194
   
 EndStructure 
  
  ; 1195 : LOCATION_REPRESENTATION_ASSIGNMENT
-Structure T_LOCATION_REPRESENTATION_ASSIGNMENT Extends TStepBase ; ID= 1195
+Structure T_LOCATION_REPRESENTATION_ASSIGNMENT Extends TStepEntityBase ; ID= 1195
   
 EndStructure 
  
  ; 1196 : LOCATION_REPRESENTATION_ROLE
-Structure T_LOCATION_REPRESENTATION_ROLE Extends TStepBase ; ID= 1196
+Structure T_LOCATION_REPRESENTATION_ROLE Extends TStepEntityBase ; ID= 1196
   
 EndStructure 
  
  ; 1197 : LOCATION_ROLE
-Structure T_LOCATION_ROLE Extends TStepBase ; ID= 1197
+Structure T_LOCATION_ROLE Extends TStepEntityBase ; ID= 1197
   
 EndStructure 
  
  ; 1198 : LOCATION_SHAPE_REPRESENTATION
-Structure T_LOCATION_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1198
+Structure T_LOCATION_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1198
   
 EndStructure 
  
  ; 1199 : LOCATOR
-Structure T_LOCATOR Extends TStepBase ; ID= 1199
+Structure T_LOCATOR Extends TStepEntityBase ; ID= 1199
   
 EndStructure 
  
  ; 1200 : LOG10_FUNCTION
-Structure T_LOG10_FUNCTION Extends TStepBase ; ID= 1200
+Structure T_LOG10_FUNCTION Extends TStepEntityBase ; ID= 1200
   
 EndStructure 
  
  ; 1201 : LOG2_FUNCTION
-Structure T_LOG2_FUNCTION Extends TStepBase ; ID= 1201
+Structure T_LOG2_FUNCTION Extends TStepEntityBase ; ID= 1201
   
 EndStructure 
  
  ; 1202 : LOG_FUNCTION
-Structure T_LOG_FUNCTION Extends TStepBase ; ID= 1202
+Structure T_LOG_FUNCTION Extends TStepEntityBase ; ID= 1202
   
 EndStructure 
  
  ; 1203 : LOGICAL_LITERAL
-Structure T_LOGICAL_LITERAL Extends TStepBase ; ID= 1203
+Structure T_LOGICAL_LITERAL Extends TStepEntityBase ; ID= 1203
   
 EndStructure 
  
  ; 1204 : LOGICAL_REPRESENTATION_ITEM
-Structure T_LOGICAL_REPRESENTATION_ITEM Extends TStepBase ; ID= 1204
+Structure T_LOGICAL_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 1204
   
 EndStructure 
  
  ; 1205 : LOOP
-Structure T_LOOP Extends TStepBase ; ID= 1205
+Structure T_LOOP Extends TStepEntityBase ; ID= 1205
   
 EndStructure 
  
  ; 1206 : LOSS_TANGENT_MEASURE_WITH_UNIT
-Structure T_LOSS_TANGENT_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1206
+Structure T_LOSS_TANGENT_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1206
   
 EndStructure 
  
  ; 1207 : LOT_EFFECTIVITY
-Structure T_LOT_EFFECTIVITY Extends TStepBase ; ID= 1207
+Structure T_LOT_EFFECTIVITY Extends TStepEntityBase ; ID= 1207
   
 EndStructure 
  
  ; 1208 : LOW_ORDER_KINEMATIC_PAIR
-Structure T_LOW_ORDER_KINEMATIC_PAIR Extends TStepBase ; ID= 1208
+Structure T_LOW_ORDER_KINEMATIC_PAIR Extends TStepEntityBase ; ID= 1208
   
 EndStructure 
  
  ; 1209 : LOW_ORDER_KINEMATIC_PAIR_VALUE
-Structure T_LOW_ORDER_KINEMATIC_PAIR_VALUE Extends TStepBase ; ID= 1209
+Structure T_LOW_ORDER_KINEMATIC_PAIR_VALUE Extends TStepEntityBase ; ID= 1209
   
 EndStructure 
  
  ; 1210 : LOW_ORDER_KINEMATIC_PAIR_WITH_MOTION_COUPLING
-Structure T_LOW_ORDER_KINEMATIC_PAIR_WITH_MOTION_COUPLING Extends TStepBase ; ID= 1210
+Structure T_LOW_ORDER_KINEMATIC_PAIR_WITH_MOTION_COUPLING Extends TStepEntityBase ; ID= 1210
   
 EndStructure 
  
  ; 1211 : LOW_ORDER_KINEMATIC_PAIR_WITH_RANGE
-Structure T_LOW_ORDER_KINEMATIC_PAIR_WITH_RANGE Extends TStepBase ; ID= 1211
+Structure T_LOW_ORDER_KINEMATIC_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 1211
   
 EndStructure 
  
  ; 1212 : LUMINOUS_FLUX_MEASURE_WITH_UNIT
-Structure T_LUMINOUS_FLUX_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1212
+Structure T_LUMINOUS_FLUX_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1212
   
 EndStructure 
  
  ; 1213 : LUMINOUS_FLUX_UNIT
-Structure T_LUMINOUS_FLUX_UNIT Extends TStepBase ; ID= 1213
+Structure T_LUMINOUS_FLUX_UNIT Extends TStepEntityBase ; ID= 1213
   
 EndStructure 
  
  ; 1214 : LUMINOUS_INTENSITY_MEASURE_WITH_UNIT
-Structure T_LUMINOUS_INTENSITY_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1214
+Structure T_LUMINOUS_INTENSITY_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1214
   
 EndStructure 
  
  ; 1215 : LUMINOUS_INTENSITY_UNIT
-Structure T_LUMINOUS_INTENSITY_UNIT Extends TStepBase ; ID= 1215
+Structure T_LUMINOUS_INTENSITY_UNIT Extends TStepEntityBase ; ID= 1215
   
 EndStructure 
  
  ; 1216 : MACHINING_ADAPTIVE_CONTROL_RELATIONSHIP
-Structure T_MACHINING_ADAPTIVE_CONTROL_RELATIONSHIP Extends TStepBase ; ID= 1216
+Structure T_MACHINING_ADAPTIVE_CONTROL_RELATIONSHIP Extends TStepEntityBase ; ID= 1216
   
 EndStructure 
  
  ; 1217 : MACHINING_APPROACH_RETRACT_STRATEGY
-Structure T_MACHINING_APPROACH_RETRACT_STRATEGY Extends TStepBase ; ID= 1217
+Structure T_MACHINING_APPROACH_RETRACT_STRATEGY Extends TStepEntityBase ; ID= 1217
   
 EndStructure 
  
  ; 1218 : MACHINING_CUTTING_COMPONENT
-Structure T_MACHINING_CUTTING_COMPONENT Extends TStepBase ; ID= 1218
+Structure T_MACHINING_CUTTING_COMPONENT Extends TStepEntityBase ; ID= 1218
   
 EndStructure 
  
  ; 1219 : MACHINING_CUTTING_CORNER_REPRESENTATION
-Structure T_MACHINING_CUTTING_CORNER_REPRESENTATION Extends TStepBase ; ID= 1219
+Structure T_MACHINING_CUTTING_CORNER_REPRESENTATION Extends TStepEntityBase ; ID= 1219
   
 EndStructure 
  
  ; 1220 : MACHINING_DWELL_TIME_REPRESENTATION
-Structure T_MACHINING_DWELL_TIME_REPRESENTATION Extends TStepBase ; ID= 1220
+Structure T_MACHINING_DWELL_TIME_REPRESENTATION Extends TStepEntityBase ; ID= 1220
   
 EndStructure 
  
  ; 1221 : MACHINING_EXECUTION_RESOURCE
-Structure T_MACHINING_EXECUTION_RESOURCE Extends TStepBase ; ID= 1221
+Structure T_MACHINING_EXECUTION_RESOURCE Extends TStepEntityBase ; ID= 1221
   
 EndStructure 
  
  ; 1222 : MACHINING_FEATURE_PROCESS
-Structure T_MACHINING_FEATURE_PROCESS Extends TStepBase ; ID= 1222
+Structure T_MACHINING_FEATURE_PROCESS Extends TStepEntityBase ; ID= 1222
   
 EndStructure 
  
  ; 1223 : MACHINING_FEATURE_RELATIONSHIP
-Structure T_MACHINING_FEATURE_RELATIONSHIP Extends TStepBase ; ID= 1223
+Structure T_MACHINING_FEATURE_RELATIONSHIP Extends TStepEntityBase ; ID= 1223
   
 EndStructure 
  
  ; 1224 : MACHINING_FEATURE_SEQUENCE_RELATIONSHIP
-Structure T_MACHINING_FEATURE_SEQUENCE_RELATIONSHIP Extends TStepBase ; ID= 1224
+Structure T_MACHINING_FEATURE_SEQUENCE_RELATIONSHIP Extends TStepEntityBase ; ID= 1224
   
 EndStructure 
  
  ; 1225 : MACHINING_FEED_SPEED_REPRESENTATION
-Structure T_MACHINING_FEED_SPEED_REPRESENTATION Extends TStepBase ; ID= 1225
+Structure T_MACHINING_FEED_SPEED_REPRESENTATION Extends TStepEntityBase ; ID= 1225
   
 EndStructure 
  
  ; 1226 : MACHINING_FINAL_FEATURE_RELATIONSHIP
-Structure T_MACHINING_FINAL_FEATURE_RELATIONSHIP Extends TStepBase ; ID= 1226
+Structure T_MACHINING_FINAL_FEATURE_RELATIONSHIP Extends TStepEntityBase ; ID= 1226
   
 EndStructure 
  
  ; 1227 : MACHINING_FIXTURE_USAGE
-Structure T_MACHINING_FIXTURE_USAGE Extends TStepBase ; ID= 1227
+Structure T_MACHINING_FIXTURE_USAGE Extends TStepEntityBase ; ID= 1227
   
 EndStructure 
  
  ; 1228 : MACHINING_FUNCTIONS
-Structure T_MACHINING_FUNCTIONS Extends TStepBase ; ID= 1228
+Structure T_MACHINING_FUNCTIONS Extends TStepEntityBase ; ID= 1228
   
 EndStructure 
  
  ; 1229 : MACHINING_FUNCTIONS_RELATIONSHIP
-Structure T_MACHINING_FUNCTIONS_RELATIONSHIP Extends TStepBase ; ID= 1229
+Structure T_MACHINING_FUNCTIONS_RELATIONSHIP Extends TStepEntityBase ; ID= 1229
   
 EndStructure 
  
  ; 1230 : MACHINING_MACHINE_USAGE
-Structure T_MACHINING_MACHINE_USAGE Extends TStepBase ; ID= 1230
+Structure T_MACHINING_MACHINE_USAGE Extends TStepEntityBase ; ID= 1230
   
 EndStructure 
  
  ; 1231 : MACHINING_NC_FUNCTION
-Structure T_MACHINING_NC_FUNCTION Extends TStepBase ; ID= 1231
+Structure T_MACHINING_NC_FUNCTION Extends TStepEntityBase ; ID= 1231
   
 EndStructure 
  
  ; 1232 : MACHINING_OFFSET_VECTOR_REPRESENTATION
-Structure T_MACHINING_OFFSET_VECTOR_REPRESENTATION Extends TStepBase ; ID= 1232
+Structure T_MACHINING_OFFSET_VECTOR_REPRESENTATION Extends TStepEntityBase ; ID= 1232
   
 EndStructure 
  
  ; 1233 : MACHINING_OPERATION
-Structure T_MACHINING_OPERATION Extends TStepBase ; ID= 1233
+Structure T_MACHINING_OPERATION Extends TStepEntityBase ; ID= 1233
   
 EndStructure 
  
  ; 1234 : MACHINING_OPERATION_RELATIONSHIP
-Structure T_MACHINING_OPERATION_RELATIONSHIP Extends TStepBase ; ID= 1234
+Structure T_MACHINING_OPERATION_RELATIONSHIP Extends TStepEntityBase ; ID= 1234
   
 EndStructure 
  
  ; 1235 : MACHINING_OPERATOR_INSTRUCTION
-Structure T_MACHINING_OPERATOR_INSTRUCTION Extends TStepBase ; ID= 1235
+Structure T_MACHINING_OPERATOR_INSTRUCTION Extends TStepEntityBase ; ID= 1235
   
 EndStructure 
  
  ; 1236 : MACHINING_OPERATOR_INSTRUCTION_RELATIONSHIP
-Structure T_MACHINING_OPERATOR_INSTRUCTION_RELATIONSHIP Extends TStepBase ; ID= 1236
+Structure T_MACHINING_OPERATOR_INSTRUCTION_RELATIONSHIP Extends TStepEntityBase ; ID= 1236
   
 EndStructure 
  
  ; 1237 : MACHINING_PROCESS_BODY_RELATIONSHIP
-Structure T_MACHINING_PROCESS_BODY_RELATIONSHIP Extends TStepBase ; ID= 1237
+Structure T_MACHINING_PROCESS_BODY_RELATIONSHIP Extends TStepEntityBase ; ID= 1237
   
 EndStructure 
  
  ; 1238 : MACHINING_PROCESS_BRANCH_RELATIONSHIP
-Structure T_MACHINING_PROCESS_BRANCH_RELATIONSHIP Extends TStepBase ; ID= 1238
+Structure T_MACHINING_PROCESS_BRANCH_RELATIONSHIP Extends TStepEntityBase ; ID= 1238
   
 EndStructure 
  
  ; 1239 : MACHINING_PROCESS_CONCURRENT_RELATIONSHIP
-Structure T_MACHINING_PROCESS_CONCURRENT_RELATIONSHIP Extends TStepBase ; ID= 1239
+Structure T_MACHINING_PROCESS_CONCURRENT_RELATIONSHIP Extends TStepEntityBase ; ID= 1239
   
 EndStructure 
  
  ; 1240 : MACHINING_PROCESS_EXECUTABLE
-Structure T_MACHINING_PROCESS_EXECUTABLE Extends TStepBase ; ID= 1240
+Structure T_MACHINING_PROCESS_EXECUTABLE Extends TStepEntityBase ; ID= 1240
   
 EndStructure 
  
  ; 1241 : MACHINING_PROCESS_MODEL
-Structure T_MACHINING_PROCESS_MODEL Extends TStepBase ; ID= 1241
+Structure T_MACHINING_PROCESS_MODEL Extends TStepEntityBase ; ID= 1241
   
 EndStructure 
  
  ; 1242 : MACHINING_PROCESS_MODEL_RELATIONSHIP
-Structure T_MACHINING_PROCESS_MODEL_RELATIONSHIP Extends TStepBase ; ID= 1242
+Structure T_MACHINING_PROCESS_MODEL_RELATIONSHIP Extends TStepEntityBase ; ID= 1242
   
 EndStructure 
  
  ; 1243 : MACHINING_PROCESS_SEQUENCE_RELATIONSHIP
-Structure T_MACHINING_PROCESS_SEQUENCE_RELATIONSHIP Extends TStepBase ; ID= 1243
+Structure T_MACHINING_PROCESS_SEQUENCE_RELATIONSHIP Extends TStepEntityBase ; ID= 1243
   
 EndStructure 
  
  ; 1244 : MACHINING_PROJECT
-Structure T_MACHINING_PROJECT Extends TStepBase ; ID= 1244
+Structure T_MACHINING_PROJECT Extends TStepEntityBase ; ID= 1244
   
 EndStructure 
  
  ; 1245 : MACHINING_PROJECT_WORKPIECE_RELATIONSHIP
-Structure T_MACHINING_PROJECT_WORKPIECE_RELATIONSHIP Extends TStepBase ; ID= 1245
+Structure T_MACHINING_PROJECT_WORKPIECE_RELATIONSHIP Extends TStepEntityBase ; ID= 1245
   
 EndStructure 
  
  ; 1246 : MACHINING_RAPID_MOVEMENT
-Structure T_MACHINING_RAPID_MOVEMENT Extends TStepBase ; ID= 1246
+Structure T_MACHINING_RAPID_MOVEMENT Extends TStepEntityBase ; ID= 1246
   
 EndStructure 
  
  ; 1247 : MACHINING_SETUP
-Structure T_MACHINING_SETUP Extends TStepBase ; ID= 1247
+Structure T_MACHINING_SETUP Extends TStepEntityBase ; ID= 1247
   
 EndStructure 
  
  ; 1248 : MACHINING_SETUP_WORKPIECE_RELATIONSHIP
-Structure T_MACHINING_SETUP_WORKPIECE_RELATIONSHIP Extends TStepBase ; ID= 1248
+Structure T_MACHINING_SETUP_WORKPIECE_RELATIONSHIP Extends TStepEntityBase ; ID= 1248
   
 EndStructure 
  
  ; 1249 : MACHINING_SPINDLE_SPEED_REPRESENTATION
-Structure T_MACHINING_SPINDLE_SPEED_REPRESENTATION Extends TStepBase ; ID= 1249
+Structure T_MACHINING_SPINDLE_SPEED_REPRESENTATION Extends TStepEntityBase ; ID= 1249
   
 EndStructure 
  
  ; 1250 : MACHINING_STRATEGY
-Structure T_MACHINING_STRATEGY Extends TStepBase ; ID= 1250
+Structure T_MACHINING_STRATEGY Extends TStepEntityBase ; ID= 1250
   
 EndStructure 
  
  ; 1251 : MACHINING_STRATEGY_RELATIONSHIP
-Structure T_MACHINING_STRATEGY_RELATIONSHIP Extends TStepBase ; ID= 1251
+Structure T_MACHINING_STRATEGY_RELATIONSHIP Extends TStepEntityBase ; ID= 1251
   
 EndStructure 
  
  ; 1252 : MACHINING_TECHNOLOGY
-Structure T_MACHINING_TECHNOLOGY Extends TStepBase ; ID= 1252
+Structure T_MACHINING_TECHNOLOGY Extends TStepEntityBase ; ID= 1252
   
 EndStructure 
  
  ; 1253 : MACHINING_TECHNOLOGY_RELATIONSHIP
-Structure T_MACHINING_TECHNOLOGY_RELATIONSHIP Extends TStepBase ; ID= 1253
+Structure T_MACHINING_TECHNOLOGY_RELATIONSHIP Extends TStepEntityBase ; ID= 1253
   
 EndStructure 
  
  ; 1254 : MACHINING_TOOL
-Structure T_MACHINING_TOOL Extends TStepBase ; ID= 1254
+Structure T_MACHINING_TOOL Extends TStepEntityBase ; ID= 1254
   
 EndStructure 
  
  ; 1255 : MACHINING_TOOL_BODY_REPRESENTATION
-Structure T_MACHINING_TOOL_BODY_REPRESENTATION Extends TStepBase ; ID= 1255
+Structure T_MACHINING_TOOL_BODY_REPRESENTATION Extends TStepEntityBase ; ID= 1255
   
 EndStructure 
  
  ; 1256 : MACHINING_TOOL_DIMENSION_REPRESENTATION
-Structure T_MACHINING_TOOL_DIMENSION_REPRESENTATION Extends TStepBase ; ID= 1256
+Structure T_MACHINING_TOOL_DIMENSION_REPRESENTATION Extends TStepEntityBase ; ID= 1256
   
 EndStructure 
  
  ; 1257 : MACHINING_TOOL_DIRECTION_REPRESENTATION
-Structure T_MACHINING_TOOL_DIRECTION_REPRESENTATION Extends TStepBase ; ID= 1257
+Structure T_MACHINING_TOOL_DIRECTION_REPRESENTATION Extends TStepEntityBase ; ID= 1257
   
 EndStructure 
  
  ; 1258 : MACHINING_TOOL_USAGE
-Structure T_MACHINING_TOOL_USAGE Extends TStepBase ; ID= 1258
+Structure T_MACHINING_TOOL_USAGE Extends TStepEntityBase ; ID= 1258
   
 EndStructure 
  
  ; 1259 : MACHINING_TOOLPATH
-Structure T_MACHINING_TOOLPATH Extends TStepBase ; ID= 1259
+Structure T_MACHINING_TOOLPATH Extends TStepEntityBase ; ID= 1259
   
 EndStructure 
  
  ; 1260 : MACHINING_TOOLPATH_SEQUENCE_RELATIONSHIP
-Structure T_MACHINING_TOOLPATH_SEQUENCE_RELATIONSHIP Extends TStepBase ; ID= 1260
+Structure T_MACHINING_TOOLPATH_SEQUENCE_RELATIONSHIP Extends TStepEntityBase ; ID= 1260
   
 EndStructure 
  
  ; 1261 : MACHINING_TOOLPATH_SPEED_PROFILE_REPRESENTATION
-Structure T_MACHINING_TOOLPATH_SPEED_PROFILE_REPRESENTATION Extends TStepBase ; ID= 1261
+Structure T_MACHINING_TOOLPATH_SPEED_PROFILE_REPRESENTATION Extends TStepEntityBase ; ID= 1261
   
 EndStructure 
  
  ; 1262 : MACHINING_TOUCH_PROBING
-Structure T_MACHINING_TOUCH_PROBING Extends TStepBase ; ID= 1262
+Structure T_MACHINING_TOUCH_PROBING Extends TStepEntityBase ; ID= 1262
   
 EndStructure 
  
  ; 1263 : MACHINING_TWIN_RELATIONSHIP
-Structure T_MACHINING_TWIN_RELATIONSHIP Extends TStepBase ; ID= 1263
+Structure T_MACHINING_TWIN_RELATIONSHIP Extends TStepEntityBase ; ID= 1263
   
 EndStructure 
  
  ; 1264 : MACHINING_USAGE_RELATIONSHIP
-Structure T_MACHINING_USAGE_RELATIONSHIP Extends TStepBase ; ID= 1264
+Structure T_MACHINING_USAGE_RELATIONSHIP Extends TStepEntityBase ; ID= 1264
   
 EndStructure 
  
  ; 1265 : MACHINING_WORKINGSTEP
-Structure T_MACHINING_WORKINGSTEP Extends TStepBase ; ID= 1265
+Structure T_MACHINING_WORKINGSTEP Extends TStepEntityBase ; ID= 1265
   
 EndStructure 
  
  ; 1266 : MACHINING_WORKPLAN
-Structure T_MACHINING_WORKPLAN Extends TStepBase ; ID= 1266
+Structure T_MACHINING_WORKPLAN Extends TStepEntityBase ; ID= 1266
   
 EndStructure 
  
  ; 1267 : MAGNETIC_FLUX_DENSITY_MEASURE_WITH_UNIT
-Structure T_MAGNETIC_FLUX_DENSITY_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1267
+Structure T_MAGNETIC_FLUX_DENSITY_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1267
   
 EndStructure 
  
  ; 1268 : MAGNETIC_FLUX_DENSITY_UNIT
-Structure T_MAGNETIC_FLUX_DENSITY_UNIT Extends TStepBase ; ID= 1268
+Structure T_MAGNETIC_FLUX_DENSITY_UNIT Extends TStepEntityBase ; ID= 1268
   
 EndStructure 
  
  ; 1269 : MAGNETIC_FLUX_MEASURE_WITH_UNIT
-Structure T_MAGNETIC_FLUX_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1269
+Structure T_MAGNETIC_FLUX_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1269
   
 EndStructure 
  
  ; 1270 : MAGNETIC_FLUX_UNIT
-Structure T_MAGNETIC_FLUX_UNIT Extends TStepBase ; ID= 1270
+Structure T_MAGNETIC_FLUX_UNIT Extends TStepEntityBase ; ID= 1270
   
 EndStructure 
  
  ; 1271 : MAKE_FROM_FEATURE_RELATIONSHIP
-Structure T_MAKE_FROM_FEATURE_RELATIONSHIP Extends TStepBase ; ID= 1271
+Structure T_MAKE_FROM_FEATURE_RELATIONSHIP Extends TStepEntityBase ; ID= 1271
   
 EndStructure 
  
  ; 1272 : MAKE_FROM_USAGE_OPTION
-Structure T_MAKE_FROM_USAGE_OPTION Extends TStepBase ; ID= 1272
+Structure T_MAKE_FROM_USAGE_OPTION Extends TStepEntityBase ; ID= 1272
   
 EndStructure 
  
  ; 1273 : MAKE_FROM_USAGE_OPTION_WITH_REFERENCE_DESIGNATOR
-Structure T_MAKE_FROM_USAGE_OPTION_WITH_REFERENCE_DESIGNATOR Extends TStepBase ; ID= 1273
+Structure T_MAKE_FROM_USAGE_OPTION_WITH_REFERENCE_DESIGNATOR Extends TStepEntityBase ; ID= 1273
   
 EndStructure 
  
  ; 1274 : MANIFOLD_SOLID_BREP
-Structure T_MANIFOLD_SOLID_BREP Extends TStepBase ; ID= 1274
+Structure T_MANIFOLD_SOLID_BREP Extends TStepEntityBase ; ID= 1274
   
 EndStructure 
  
  ; 1275 : MANIFOLD_SUBSURFACE_SHAPE_REPRESENTATION
-Structure T_MANIFOLD_SUBSURFACE_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1275
+Structure T_MANIFOLD_SUBSURFACE_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1275
   
 EndStructure 
  
  ; 1276 : MANIFOLD_SURFACE_SHAPE_REPRESENTATION
-Structure T_MANIFOLD_SURFACE_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1276
+Structure T_MANIFOLD_SURFACE_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1276
   
 EndStructure 
  
  ; 1277 : MAPPED_ITEM
-Structure T_MAPPED_ITEM Extends TStepBase ; ID= 1277
+Structure T_MAPPED_ITEM Extends TStepEntityBase ; ID= 1277
   
 EndStructure 
  
  ; 1278 : MARKING
-Structure T_MARKING Extends TStepBase ; ID= 1278
+Structure T_MARKING Extends TStepEntityBase ; ID= 1278
   
 EndStructure 
  
  ; 1279 : MASS_MEASURE_WITH_UNIT
-Structure T_MASS_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1279
+Structure T_MASS_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1279
   
 EndStructure 
  
  ; 1280 : MASS_UNIT
-Structure T_MASS_UNIT Extends TStepBase ; ID= 1280
+Structure T_MASS_UNIT Extends TStepEntityBase ; ID= 1280
   
 EndStructure 
  
  ; 1281 : MATED_PART_RELATIONSHIP
-Structure T_MATED_PART_RELATIONSHIP Extends TStepBase ; ID= 1281
+Structure T_MATED_PART_RELATIONSHIP Extends TStepEntityBase ; ID= 1281
   
 EndStructure 
  
  ; 1282 : MATERIAL_DESIGNATION
-Structure T_MATERIAL_DESIGNATION Extends TStepBase ; ID= 1282
+Structure T_MATERIAL_DESIGNATION Extends TStepEntityBase ; ID= 1282
   
 EndStructure 
  
  ; 1283 : MATERIAL_DESIGNATION_CHARACTERIZATION
-Structure T_MATERIAL_DESIGNATION_CHARACTERIZATION Extends TStepBase ; ID= 1283
+Structure T_MATERIAL_DESIGNATION_CHARACTERIZATION Extends TStepEntityBase ; ID= 1283
   
 EndStructure 
  
  ; 1284 : MATERIAL_PROPERTY
-Structure T_MATERIAL_PROPERTY Extends TStepBase ; ID= 1284
+Structure T_MATERIAL_PROPERTY Extends TStepEntityBase ; ID= 1284
   
 EndStructure 
  
  ; 1285 : MATERIAL_PROPERTY_REPRESENTATION
-Structure T_MATERIAL_PROPERTY_REPRESENTATION Extends TStepBase ; ID= 1285
+Structure T_MATERIAL_PROPERTY_REPRESENTATION Extends TStepEntityBase ; ID= 1285
   
 EndStructure 
  
  ; 1286 : MATHEMATICAL_DESCRIPTION
-Structure T_MATHEMATICAL_DESCRIPTION Extends TStepBase ; ID= 1286
+Structure T_MATHEMATICAL_DESCRIPTION Extends TStepEntityBase ; ID= 1286
   
 EndStructure 
  
  ; 1287 : MATHS_BOOLEAN_VARIABLE
-Structure T_MATHS_BOOLEAN_VARIABLE Extends TStepBase ; ID= 1287
+Structure T_MATHS_BOOLEAN_VARIABLE Extends TStepEntityBase ; ID= 1287
   
 EndStructure 
  
  ; 1288 : MATHS_ENUM_LITERAL
-Structure T_MATHS_ENUM_LITERAL Extends TStepBase ; ID= 1288
+Structure T_MATHS_ENUM_LITERAL Extends TStepEntityBase ; ID= 1288
   
 EndStructure 
  
  ; 1289 : MATHS_FUNCTION
-Structure T_MATHS_FUNCTION Extends TStepBase ; ID= 1289
+Structure T_MATHS_FUNCTION Extends TStepEntityBase ; ID= 1289
   
 EndStructure 
  
  ; 1290 : MATHS_INTEGER_VARIABLE
-Structure T_MATHS_INTEGER_VARIABLE Extends TStepBase ; ID= 1290
+Structure T_MATHS_INTEGER_VARIABLE Extends TStepEntityBase ; ID= 1290
   
 EndStructure 
  
  ; 1291 : MATHS_REAL_VARIABLE
-Structure T_MATHS_REAL_VARIABLE Extends TStepBase ; ID= 1291
+Structure T_MATHS_REAL_VARIABLE Extends TStepEntityBase ; ID= 1291
   
 EndStructure 
  
  ; 1292 : MATHS_SPACE
-Structure T_MATHS_SPACE Extends TStepBase ; ID= 1292
+Structure T_MATHS_SPACE Extends TStepEntityBase ; ID= 1292
   
 EndStructure 
  
  ; 1293 : MATHS_STRING_VARIABLE
-Structure T_MATHS_STRING_VARIABLE Extends TStepBase ; ID= 1293
+Structure T_MATHS_STRING_VARIABLE Extends TStepEntityBase ; ID= 1293
   
 EndStructure 
  
  ; 1294 : MATHS_TUPLE_LITERAL
-Structure T_MATHS_TUPLE_LITERAL Extends TStepBase ; ID= 1294
+Structure T_MATHS_TUPLE_LITERAL Extends TStepEntityBase ; ID= 1294
   
 EndStructure 
  
  ; 1295 : MATHS_VALUE_PRECISION_QUALIFIER
-Structure T_MATHS_VALUE_PRECISION_QUALIFIER Extends TStepBase ; ID= 1295
+Structure T_MATHS_VALUE_PRECISION_QUALIFIER Extends TStepEntityBase ; ID= 1295
   
 EndStructure 
  
  ; 1296 : MATHS_VARIABLE
-Structure T_MATHS_VARIABLE Extends TStepBase ; ID= 1296
+Structure T_MATHS_VARIABLE Extends TStepEntityBase ; ID= 1296
   
 EndStructure 
  
  ; 1297 : MATING_MATERIAL
-Structure T_MATING_MATERIAL Extends TStepBase ; ID= 1297
+Structure T_MATING_MATERIAL Extends TStepEntityBase ; ID= 1297
   
 EndStructure 
  
  ; 1298 : MATING_MATERIAL_ITEMS
-Structure T_MATING_MATERIAL_ITEMS Extends TStepBase ; ID= 1298
+Structure T_MATING_MATERIAL_ITEMS Extends TStepEntityBase ; ID= 1298
   
 EndStructure 
  
  ; 1299 : MAXIMUM_FUNCTION
-Structure T_MAXIMUM_FUNCTION Extends TStepBase ; ID= 1299
+Structure T_MAXIMUM_FUNCTION Extends TStepEntityBase ; ID= 1299
   
 EndStructure 
  
  ; 1300 : MEASURE_QUALIFICATION
-Structure T_MEASURE_QUALIFICATION Extends TStepBase ; ID= 1300
+Structure T_MEASURE_QUALIFICATION Extends TStepEntityBase ; ID= 1300
   
 EndStructure 
  
  ; 1301 : MEASURE_REPRESENTATION_ITEM
-Structure T_MEASURE_REPRESENTATION_ITEM Extends TStepBase ; ID= 1301
+Structure T_MEASURE_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 1301
   
 EndStructure 
  
  ; 1302 : MEASURE_WITH_UNIT
-Structure T_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1302
+Structure T_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1302
   
 EndStructure 
  
  ; 1303 : MECHANICAL_DESIGN_AND_DRAUGHTING_RELATIONSHIP
-Structure T_MECHANICAL_DESIGN_AND_DRAUGHTING_RELATIONSHIP Extends TStepBase ; ID= 1303
+Structure T_MECHANICAL_DESIGN_AND_DRAUGHTING_RELATIONSHIP Extends TStepEntityBase ; ID= 1303
   
 EndStructure 
  
  ; 1304 : MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_AREA
-Structure T_MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_AREA Extends TStepBase ; ID= 1304
+Structure T_MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_AREA Extends TStepEntityBase ; ID= 1304
   
 EndStructure 
  
  ; 1305 : MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION
-Structure T_MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION Extends TStepBase ; ID= 1305
+Structure T_MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION Extends TStepEntityBase ; ID= 1305
   
 EndStructure 
  
  ; 1306 : MECHANICAL_DESIGN_PRESENTATION_REPRESENTATION_WITH_DRAUGHTING
-Structure T_MECHANICAL_DESIGN_PRESENTATION_REPRESENTATION_WITH_DRAUGHTING Extends TStepBase ; ID= 1306
+Structure T_MECHANICAL_DESIGN_PRESENTATION_REPRESENTATION_WITH_DRAUGHTING Extends TStepEntityBase ; ID= 1306
   
 EndStructure 
  
  ; 1307 : MECHANICAL_DESIGN_REQUIREMENT_ITEM_ASSOCIATION
-Structure T_MECHANICAL_DESIGN_REQUIREMENT_ITEM_ASSOCIATION Extends TStepBase ; ID= 1307
+Structure T_MECHANICAL_DESIGN_REQUIREMENT_ITEM_ASSOCIATION Extends TStepEntityBase ; ID= 1307
   
 EndStructure 
  
  ; 1308 : MECHANICAL_DESIGN_SHADED_PRESENTATION_AREA
-Structure T_MECHANICAL_DESIGN_SHADED_PRESENTATION_AREA Extends TStepBase ; ID= 1308
+Structure T_MECHANICAL_DESIGN_SHADED_PRESENTATION_AREA Extends TStepEntityBase ; ID= 1308
   
 EndStructure 
  
  ; 1309 : MECHANICAL_DESIGN_SHADED_PRESENTATION_REPRESENTATION
-Structure T_MECHANICAL_DESIGN_SHADED_PRESENTATION_REPRESENTATION Extends TStepBase ; ID= 1309
+Structure T_MECHANICAL_DESIGN_SHADED_PRESENTATION_REPRESENTATION Extends TStepEntityBase ; ID= 1309
   
 EndStructure 
  
  ; 1310 : MECHANISM
-Structure T_MECHANISM Extends TStepBase ; ID= 1310
+Structure T_MECHANISM Extends TStepEntityBase ; ID= 1310
   
 EndStructure 
  
  ; 1311 : MECHANISM_BASE_PLACEMENT
-Structure T_MECHANISM_BASE_PLACEMENT Extends TStepBase ; ID= 1311
+Structure T_MECHANISM_BASE_PLACEMENT Extends TStepEntityBase ; ID= 1311
   
 EndStructure 
  
  ; 1312 : MECHANISM_REPRESENTATION
-Structure T_MECHANISM_REPRESENTATION Extends TStepBase ; ID= 1312
+Structure T_MECHANISM_REPRESENTATION Extends TStepEntityBase ; ID= 1312
   
 EndStructure 
  
  ; 1313 : MECHANISM_STATE_REPRESENTATION
-Structure T_MECHANISM_STATE_REPRESENTATION Extends TStepBase ; ID= 1313
+Structure T_MECHANISM_STATE_REPRESENTATION Extends TStepEntityBase ; ID= 1313
   
 EndStructure 
  
  ; 1314 : MESSAGE_CONTENTS_ASSIGNMENT
-Structure T_MESSAGE_CONTENTS_ASSIGNMENT Extends TStepBase ; ID= 1314
+Structure T_MESSAGE_CONTENTS_ASSIGNMENT Extends TStepEntityBase ; ID= 1314
   
 EndStructure 
  
  ; 1315 : MESSAGE_CONTENTS_GROUP
-Structure T_MESSAGE_CONTENTS_GROUP Extends TStepBase ; ID= 1315
+Structure T_MESSAGE_CONTENTS_GROUP Extends TStepEntityBase ; ID= 1315
   
 EndStructure 
  
  ; 1316 : MESSAGE_RELATIONSHIP
-Structure T_MESSAGE_RELATIONSHIP Extends TStepBase ; ID= 1316
+Structure T_MESSAGE_RELATIONSHIP Extends TStepEntityBase ; ID= 1316
   
 EndStructure 
  
  ; 1317 : MILLING_TYPE_OPERATION
-Structure T_MILLING_TYPE_OPERATION Extends TStepBase ; ID= 1317
+Structure T_MILLING_TYPE_OPERATION Extends TStepEntityBase ; ID= 1317
   
 EndStructure 
  
  ; 1318 : MILLING_TYPE_STRATEGY
-Structure T_MILLING_TYPE_STRATEGY Extends TStepBase ; ID= 1318
+Structure T_MILLING_TYPE_STRATEGY Extends TStepEntityBase ; ID= 1318
   
 EndStructure 
  
  ; 1319 : MIN_AND_MAJOR_PLY_ORIENTATION_BASIS
-Structure T_MIN_AND_MAJOR_PLY_ORIENTATION_BASIS Extends TStepBase ; ID= 1319
+Structure T_MIN_AND_MAJOR_PLY_ORIENTATION_BASIS Extends TStepEntityBase ; ID= 1319
   
 EndStructure 
  
  ; 1320 : MINIMUM_FUNCTION
-Structure T_MINIMUM_FUNCTION Extends TStepBase ; ID= 1320
+Structure T_MINIMUM_FUNCTION Extends TStepEntityBase ; ID= 1320
   
 EndStructure 
  
  ; 1321 : MINUS_EXPRESSION
-Structure T_MINUS_EXPRESSION Extends TStepBase ; ID= 1321
+Structure T_MINUS_EXPRESSION Extends TStepEntityBase ; ID= 1321
   
 EndStructure 
  
  ; 1322 : MINUS_FUNCTION
-Structure T_MINUS_FUNCTION Extends TStepBase ; ID= 1322
+Structure T_MINUS_FUNCTION Extends TStepEntityBase ; ID= 1322
   
 EndStructure 
  
  ; 1323 : MISMATCH_OF_ARCWISE_CONNECTED_CURVES
-Structure T_MISMATCH_OF_ARCWISE_CONNECTED_CURVES Extends TStepBase ; ID= 1323
+Structure T_MISMATCH_OF_ARCWISE_CONNECTED_CURVES Extends TStepEntityBase ; ID= 1323
   
 EndStructure 
  
  ; 1324 : MISMATCH_OF_ARCWISE_CONNECTED_SURFACES
-Structure T_MISMATCH_OF_ARCWISE_CONNECTED_SURFACES Extends TStepBase ; ID= 1324
+Structure T_MISMATCH_OF_ARCWISE_CONNECTED_SURFACES Extends TStepEntityBase ; ID= 1324
   
 EndStructure 
  
  ; 1325 : MISMATCH_OF_ARCWISE_CONNECTED_SURFACES_BOUNDARY
-Structure T_MISMATCH_OF_ARCWISE_CONNECTED_SURFACES_BOUNDARY Extends TStepBase ; ID= 1325
+Structure T_MISMATCH_OF_ARCWISE_CONNECTED_SURFACES_BOUNDARY Extends TStepEntityBase ; ID= 1325
   
 EndStructure 
  
  ; 1326 : MISMATCH_OF_COMPONENT
-Structure T_MISMATCH_OF_COMPONENT Extends TStepBase ; ID= 1326
+Structure T_MISMATCH_OF_COMPONENT Extends TStepEntityBase ; ID= 1326
   
 EndStructure 
  
  ; 1327 : MISMATCH_OF_EDGES
-Structure T_MISMATCH_OF_EDGES Extends TStepBase ; ID= 1327
+Structure T_MISMATCH_OF_EDGES Extends TStepEntityBase ; ID= 1327
   
 EndStructure 
  
  ; 1328 : MISMATCH_OF_FACES
-Structure T_MISMATCH_OF_FACES Extends TStepBase ; ID= 1328
+Structure T_MISMATCH_OF_FACES Extends TStepEntityBase ; ID= 1328
   
 EndStructure 
  
  ; 1329 : MISMATCH_OF_POINT_CLOUD_AND_RELATED_GEOMETRY
-Structure T_MISMATCH_OF_POINT_CLOUD_AND_RELATED_GEOMETRY Extends TStepBase ; ID= 1329
+Structure T_MISMATCH_OF_POINT_CLOUD_AND_RELATED_GEOMETRY Extends TStepEntityBase ; ID= 1329
   
 EndStructure 
  
  ; 1330 : MISMATCH_OF_POINTS
-Structure T_MISMATCH_OF_POINTS Extends TStepBase ; ID= 1330
+Structure T_MISMATCH_OF_POINTS Extends TStepEntityBase ; ID= 1330
   
 EndStructure 
  
  ; 1331 : MISMATCH_OF_UNDERLYING_EDGE_GEOMETRY
-Structure T_MISMATCH_OF_UNDERLYING_EDGE_GEOMETRY Extends TStepBase ; ID= 1331
+Structure T_MISMATCH_OF_UNDERLYING_EDGE_GEOMETRY Extends TStepEntityBase ; ID= 1331
   
 EndStructure 
  
  ; 1332 : MISMATCH_OF_UNDERLYING_FACE_GEOMETRY
-Structure T_MISMATCH_OF_UNDERLYING_FACE_GEOMETRY Extends TStepBase ; ID= 1332
+Structure T_MISMATCH_OF_UNDERLYING_FACE_GEOMETRY Extends TStepEntityBase ; ID= 1332
   
 EndStructure 
  
  ; 1333 : MISSING_ASSEMBLY_CONSTRAINT
-Structure T_MISSING_ASSEMBLY_CONSTRAINT Extends TStepBase ; ID= 1333
+Structure T_MISSING_ASSEMBLY_CONSTRAINT Extends TStepEntityBase ; ID= 1333
   
 EndStructure 
  
  ; 1334 : MISSING_COMPONENT
-Structure T_MISSING_COMPONENT Extends TStepBase ; ID= 1334
+Structure T_MISSING_COMPONENT Extends TStepEntityBase ; ID= 1334
   
 EndStructure 
  
  ; 1335 : MISSING_EDGE
-Structure T_MISSING_EDGE Extends TStepBase ; ID= 1335
+Structure T_MISSING_EDGE Extends TStepEntityBase ; ID= 1335
   
 EndStructure 
  
  ; 1336 : MISSING_FACE
-Structure T_MISSING_FACE Extends TStepBase ; ID= 1336
+Structure T_MISSING_FACE Extends TStepEntityBase ; ID= 1336
   
 EndStructure 
  
  ; 1337 : MOD_EXPRESSION
-Structure T_MOD_EXPRESSION Extends TStepBase ; ID= 1337
+Structure T_MOD_EXPRESSION Extends TStepEntityBase ; ID= 1337
   
 EndStructure 
  
  ; 1338 : MODEL_GEOMETRIC_VIEW
-Structure T_MODEL_GEOMETRIC_VIEW Extends TStepBase ; ID= 1338
+Structure T_MODEL_GEOMETRIC_VIEW Extends TStepEntityBase ; ID= 1338
   
 EndStructure 
  
  ; 1339 : MODIFIED_GEOMETRIC_TOLERANCE
-Structure T_MODIFIED_GEOMETRIC_TOLERANCE Extends TStepBase ; ID= 1339
+Structure T_MODIFIED_GEOMETRIC_TOLERANCE Extends TStepEntityBase ; ID= 1339
   
 EndStructure 
  
  ; 1340 : MODIFIED_PATTERN
-Structure T_MODIFIED_PATTERN Extends TStepBase ; ID= 1340
+Structure T_MODIFIED_PATTERN Extends TStepEntityBase ; ID= 1340
   
 EndStructure 
  
  ; 1341 : MODIFIED_SOLID
-Structure T_MODIFIED_SOLID Extends TStepBase ; ID= 1341
+Structure T_MODIFIED_SOLID Extends TStepEntityBase ; ID= 1341
   
 EndStructure 
  
  ; 1342 : MODIFIED_SOLID_WITH_PLACED_CONFIGURATION
-Structure T_MODIFIED_SOLID_WITH_PLACED_CONFIGURATION Extends TStepBase ; ID= 1342
+Structure T_MODIFIED_SOLID_WITH_PLACED_CONFIGURATION Extends TStepEntityBase ; ID= 1342
   
 EndStructure 
  
  ; 1343 : MODIFY_ELEMENT
-Structure T_MODIFY_ELEMENT Extends TStepBase ; ID= 1343
+Structure T_MODIFY_ELEMENT Extends TStepEntityBase ; ID= 1343
   
 EndStructure 
  
  ; 1344 : MOMENTS_OF_INERTIA_REPRESENTATION
-Structure T_MOMENTS_OF_INERTIA_REPRESENTATION Extends TStepBase ; ID= 1344
+Structure T_MOMENTS_OF_INERTIA_REPRESENTATION Extends TStepEntityBase ; ID= 1344
   
 EndStructure 
  
  ; 1345 : MOTION_LINK_RELATIONSHIP
-Structure T_MOTION_LINK_RELATIONSHIP Extends TStepBase ; ID= 1345
+Structure T_MOTION_LINK_RELATIONSHIP Extends TStepEntityBase ; ID= 1345
   
 EndStructure 
  
  ; 1346 : MULT_EXPRESSION
-Structure T_MULT_EXPRESSION Extends TStepBase ; ID= 1346
+Structure T_MULT_EXPRESSION Extends TStepEntityBase ; ID= 1346
   
 EndStructure 
  
  ; 1347 : MULTI_LANGUAGE_ATTRIBUTE_ASSIGNMENT
-Structure T_MULTI_LANGUAGE_ATTRIBUTE_ASSIGNMENT Extends TStepBase ; ID= 1347
+Structure T_MULTI_LANGUAGE_ATTRIBUTE_ASSIGNMENT Extends TStepEntityBase ; ID= 1347
   
 EndStructure 
  
  ; 1348 : MULTI_LEVEL_REFERENCE_DESIGNATOR
-Structure T_MULTI_LEVEL_REFERENCE_DESIGNATOR Extends TStepBase ; ID= 1348
+Structure T_MULTI_LEVEL_REFERENCE_DESIGNATOR Extends TStepEntityBase ; ID= 1348
   
 EndStructure 
  
  ; 1349 : MULTIPLE_ARITY_BOOLEAN_EXPRESSION
-Structure T_MULTIPLE_ARITY_BOOLEAN_EXPRESSION Extends TStepBase ; ID= 1349
+Structure T_MULTIPLE_ARITY_BOOLEAN_EXPRESSION Extends TStepEntityBase ; ID= 1349
   
 EndStructure 
  
  ; 1350 : MULTIPLE_ARITY_FUNCTION_CALL
-Structure T_MULTIPLE_ARITY_FUNCTION_CALL Extends TStepBase ; ID= 1350
+Structure T_MULTIPLE_ARITY_FUNCTION_CALL Extends TStepEntityBase ; ID= 1350
   
 EndStructure 
  
  ; 1351 : MULTIPLE_ARITY_GENERIC_EXPRESSION
-Structure T_MULTIPLE_ARITY_GENERIC_EXPRESSION Extends TStepBase ; ID= 1351
+Structure T_MULTIPLE_ARITY_GENERIC_EXPRESSION Extends TStepEntityBase ; ID= 1351
   
 EndStructure 
  
  ; 1352 : MULTIPLE_ARITY_NUMERIC_EXPRESSION
-Structure T_MULTIPLE_ARITY_NUMERIC_EXPRESSION Extends TStepBase ; ID= 1352
+Structure T_MULTIPLE_ARITY_NUMERIC_EXPRESSION Extends TStepEntityBase ; ID= 1352
   
 EndStructure 
  
  ; 1353 : MULTIPLY_DEFINED_CARTESIAN_POINTS
-Structure T_MULTIPLY_DEFINED_CARTESIAN_POINTS Extends TStepBase ; ID= 1353
+Structure T_MULTIPLY_DEFINED_CARTESIAN_POINTS Extends TStepEntityBase ; ID= 1353
   
 EndStructure 
  
  ; 1354 : MULTIPLY_DEFINED_CURVES
-Structure T_MULTIPLY_DEFINED_CURVES Extends TStepBase ; ID= 1354
+Structure T_MULTIPLY_DEFINED_CURVES Extends TStepEntityBase ; ID= 1354
   
 EndStructure 
  
  ; 1355 : MULTIPLY_DEFINED_DIRECTIONS
-Structure T_MULTIPLY_DEFINED_DIRECTIONS Extends TStepBase ; ID= 1355
+Structure T_MULTIPLY_DEFINED_DIRECTIONS Extends TStepEntityBase ; ID= 1355
   
 EndStructure 
  
  ; 1356 : MULTIPLY_DEFINED_EDGES
-Structure T_MULTIPLY_DEFINED_EDGES Extends TStepBase ; ID= 1356
+Structure T_MULTIPLY_DEFINED_EDGES Extends TStepEntityBase ; ID= 1356
   
 EndStructure 
  
  ; 1357 : MULTIPLY_DEFINED_FACES
-Structure T_MULTIPLY_DEFINED_FACES Extends TStepBase ; ID= 1357
+Structure T_MULTIPLY_DEFINED_FACES Extends TStepEntityBase ; ID= 1357
   
 EndStructure 
  
  ; 1358 : MULTIPLY_DEFINED_GEOMETRY
-Structure T_MULTIPLY_DEFINED_GEOMETRY Extends TStepBase ; ID= 1358
+Structure T_MULTIPLY_DEFINED_GEOMETRY Extends TStepEntityBase ; ID= 1358
   
 EndStructure 
  
  ; 1359 : MULTIPLY_DEFINED_PLACEMENTS
-Structure T_MULTIPLY_DEFINED_PLACEMENTS Extends TStepBase ; ID= 1359
+Structure T_MULTIPLY_DEFINED_PLACEMENTS Extends TStepEntityBase ; ID= 1359
   
 EndStructure 
  
  ; 1360 : MULTIPLY_DEFINED_SOLIDS
-Structure T_MULTIPLY_DEFINED_SOLIDS Extends TStepBase ; ID= 1360
+Structure T_MULTIPLY_DEFINED_SOLIDS Extends TStepEntityBase ; ID= 1360
   
 EndStructure 
  
  ; 1361 : MULTIPLY_DEFINED_SURFACES
-Structure T_MULTIPLY_DEFINED_SURFACES Extends TStepBase ; ID= 1361
+Structure T_MULTIPLY_DEFINED_SURFACES Extends TStepEntityBase ; ID= 1361
   
 EndStructure 
  
  ; 1362 : MULTIPLY_DEFINED_VERTICES
-Structure T_MULTIPLY_DEFINED_VERTICES Extends TStepBase ; ID= 1362
+Structure T_MULTIPLY_DEFINED_VERTICES Extends TStepEntityBase ; ID= 1362
   
 EndStructure 
  
  ; 1363 : NAME_ASSIGNMENT
-Structure T_NAME_ASSIGNMENT Extends TStepBase ; ID= 1363
+Structure T_NAME_ASSIGNMENT Extends TStepEntityBase ; ID= 1363
   
 EndStructure 
  
  ; 1364 : NAME_ATTRIBUTE
-Structure T_NAME_ATTRIBUTE Extends TStepBase ; ID= 1364
+Structure T_NAME_ATTRIBUTE Extends TStepEntityBase ; ID= 1364
   
 EndStructure 
  
  ; 1365 : NAMED_UNIT
-Structure T_NAMED_UNIT Extends TStepBase ; ID= 1365
+Structure T_NAMED_UNIT Extends TStepEntityBase ; ID= 1365
   
 EndStructure 
  
  ; 1366 : NAMED_UNIT_VARIABLE
-Structure T_NAMED_UNIT_VARIABLE Extends TStepBase ; ID= 1366
+Structure T_NAMED_UNIT_VARIABLE Extends TStepEntityBase ; ID= 1366
   
 EndStructure 
  
  ; 1367 : NARROW_SURFACE_PATCH
-Structure T_NARROW_SURFACE_PATCH Extends TStepBase ; ID= 1367
+Structure T_NARROW_SURFACE_PATCH Extends TStepEntityBase ; ID= 1367
   
 EndStructure 
  
  ; 1368 : NEAR_POINT_RELATIONSHIP
-Structure T_NEAR_POINT_RELATIONSHIP Extends TStepBase ; ID= 1368
+Structure T_NEAR_POINT_RELATIONSHIP Extends TStepEntityBase ; ID= 1368
   
 EndStructure 
  
  ; 1369 : NEARLY_DEGENERATE_GEOMETRY
-Structure T_NEARLY_DEGENERATE_GEOMETRY Extends TStepBase ; ID= 1369
+Structure T_NEARLY_DEGENERATE_GEOMETRY Extends TStepEntityBase ; ID= 1369
   
 EndStructure 
  
  ; 1370 : NEARLY_DEGENERATE_SURFACE_BOUNDARY
-Structure T_NEARLY_DEGENERATE_SURFACE_BOUNDARY Extends TStepBase ; ID= 1370
+Structure T_NEARLY_DEGENERATE_SURFACE_BOUNDARY Extends TStepEntityBase ; ID= 1370
   
 EndStructure 
  
  ; 1371 : NEARLY_DEGENERATE_SURFACE_PATCH
-Structure T_NEARLY_DEGENERATE_SURFACE_PATCH Extends TStepBase ; ID= 1371
+Structure T_NEARLY_DEGENERATE_SURFACE_PATCH Extends TStepEntityBase ; ID= 1371
   
 EndStructure 
  
  ; 1372 : NEUTRAL_SKETCH_REPRESENTATION
-Structure T_NEUTRAL_SKETCH_REPRESENTATION Extends TStepBase ; ID= 1372
+Structure T_NEUTRAL_SKETCH_REPRESENTATION Extends TStepEntityBase ; ID= 1372
   
 EndStructure 
  
  ; 1373 : NEXT_ASSEMBLY_USAGE_OCCURRENCE
-Structure T_NEXT_ASSEMBLY_USAGE_OCCURRENCE Extends TStepBase ; ID= 1373
+Structure T_NEXT_ASSEMBLY_USAGE_OCCURRENCE Extends TStepEntityBase ; ID= 1373
   
 EndStructure 
  
  ; 1374 : NGON_CLOSED_PROFILE
-Structure T_NGON_CLOSED_PROFILE Extends TStepBase ; ID= 1374
+Structure T_NGON_CLOSED_PROFILE Extends TStepEntityBase ; ID= 1374
   
 EndStructure 
  
  ; 1375 : NGON_SHAPE_REPRESENTATION
-Structure T_NGON_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1375
+Structure T_NGON_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1375
   
 EndStructure 
  
  ; 1376 : NON_AGREED_ACCURACY_PARAMETER_USAGE
-Structure T_NON_AGREED_ACCURACY_PARAMETER_USAGE Extends TStepBase ; ID= 1376
+Structure T_NON_AGREED_ACCURACY_PARAMETER_USAGE Extends TStepEntityBase ; ID= 1376
   
 EndStructure 
  
  ; 1377 : NON_AGREED_SCALE_USAGE
-Structure T_NON_AGREED_SCALE_USAGE Extends TStepBase ; ID= 1377
+Structure T_NON_AGREED_SCALE_USAGE Extends TStepEntityBase ; ID= 1377
   
 EndStructure 
  
  ; 1378 : NON_AGREED_UNIT_USAGE
-Structure T_NON_AGREED_UNIT_USAGE Extends TStepBase ; ID= 1378
+Structure T_NON_AGREED_UNIT_USAGE Extends TStepEntityBase ; ID= 1378
   
 EndStructure 
  
  ; 1379 : NON_MANIFOLD_AT_EDGE
-Structure T_NON_MANIFOLD_AT_EDGE Extends TStepBase ; ID= 1379
+Structure T_NON_MANIFOLD_AT_EDGE Extends TStepEntityBase ; ID= 1379
   
 EndStructure 
  
  ; 1380 : NON_MANIFOLD_AT_VERTEX
-Structure T_NON_MANIFOLD_AT_VERTEX Extends TStepBase ; ID= 1380
+Structure T_NON_MANIFOLD_AT_VERTEX Extends TStepEntityBase ; ID= 1380
   
 EndStructure 
  
  ; 1381 : NON_MANIFOLD_SURFACE_SHAPE_REPRESENTATION
-Structure T_NON_MANIFOLD_SURFACE_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1381
+Structure T_NON_MANIFOLD_SURFACE_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1381
   
 EndStructure 
  
  ; 1382 : NON_REFERENCED_COORDINATE_SYSTEM
-Structure T_NON_REFERENCED_COORDINATE_SYSTEM Extends TStepBase ; ID= 1382
+Structure T_NON_REFERENCED_COORDINATE_SYSTEM Extends TStepEntityBase ; ID= 1382
   
 EndStructure 
  
  ; 1383 : NON_SMOOTH_GEOMETRY_TRANSITION_ACROSS_EDGE
-Structure T_NON_SMOOTH_GEOMETRY_TRANSITION_ACROSS_EDGE Extends TStepBase ; ID= 1383
+Structure T_NON_SMOOTH_GEOMETRY_TRANSITION_ACROSS_EDGE Extends TStepEntityBase ; ID= 1383
   
 EndStructure 
  
  ; 1384 : NON_UNIFORM_ZONE_DEFINITION
-Structure T_NON_UNIFORM_ZONE_DEFINITION Extends TStepBase ; ID= 1384
+Structure T_NON_UNIFORM_ZONE_DEFINITION Extends TStepEntityBase ; ID= 1384
   
 EndStructure 
  
  ; 1385 : NOT_EXPRESSION
-Structure T_NOT_EXPRESSION Extends TStepBase ; ID= 1385
+Structure T_NOT_EXPRESSION Extends TStepEntityBase ; ID= 1385
   
 EndStructure 
  
  ; 1386 : NULL_REPRESENTATION_ITEM
-Structure T_NULL_REPRESENTATION_ITEM Extends TStepBase ; ID= 1386
+Structure T_NULL_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 1386
   
 EndStructure 
  
  ; 1387 : NUMERIC_DEFINED_FUNCTION
-Structure T_NUMERIC_DEFINED_FUNCTION Extends TStepBase ; ID= 1387
+Structure T_NUMERIC_DEFINED_FUNCTION Extends TStepEntityBase ; ID= 1387
   
 EndStructure 
  
  ; 1388 : NUMERIC_EXPRESSION
-Structure T_NUMERIC_EXPRESSION Extends TStepBase ; ID= 1388
+Structure T_NUMERIC_EXPRESSION Extends TStepEntityBase ; ID= 1388
   
 EndStructure 
  
  ; 1389 : NUMERIC_VARIABLE
-Structure T_NUMERIC_VARIABLE Extends TStepBase ; ID= 1389
+Structure T_NUMERIC_VARIABLE Extends TStepEntityBase ; ID= 1389
   
 EndStructure 
  
  ; 1390 : OBJECT_ROLE
-Structure T_OBJECT_ROLE Extends TStepBase ; ID= 1390
+Structure T_OBJECT_ROLE Extends TStepEntityBase ; ID= 1390
   
 EndStructure 
  
  ; 1391 : ODD_FUNCTION
-Structure T_ODD_FUNCTION Extends TStepBase ; ID= 1391
+Structure T_ODD_FUNCTION Extends TStepEntityBase ; ID= 1391
   
 EndStructure 
  
  ; 1392 : OFFSET_CURVE_2D
-Structure T_OFFSET_CURVE_2D Extends TStepBase ; ID= 1392
+Structure T_OFFSET_CURVE_2D Extends TStepEntityBase ; ID= 1392
   
 EndStructure 
  
  ; 1393 : OFFSET_CURVE_3D
-Structure T_OFFSET_CURVE_3D Extends TStepBase ; ID= 1393
+Structure T_OFFSET_CURVE_3D Extends TStepEntityBase ; ID= 1393
   
 EndStructure 
  
  ; 1394 : OFFSET_SURFACE
-Structure T_OFFSET_SURFACE Extends TStepBase ; ID= 1394
+Structure T_OFFSET_SURFACE Extends TStepEntityBase ; ID= 1394
   
 EndStructure 
  
  ; 1395 : ONE_DIRECTION_REPEAT_FACTOR
-Structure T_ONE_DIRECTION_REPEAT_FACTOR Extends TStepBase ; ID= 1395
+Structure T_ONE_DIRECTION_REPEAT_FACTOR Extends TStepEntityBase ; ID= 1395
   
 EndStructure 
  
  ; 1396 : OPEN_CLOSED_SHELL
-Structure T_OPEN_CLOSED_SHELL Extends TStepBase ; ID= 1396
+Structure T_OPEN_CLOSED_SHELL Extends TStepEntityBase ; ID= 1396
   
 EndStructure 
  
  ; 1397 : OPEN_EDGE_LOOP
-Structure T_OPEN_EDGE_LOOP Extends TStepBase ; ID= 1397
+Structure T_OPEN_EDGE_LOOP Extends TStepEntityBase ; ID= 1397
   
 EndStructure 
  
  ; 1398 : OPEN_PATH
-Structure T_OPEN_PATH Extends TStepBase ; ID= 1398
+Structure T_OPEN_PATH Extends TStepEntityBase ; ID= 1398
   
 EndStructure 
  
  ; 1399 : OPEN_PATH_PROFILE
-Structure T_OPEN_PATH_PROFILE Extends TStepBase ; ID= 1399
+Structure T_OPEN_PATH_PROFILE Extends TStepEntityBase ; ID= 1399
   
 EndStructure 
  
  ; 1400 : OPEN_SHELL
-Structure T_OPEN_SHELL Extends TStepBase ; ID= 1400
+Structure T_OPEN_SHELL Extends TStepEntityBase ; ID= 1400
   
 EndStructure 
  
  ; 1401 : OR_EXPRESSION
-Structure T_OR_EXPRESSION Extends TStepBase ; ID= 1401
+Structure T_OR_EXPRESSION Extends TStepEntityBase ; ID= 1401
   
 EndStructure 
  
  ; 1402 : ORDERED_PART
-Structure T_ORDERED_PART Extends TStepBase ; ID= 1402
+Structure T_ORDERED_PART Extends TStepEntityBase ; ID= 1402
   
 EndStructure 
  
  ; 1403 : ORDINAL_DATE
-Structure T_ORDINAL_DATE Extends TStepBase ; ID= 1403
+Structure T_ORDINAL_DATE Extends TStepEntityBase ; ID= 1403
   
 EndStructure 
  
  ; 1404 : ORDINATE_DIMENSION
-Structure T_ORDINATE_DIMENSION Extends TStepBase ; ID= 1404
+Structure T_ORDINATE_DIMENSION Extends TStepEntityBase ; ID= 1404
   
 EndStructure 
  
  ; 1405 : ORGANIZATION
-Structure T_ORGANIZATION Extends TStepBase ; ID= 1405
+Structure T_ORGANIZATION Extends TStepEntityBase ; ID= 1405
   
 EndStructure 
  
  ; 1406 : ORGANIZATION_ASSIGNMENT
-Structure T_ORGANIZATION_ASSIGNMENT Extends TStepBase ; ID= 1406
+Structure T_ORGANIZATION_ASSIGNMENT Extends TStepEntityBase ; ID= 1406
   
 EndStructure 
  
  ; 1407 : ORGANIZATION_RELATIONSHIP
-Structure T_ORGANIZATION_RELATIONSHIP Extends TStepBase ; ID= 1407
+Structure T_ORGANIZATION_RELATIONSHIP Extends TStepEntityBase ; ID= 1407
   
 EndStructure 
  
  ; 1408 : ORGANIZATION_ROLE
-Structure T_ORGANIZATION_ROLE Extends TStepBase ; ID= 1408
+Structure T_ORGANIZATION_ROLE Extends TStepEntityBase ; ID= 1408
   
 EndStructure 
  
  ; 1409 : ORGANIZATION_TYPE
-Structure T_ORGANIZATION_TYPE Extends TStepBase ; ID= 1409
+Structure T_ORGANIZATION_TYPE Extends TStepEntityBase ; ID= 1409
   
 EndStructure 
  
  ; 1410 : ORGANIZATION_TYPE_ASSIGNMENT
-Structure T_ORGANIZATION_TYPE_ASSIGNMENT Extends TStepBase ; ID= 1410
+Structure T_ORGANIZATION_TYPE_ASSIGNMENT Extends TStepEntityBase ; ID= 1410
   
 EndStructure 
  
  ; 1411 : ORGANIZATION_TYPE_ROLE
-Structure T_ORGANIZATION_TYPE_ROLE Extends TStepBase ; ID= 1411
+Structure T_ORGANIZATION_TYPE_ROLE Extends TStepEntityBase ; ID= 1411
   
 EndStructure 
  
  ; 1412 : ORGANIZATIONAL_ADDRESS
-Structure T_ORGANIZATIONAL_ADDRESS Extends TStepBase ; ID= 1412
+Structure T_ORGANIZATIONAL_ADDRESS Extends TStepEntityBase ; ID= 1412
   
 EndStructure 
  
  ; 1413 : ORGANIZATIONAL_PROJECT
-Structure T_ORGANIZATIONAL_PROJECT Extends TStepBase ; ID= 1413
+Structure T_ORGANIZATIONAL_PROJECT Extends TStepEntityBase ; ID= 1413
   
 EndStructure 
  
  ; 1414 : ORGANIZATIONAL_PROJECT_ASSIGNMENT
-Structure T_ORGANIZATIONAL_PROJECT_ASSIGNMENT Extends TStepBase ; ID= 1414
+Structure T_ORGANIZATIONAL_PROJECT_ASSIGNMENT Extends TStepEntityBase ; ID= 1414
   
 EndStructure 
  
  ; 1415 : ORGANIZATIONAL_PROJECT_RELATIONSHIP
-Structure T_ORGANIZATIONAL_PROJECT_RELATIONSHIP Extends TStepBase ; ID= 1415
+Structure T_ORGANIZATIONAL_PROJECT_RELATIONSHIP Extends TStepEntityBase ; ID= 1415
   
 EndStructure 
  
  ; 1416 : ORGANIZATIONAL_PROJECT_ROLE
-Structure T_ORGANIZATIONAL_PROJECT_ROLE Extends TStepBase ; ID= 1416
+Structure T_ORGANIZATIONAL_PROJECT_ROLE Extends TStepEntityBase ; ID= 1416
   
 EndStructure 
  
  ; 1417 : ORIENTED_CLOSED_SHELL
-Structure T_ORIENTED_CLOSED_SHELL Extends TStepBase ; ID= 1417
+Structure T_ORIENTED_CLOSED_SHELL Extends TStepEntityBase ; ID= 1417
   
 EndStructure 
  
  ; 1418 : ORIENTED_EDGE
-Structure T_ORIENTED_EDGE Extends TStepBase ; ID= 1418
+Structure T_ORIENTED_EDGE Extends TStepEntityBase ; ID= 1418
   *Edge.T_EDGE
   Orientation.w     ; Boolean  
 EndStructure 
  
  ; 1419 : ORIENTED_FACE
-Structure T_ORIENTED_FACE Extends TStepBase ; ID= 1419
+Structure T_ORIENTED_FACE Extends TStepEntityBase ; ID= 1419
   
 EndStructure 
  
  ; 1420 : ORIENTED_JOINT
-Structure T_ORIENTED_JOINT Extends TStepBase ; ID= 1420
+Structure T_ORIENTED_JOINT Extends TStepEntityBase ; ID= 1420
   
 EndStructure 
  
  ; 1421 : ORIENTED_OPEN_SHELL
-Structure T_ORIENTED_OPEN_SHELL Extends TStepBase ; ID= 1421
+Structure T_ORIENTED_OPEN_SHELL Extends TStepEntityBase ; ID= 1421
   
 EndStructure 
  
  ; 1422 : ORIENTED_PATH
-Structure T_ORIENTED_PATH Extends TStepBase ; ID= 1422
+Structure T_ORIENTED_PATH Extends TStepEntityBase ; ID= 1422
   
 EndStructure 
  
  ; 1423 : ORIENTED_SURFACE
-Structure T_ORIENTED_SURFACE Extends TStepBase ; ID= 1423
+Structure T_ORIENTED_SURFACE Extends TStepEntityBase ; ID= 1423
   
 EndStructure 
  
  ; 1424 : ORIENTED_TOLERANCE_ZONE
-Structure T_ORIENTED_TOLERANCE_ZONE Extends TStepBase ; ID= 1424
+Structure T_ORIENTED_TOLERANCE_ZONE Extends TStepEntityBase ; ID= 1424
   
 EndStructure 
  
  ; 1425 : OTHER_LIST_TABLE_REPRESENTATION
-Structure T_OTHER_LIST_TABLE_REPRESENTATION Extends TStepBase ; ID= 1425
+Structure T_OTHER_LIST_TABLE_REPRESENTATION Extends TStepEntityBase ; ID= 1425
   
 EndStructure 
  
  ; 1426 : OUTER_BOUNDARY_CURVE
-Structure T_OUTER_BOUNDARY_CURVE Extends TStepBase ; ID= 1426
+Structure T_OUTER_BOUNDARY_CURVE Extends TStepEntityBase ; ID= 1426
   
 EndStructure 
  
  ; 1427 : OUTER_ROUND
-Structure T_OUTER_ROUND Extends TStepBase ; ID= 1427
+Structure T_OUTER_ROUND Extends TStepEntityBase ; ID= 1427
   
 EndStructure 
  
  ; 1428 : OUTSIDE_PROFILE
-Structure T_OUTSIDE_PROFILE Extends TStepBase ; ID= 1428
+Structure T_OUTSIDE_PROFILE Extends TStepEntityBase ; ID= 1428
   
 EndStructure 
  
  ; 1429 : OVER_RIDING_STYLED_ITEM
-Structure T_OVER_RIDING_STYLED_ITEM Extends TStepBase ; ID= 1429
+Structure T_OVER_RIDING_STYLED_ITEM Extends TStepEntityBase ; ID= 1429
   
 EndStructure 
  
  ; 1430 : OVER_USED_VERTEX
-Structure T_OVER_USED_VERTEX Extends TStepBase ; ID= 1430
+Structure T_OVER_USED_VERTEX Extends TStepEntityBase ; ID= 1430
   
 EndStructure 
  
  ; 1431 : OVERCOMPLEX_GEOMETRY
-Structure T_OVERCOMPLEX_GEOMETRY Extends TStepBase ; ID= 1431
+Structure T_OVERCOMPLEX_GEOMETRY Extends TStepEntityBase ; ID= 1431
   
 EndStructure 
  
  ; 1432 : OVERCOMPLEX_TOPOLOGY_AND_GEOMETRY_RELATIONSHIP
-Structure T_OVERCOMPLEX_TOPOLOGY_AND_GEOMETRY_RELATIONSHIP Extends TStepBase ; ID= 1432
+Structure T_OVERCOMPLEX_TOPOLOGY_AND_GEOMETRY_RELATIONSHIP Extends TStepEntityBase ; ID= 1432
   
 EndStructure 
  
  ; 1433 : OVERLAPPING_GEOMETRY
-Structure T_OVERLAPPING_GEOMETRY Extends TStepBase ; ID= 1433
+Structure T_OVERLAPPING_GEOMETRY Extends TStepEntityBase ; ID= 1433
   
 EndStructure 
  
  ; 1434 : PACKAGE_PRODUCT_CONCEPT_FEATURE
-Structure T_PACKAGE_PRODUCT_CONCEPT_FEATURE Extends TStepBase ; ID= 1434
+Structure T_PACKAGE_PRODUCT_CONCEPT_FEATURE Extends TStepEntityBase ; ID= 1434
   
 EndStructure 
  
  ; 1435 : PAIR_ACTUATOR
-Structure T_PAIR_ACTUATOR Extends TStepBase ; ID= 1435
+Structure T_PAIR_ACTUATOR Extends TStepEntityBase ; ID= 1435
   
 EndStructure 
  
  ; 1436 : PAIR_REPRESENTATION_RELATIONSHIP
-Structure T_PAIR_REPRESENTATION_RELATIONSHIP Extends TStepBase ; ID= 1436
+Structure T_PAIR_REPRESENTATION_RELATIONSHIP Extends TStepEntityBase ; ID= 1436
   
 EndStructure 
  
  ; 1437 : PAIR_VALUE
-Structure T_PAIR_VALUE Extends TStepBase ; ID= 1437
+Structure T_PAIR_VALUE Extends TStepEntityBase ; ID= 1437
   
 EndStructure 
  
  ; 1438 : PARABOLA
-Structure T_PARABOLA Extends TStepBase ; ID= 1438
+Structure T_PARABOLA Extends TStepEntityBase ; ID= 1438
   
 EndStructure 
  
  ; 1439 : PARALLEL_ASSEMBLY_CONSTRAINT
-Structure T_PARALLEL_ASSEMBLY_CONSTRAINT Extends TStepBase ; ID= 1439
+Structure T_PARALLEL_ASSEMBLY_CONSTRAINT Extends TStepEntityBase ; ID= 1439
   
 EndStructure 
  
  ; 1440 : PARALLEL_ASSEMBLY_CONSTRAINT_WITH_DIMENSION
-Structure T_PARALLEL_ASSEMBLY_CONSTRAINT_WITH_DIMENSION Extends TStepBase ; ID= 1440
+Structure T_PARALLEL_ASSEMBLY_CONSTRAINT_WITH_DIMENSION Extends TStepEntityBase ; ID= 1440
   
 EndStructure 
  
  ; 1441 : PARALLEL_COMPOSED_FUNCTION
-Structure T_PARALLEL_COMPOSED_FUNCTION Extends TStepBase ; ID= 1441
+Structure T_PARALLEL_COMPOSED_FUNCTION Extends TStepEntityBase ; ID= 1441
   
 EndStructure 
  
  ; 1442 : PARALLEL_GEOMETRIC_CONSTRAINT
-Structure T_PARALLEL_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 1442
+Structure T_PARALLEL_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 1442
   
 EndStructure 
  
  ; 1443 : PARALLEL_OFFSET
-Structure T_PARALLEL_OFFSET Extends TStepBase ; ID= 1443
+Structure T_PARALLEL_OFFSET Extends TStepEntityBase ; ID= 1443
   
 EndStructure 
  
  ; 1444 : PARALLEL_OFFSET_GEOMETRIC_CONSTRAINT
-Structure T_PARALLEL_OFFSET_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 1444
+Structure T_PARALLEL_OFFSET_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 1444
   
 EndStructure 
  
  ; 1445 : PARALLELISM_TOLERANCE
-Structure T_PARALLELISM_TOLERANCE Extends TStepBase ; ID= 1445
+Structure T_PARALLELISM_TOLERANCE Extends TStepEntityBase ; ID= 1445
   
 EndStructure 
  
  ; 1446 : PARAMETRIC_REPRESENTATION_CONTEXT
-Structure T_PARAMETRIC_REPRESENTATION_CONTEXT Extends TStepBase ; ID= 1446
+Structure T_PARAMETRIC_REPRESENTATION_CONTEXT Extends TStepEntityBase ; ID= 1446
   
 EndStructure 
  
  ; 1447 : PART_LAMINATE_TABLE
-Structure T_PART_LAMINATE_TABLE Extends TStepBase ; ID= 1447
+Structure T_PART_LAMINATE_TABLE Extends TStepEntityBase ; ID= 1447
   
 EndStructure 
  
  ; 1448 : PARTIAL_CIRCULAR_PROFILE
-Structure T_PARTIAL_CIRCULAR_PROFILE Extends TStepBase ; ID= 1448
+Structure T_PARTIAL_CIRCULAR_PROFILE Extends TStepEntityBase ; ID= 1448
   
 EndStructure 
  
  ; 1449 : PARTIAL_DERIVATIVE_EXPRESSION
-Structure T_PARTIAL_DERIVATIVE_EXPRESSION Extends TStepBase ; ID= 1449
+Structure T_PARTIAL_DERIVATIVE_EXPRESSION Extends TStepEntityBase ; ID= 1449
   
 EndStructure 
  
  ; 1450 : PARTIAL_DERIVATIVE_FUNCTION
-Structure T_PARTIAL_DERIVATIVE_FUNCTION Extends TStepBase ; ID= 1450
+Structure T_PARTIAL_DERIVATIVE_FUNCTION Extends TStepEntityBase ; ID= 1450
   
 EndStructure 
  
  ; 1451 : PARTIAL_DOCUMENT_WITH_STRUCTURED_TEXT_REPRESENTATION_ASSIGNMENT
-Structure T_PARTIAL_DOCUMENT_WITH_STRUCTURED_TEXT_REPRESENTATION_ASSIGNMENT Extends TStepBase ; ID= 1451
+Structure T_PARTIAL_DOCUMENT_WITH_STRUCTURED_TEXT_REPRESENTATION_ASSIGNMENT Extends TStepEntityBase ; ID= 1451
   
 EndStructure 
  
  ; 1452 : PARTLY_OVERLAPPING_CURVES
-Structure T_PARTLY_OVERLAPPING_CURVES Extends TStepBase ; ID= 1452
+Structure T_PARTLY_OVERLAPPING_CURVES Extends TStepEntityBase ; ID= 1452
   
 EndStructure 
  
  ; 1453 : PARTLY_OVERLAPPING_EDGES
-Structure T_PARTLY_OVERLAPPING_EDGES Extends TStepBase ; ID= 1453
+Structure T_PARTLY_OVERLAPPING_EDGES Extends TStepEntityBase ; ID= 1453
   
 EndStructure 
  
  ; 1454 : PARTLY_OVERLAPPING_FACES
-Structure T_PARTLY_OVERLAPPING_FACES Extends TStepBase ; ID= 1454
+Structure T_PARTLY_OVERLAPPING_FACES Extends TStepEntityBase ; ID= 1454
   
 EndStructure 
  
  ; 1455 : PARTLY_OVERLAPPING_SOLIDS
-Structure T_PARTLY_OVERLAPPING_SOLIDS Extends TStepBase ; ID= 1455
+Structure T_PARTLY_OVERLAPPING_SOLIDS Extends TStepEntityBase ; ID= 1455
   
 EndStructure 
  
  ; 1456 : PARTLY_OVERLAPPING_SURFACES
-Structure T_PARTLY_OVERLAPPING_SURFACES Extends TStepBase ; ID= 1456
+Structure T_PARTLY_OVERLAPPING_SURFACES Extends TStepEntityBase ; ID= 1456
   
 EndStructure 
  
  ; 1457 : PATH
-Structure T_PATH Extends TStepBase ; ID= 1457
+Structure T_PATH Extends TStepEntityBase ; ID= 1457
   
 EndStructure 
  
  ; 1458 : PATH_AREA_WITH_PARAMETERS
-Structure T_PATH_AREA_WITH_PARAMETERS Extends TStepBase ; ID= 1458
+Structure T_PATH_AREA_WITH_PARAMETERS Extends TStepEntityBase ; ID= 1458
   
 EndStructure 
  
  ; 1459 : PATH_FEATURE_COMPONENT
-Structure T_PATH_FEATURE_COMPONENT Extends TStepBase ; ID= 1459
+Structure T_PATH_FEATURE_COMPONENT Extends TStepEntityBase ; ID= 1459
   
 EndStructure 
  
  ; 1460 : PATH_NODE
-Structure T_PATH_NODE Extends TStepBase ; ID= 1460
+Structure T_PATH_NODE Extends TStepEntityBase ; ID= 1460
   
 EndStructure 
  
  ; 1461 : PATH_PARAMETER_REPRESENTATION
-Structure T_PATH_PARAMETER_REPRESENTATION Extends TStepBase ; ID= 1461
+Structure T_PATH_PARAMETER_REPRESENTATION Extends TStepEntityBase ; ID= 1461
   
 EndStructure 
  
  ; 1462 : PATH_PARAMETER_REPRESENTATION_CONTEXT
-Structure T_PATH_PARAMETER_REPRESENTATION_CONTEXT Extends TStepBase ; ID= 1462
+Structure T_PATH_PARAMETER_REPRESENTATION_CONTEXT Extends TStepEntityBase ; ID= 1462
   
 EndStructure 
  
  ; 1463 : PATH_SHAPE_REPRESENTATION
-Structure T_PATH_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1463
+Structure T_PATH_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1463
   
 EndStructure 
  
  ; 1464 : PATTERN_OFFSET_MEMBERSHIP
-Structure T_PATTERN_OFFSET_MEMBERSHIP Extends TStepBase ; ID= 1464
+Structure T_PATTERN_OFFSET_MEMBERSHIP Extends TStepEntityBase ; ID= 1464
   
 EndStructure 
  
  ; 1465 : PATTERN_OMIT_MEMBERSHIP
-Structure T_PATTERN_OMIT_MEMBERSHIP Extends TStepBase ; ID= 1465
+Structure T_PATTERN_OMIT_MEMBERSHIP Extends TStepEntityBase ; ID= 1465
   
 EndStructure 
  
  ; 1466 : PCURVE
-Structure T_PCURVE Extends TStepBase ; ID= 1466
+Structure T_PCURVE Extends TStepEntityBase ; ID= 1466
   
 EndStructure 
  
  ; 1467 : PDGC_WITH_DIMENSION
-Structure T_PDGC_WITH_DIMENSION Extends TStepBase ; ID= 1467
+Structure T_PDGC_WITH_DIMENSION Extends TStepEntityBase ; ID= 1467
   
 EndStructure 
  
  ; 1468 : PERCENTAGE_LAMINATE_DEFINITION
-Structure T_PERCENTAGE_LAMINATE_DEFINITION Extends TStepBase ; ID= 1468
+Structure T_PERCENTAGE_LAMINATE_DEFINITION Extends TStepEntityBase ; ID= 1468
   
 EndStructure 
  
  ; 1469 : PERCENTAGE_LAMINATE_TABLE
-Structure T_PERCENTAGE_LAMINATE_TABLE Extends TStepBase ; ID= 1469
+Structure T_PERCENTAGE_LAMINATE_TABLE Extends TStepEntityBase ; ID= 1469
   
 EndStructure 
  
  ; 1470 : PERCENTAGE_PLY_DEFINITION
-Structure T_PERCENTAGE_PLY_DEFINITION Extends TStepBase ; ID= 1470
+Structure T_PERCENTAGE_PLY_DEFINITION Extends TStepEntityBase ; ID= 1470
   
 EndStructure 
  
  ; 1471 : PERPENDICULAR_ASSEMBLY_CONSTRAINT
-Structure T_PERPENDICULAR_ASSEMBLY_CONSTRAINT Extends TStepBase ; ID= 1471
+Structure T_PERPENDICULAR_ASSEMBLY_CONSTRAINT Extends TStepEntityBase ; ID= 1471
   
 EndStructure 
  
  ; 1472 : PERPENDICULAR_GEOMETRIC_CONSTRAINT
-Structure T_PERPENDICULAR_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 1472
+Structure T_PERPENDICULAR_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 1472
   
 EndStructure 
  
  ; 1473 : PERPENDICULAR_TO
-Structure T_PERPENDICULAR_TO Extends TStepBase ; ID= 1473
+Structure T_PERPENDICULAR_TO Extends TStepEntityBase ; ID= 1473
   
 EndStructure 
  
  ; 1474 : PERPENDICULARITY_TOLERANCE
-Structure T_PERPENDICULARITY_TOLERANCE Extends TStepBase ; ID= 1474
+Structure T_PERPENDICULARITY_TOLERANCE Extends TStepEntityBase ; ID= 1474
   
 EndStructure 
  
  ; 1475 : PERSON
-Structure T_PERSON Extends TStepBase ; ID= 1475
+Structure T_PERSON Extends TStepEntityBase ; ID= 1475
   
 EndStructure 
  
  ; 1476 : PERSON_AND_ORGANIZATION
-Structure T_PERSON_AND_ORGANIZATION Extends TStepBase ; ID= 1476
+Structure T_PERSON_AND_ORGANIZATION Extends TStepEntityBase ; ID= 1476
   
 EndStructure 
  
  ; 1477 : PERSON_AND_ORGANIZATION_ADDRESS
-Structure T_PERSON_AND_ORGANIZATION_ADDRESS Extends TStepBase ; ID= 1477
+Structure T_PERSON_AND_ORGANIZATION_ADDRESS Extends TStepEntityBase ; ID= 1477
   
 EndStructure 
  
  ; 1478 : PERSON_AND_ORGANIZATION_ASSIGNMENT
-Structure T_PERSON_AND_ORGANIZATION_ASSIGNMENT Extends TStepBase ; ID= 1478
+Structure T_PERSON_AND_ORGANIZATION_ASSIGNMENT Extends TStepEntityBase ; ID= 1478
   
 EndStructure 
  
  ; 1479 : PERSON_AND_ORGANIZATION_ROLE
-Structure T_PERSON_AND_ORGANIZATION_ROLE Extends TStepBase ; ID= 1479
+Structure T_PERSON_AND_ORGANIZATION_ROLE Extends TStepEntityBase ; ID= 1479
   
 EndStructure 
  
  ; 1480 : PERSONAL_ADDRESS
-Structure T_PERSONAL_ADDRESS Extends TStepBase ; ID= 1480
+Structure T_PERSONAL_ADDRESS Extends TStepEntityBase ; ID= 1480
   
 EndStructure 
  
  ; 1481 : PGC_WITH_DIMENSION
-Structure T_PGC_WITH_DIMENSION Extends TStepBase ; ID= 1481
+Structure T_PGC_WITH_DIMENSION Extends TStepEntityBase ; ID= 1481
   
 EndStructure 
  
  ; 1482 : PHYSICAL_BREAKDOWN_CONTEXT
-Structure T_PHYSICAL_BREAKDOWN_CONTEXT Extends TStepBase ; ID= 1482
+Structure T_PHYSICAL_BREAKDOWN_CONTEXT Extends TStepEntityBase ; ID= 1482
   
 EndStructure 
  
  ; 1483 : PHYSICAL_COMPONENT
-Structure T_PHYSICAL_COMPONENT Extends TStepBase ; ID= 1483
+Structure T_PHYSICAL_COMPONENT Extends TStepEntityBase ; ID= 1483
   
 EndStructure 
  
  ; 1484 : PHYSICAL_COMPONENT_FEATURE
-Structure T_PHYSICAL_COMPONENT_FEATURE Extends TStepBase ; ID= 1484
+Structure T_PHYSICAL_COMPONENT_FEATURE Extends TStepEntityBase ; ID= 1484
   
 EndStructure 
  
  ; 1485 : PHYSICAL_COMPONENT_INTERFACE_TERMINAL
-Structure T_PHYSICAL_COMPONENT_INTERFACE_TERMINAL Extends TStepBase ; ID= 1485
+Structure T_PHYSICAL_COMPONENT_INTERFACE_TERMINAL Extends TStepEntityBase ; ID= 1485
   
 EndStructure 
  
  ; 1486 : PHYSICAL_COMPONENT_TERMINAL
-Structure T_PHYSICAL_COMPONENT_TERMINAL Extends TStepBase ; ID= 1486
+Structure T_PHYSICAL_COMPONENT_TERMINAL Extends TStepEntityBase ; ID= 1486
   
 EndStructure 
  
  ; 1487 : PHYSICAL_ELEMENT_USAGE
-Structure T_PHYSICAL_ELEMENT_USAGE Extends TStepBase ; ID= 1487
+Structure T_PHYSICAL_ELEMENT_USAGE Extends TStepEntityBase ; ID= 1487
   
 EndStructure 
  
  ; 1488 : PHYSICALLY_MODELLED_PRODUCT_DEFINITION
-Structure T_PHYSICALLY_MODELLED_PRODUCT_DEFINITION Extends TStepBase ; ID= 1488
+Structure T_PHYSICALLY_MODELLED_PRODUCT_DEFINITION Extends TStepEntityBase ; ID= 1488
   
 EndStructure 
  
  ; 1489 : PICTURE_REPRESENTATION
-Structure T_PICTURE_REPRESENTATION Extends TStepBase ; ID= 1489
+Structure T_PICTURE_REPRESENTATION Extends TStepEntityBase ; ID= 1489
   
 EndStructure 
  
  ; 1490 : PICTURE_REPRESENTATION_ITEM
-Structure T_PICTURE_REPRESENTATION_ITEM Extends TStepBase ; ID= 1490
+Structure T_PICTURE_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 1490
   
 EndStructure 
  
  ; 1491 : PLACED_DATUM_TARGET_FEATURE
-Structure T_PLACED_DATUM_TARGET_FEATURE Extends TStepBase ; ID= 1491
+Structure T_PLACED_DATUM_TARGET_FEATURE Extends TStepEntityBase ; ID= 1491
   
 EndStructure 
  
  ; 1492 : PLACED_FEATURE
-Structure T_PLACED_FEATURE Extends TStepBase ; ID= 1492
+Structure T_PLACED_FEATURE Extends TStepEntityBase ; ID= 1492
   
 EndStructure 
  
  ; 1493 : PLACEMENT
-Structure T_PLACEMENT Extends TStepBase ; ID= 1493
+Structure T_PLACEMENT Extends TStepEntityBase ; ID= 1493
   
 EndStructure 
  
  ; 1494 : PLANAR_BOX
-Structure T_PLANAR_BOX Extends TStepBase ; ID= 1494
+Structure T_PLANAR_BOX Extends TStepEntityBase ; ID= 1494
   
 EndStructure 
  
  ; 1495 : PLANAR_CURVE_PAIR
-Structure T_PLANAR_CURVE_PAIR Extends TStepBase ; ID= 1495
+Structure T_PLANAR_CURVE_PAIR Extends TStepEntityBase ; ID= 1495
   
 EndStructure 
  
  ; 1496 : PLANAR_CURVE_PAIR_RANGE
-Structure T_PLANAR_CURVE_PAIR_RANGE Extends TStepBase ; ID= 1496
+Structure T_PLANAR_CURVE_PAIR_RANGE Extends TStepEntityBase ; ID= 1496
   
 EndStructure 
  
  ; 1497 : PLANAR_EXTENT
-Structure T_PLANAR_EXTENT Extends TStepBase ; ID= 1497
+Structure T_PLANAR_EXTENT Extends TStepEntityBase ; ID= 1497
   
 EndStructure 
  
  ; 1498 : PLANAR_PAIR
-Structure T_PLANAR_PAIR Extends TStepBase ; ID= 1498
+Structure T_PLANAR_PAIR Extends TStepEntityBase ; ID= 1498
   
 EndStructure 
  
  ; 1499 : PLANAR_PAIR_RANGE
-Structure T_PLANAR_PAIR_RANGE Extends TStepBase ; ID= 1499
+Structure T_PLANAR_PAIR_RANGE Extends TStepEntityBase ; ID= 1499
   
 EndStructure 
  
  ; 1500 : PLANAR_PAIR_VALUE
-Structure T_PLANAR_PAIR_VALUE Extends TStepBase ; ID= 1500
+Structure T_PLANAR_PAIR_VALUE Extends TStepEntityBase ; ID= 1500
   
 EndStructure 
  
  ; 1501 : PLANAR_PAIR_WITH_RANGE
-Structure T_PLANAR_PAIR_WITH_RANGE Extends TStepBase ; ID= 1501
+Structure T_PLANAR_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 1501
   
 EndStructure 
  
  ; 1502 : PLANAR_SHAPE_REPRESENTATION
-Structure T_PLANAR_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1502
+Structure T_PLANAR_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1502
   
 EndStructure 
  
  ; 1503 : PLANE
-Structure T_PLANE Extends TStepBase ; ID= 1503
+Structure T_PLANE Extends TStepEntityBase ; ID= 1503
    *Pos.T_AXIS2_PLACEMENT_3D 
 EndStructure 
  
  ; 1504 : PLANE_ANGLE_AND_LENGTH_PAIR
-Structure T_PLANE_ANGLE_AND_LENGTH_PAIR Extends TStepBase ; ID= 1504
+Structure T_PLANE_ANGLE_AND_LENGTH_PAIR Extends TStepEntityBase ; ID= 1504
   
 EndStructure 
  
  ; 1505 : PLANE_ANGLE_AND_RATIO_PAIR
-Structure T_PLANE_ANGLE_AND_RATIO_PAIR Extends TStepBase ; ID= 1505
+Structure T_PLANE_ANGLE_AND_RATIO_PAIR Extends TStepEntityBase ; ID= 1505
   
 EndStructure 
  
  ; 1506 : PLANE_ANGLE_MEASURE_WITH_UNIT
-Structure T_PLANE_ANGLE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1506
+Structure T_PLANE_ANGLE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1506
   
 EndStructure 
  
  ; 1507 : PLANE_ANGLE_UNIT
-Structure T_PLANE_ANGLE_UNIT Extends TStepBase ; ID= 1507
+Structure T_PLANE_ANGLE_UNIT Extends TStepEntityBase ; ID= 1507
   
 EndStructure 
  
  ; 1508 : PLANE_MILLING_OPERATION
-Structure T_PLANE_MILLING_OPERATION Extends TStepBase ; ID= 1508
+Structure T_PLANE_MILLING_OPERATION Extends TStepEntityBase ; ID= 1508
   
 EndStructure 
  
  ; 1509 : PLUS_EXPRESSION
-Structure T_PLUS_EXPRESSION Extends TStepBase ; ID= 1509
+Structure T_PLUS_EXPRESSION Extends TStepEntityBase ; ID= 1509
   
 EndStructure 
  
  ; 1510 : PLUS_MINUS_TOLERANCE
-Structure T_PLUS_MINUS_TOLERANCE Extends TStepBase ; ID= 1510
+Structure T_PLUS_MINUS_TOLERANCE Extends TStepEntityBase ; ID= 1510
   
 EndStructure 
  
  ; 1511 : PLY_ANGLE_REPRESENTATION
-Structure T_PLY_ANGLE_REPRESENTATION Extends TStepBase ; ID= 1511
+Structure T_PLY_ANGLE_REPRESENTATION Extends TStepEntityBase ; ID= 1511
   
 EndStructure 
  
  ; 1512 : PLY_LAMINATE_DEFINITION
-Structure T_PLY_LAMINATE_DEFINITION Extends TStepBase ; ID= 1512
+Structure T_PLY_LAMINATE_DEFINITION Extends TStepEntityBase ; ID= 1512
   
 EndStructure 
  
  ; 1513 : PLY_LAMINATE_SEQUENCE_DEFINITION
-Structure T_PLY_LAMINATE_SEQUENCE_DEFINITION Extends TStepBase ; ID= 1513
+Structure T_PLY_LAMINATE_SEQUENCE_DEFINITION Extends TStepEntityBase ; ID= 1513
   
 EndStructure 
  
  ; 1514 : PLY_LAMINATE_TABLE
-Structure T_PLY_LAMINATE_TABLE Extends TStepBase ; ID= 1514
+Structure T_PLY_LAMINATE_TABLE Extends TStepEntityBase ; ID= 1514
   
 EndStructure 
  
  ; 1515 : PLY_ORIENTATION_ANGLE
-Structure T_PLY_ORIENTATION_ANGLE Extends TStepBase ; ID= 1515
+Structure T_PLY_ORIENTATION_ANGLE Extends TStepEntityBase ; ID= 1515
   
 EndStructure 
  
  ; 1516 : PMI_REQUIREMENT_ITEM_ASSOCIATION
-Structure T_PMI_REQUIREMENT_ITEM_ASSOCIATION Extends TStepBase ; ID= 1516
+Structure T_PMI_REQUIREMENT_ITEM_ASSOCIATION Extends TStepEntityBase ; ID= 1516
   
 EndStructure 
  
  ; 1517 : POCKET
-Structure T_POCKET Extends TStepBase ; ID= 1517
+Structure T_POCKET Extends TStepEntityBase ; ID= 1517
   
 EndStructure 
  
  ; 1518 : POCKET_BOTTOM
-Structure T_POCKET_BOTTOM Extends TStepBase ; ID= 1518
+Structure T_POCKET_BOTTOM Extends TStepEntityBase ; ID= 1518
   
 EndStructure 
  
  ; 1519 : POGC_WITH_DIMENSION
-Structure T_POGC_WITH_DIMENSION Extends TStepBase ; ID= 1519
+Structure T_POGC_WITH_DIMENSION Extends TStepEntityBase ; ID= 1519
   
 EndStructure 
  
  ; 1520 : POINT
-Structure T_POINT Extends TStepBase ; ID= 1520
+Structure T_POINT Extends TStepEntityBase ; ID= 1520
   
 EndStructure 
  
  ; 1521 : POINT_AND_VECTOR
-Structure T_POINT_AND_VECTOR Extends TStepBase ; ID= 1521
+Structure T_POINT_AND_VECTOR Extends TStepEntityBase ; ID= 1521
   
 EndStructure 
  
  ; 1522 : POINT_ARRAY
-Structure T_POINT_ARRAY Extends TStepBase ; ID= 1522
+Structure T_POINT_ARRAY Extends TStepEntityBase ; ID= 1522
   
 EndStructure 
  
  ; 1523 : POINT_CLOUD_DATASET
-Structure T_POINT_CLOUD_DATASET Extends TStepBase ; ID= 1523
+Structure T_POINT_CLOUD_DATASET Extends TStepEntityBase ; ID= 1523
   
 EndStructure 
  
  ; 1524 : POINT_CLOUD_DATASET_WITH_COLOURS
-Structure T_POINT_CLOUD_DATASET_WITH_COLOURS Extends TStepBase ; ID= 1524
+Structure T_POINT_CLOUD_DATASET_WITH_COLOURS Extends TStepEntityBase ; ID= 1524
   
 EndStructure 
  
  ; 1525 : POINT_CLOUD_DATASET_WITH_INTENSITIES
-Structure T_POINT_CLOUD_DATASET_WITH_INTENSITIES Extends TStepBase ; ID= 1525
+Structure T_POINT_CLOUD_DATASET_WITH_INTENSITIES Extends TStepEntityBase ; ID= 1525
   
 EndStructure 
  
  ; 1526 : POINT_CLOUD_DATASET_WITH_NORMALS
-Structure T_POINT_CLOUD_DATASET_WITH_NORMALS Extends TStepBase ; ID= 1526
+Structure T_POINT_CLOUD_DATASET_WITH_NORMALS Extends TStepEntityBase ; ID= 1526
   
 EndStructure 
  
  ; 1527 : POINT_CLOUD_SUPERDATASET
-Structure T_POINT_CLOUD_SUPERDATASET Extends TStepBase ; ID= 1527
+Structure T_POINT_CLOUD_SUPERDATASET Extends TStepEntityBase ; ID= 1527
   
 EndStructure 
  
  ; 1528 : POINT_DISTANCE_GEOMETRIC_CONSTRAINT
-Structure T_POINT_DISTANCE_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 1528
+Structure T_POINT_DISTANCE_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 1528
   
 EndStructure 
  
  ; 1529 : POINT_IN_VOLUME
-Structure T_POINT_IN_VOLUME Extends TStepBase ; ID= 1529
+Structure T_POINT_IN_VOLUME Extends TStepEntityBase ; ID= 1529
   
 EndStructure 
  
  ; 1530 : POINT_ON_CURVE
-Structure T_POINT_ON_CURVE Extends TStepBase ; ID= 1530
+Structure T_POINT_ON_CURVE Extends TStepEntityBase ; ID= 1530
   
 EndStructure 
  
  ; 1531 : POINT_ON_EDGE_CURVE
-Structure T_POINT_ON_EDGE_CURVE Extends TStepBase ; ID= 1531
+Structure T_POINT_ON_EDGE_CURVE Extends TStepEntityBase ; ID= 1531
   
 EndStructure 
  
  ; 1532 : POINT_ON_FACE_SURFACE
-Structure T_POINT_ON_FACE_SURFACE Extends TStepBase ; ID= 1532
+Structure T_POINT_ON_FACE_SURFACE Extends TStepEntityBase ; ID= 1532
   
 EndStructure 
  
  ; 1533 : POINT_ON_PLANAR_CURVE_PAIR
-Structure T_POINT_ON_PLANAR_CURVE_PAIR Extends TStepBase ; ID= 1533
+Structure T_POINT_ON_PLANAR_CURVE_PAIR Extends TStepEntityBase ; ID= 1533
   
 EndStructure 
  
  ; 1534 : POINT_ON_PLANAR_CURVE_PAIR_RANGE
-Structure T_POINT_ON_PLANAR_CURVE_PAIR_RANGE Extends TStepBase ; ID= 1534
+Structure T_POINT_ON_PLANAR_CURVE_PAIR_RANGE Extends TStepEntityBase ; ID= 1534
   
 EndStructure 
  
  ; 1535 : POINT_ON_PLANAR_CURVE_PAIR_VALUE
-Structure T_POINT_ON_PLANAR_CURVE_PAIR_VALUE Extends TStepBase ; ID= 1535
+Structure T_POINT_ON_PLANAR_CURVE_PAIR_VALUE Extends TStepEntityBase ; ID= 1535
   
 EndStructure 
  
  ; 1536 : POINT_ON_PLANAR_CURVE_PAIR_WITH_RANGE
-Structure T_POINT_ON_PLANAR_CURVE_PAIR_WITH_RANGE Extends TStepBase ; ID= 1536
+Structure T_POINT_ON_PLANAR_CURVE_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 1536
   
 EndStructure 
  
  ; 1537 : POINT_ON_SURFACE
-Structure T_POINT_ON_SURFACE Extends TStepBase ; ID= 1537
+Structure T_POINT_ON_SURFACE Extends TStepEntityBase ; ID= 1537
   
 EndStructure 
  
  ; 1538 : POINT_ON_SURFACE_PAIR
-Structure T_POINT_ON_SURFACE_PAIR Extends TStepBase ; ID= 1538
+Structure T_POINT_ON_SURFACE_PAIR Extends TStepEntityBase ; ID= 1538
   
 EndStructure 
  
  ; 1539 : POINT_ON_SURFACE_PAIR_RANGE
-Structure T_POINT_ON_SURFACE_PAIR_RANGE Extends TStepBase ; ID= 1539
+Structure T_POINT_ON_SURFACE_PAIR_RANGE Extends TStepEntityBase ; ID= 1539
   
 EndStructure 
  
  ; 1540 : POINT_ON_SURFACE_PAIR_VALUE
-Structure T_POINT_ON_SURFACE_PAIR_VALUE Extends TStepBase ; ID= 1540
+Structure T_POINT_ON_SURFACE_PAIR_VALUE Extends TStepEntityBase ; ID= 1540
   
 EndStructure 
  
  ; 1541 : POINT_ON_SURFACE_PAIR_WITH_RANGE
-Structure T_POINT_ON_SURFACE_PAIR_WITH_RANGE Extends TStepBase ; ID= 1541
+Structure T_POINT_ON_SURFACE_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 1541
   
 EndStructure 
  
  ; 1542 : POINT_PATH
-Structure T_POINT_PATH Extends TStepBase ; ID= 1542
+Structure T_POINT_PATH Extends TStepEntityBase ; ID= 1542
   
 EndStructure 
  
  ; 1543 : POINT_PLACEMENT_SHAPE_REPRESENTATION
-Structure T_POINT_PLACEMENT_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1543
+Structure T_POINT_PLACEMENT_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1543
   
 EndStructure 
  
  ; 1544 : POINT_REPLICA
-Structure T_POINT_REPLICA Extends TStepBase ; ID= 1544
+Structure T_POINT_REPLICA Extends TStepEntityBase ; ID= 1544
   
 EndStructure 
  
  ; 1545 : POINT_STYLE
-Structure T_POINT_STYLE Extends TStepBase ; ID= 1545
+Structure T_POINT_STYLE Extends TStepEntityBase ; ID= 1545
   
 EndStructure 
  
  ; 1546 : POINT_TO_POINT_PATH
-Structure T_POINT_TO_POINT_PATH Extends TStepBase ; ID= 1546
+Structure T_POINT_TO_POINT_PATH Extends TStepEntityBase ; ID= 1546
   
 EndStructure 
  
  ; 1547 : POLAR_11
-Structure T_POLAR_11 Extends TStepBase ; ID= 1547
+Structure T_POLAR_11 Extends TStepEntityBase ; ID= 1547
   
 EndStructure 
  
  ; 1548 : POLAR_COMPLEX_NUMBER_LITERAL
-Structure T_POLAR_COMPLEX_NUMBER_LITERAL Extends TStepBase ; ID= 1548
+Structure T_POLAR_COMPLEX_NUMBER_LITERAL Extends TStepEntityBase ; ID= 1548
   
 EndStructure 
  
  ; 1549 : POLAR_COMPLEX_NUMBER_REGION
-Structure T_POLAR_COMPLEX_NUMBER_REGION Extends TStepBase ; ID= 1549
+Structure T_POLAR_COMPLEX_NUMBER_REGION Extends TStepEntityBase ; ID= 1549
   
 EndStructure 
  
  ; 1550 : POLAR_POINT
-Structure T_POLAR_POINT Extends TStepBase ; ID= 1550
+Structure T_POLAR_POINT Extends TStepEntityBase ; ID= 1550
   
 EndStructure 
  
  ; 1551 : POLY_LOOP
-Structure T_POLY_LOOP Extends TStepBase ; ID= 1551
+Structure T_POLY_LOOP Extends TStepEntityBase ; ID= 1551
   
 EndStructure 
  
  ; 1552 : POLYGONAL_AREA
-Structure T_POLYGONAL_AREA Extends TStepBase ; ID= 1552
+Structure T_POLYGONAL_AREA Extends TStepEntityBase ; ID= 1552
   
 EndStructure 
  
  ; 1553 : POLYLINE
-Structure T_POLYLINE Extends TStepBase ; ID= 1553
+Structure T_POLYLINE Extends TStepEntityBase ; ID= 1553
   
 EndStructure 
  
  ; 1554 : POSITION_TOLERANCE
-Structure T_POSITION_TOLERANCE Extends TStepBase ; ID= 1554
+Structure T_POSITION_TOLERANCE Extends TStepEntityBase ; ID= 1554
   
 EndStructure 
  
  ; 1555 : POSITIONED_SKETCH
-Structure T_POSITIONED_SKETCH Extends TStepBase ; ID= 1555
+Structure T_POSITIONED_SKETCH Extends TStepEntityBase ; ID= 1555
   
 EndStructure 
  
  ; 1556 : POSITIVE_LENGTH_MEASURE_WITH_UNIT
-Structure T_POSITIVE_LENGTH_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1556
+Structure T_POSITIVE_LENGTH_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1556
   
 EndStructure 
  
  ; 1557 : POSITIVE_PLANE_ANGLE_MEASURE_WITH_UNIT
-Structure T_POSITIVE_PLANE_ANGLE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1557
+Structure T_POSITIVE_PLANE_ANGLE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1557
   
 EndStructure 
  
  ; 1558 : POWER_EXPRESSION
-Structure T_POWER_EXPRESSION Extends TStepBase ; ID= 1558
+Structure T_POWER_EXPRESSION Extends TStepEntityBase ; ID= 1558
   
 EndStructure 
  
  ; 1559 : POWER_MEASURE_WITH_UNIT
-Structure T_POWER_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1559
+Structure T_POWER_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1559
   
 EndStructure 
  
  ; 1560 : POWER_UNIT
-Structure T_POWER_UNIT Extends TStepBase ; ID= 1560
+Structure T_POWER_UNIT Extends TStepEntityBase ; ID= 1560
   
 EndStructure 
  
  ; 1561 : PRE_DEFINED_CHARACTER_GLYPH
-Structure T_PRE_DEFINED_CHARACTER_GLYPH Extends TStepBase ; ID= 1561
+Structure T_PRE_DEFINED_CHARACTER_GLYPH Extends TStepEntityBase ; ID= 1561
   
 EndStructure 
  
  ; 1562 : PRE_DEFINED_COLOUR
-Structure T_PRE_DEFINED_COLOUR Extends TStepBase ; ID= 1562
-  
+Structure T_PRE_DEFINED_COLOUR Extends TStepEntityBase ; ID= 1562
+  *SuperType.TStepEntityBase
+  *SubType.TStepEntityBase
 EndStructure 
  
  ; 1563 : PRE_DEFINED_CURVE_FONT
-Structure T_PRE_DEFINED_CURVE_FONT Extends TStepBase ; ID= 1563
+Structure T_PRE_DEFINED_CURVE_FONT Extends TStepEntityBase ; ID= 1563
   
 EndStructure 
  
  ; 1564 : PRE_DEFINED_DIMENSION_SYMBOL
-Structure T_PRE_DEFINED_DIMENSION_SYMBOL Extends TStepBase ; ID= 1564
+Structure T_PRE_DEFINED_DIMENSION_SYMBOL Extends TStepEntityBase ; ID= 1564
   
 EndStructure 
  
  ; 1565 : PRE_DEFINED_GEOMETRICAL_TOLERANCE_SYMBOL
-Structure T_PRE_DEFINED_GEOMETRICAL_TOLERANCE_SYMBOL Extends TStepBase ; ID= 1565
+Structure T_PRE_DEFINED_GEOMETRICAL_TOLERANCE_SYMBOL Extends TStepEntityBase ; ID= 1565
   
 EndStructure 
  
  ; 1566 : PRE_DEFINED_ITEM
-Structure T_PRE_DEFINED_ITEM Extends TStepBase ; ID= 1566
-  
+Structure T_PRE_DEFINED_ITEM Extends TStepEntityBase ; ID= 1566
+    
 EndStructure 
  
  ; 1567 : PRE_DEFINED_MARKER
-Structure T_PRE_DEFINED_MARKER Extends TStepBase ; ID= 1567
+Structure T_PRE_DEFINED_MARKER Extends TStepEntityBase ; ID= 1567
   
 EndStructure 
  
  ; 1568 : PRE_DEFINED_POINT_MARKER_SYMBOL
-Structure T_PRE_DEFINED_POINT_MARKER_SYMBOL Extends TStepBase ; ID= 1568
+Structure T_PRE_DEFINED_POINT_MARKER_SYMBOL Extends TStepEntityBase ; ID= 1568
   
 EndStructure 
  
  ; 1569 : PRE_DEFINED_PRESENTATION_STYLE
-Structure T_PRE_DEFINED_PRESENTATION_STYLE Extends TStepBase ; ID= 1569
+Structure T_PRE_DEFINED_PRESENTATION_STYLE Extends TStepEntityBase ; ID= 1569
   
 EndStructure 
  
  ; 1570 : PRE_DEFINED_SURFACE_CONDITION_SYMBOL
-Structure T_PRE_DEFINED_SURFACE_CONDITION_SYMBOL Extends TStepBase ; ID= 1570
+Structure T_PRE_DEFINED_SURFACE_CONDITION_SYMBOL Extends TStepEntityBase ; ID= 1570
   
 EndStructure 
  
  ; 1571 : PRE_DEFINED_SURFACE_SIDE_STYLE
-Structure T_PRE_DEFINED_SURFACE_SIDE_STYLE Extends TStepBase ; ID= 1571
+Structure T_PRE_DEFINED_SURFACE_SIDE_STYLE Extends TStepEntityBase ; ID= 1571
   
 EndStructure 
  
  ; 1572 : PRE_DEFINED_SYMBOL
-Structure T_PRE_DEFINED_SYMBOL Extends TStepBase ; ID= 1572
+Structure T_PRE_DEFINED_SYMBOL Extends TStepEntityBase ; ID= 1572
   
 EndStructure 
  
  ; 1573 : PRE_DEFINED_TERMINATOR_SYMBOL
-Structure T_PRE_DEFINED_TERMINATOR_SYMBOL Extends TStepBase ; ID= 1573
+Structure T_PRE_DEFINED_TERMINATOR_SYMBOL Extends TStepEntityBase ; ID= 1573
   
 EndStructure 
  
  ; 1574 : PRE_DEFINED_TEXT_FONT
-Structure T_PRE_DEFINED_TEXT_FONT Extends TStepBase ; ID= 1574
+Structure T_PRE_DEFINED_TEXT_FONT Extends TStepEntityBase ; ID= 1574
   
 EndStructure 
  
  ; 1575 : PRE_DEFINED_TILE
-Structure T_PRE_DEFINED_TILE Extends TStepBase ; ID= 1575
+Structure T_PRE_DEFINED_TILE Extends TStepEntityBase ; ID= 1575
   
 EndStructure 
  
  ; 1576 : PRECISION_QUALIFIER
-Structure T_PRECISION_QUALIFIER Extends TStepBase ; ID= 1576
+Structure T_PRECISION_QUALIFIER Extends TStepEntityBase ; ID= 1576
   
 EndStructure 
  
  ; 1577 : PREDEFINED_PICTURE_REPRESENTATION_ITEM
-Structure T_PREDEFINED_PICTURE_REPRESENTATION_ITEM Extends TStepBase ; ID= 1577
+Structure T_PREDEFINED_PICTURE_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 1577
   
 EndStructure 
  
  ; 1578 : PRESCRIBED_PATH
-Structure T_PRESCRIBED_PATH Extends TStepBase ; ID= 1578
+Structure T_PRESCRIBED_PATH Extends TStepEntityBase ; ID= 1578
   
 EndStructure 
  
  ; 1579 : PRESENTATION_AREA
-Structure T_PRESENTATION_AREA Extends TStepBase ; ID= 1579
+Structure T_PRESENTATION_AREA Extends TStepEntityBase ; ID= 1579
   
 EndStructure 
  
  ; 1580 : PRESENTATION_LAYER_ASSIGNMENT
-Structure T_PRESENTATION_LAYER_ASSIGNMENT Extends TStepBase ; ID= 1580
+Structure T_PRESENTATION_LAYER_ASSIGNMENT Extends TStepEntityBase ; ID= 1580
   
 EndStructure 
  
  ; 1581 : PRESENTATION_REPRESENTATION
-Structure T_PRESENTATION_REPRESENTATION Extends TStepBase ; ID= 1581
+Structure T_PRESENTATION_REPRESENTATION Extends TStepEntityBase ; ID= 1581
   
 EndStructure 
  
  ; 1582 : PRESENTATION_SET
-Structure T_PRESENTATION_SET Extends TStepBase ; ID= 1582
+Structure T_PRESENTATION_SET Extends TStepEntityBase ; ID= 1582
   
 EndStructure 
  
  ; 1583 : PRESENTATION_SIZE
-Structure T_PRESENTATION_SIZE Extends TStepBase ; ID= 1583
+Structure T_PRESENTATION_SIZE Extends TStepEntityBase ; ID= 1583
   
 EndStructure 
  
  ; 1584 : PRESENTATION_STYLE_ASSIGNMENT
-Structure T_PRESENTATION_STYLE_ASSIGNMENT Extends TStepBase ; ID= 1584
+Structure T_PRESENTATION_STYLE_ASSIGNMENT Extends TStepEntityBase ; ID= 1584
   
 EndStructure 
  
  ; 1585 : PRESENTATION_STYLE_BY_CONTEXT
-Structure T_PRESENTATION_STYLE_BY_CONTEXT Extends TStepBase ; ID= 1585
+Structure T_PRESENTATION_STYLE_BY_CONTEXT Extends TStepEntityBase ; ID= 1585
   
 EndStructure 
  
  ; 1586 : PRESENTATION_VIEW
-Structure T_PRESENTATION_VIEW Extends TStepBase ; ID= 1586
+Structure T_PRESENTATION_VIEW Extends TStepEntityBase ; ID= 1586
   
 EndStructure 
  
  ; 1587 : PRESENTED_ITEM
-Structure T_PRESENTED_ITEM Extends TStepBase ; ID= 1587
+Structure T_PRESENTED_ITEM Extends TStepEntityBase ; ID= 1587
   
 EndStructure 
  
  ; 1588 : PRESENTED_ITEM_REPRESENTATION
-Structure T_PRESENTED_ITEM_REPRESENTATION Extends TStepBase ; ID= 1588
+Structure T_PRESENTED_ITEM_REPRESENTATION Extends TStepEntityBase ; ID= 1588
   
 EndStructure 
  
  ; 1589 : PRESSURE_MEASURE_WITH_UNIT
-Structure T_PRESSURE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1589
+Structure T_PRESSURE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1589
   
 EndStructure 
  
  ; 1590 : PRESSURE_UNIT
-Structure T_PRESSURE_UNIT Extends TStepBase ; ID= 1590
+Structure T_PRESSURE_UNIT Extends TStepEntityBase ; ID= 1590
   
 EndStructure 
  
  ; 1591 : PREVIOUS_CHANGE_ELEMENT_ASSIGNMENT
-Structure T_PREVIOUS_CHANGE_ELEMENT_ASSIGNMENT Extends TStepBase ; ID= 1591
+Structure T_PREVIOUS_CHANGE_ELEMENT_ASSIGNMENT Extends TStepEntityBase ; ID= 1591
   
 EndStructure 
  
  ; 1592 : PRIMITIVE_2D
-Structure T_PRIMITIVE_2D Extends TStepBase ; ID= 1592
+Structure T_PRIMITIVE_2D Extends TStepEntityBase ; ID= 1592
   
 EndStructure 
  
  ; 1593 : PRIMITIVE_2D_WITH_INNER_BOUNDARY
-Structure T_PRIMITIVE_2D_WITH_INNER_BOUNDARY Extends TStepBase ; ID= 1593
+Structure T_PRIMITIVE_2D_WITH_INNER_BOUNDARY Extends TStepEntityBase ; ID= 1593
   
 EndStructure 
  
  ; 1594 : PRISMATIC_PAIR
-Structure T_PRISMATIC_PAIR Extends TStepBase ; ID= 1594
+Structure T_PRISMATIC_PAIR Extends TStepEntityBase ; ID= 1594
   
 EndStructure 
  
  ; 1595 : PRISMATIC_PAIR_RANGE
-Structure T_PRISMATIC_PAIR_RANGE Extends TStepBase ; ID= 1595
+Structure T_PRISMATIC_PAIR_RANGE Extends TStepEntityBase ; ID= 1595
   
 EndStructure 
  
  ; 1596 : PRISMATIC_PAIR_VALUE
-Structure T_PRISMATIC_PAIR_VALUE Extends TStepBase ; ID= 1596
+Structure T_PRISMATIC_PAIR_VALUE Extends TStepEntityBase ; ID= 1596
   
 EndStructure 
  
  ; 1597 : PRISMATIC_PAIR_WITH_RANGE
-Structure T_PRISMATIC_PAIR_WITH_RANGE Extends TStepBase ; ID= 1597
+Structure T_PRISMATIC_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 1597
   
 EndStructure 
  
  ; 1598 : PROCEDURAL_REPRESENTATION
-Structure T_PROCEDURAL_REPRESENTATION Extends TStepBase ; ID= 1598
+Structure T_PROCEDURAL_REPRESENTATION Extends TStepEntityBase ; ID= 1598
   
 EndStructure 
  
  ; 1599 : PROCEDURAL_REPRESENTATION_SEQUENCE
-Structure T_PROCEDURAL_REPRESENTATION_SEQUENCE Extends TStepBase ; ID= 1599
+Structure T_PROCEDURAL_REPRESENTATION_SEQUENCE Extends TStepEntityBase ; ID= 1599
   
 EndStructure 
  
  ; 1600 : PROCEDURAL_SHAPE_REPRESENTATION
-Structure T_PROCEDURAL_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1600
+Structure T_PROCEDURAL_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1600
   
 EndStructure 
  
  ; 1601 : PROCEDURAL_SHAPE_REPRESENTATION_SEQUENCE
-Structure T_PROCEDURAL_SHAPE_REPRESENTATION_SEQUENCE Extends TStepBase ; ID= 1601
+Structure T_PROCEDURAL_SHAPE_REPRESENTATION_SEQUENCE Extends TStepEntityBase ; ID= 1601
   
 EndStructure 
  
  ; 1602 : PROCEDURAL_SOLID_REPRESENTATION_SEQUENCE
-Structure T_PROCEDURAL_SOLID_REPRESENTATION_SEQUENCE Extends TStepBase ; ID= 1602
+Structure T_PROCEDURAL_SOLID_REPRESENTATION_SEQUENCE Extends TStepEntityBase ; ID= 1602
   
 EndStructure 
  
  ; 1603 : PROCESS_OPERATION
-Structure T_PROCESS_OPERATION Extends TStepBase ; ID= 1603
+Structure T_PROCESS_OPERATION Extends TStepEntityBase ; ID= 1603
   
 EndStructure 
  
  ; 1604 : PROCESS_PLAN
-Structure T_PROCESS_PLAN Extends TStepBase ; ID= 1604
+Structure T_PROCESS_PLAN Extends TStepEntityBase ; ID= 1604
   
 EndStructure 
  
  ; 1605 : PROCESS_PLAN_SPECIFICATION
-Structure T_PROCESS_PLAN_SPECIFICATION Extends TStepBase ; ID= 1605
+Structure T_PROCESS_PLAN_SPECIFICATION Extends TStepEntityBase ; ID= 1605
   
 EndStructure 
  
  ; 1606 : PROCESS_PRODUCT_ASSOCIATION
-Structure T_PROCESS_PRODUCT_ASSOCIATION Extends TStepBase ; ID= 1606
+Structure T_PROCESS_PRODUCT_ASSOCIATION Extends TStepEntityBase ; ID= 1606
   
 EndStructure 
  
  ; 1607 : PROCESS_PROPERTY_ASSOCIATION
-Structure T_PROCESS_PROPERTY_ASSOCIATION Extends TStepBase ; ID= 1607
+Structure T_PROCESS_PROPERTY_ASSOCIATION Extends TStepEntityBase ; ID= 1607
   
 EndStructure 
  
  ; 1608 : PRODUCT
-Structure T_PRODUCT Extends TStepBase ; ID= 1608
+Structure T_PRODUCT Extends TStepEntityBase ; ID= 1608
   
 EndStructure 
  
  ; 1609 : PRODUCT_AS_PLANNED
-Structure T_PRODUCT_AS_PLANNED Extends TStepBase ; ID= 1609
+Structure T_PRODUCT_AS_PLANNED Extends TStepEntityBase ; ID= 1609
   
 EndStructure 
  
  ; 1610 : PRODUCT_CATEGORY
-Structure T_PRODUCT_CATEGORY Extends TStepBase ; ID= 1610
+Structure T_PRODUCT_CATEGORY Extends TStepEntityBase ; ID= 1610
   
 EndStructure 
  
  ; 1611 : PRODUCT_CATEGORY_RELATIONSHIP
-Structure T_PRODUCT_CATEGORY_RELATIONSHIP Extends TStepBase ; ID= 1611
+Structure T_PRODUCT_CATEGORY_RELATIONSHIP Extends TStepEntityBase ; ID= 1611
   
 EndStructure 
  
  ; 1612 : PRODUCT_CLASS
-Structure T_PRODUCT_CLASS Extends TStepBase ; ID= 1612
+Structure T_PRODUCT_CLASS Extends TStepEntityBase ; ID= 1612
   
 EndStructure 
  
  ; 1613 : PRODUCT_CONCEPT
-Structure T_PRODUCT_CONCEPT Extends TStepBase ; ID= 1613
+Structure T_PRODUCT_CONCEPT Extends TStepEntityBase ; ID= 1613
   
 EndStructure 
  
  ; 1614 : PRODUCT_CONCEPT_CONTEXT
-Structure T_PRODUCT_CONCEPT_CONTEXT Extends TStepBase ; ID= 1614
+Structure T_PRODUCT_CONCEPT_CONTEXT Extends TStepEntityBase ; ID= 1614
   
 EndStructure 
  
  ; 1615 : PRODUCT_CONCEPT_FEATURE
-Structure T_PRODUCT_CONCEPT_FEATURE Extends TStepBase ; ID= 1615
+Structure T_PRODUCT_CONCEPT_FEATURE Extends TStepEntityBase ; ID= 1615
   
 EndStructure 
  
  ; 1616 : PRODUCT_CONCEPT_FEATURE_ASSOCIATION
-Structure T_PRODUCT_CONCEPT_FEATURE_ASSOCIATION Extends TStepBase ; ID= 1616
+Structure T_PRODUCT_CONCEPT_FEATURE_ASSOCIATION Extends TStepEntityBase ; ID= 1616
   
 EndStructure 
  
  ; 1617 : PRODUCT_CONCEPT_FEATURE_CATEGORY
-Structure T_PRODUCT_CONCEPT_FEATURE_CATEGORY Extends TStepBase ; ID= 1617
+Structure T_PRODUCT_CONCEPT_FEATURE_CATEGORY Extends TStepEntityBase ; ID= 1617
   
 EndStructure 
  
  ; 1618 : PRODUCT_CONCEPT_FEATURE_CATEGORY_USAGE
-Structure T_PRODUCT_CONCEPT_FEATURE_CATEGORY_USAGE Extends TStepBase ; ID= 1618
+Structure T_PRODUCT_CONCEPT_FEATURE_CATEGORY_USAGE Extends TStepEntityBase ; ID= 1618
   
 EndStructure 
  
  ; 1619 : PRODUCT_CONCEPT_RELATIONSHIP
-Structure T_PRODUCT_CONCEPT_RELATIONSHIP Extends TStepBase ; ID= 1619
+Structure T_PRODUCT_CONCEPT_RELATIONSHIP Extends TStepEntityBase ; ID= 1619
   
 EndStructure 
  
  ; 1620 : PRODUCT_CONTEXT
-Structure T_PRODUCT_CONTEXT Extends TStepBase ; ID= 1620
+Structure T_PRODUCT_CONTEXT Extends TStepEntityBase ; ID= 1620
   
 EndStructure 
  
  ; 1621 : PRODUCT_DATA_AND_DATA_EQUIVALENCE_RELATIONSHIP
-Structure T_PRODUCT_DATA_AND_DATA_EQUIVALENCE_RELATIONSHIP Extends TStepBase ; ID= 1621
+Structure T_PRODUCT_DATA_AND_DATA_EQUIVALENCE_RELATIONSHIP Extends TStepEntityBase ; ID= 1621
   
 EndStructure 
  
  ; 1622 : PRODUCT_DATA_AND_DATA_QUALITY_RELATIONSHIP
-Structure T_PRODUCT_DATA_AND_DATA_QUALITY_RELATIONSHIP Extends TStepBase ; ID= 1622
+Structure T_PRODUCT_DATA_AND_DATA_QUALITY_RELATIONSHIP Extends TStepEntityBase ; ID= 1622
   
 EndStructure 
  
  ; 1623 : PRODUCT_DEFINITION
-Structure T_PRODUCT_DEFINITION Extends TStepBase ; ID= 1623
+Structure T_PRODUCT_DEFINITION Extends TStepEntityBase ; ID= 1623
   
 EndStructure 
  
  ; 1624 : PRODUCT_DEFINITION_CONTEXT
-Structure T_PRODUCT_DEFINITION_CONTEXT Extends TStepBase ; ID= 1624
+Structure T_PRODUCT_DEFINITION_CONTEXT Extends TStepEntityBase ; ID= 1624
   
 EndStructure 
  
  ; 1625 : PRODUCT_DEFINITION_CONTEXT_ASSOCIATION
-Structure T_PRODUCT_DEFINITION_CONTEXT_ASSOCIATION Extends TStepBase ; ID= 1625
+Structure T_PRODUCT_DEFINITION_CONTEXT_ASSOCIATION Extends TStepEntityBase ; ID= 1625
   
 EndStructure 
  
  ; 1626 : PRODUCT_DEFINITION_CONTEXT_ROLE
-Structure T_PRODUCT_DEFINITION_CONTEXT_ROLE Extends TStepBase ; ID= 1626
+Structure T_PRODUCT_DEFINITION_CONTEXT_ROLE Extends TStepEntityBase ; ID= 1626
   
 EndStructure 
  
  ; 1627 : PRODUCT_DEFINITION_EFFECTIVITY
-Structure T_PRODUCT_DEFINITION_EFFECTIVITY Extends TStepBase ; ID= 1627
+Structure T_PRODUCT_DEFINITION_EFFECTIVITY Extends TStepEntityBase ; ID= 1627
   
 EndStructure 
  
  ; 1628 : PRODUCT_DEFINITION_ELEMENT_RELATIONSHIP
-Structure T_PRODUCT_DEFINITION_ELEMENT_RELATIONSHIP Extends TStepBase ; ID= 1628
+Structure T_PRODUCT_DEFINITION_ELEMENT_RELATIONSHIP Extends TStepEntityBase ; ID= 1628
   
 EndStructure 
  
  ; 1629 : PRODUCT_DEFINITION_FORMATION
-Structure T_PRODUCT_DEFINITION_FORMATION Extends TStepBase ; ID= 1629
+Structure T_PRODUCT_DEFINITION_FORMATION Extends TStepEntityBase ; ID= 1629
   
 EndStructure 
  
  ; 1630 : PRODUCT_DEFINITION_FORMATION_RELATIONSHIP
-Structure T_PRODUCT_DEFINITION_FORMATION_RELATIONSHIP Extends TStepBase ; ID= 1630
+Structure T_PRODUCT_DEFINITION_FORMATION_RELATIONSHIP Extends TStepEntityBase ; ID= 1630
   
 EndStructure 
  
  ; 1631 : PRODUCT_DEFINITION_FORMATION_RESOURCE
-Structure T_PRODUCT_DEFINITION_FORMATION_RESOURCE Extends TStepBase ; ID= 1631
+Structure T_PRODUCT_DEFINITION_FORMATION_RESOURCE Extends TStepEntityBase ; ID= 1631
   
 EndStructure 
  
  ; 1632 : PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE
-Structure T_PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE Extends TStepBase ; ID= 1632
+Structure T_PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE Extends TStepEntityBase ; ID= 1632
   
 EndStructure 
  
  ; 1633 : PRODUCT_DEFINITION_GROUP_ASSIGNMENT
-Structure T_PRODUCT_DEFINITION_GROUP_ASSIGNMENT Extends TStepBase ; ID= 1633
+Structure T_PRODUCT_DEFINITION_GROUP_ASSIGNMENT Extends TStepEntityBase ; ID= 1633
   
 EndStructure 
  
  ; 1634 : PRODUCT_DEFINITION_KINEMATICS
-Structure T_PRODUCT_DEFINITION_KINEMATICS Extends TStepBase ; ID= 1634
+Structure T_PRODUCT_DEFINITION_KINEMATICS Extends TStepEntityBase ; ID= 1634
   
 EndStructure 
  
  ; 1635 : PRODUCT_DEFINITION_OCCURRENCE
-Structure T_PRODUCT_DEFINITION_OCCURRENCE Extends TStepBase ; ID= 1635
+Structure T_PRODUCT_DEFINITION_OCCURRENCE Extends TStepEntityBase ; ID= 1635
   
 EndStructure 
  
  ; 1636 : PRODUCT_DEFINITION_OCCURRENCE_REFERENCE
-Structure T_PRODUCT_DEFINITION_OCCURRENCE_REFERENCE Extends TStepBase ; ID= 1636
+Structure T_PRODUCT_DEFINITION_OCCURRENCE_REFERENCE Extends TStepEntityBase ; ID= 1636
   
 EndStructure 
  
  ; 1637 : PRODUCT_DEFINITION_OCCURRENCE_REFERENCE_WITH_LOCAL_REPRESENTATION
-Structure T_PRODUCT_DEFINITION_OCCURRENCE_REFERENCE_WITH_LOCAL_REPRESENTATION Extends TStepBase ; ID= 1637
+Structure T_PRODUCT_DEFINITION_OCCURRENCE_REFERENCE_WITH_LOCAL_REPRESENTATION Extends TStepEntityBase ; ID= 1637
   
 EndStructure 
  
  ; 1638 : PRODUCT_DEFINITION_OCCURRENCE_RELATIONSHIP
-Structure T_PRODUCT_DEFINITION_OCCURRENCE_RELATIONSHIP Extends TStepBase ; ID= 1638
+Structure T_PRODUCT_DEFINITION_OCCURRENCE_RELATIONSHIP Extends TStepEntityBase ; ID= 1638
   
 EndStructure 
  
  ; 1639 : PRODUCT_DEFINITION_PROCESS
-Structure T_PRODUCT_DEFINITION_PROCESS Extends TStepBase ; ID= 1639
+Structure T_PRODUCT_DEFINITION_PROCESS Extends TStepEntityBase ; ID= 1639
   
 EndStructure 
  
  ; 1640 : PRODUCT_DEFINITION_REFERENCE
-Structure T_PRODUCT_DEFINITION_REFERENCE Extends TStepBase ; ID= 1640
+Structure T_PRODUCT_DEFINITION_REFERENCE Extends TStepEntityBase ; ID= 1640
   
 EndStructure 
  
  ; 1641 : PRODUCT_DEFINITION_REFERENCE_WITH_LOCAL_REPRESENTATION
-Structure T_PRODUCT_DEFINITION_REFERENCE_WITH_LOCAL_REPRESENTATION Extends TStepBase ; ID= 1641
+Structure T_PRODUCT_DEFINITION_REFERENCE_WITH_LOCAL_REPRESENTATION Extends TStepEntityBase ; ID= 1641
   
 EndStructure 
  
  ; 1642 : PRODUCT_DEFINITION_RELATIONSHIP
-Structure T_PRODUCT_DEFINITION_RELATIONSHIP Extends TStepBase ; ID= 1642
+Structure T_PRODUCT_DEFINITION_RELATIONSHIP Extends TStepEntityBase ; ID= 1642
   
 EndStructure 
  
  ; 1643 : PRODUCT_DEFINITION_RELATIONSHIP_KINEMATICS
-Structure T_PRODUCT_DEFINITION_RELATIONSHIP_KINEMATICS Extends TStepBase ; ID= 1643
+Structure T_PRODUCT_DEFINITION_RELATIONSHIP_KINEMATICS Extends TStepEntityBase ; ID= 1643
   
 EndStructure 
  
  ; 1644 : PRODUCT_DEFINITION_RELATIONSHIP_RELATIONSHIP
-Structure T_PRODUCT_DEFINITION_RELATIONSHIP_RELATIONSHIP Extends TStepBase ; ID= 1644
+Structure T_PRODUCT_DEFINITION_RELATIONSHIP_RELATIONSHIP Extends TStepEntityBase ; ID= 1644
   
 EndStructure 
  
  ; 1645 : PRODUCT_DEFINITION_RESOURCE
-Structure T_PRODUCT_DEFINITION_RESOURCE Extends TStepBase ; ID= 1645
+Structure T_PRODUCT_DEFINITION_RESOURCE Extends TStepEntityBase ; ID= 1645
   
 EndStructure 
  
  ; 1646 : PRODUCT_DEFINITION_SHAPE
-Structure T_PRODUCT_DEFINITION_SHAPE Extends TStepBase ; ID= 1646
+Structure T_PRODUCT_DEFINITION_SHAPE Extends TStepEntityBase ; ID= 1646
   
 EndStructure 
  
  ; 1647 : PRODUCT_DEFINITION_SPECIFIED_OCCURRENCE
-Structure T_PRODUCT_DEFINITION_SPECIFIED_OCCURRENCE Extends TStepBase ; ID= 1647
+Structure T_PRODUCT_DEFINITION_SPECIFIED_OCCURRENCE Extends TStepEntityBase ; ID= 1647
   
 EndStructure 
  
  ; 1648 : PRODUCT_DEFINITION_SUBSTITUTE
-Structure T_PRODUCT_DEFINITION_SUBSTITUTE Extends TStepBase ; ID= 1648
+Structure T_PRODUCT_DEFINITION_SUBSTITUTE Extends TStepEntityBase ; ID= 1648
   
 EndStructure 
  
  ; 1649 : PRODUCT_DEFINITION_USAGE
-Structure T_PRODUCT_DEFINITION_USAGE Extends TStepBase ; ID= 1649
+Structure T_PRODUCT_DEFINITION_USAGE Extends TStepEntityBase ; ID= 1649
   
 EndStructure 
  
  ; 1650 : PRODUCT_DEFINITION_USAGE_RELATIONSHIP
-Structure T_PRODUCT_DEFINITION_USAGE_RELATIONSHIP Extends TStepBase ; ID= 1650
+Structure T_PRODUCT_DEFINITION_USAGE_RELATIONSHIP Extends TStepEntityBase ; ID= 1650
   
 EndStructure 
  
  ; 1651 : PRODUCT_DEFINITION_WITH_ASSOCIATED_DOCUMENTS
-Structure T_PRODUCT_DEFINITION_WITH_ASSOCIATED_DOCUMENTS Extends TStepBase ; ID= 1651
+Structure T_PRODUCT_DEFINITION_WITH_ASSOCIATED_DOCUMENTS Extends TStepEntityBase ; ID= 1651
   
 EndStructure 
  
  ; 1652 : PRODUCT_DESIGN_TO_INDIVIDUAL
-Structure T_PRODUCT_DESIGN_TO_INDIVIDUAL Extends TStepBase ; ID= 1652
+Structure T_PRODUCT_DESIGN_TO_INDIVIDUAL Extends TStepEntityBase ; ID= 1652
   
 EndStructure 
  
  ; 1653 : PRODUCT_DESIGN_VERSION_TO_INDIVIDUAL
-Structure T_PRODUCT_DESIGN_VERSION_TO_INDIVIDUAL Extends TStepBase ; ID= 1653
+Structure T_PRODUCT_DESIGN_VERSION_TO_INDIVIDUAL Extends TStepEntityBase ; ID= 1653
   
 EndStructure 
  
  ; 1654 : PRODUCT_GROUP
-Structure T_PRODUCT_GROUP Extends TStepBase ; ID= 1654
+Structure T_PRODUCT_GROUP Extends TStepEntityBase ; ID= 1654
   
 EndStructure 
  
  ; 1655 : PRODUCT_GROUP_ATTRIBUTE_ASSIGNMENT
-Structure T_PRODUCT_GROUP_ATTRIBUTE_ASSIGNMENT Extends TStepBase ; ID= 1655
+Structure T_PRODUCT_GROUP_ATTRIBUTE_ASSIGNMENT Extends TStepEntityBase ; ID= 1655
   
 EndStructure 
  
  ; 1656 : PRODUCT_GROUP_ATTRIBUTE_SET
-Structure T_PRODUCT_GROUP_ATTRIBUTE_SET Extends TStepBase ; ID= 1656
+Structure T_PRODUCT_GROUP_ATTRIBUTE_SET Extends TStepEntityBase ; ID= 1656
   
 EndStructure 
  
  ; 1657 : PRODUCT_GROUP_ATTRIBUTES
-Structure T_PRODUCT_GROUP_ATTRIBUTES Extends TStepBase ; ID= 1657
+Structure T_PRODUCT_GROUP_ATTRIBUTES Extends TStepEntityBase ; ID= 1657
   
 EndStructure 
  
  ; 1658 : PRODUCT_GROUP_CONTEXT
-Structure T_PRODUCT_GROUP_CONTEXT Extends TStepBase ; ID= 1658
+Structure T_PRODUCT_GROUP_CONTEXT Extends TStepEntityBase ; ID= 1658
   
 EndStructure 
  
  ; 1659 : PRODUCT_GROUP_MEMBERSHIP
-Structure T_PRODUCT_GROUP_MEMBERSHIP Extends TStepBase ; ID= 1659
+Structure T_PRODUCT_GROUP_MEMBERSHIP Extends TStepEntityBase ; ID= 1659
   
 EndStructure 
  
  ; 1660 : PRODUCT_GROUP_MEMBERSHIP_RULES
-Structure T_PRODUCT_GROUP_MEMBERSHIP_RULES Extends TStepBase ; ID= 1660
+Structure T_PRODUCT_GROUP_MEMBERSHIP_RULES Extends TStepEntityBase ; ID= 1660
   
 EndStructure 
  
  ; 1661 : PRODUCT_GROUP_PURPOSE
-Structure T_PRODUCT_GROUP_PURPOSE Extends TStepBase ; ID= 1661
+Structure T_PRODUCT_GROUP_PURPOSE Extends TStepEntityBase ; ID= 1661
   
 EndStructure 
  
  ; 1662 : PRODUCT_GROUP_RELATIONSHIP
-Structure T_PRODUCT_GROUP_RELATIONSHIP Extends TStepBase ; ID= 1662
+Structure T_PRODUCT_GROUP_RELATIONSHIP Extends TStepEntityBase ; ID= 1662
   
 EndStructure 
  
  ; 1663 : PRODUCT_GROUP_RULE
-Structure T_PRODUCT_GROUP_RULE Extends TStepBase ; ID= 1663
+Structure T_PRODUCT_GROUP_RULE Extends TStepEntityBase ; ID= 1663
   
 EndStructure 
  
  ; 1664 : PRODUCT_GROUP_RULE_ASSIGNMENT
-Structure T_PRODUCT_GROUP_RULE_ASSIGNMENT Extends TStepBase ; ID= 1664
+Structure T_PRODUCT_GROUP_RULE_ASSIGNMENT Extends TStepEntityBase ; ID= 1664
   
 EndStructure 
  
  ; 1665 : PRODUCT_GROUP_RULES
-Structure T_PRODUCT_GROUP_RULES Extends TStepBase ; ID= 1665
+Structure T_PRODUCT_GROUP_RULES Extends TStepEntityBase ; ID= 1665
   
 EndStructure 
  
  ; 1666 : PRODUCT_IDENTIFICATION
-Structure T_PRODUCT_IDENTIFICATION Extends TStepBase ; ID= 1666
+Structure T_PRODUCT_IDENTIFICATION Extends TStepEntityBase ; ID= 1666
   
 EndStructure 
  
  ; 1667 : PRODUCT_IN_ATTACHMENT_SLOT
-Structure T_PRODUCT_IN_ATTACHMENT_SLOT Extends TStepBase ; ID= 1667
+Structure T_PRODUCT_IN_ATTACHMENT_SLOT Extends TStepEntityBase ; ID= 1667
   
 EndStructure 
  
  ; 1668 : PRODUCT_MATERIAL_COMPOSITION_RELATIONSHIP
-Structure T_PRODUCT_MATERIAL_COMPOSITION_RELATIONSHIP Extends TStepBase ; ID= 1668
+Structure T_PRODUCT_MATERIAL_COMPOSITION_RELATIONSHIP Extends TStepEntityBase ; ID= 1668
   
 EndStructure 
  
  ; 1669 : PRODUCT_PLANNED_TO_REALIZED
-Structure T_PRODUCT_PLANNED_TO_REALIZED Extends TStepBase ; ID= 1669
+Structure T_PRODUCT_PLANNED_TO_REALIZED Extends TStepEntityBase ; ID= 1669
   
 EndStructure 
  
  ; 1670 : PRODUCT_PROCESS_PLAN
-Structure T_PRODUCT_PROCESS_PLAN Extends TStepBase ; ID= 1670
+Structure T_PRODUCT_PROCESS_PLAN Extends TStepEntityBase ; ID= 1670
   
 EndStructure 
  
  ; 1671 : PRODUCT_RELATED_PRODUCT_CATEGORY
-Structure T_PRODUCT_RELATED_PRODUCT_CATEGORY Extends TStepBase ; ID= 1671
+Structure T_PRODUCT_RELATED_PRODUCT_CATEGORY Extends TStepEntityBase ; ID= 1671
   
 EndStructure 
  
  ; 1672 : PRODUCT_RELATIONSHIP
-Structure T_PRODUCT_RELATIONSHIP Extends TStepBase ; ID= 1672
+Structure T_PRODUCT_RELATIONSHIP Extends TStepEntityBase ; ID= 1672
   
 EndStructure 
  
  ; 1673 : PRODUCT_RESOURCE
-Structure T_PRODUCT_RESOURCE Extends TStepBase ; ID= 1673
+Structure T_PRODUCT_RESOURCE Extends TStepEntityBase ; ID= 1673
   
 EndStructure 
  
  ; 1674 : PRODUCT_SPECIFICATION
-Structure T_PRODUCT_SPECIFICATION Extends TStepBase ; ID= 1674
+Structure T_PRODUCT_SPECIFICATION Extends TStepEntityBase ; ID= 1674
   
 EndStructure 
  
  ; 1675 : PROFILE_FLOOR
-Structure T_PROFILE_FLOOR Extends TStepBase ; ID= 1675
+Structure T_PROFILE_FLOOR Extends TStepEntityBase ; ID= 1675
   
 EndStructure 
  
  ; 1676 : PROJECTED_ZONE_DEFINITION
-Structure T_PROJECTED_ZONE_DEFINITION Extends TStepBase ; ID= 1676
+Structure T_PROJECTED_ZONE_DEFINITION Extends TStepEntityBase ; ID= 1676
   
 EndStructure 
  
  ; 1677 : PROJECTED_ZONE_DEFINITION_WITH_OFFSET
-Structure T_PROJECTED_ZONE_DEFINITION_WITH_OFFSET Extends TStepBase ; ID= 1677
+Structure T_PROJECTED_ZONE_DEFINITION_WITH_OFFSET Extends TStepEntityBase ; ID= 1677
   
 EndStructure 
  
  ; 1678 : PROJECTION_CURVE
-Structure T_PROJECTION_CURVE Extends TStepBase ; ID= 1678
+Structure T_PROJECTION_CURVE Extends TStepEntityBase ; ID= 1678
   
 EndStructure 
  
  ; 1679 : PROJECTION_DIRECTED_CALLOUT
-Structure T_PROJECTION_DIRECTED_CALLOUT Extends TStepBase ; ID= 1679
+Structure T_PROJECTION_DIRECTED_CALLOUT Extends TStepEntityBase ; ID= 1679
   
 EndStructure 
  
  ; 1680 : PROMISSORY_USAGE_OCCURRENCE
-Structure T_PROMISSORY_USAGE_OCCURRENCE Extends TStepBase ; ID= 1680
+Structure T_PROMISSORY_USAGE_OCCURRENCE Extends TStepEntityBase ; ID= 1680
   
 EndStructure 
  
  ; 1681 : PROPERTY_DEFINITION
-Structure T_PROPERTY_DEFINITION Extends TStepBase ; ID= 1681
+Structure T_PROPERTY_DEFINITION Extends TStepEntityBase ; ID= 1681
   
 EndStructure 
  
  ; 1682 : PROPERTY_DEFINITION_RELATIONSHIP
-Structure T_PROPERTY_DEFINITION_RELATIONSHIP Extends TStepBase ; ID= 1682
+Structure T_PROPERTY_DEFINITION_RELATIONSHIP Extends TStepEntityBase ; ID= 1682
   
 EndStructure 
  
  ; 1683 : PROPERTY_DEFINITION_REPRESENTATION
-Structure T_PROPERTY_DEFINITION_REPRESENTATION Extends TStepBase ; ID= 1683
+Structure T_PROPERTY_DEFINITION_REPRESENTATION Extends TStepEntityBase ; ID= 1683
   
 EndStructure 
  
  ; 1684 : PROPERTY_PROCESS
-Structure T_PROPERTY_PROCESS Extends TStepBase ; ID= 1684
+Structure T_PROPERTY_PROCESS Extends TStepEntityBase ; ID= 1684
   
 EndStructure 
  
  ; 1685 : PROTRUSION
-Structure T_PROTRUSION Extends TStepBase ; ID= 1685
+Structure T_PROTRUSION Extends TStepEntityBase ; ID= 1685
   
 EndStructure 
  
  ; 1686 : PYRAMID_VOLUME
-Structure T_PYRAMID_VOLUME Extends TStepBase ; ID= 1686
+Structure T_PYRAMID_VOLUME Extends TStepEntityBase ; ID= 1686
   
 EndStructure 
  
  ; 1687 : QUALIFIED_REPRESENTATION_ITEM
-Structure T_QUALIFIED_REPRESENTATION_ITEM Extends TStepBase ; ID= 1687
+Structure T_QUALIFIED_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 1687
   
 EndStructure 
  
  ; 1688 : QUALITATIVE_UNCERTAINTY
-Structure T_QUALITATIVE_UNCERTAINTY Extends TStepBase ; ID= 1688
+Structure T_QUALITATIVE_UNCERTAINTY Extends TStepEntityBase ; ID= 1688
   
 EndStructure 
  
  ; 1689 : QUANTIFIED_ASSEMBLY_COMPONENT_USAGE
-Structure T_QUANTIFIED_ASSEMBLY_COMPONENT_USAGE Extends TStepBase ; ID= 1689
+Structure T_QUANTIFIED_ASSEMBLY_COMPONENT_USAGE Extends TStepEntityBase ; ID= 1689
   
 EndStructure 
  
  ; 1690 : QUANTIFIER_EXPRESSION
-Structure T_QUANTIFIER_EXPRESSION Extends TStepBase ; ID= 1690
+Structure T_QUANTIFIER_EXPRESSION Extends TStepEntityBase ; ID= 1690
   
 EndStructure 
  
  ; 1691 : QUASI_UNIFORM_CURVE
-Structure T_QUASI_UNIFORM_CURVE Extends TStepBase ; ID= 1691
+Structure T_QUASI_UNIFORM_CURVE Extends TStepEntityBase ; ID= 1691
   
 EndStructure 
  
  ; 1692 : QUASI_UNIFORM_SURFACE
-Structure T_QUASI_UNIFORM_SURFACE Extends TStepBase ; ID= 1692
+Structure T_QUASI_UNIFORM_SURFACE Extends TStepEntityBase ; ID= 1692
   
 EndStructure 
  
  ; 1693 : QUASI_UNIFORM_VOLUME
-Structure T_QUASI_UNIFORM_VOLUME Extends TStepBase ; ID= 1693
+Structure T_QUASI_UNIFORM_VOLUME Extends TStepEntityBase ; ID= 1693
   
 EndStructure 
  
  ; 1694 : RACK_AND_PINION_PAIR
-Structure T_RACK_AND_PINION_PAIR Extends TStepBase ; ID= 1694
+Structure T_RACK_AND_PINION_PAIR Extends TStepEntityBase ; ID= 1694
   
 EndStructure 
  
  ; 1695 : RACK_AND_PINION_PAIR_RANGE
-Structure T_RACK_AND_PINION_PAIR_RANGE Extends TStepBase ; ID= 1695
+Structure T_RACK_AND_PINION_PAIR_RANGE Extends TStepEntityBase ; ID= 1695
   
 EndStructure 
  
  ; 1696 : RACK_AND_PINION_PAIR_VALUE
-Structure T_RACK_AND_PINION_PAIR_VALUE Extends TStepBase ; ID= 1696
+Structure T_RACK_AND_PINION_PAIR_VALUE Extends TStepEntityBase ; ID= 1696
   
 EndStructure 
  
  ; 1697 : RACK_AND_PINION_PAIR_WITH_RANGE
-Structure T_RACK_AND_PINION_PAIR_WITH_RANGE Extends TStepBase ; ID= 1697
+Structure T_RACK_AND_PINION_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 1697
   
 EndStructure 
  
  ; 1698 : RADIOACTIVITY_MEASURE_WITH_UNIT
-Structure T_RADIOACTIVITY_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1698
+Structure T_RADIOACTIVITY_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1698
   
 EndStructure 
  
  ; 1699 : RADIOACTIVITY_UNIT
-Structure T_RADIOACTIVITY_UNIT Extends TStepBase ; ID= 1699
+Structure T_RADIOACTIVITY_UNIT Extends TStepEntityBase ; ID= 1699
   
 EndStructure 
  
  ; 1700 : RADIUS_DIMENSION
-Structure T_RADIUS_DIMENSION Extends TStepBase ; ID= 1700
+Structure T_RADIUS_DIMENSION Extends TStepEntityBase ; ID= 1700
   
 EndStructure 
  
  ; 1701 : RADIUS_GEOMETRIC_CONSTRAINT
-Structure T_RADIUS_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 1701
+Structure T_RADIUS_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 1701
   
 EndStructure 
  
  ; 1702 : RANGE_CHARACTERISTIC
-Structure T_RANGE_CHARACTERISTIC Extends TStepBase ; ID= 1702
+Structure T_RANGE_CHARACTERISTIC Extends TStepEntityBase ; ID= 1702
   
 EndStructure 
  
  ; 1703 : RATIO_MEASURE_WITH_UNIT
-Structure T_RATIO_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1703
+Structure T_RATIO_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1703
   
 EndStructure 
  
  ; 1704 : RATIO_UNIT
-Structure T_RATIO_UNIT Extends TStepBase ; ID= 1704
+Structure T_RATIO_UNIT Extends TStepEntityBase ; ID= 1704
   
 EndStructure 
  
  ; 1705 : RATIONAL_B_SPLINE_CURVE
-Structure T_RATIONAL_B_SPLINE_CURVE Extends TStepBase ; ID= 1705
+Structure T_RATIONAL_B_SPLINE_CURVE Extends TStepEntityBase ; ID= 1705
   
 EndStructure 
  
  ; 1706 : RATIONAL_B_SPLINE_SURFACE
-Structure T_RATIONAL_B_SPLINE_SURFACE Extends TStepBase ; ID= 1706
+Structure T_RATIONAL_B_SPLINE_SURFACE Extends TStepEntityBase ; ID= 1706
   
 EndStructure 
  
  ; 1707 : RATIONAL_B_SPLINE_VOLUME
-Structure T_RATIONAL_B_SPLINE_VOLUME Extends TStepBase ; ID= 1707
+Structure T_RATIONAL_B_SPLINE_VOLUME Extends TStepEntityBase ; ID= 1707
   
 EndStructure 
  
  ; 1708 : RATIONAL_LOCALLY_REFINED_SPLINE_CURVE
-Structure T_RATIONAL_LOCALLY_REFINED_SPLINE_CURVE Extends TStepBase ; ID= 1708
+Structure T_RATIONAL_LOCALLY_REFINED_SPLINE_CURVE Extends TStepEntityBase ; ID= 1708
   
 EndStructure 
  
  ; 1709 : RATIONAL_LOCALLY_REFINED_SPLINE_SURFACE
-Structure T_RATIONAL_LOCALLY_REFINED_SPLINE_SURFACE Extends TStepBase ; ID= 1709
+Structure T_RATIONAL_LOCALLY_REFINED_SPLINE_SURFACE Extends TStepEntityBase ; ID= 1709
   
 EndStructure 
  
  ; 1710 : RATIONAL_LOCALLY_REFINED_SPLINE_VOLUME
-Structure T_RATIONAL_LOCALLY_REFINED_SPLINE_VOLUME Extends TStepBase ; ID= 1710
+Structure T_RATIONAL_LOCALLY_REFINED_SPLINE_VOLUME Extends TStepEntityBase ; ID= 1710
   
 EndStructure 
  
  ; 1711 : RATIONAL_REPRESENTATION_ITEM
-Structure T_RATIONAL_REPRESENTATION_ITEM Extends TStepBase ; ID= 1711
+Structure T_RATIONAL_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 1711
   
 EndStructure 
  
  ; 1712 : RATIONALIZE_FUNCTION
-Structure T_RATIONALIZE_FUNCTION Extends TStepBase ; ID= 1712
+Structure T_RATIONALIZE_FUNCTION Extends TStepEntityBase ; ID= 1712
   
 EndStructure 
  
  ; 1713 : REAL_DEFINED_FUNCTION
-Structure T_REAL_DEFINED_FUNCTION Extends TStepBase ; ID= 1713
+Structure T_REAL_DEFINED_FUNCTION Extends TStepEntityBase ; ID= 1713
   
 EndStructure 
  
  ; 1714 : REAL_INTERVAL_FROM_MIN
-Structure T_REAL_INTERVAL_FROM_MIN Extends TStepBase ; ID= 1714
+Structure T_REAL_INTERVAL_FROM_MIN Extends TStepEntityBase ; ID= 1714
   
 EndStructure 
  
  ; 1715 : REAL_INTERVAL_TO_MAX
-Structure T_REAL_INTERVAL_TO_MAX Extends TStepBase ; ID= 1715
+Structure T_REAL_INTERVAL_TO_MAX Extends TStepEntityBase ; ID= 1715
   
 EndStructure 
  
  ; 1716 : REAL_LITERAL
-Structure T_REAL_LITERAL Extends TStepBase ; ID= 1716
+Structure T_REAL_LITERAL Extends TStepEntityBase ; ID= 1716
   
 EndStructure 
  
  ; 1717 : REAL_NUMERIC_VARIABLE
-Structure T_REAL_NUMERIC_VARIABLE Extends TStepBase ; ID= 1717
+Structure T_REAL_NUMERIC_VARIABLE Extends TStepEntityBase ; ID= 1717
   
 EndStructure 
  
  ; 1718 : REAL_REPRESENTATION_ITEM
-Structure T_REAL_REPRESENTATION_ITEM Extends TStepBase ; ID= 1718
+Structure T_REAL_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 1718
   
 EndStructure 
  
  ; 1719 : REAL_TUPLE_LITERAL
-Structure T_REAL_TUPLE_LITERAL Extends TStepBase ; ID= 1719
+Structure T_REAL_TUPLE_LITERAL Extends TStepEntityBase ; ID= 1719
   
 EndStructure 
  
  ; 1720 : RECTANGULAR_AREA
-Structure T_RECTANGULAR_AREA Extends TStepBase ; ID= 1720
+Structure T_RECTANGULAR_AREA Extends TStepEntityBase ; ID= 1720
   
 EndStructure 
  
  ; 1721 : RECTANGULAR_ARRAY_PLACEMENT_GROUP_COMPONENT
-Structure T_RECTANGULAR_ARRAY_PLACEMENT_GROUP_COMPONENT Extends TStepBase ; ID= 1721
+Structure T_RECTANGULAR_ARRAY_PLACEMENT_GROUP_COMPONENT Extends TStepEntityBase ; ID= 1721
   
 EndStructure 
  
  ; 1722 : RECTANGULAR_CLOSED_PROFILE
-Structure T_RECTANGULAR_CLOSED_PROFILE Extends TStepBase ; ID= 1722
+Structure T_RECTANGULAR_CLOSED_PROFILE Extends TStepEntityBase ; ID= 1722
   
 EndStructure 
  
  ; 1723 : RECTANGULAR_COMPOSITE_SURFACE
-Structure T_RECTANGULAR_COMPOSITE_SURFACE Extends TStepBase ; ID= 1723
+Structure T_RECTANGULAR_COMPOSITE_SURFACE Extends TStepEntityBase ; ID= 1723
   
 EndStructure 
  
  ; 1724 : RECTANGULAR_COMPOSITE_SURFACE_TRANSITION_LOCATOR
-Structure T_RECTANGULAR_COMPOSITE_SURFACE_TRANSITION_LOCATOR Extends TStepBase ; ID= 1724
+Structure T_RECTANGULAR_COMPOSITE_SURFACE_TRANSITION_LOCATOR Extends TStepEntityBase ; ID= 1724
   
 EndStructure 
  
  ; 1725 : RECTANGULAR_PATTERN
-Structure T_RECTANGULAR_PATTERN Extends TStepBase ; ID= 1725
+Structure T_RECTANGULAR_PATTERN Extends TStepEntityBase ; ID= 1725
   
 EndStructure 
  
  ; 1726 : RECTANGULAR_PYRAMID
-Structure T_RECTANGULAR_PYRAMID Extends TStepBase ; ID= 1726
+Structure T_RECTANGULAR_PYRAMID Extends TStepEntityBase ; ID= 1726
   
 EndStructure 
  
  ; 1727 : RECTANGULAR_TRIMMED_SURFACE
-Structure T_RECTANGULAR_TRIMMED_SURFACE Extends TStepBase ; ID= 1727
+Structure T_RECTANGULAR_TRIMMED_SURFACE Extends TStepEntityBase ; ID= 1727
   
 EndStructure 
  
  ; 1728 : REFERENCED_MODIFIED_DATUM
-Structure T_REFERENCED_MODIFIED_DATUM Extends TStepBase ; ID= 1728
+Structure T_REFERENCED_MODIFIED_DATUM Extends TStepEntityBase ; ID= 1728
   
 EndStructure 
  
  ; 1729 : REGULAR_TABLE_FUNCTION
-Structure T_REGULAR_TABLE_FUNCTION Extends TStepBase ; ID= 1729
+Structure T_REGULAR_TABLE_FUNCTION Extends TStepEntityBase ; ID= 1729
   
 EndStructure 
  
  ; 1730 : REINDEXED_ARRAY_FUNCTION
-Structure T_REINDEXED_ARRAY_FUNCTION Extends TStepBase ; ID= 1730
+Structure T_REINDEXED_ARRAY_FUNCTION Extends TStepEntityBase ; ID= 1730
   
 EndStructure 
  
  ; 1731 : REINFORCEMENT_ORIENTATION_BASIS
-Structure T_REINFORCEMENT_ORIENTATION_BASIS Extends TStepBase ; ID= 1731
+Structure T_REINFORCEMENT_ORIENTATION_BASIS Extends TStepEntityBase ; ID= 1731
   
 EndStructure 
  
  ; 1732 : RELATIVE_EVENT_OCCURRENCE
-Structure T_RELATIVE_EVENT_OCCURRENCE Extends TStepBase ; ID= 1732
+Structure T_RELATIVE_EVENT_OCCURRENCE Extends TStepEntityBase ; ID= 1732
   
 EndStructure 
  
  ; 1733 : REMOVAL_VOLUME
-Structure T_REMOVAL_VOLUME Extends TStepBase ; ID= 1733
+Structure T_REMOVAL_VOLUME Extends TStepEntityBase ; ID= 1733
   
 EndStructure 
  
  ; 1734 : REP_ITEM_GROUP
-Structure T_REP_ITEM_GROUP Extends TStepBase ; ID= 1734
+Structure T_REP_ITEM_GROUP Extends TStepEntityBase ; ID= 1734
   
 EndStructure 
  
  ; 1735 : REPACKAGING_FUNCTION
-Structure T_REPACKAGING_FUNCTION Extends TStepBase ; ID= 1735
+Structure T_REPACKAGING_FUNCTION Extends TStepEntityBase ; ID= 1735
   
 EndStructure 
  
  ; 1736 : REPARAMETRISED_COMPOSITE_CURVE_SEGMENT
-Structure T_REPARAMETRISED_COMPOSITE_CURVE_SEGMENT Extends TStepBase ; ID= 1736
+Structure T_REPARAMETRISED_COMPOSITE_CURVE_SEGMENT Extends TStepEntityBase ; ID= 1736
   
 EndStructure 
  
  ; 1737 : REPLICATE_FEATURE
-Structure T_REPLICATE_FEATURE Extends TStepBase ; ID= 1737
+Structure T_REPLICATE_FEATURE Extends TStepEntityBase ; ID= 1737
   
 EndStructure 
  
  ; 1738 : REPOSITIONED_NEUTRAL_SKETCH
-Structure T_REPOSITIONED_NEUTRAL_SKETCH Extends TStepBase ; ID= 1738
+Structure T_REPOSITIONED_NEUTRAL_SKETCH Extends TStepEntityBase ; ID= 1738
   
 EndStructure 
  
  ; 1739 : REPOSITIONED_TESSELLATED_ITEM
-Structure T_REPOSITIONED_TESSELLATED_ITEM Extends TStepBase ; ID= 1739
+Structure T_REPOSITIONED_TESSELLATED_ITEM Extends TStepEntityBase ; ID= 1739
   
 EndStructure 
  
  ; 1740 : REPRESENTATION
-Structure T_REPRESENTATION Extends TStepBase ; ID= 1740
+Structure T_REPRESENTATION Extends TStepEntityBase ; ID= 1740
   
 EndStructure 
  
  ; 1741 : REPRESENTATION_CONTEXT
-Structure T_REPRESENTATION_CONTEXT Extends TStepBase ; ID= 1741
+Structure T_REPRESENTATION_CONTEXT Extends TStepEntityBase ; ID= 1741
   
 EndStructure 
  
  ; 1742 : REPRESENTATION_CONTEXT_REFERENCE
-Structure T_REPRESENTATION_CONTEXT_REFERENCE Extends TStepBase ; ID= 1742
+Structure T_REPRESENTATION_CONTEXT_REFERENCE Extends TStepEntityBase ; ID= 1742
   
 EndStructure 
  
  ; 1743 : REPRESENTATION_ITEM
-Structure T_REPRESENTATION_ITEM Extends TStepBase ; ID= 1743
+Structure T_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 1743
   
 EndStructure 
  
  ; 1744 : REPRESENTATION_ITEM_RELATIONSHIP
-Structure T_REPRESENTATION_ITEM_RELATIONSHIP Extends TStepBase ; ID= 1744
+Structure T_REPRESENTATION_ITEM_RELATIONSHIP Extends TStepEntityBase ; ID= 1744
   
 EndStructure 
  
  ; 1745 : REPRESENTATION_MAP
-Structure T_REPRESENTATION_MAP Extends TStepBase ; ID= 1745
+Structure T_REPRESENTATION_MAP Extends TStepEntityBase ; ID= 1745
   
 EndStructure 
  
  ; 1746 : REPRESENTATION_PROXY_ITEM
-Structure T_REPRESENTATION_PROXY_ITEM Extends TStepBase ; ID= 1746
+Structure T_REPRESENTATION_PROXY_ITEM Extends TStepEntityBase ; ID= 1746
   
 EndStructure 
  
  ; 1747 : REPRESENTATION_REFERENCE
-Structure T_REPRESENTATION_REFERENCE Extends TStepBase ; ID= 1747
+Structure T_REPRESENTATION_REFERENCE Extends TStepEntityBase ; ID= 1747
   
 EndStructure 
  
  ; 1748 : REPRESENTATION_RELATIONSHIP
-Structure T_REPRESENTATION_RELATIONSHIP Extends TStepBase ; ID= 1748
+Structure T_REPRESENTATION_RELATIONSHIP Extends TStepEntityBase ; ID= 1748
   
 EndStructure 
  
  ; 1749 : REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION
-Structure T_REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION Extends TStepBase ; ID= 1749
+Structure T_REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION Extends TStepEntityBase ; ID= 1749
   
 EndStructure 
  
  ; 1750 : REPRESENTATIVE_SHAPE_REPRESENTATION
-Structure T_REPRESENTATIVE_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1750
+Structure T_REPRESENTATIVE_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1750
   
 EndStructure 
  
  ; 1751 : REQUIREMENT_ASSIGNED_OBJECT
-Structure T_REQUIREMENT_ASSIGNED_OBJECT Extends TStepBase ; ID= 1751
+Structure T_REQUIREMENT_ASSIGNED_OBJECT Extends TStepEntityBase ; ID= 1751
   
 EndStructure 
  
  ; 1752 : REQUIREMENT_ASSIGNMENT
-Structure T_REQUIREMENT_ASSIGNMENT Extends TStepBase ; ID= 1752
+Structure T_REQUIREMENT_ASSIGNMENT Extends TStepEntityBase ; ID= 1752
   
 EndStructure 
  
  ; 1753 : REQUIREMENT_FOR_ACTION_RESOURCE
-Structure T_REQUIREMENT_FOR_ACTION_RESOURCE Extends TStepBase ; ID= 1753
+Structure T_REQUIREMENT_FOR_ACTION_RESOURCE Extends TStepEntityBase ; ID= 1753
   
 EndStructure 
  
  ; 1754 : REQUIREMENT_SOURCE
-Structure T_REQUIREMENT_SOURCE Extends TStepBase ; ID= 1754
+Structure T_REQUIREMENT_SOURCE Extends TStepEntityBase ; ID= 1754
   
 EndStructure 
  
  ; 1755 : REQUIREMENT_VIEW_DEFINITION_RELATIONSHIP
-Structure T_REQUIREMENT_VIEW_DEFINITION_RELATIONSHIP Extends TStepBase ; ID= 1755
+Structure T_REQUIREMENT_VIEW_DEFINITION_RELATIONSHIP Extends TStepEntityBase ; ID= 1755
   
 EndStructure 
  
  ; 1756 : RESISTANCE_MEASURE_WITH_UNIT
-Structure T_RESISTANCE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1756
+Structure T_RESISTANCE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1756
   
 EndStructure 
  
  ; 1757 : RESISTANCE_UNIT
-Structure T_RESISTANCE_UNIT Extends TStepBase ; ID= 1757
+Structure T_RESISTANCE_UNIT Extends TStepEntityBase ; ID= 1757
   
 EndStructure 
  
  ; 1758 : RESOURCE_PROPERTY
-Structure T_RESOURCE_PROPERTY Extends TStepBase ; ID= 1758
+Structure T_RESOURCE_PROPERTY Extends TStepEntityBase ; ID= 1758
   
 EndStructure 
  
  ; 1759 : RESOURCE_PROPERTY_REPRESENTATION
-Structure T_RESOURCE_PROPERTY_REPRESENTATION Extends TStepBase ; ID= 1759
+Structure T_RESOURCE_PROPERTY_REPRESENTATION Extends TStepEntityBase ; ID= 1759
   
 EndStructure 
  
- ; 1760 : RESOURCE_REQUIREMENT_TYPE
-Structure T_RESOURCE_REQUIREMENT_TYPE Extends TStepBase ; ID= 1760
-  
-EndStructure 
  
  ; 1761 : RESTRICTION_FUNCTION
-Structure T_RESTRICTION_FUNCTION Extends TStepBase ; ID= 1761
+Structure T_RESTRICTION_FUNCTION Extends TStepEntityBase ; ID= 1761
   
 EndStructure 
  
  ; 1762 : RESULTING_PATH
-Structure T_RESULTING_PATH Extends TStepBase ; ID= 1762
+Structure T_RESULTING_PATH Extends TStepEntityBase ; ID= 1762
   
 EndStructure 
  
  ; 1763 : RETENTION
-Structure T_RETENTION Extends TStepBase ; ID= 1763
+Structure T_RETENTION Extends TStepEntityBase ; ID= 1763
   
 EndStructure 
  
  ; 1764 : REVOLUTE_PAIR
-Structure T_REVOLUTE_PAIR Extends TStepBase ; ID= 1764
+Structure T_REVOLUTE_PAIR Extends TStepEntityBase ; ID= 1764
   
 EndStructure 
  
  ; 1765 : REVOLUTE_PAIR_RANGE
-Structure T_REVOLUTE_PAIR_RANGE Extends TStepBase ; ID= 1765
+Structure T_REVOLUTE_PAIR_RANGE Extends TStepEntityBase ; ID= 1765
   
 EndStructure 
  
  ; 1766 : REVOLUTE_PAIR_VALUE
-Structure T_REVOLUTE_PAIR_VALUE Extends TStepBase ; ID= 1766
+Structure T_REVOLUTE_PAIR_VALUE Extends TStepEntityBase ; ID= 1766
   
 EndStructure 
  
  ; 1767 : REVOLUTE_PAIR_WITH_RANGE
-Structure T_REVOLUTE_PAIR_WITH_RANGE Extends TStepBase ; ID= 1767
+Structure T_REVOLUTE_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 1767
   
 EndStructure 
  
  ; 1768 : REVOLVED_AREA_SOLID
-Structure T_REVOLVED_AREA_SOLID Extends TStepBase ; ID= 1768
+Structure T_REVOLVED_AREA_SOLID Extends TStepEntityBase ; ID= 1768
   
 EndStructure 
  
  ; 1769 : REVOLVED_FACE_SOLID
-Structure T_REVOLVED_FACE_SOLID Extends TStepBase ; ID= 1769
+Structure T_REVOLVED_FACE_SOLID Extends TStepEntityBase ; ID= 1769
   
 EndStructure 
  
  ; 1770 : REVOLVED_FACE_SOLID_WITH_TRIM_CONDITIONS
-Structure T_REVOLVED_FACE_SOLID_WITH_TRIM_CONDITIONS Extends TStepBase ; ID= 1770
+Structure T_REVOLVED_FACE_SOLID_WITH_TRIM_CONDITIONS Extends TStepEntityBase ; ID= 1770
   
 EndStructure 
  
  ; 1771 : REVOLVED_PROFILE
-Structure T_REVOLVED_PROFILE Extends TStepBase ; ID= 1771
+Structure T_REVOLVED_PROFILE Extends TStepEntityBase ; ID= 1771
   
 EndStructure 
  
  ; 1772 : RGC_WITH_DIMENSION
-Structure T_RGC_WITH_DIMENSION Extends TStepBase ; ID= 1772
+Structure T_RGC_WITH_DIMENSION Extends TStepEntityBase ; ID= 1772
   
 EndStructure 
  
  ; 1773 : RIB
-Structure T_RIB Extends TStepBase ; ID= 1773
+Structure T_RIB Extends TStepEntityBase ; ID= 1773
   
 EndStructure 
  
  ; 1774 : RIB_TOP
-Structure T_RIB_TOP Extends TStepBase ; ID= 1774
+Structure T_RIB_TOP Extends TStepEntityBase ; ID= 1774
   
 EndStructure 
  
  ; 1775 : RIB_TOP_FLOOR
-Structure T_RIB_TOP_FLOOR Extends TStepBase ; ID= 1775
+Structure T_RIB_TOP_FLOOR Extends TStepEntityBase ; ID= 1775
   
 EndStructure 
  
  ; 1776 : RIGHT_ANGULAR_WEDGE
-Structure T_RIGHT_ANGULAR_WEDGE Extends TStepBase ; ID= 1776
+Structure T_RIGHT_ANGULAR_WEDGE Extends TStepEntityBase ; ID= 1776
   
 EndStructure 
  
  ; 1777 : RIGHT_CIRCULAR_CONE
-Structure T_RIGHT_CIRCULAR_CONE Extends TStepBase ; ID= 1777
+Structure T_RIGHT_CIRCULAR_CONE Extends TStepEntityBase ; ID= 1777
   
 EndStructure 
  
  ; 1778 : RIGHT_CIRCULAR_CYLINDER
-Structure T_RIGHT_CIRCULAR_CYLINDER Extends TStepBase ; ID= 1778
+Structure T_RIGHT_CIRCULAR_CYLINDER Extends TStepEntityBase ; ID= 1778
   
 EndStructure 
  
  ; 1779 : RIGHT_TO_USAGE_ASSOCIATION
-Structure T_RIGHT_TO_USAGE_ASSOCIATION Extends TStepBase ; ID= 1779
+Structure T_RIGHT_TO_USAGE_ASSOCIATION Extends TStepEntityBase ; ID= 1779
   
 EndStructure 
  
  ; 1780 : RIGID_LINK_REPRESENTATION
-Structure T_RIGID_LINK_REPRESENTATION Extends TStepBase ; ID= 1780
+Structure T_RIGID_LINK_REPRESENTATION Extends TStepEntityBase ; ID= 1780
   
 EndStructure 
  
  ; 1781 : RIGID_SUBSKETCH
-Structure T_RIGID_SUBSKETCH Extends TStepBase ; ID= 1781
+Structure T_RIGID_SUBSKETCH Extends TStepEntityBase ; ID= 1781
   
 EndStructure 
  
  ; 1782 : ROLE_ASSOCIATION
-Structure T_ROLE_ASSOCIATION Extends TStepBase ; ID= 1782
+Structure T_ROLE_ASSOCIATION Extends TStepEntityBase ; ID= 1782
   
 EndStructure 
  
  ; 1783 : ROLLING_CURVE_PAIR
-Structure T_ROLLING_CURVE_PAIR Extends TStepBase ; ID= 1783
+Structure T_ROLLING_CURVE_PAIR Extends TStepEntityBase ; ID= 1783
   
 EndStructure 
  
  ; 1784 : ROLLING_CURVE_PAIR_VALUE
-Structure T_ROLLING_CURVE_PAIR_VALUE Extends TStepBase ; ID= 1784
+Structure T_ROLLING_CURVE_PAIR_VALUE Extends TStepEntityBase ; ID= 1784
   
 EndStructure 
  
  ; 1785 : ROLLING_SURFACE_PAIR
-Structure T_ROLLING_SURFACE_PAIR Extends TStepBase ; ID= 1785
+Structure T_ROLLING_SURFACE_PAIR Extends TStepEntityBase ; ID= 1785
   
 EndStructure 
  
  ; 1786 : ROLLING_SURFACE_PAIR_VALUE
-Structure T_ROLLING_SURFACE_PAIR_VALUE Extends TStepBase ; ID= 1786
+Structure T_ROLLING_SURFACE_PAIR_VALUE Extends TStepEntityBase ; ID= 1786
   
 EndStructure 
  
  ; 1787 : ROTATION_ABOUT_DIRECTION
-Structure T_ROTATION_ABOUT_DIRECTION Extends TStepBase ; ID= 1787
+Structure T_ROTATION_ABOUT_DIRECTION Extends TStepEntityBase ; ID= 1787
   
 EndStructure 
  
  ; 1788 : ROUND_HOLE
-Structure T_ROUND_HOLE Extends TStepBase ; ID= 1788
+Structure T_ROUND_HOLE Extends TStepEntityBase ; ID= 1788
   
 EndStructure 
  
  ; 1789 : ROUNDED_END
-Structure T_ROUNDED_END Extends TStepBase ; ID= 1789
+Structure T_ROUNDED_END Extends TStepEntityBase ; ID= 1789
   
 EndStructure 
  
  ; 1790 : ROUNDED_U_PROFILE
-Structure T_ROUNDED_U_PROFILE Extends TStepBase ; ID= 1790
+Structure T_ROUNDED_U_PROFILE Extends TStepEntityBase ; ID= 1790
   
 EndStructure 
  
  ; 1791 : ROUNDNESS_TOLERANCE
-Structure T_ROUNDNESS_TOLERANCE Extends TStepBase ; ID= 1791
+Structure T_ROUNDNESS_TOLERANCE Extends TStepEntityBase ; ID= 1791
   
 EndStructure 
  
  ; 1792 : ROW_REPRESENTATION_ITEM
-Structure T_ROW_REPRESENTATION_ITEM Extends TStepBase ; ID= 1792
+Structure T_ROW_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 1792
   
 EndStructure 
  
  ; 1793 : ROW_VALUE
-Structure T_ROW_VALUE Extends TStepBase ; ID= 1793
+Structure T_ROW_VALUE Extends TStepEntityBase ; ID= 1793
   
 EndStructure 
  
  ; 1794 : ROW_VARIABLE
-Structure T_ROW_VARIABLE Extends TStepBase ; ID= 1794
+Structure T_ROW_VARIABLE Extends TStepEntityBase ; ID= 1794
   
 EndStructure 
  
  ; 1795 : RULE_ACTION
-Structure T_RULE_ACTION Extends TStepBase ; ID= 1795
+Structure T_RULE_ACTION Extends TStepEntityBase ; ID= 1795
   
 EndStructure 
  
  ; 1796 : RULE_CONDITION
-Structure T_RULE_CONDITION Extends TStepBase ; ID= 1796
+Structure T_RULE_CONDITION Extends TStepEntityBase ; ID= 1796
   
 EndStructure 
  
  ; 1797 : RULE_DEFINITION
-Structure T_RULE_DEFINITION Extends TStepBase ; ID= 1797
+Structure T_RULE_DEFINITION Extends TStepEntityBase ; ID= 1797
   
 EndStructure 
  
  ; 1798 : RULE_SET
-Structure T_RULE_SET Extends TStepBase ; ID= 1798
+Structure T_RULE_SET Extends TStepEntityBase ; ID= 1798
   
 EndStructure 
  
  ; 1799 : RULE_SET_GROUP
-Structure T_RULE_SET_GROUP Extends TStepBase ; ID= 1799
+Structure T_RULE_SET_GROUP Extends TStepEntityBase ; ID= 1799
   
 EndStructure 
  
  ; 1800 : RULE_SOFTWARE_DEFINITION
-Structure T_RULE_SOFTWARE_DEFINITION Extends TStepBase ; ID= 1800
+Structure T_RULE_SOFTWARE_DEFINITION Extends TStepEntityBase ; ID= 1800
   
 EndStructure 
  
  ; 1801 : RULE_SUPERSEDED_ASSIGNMENT
-Structure T_RULE_SUPERSEDED_ASSIGNMENT Extends TStepBase ; ID= 1801
+Structure T_RULE_SUPERSEDED_ASSIGNMENT Extends TStepEntityBase ; ID= 1801
   
 EndStructure 
  
  ; 1802 : RULE_SUPERSEDENCE
-Structure T_RULE_SUPERSEDENCE Extends TStepBase ; ID= 1802
+Structure T_RULE_SUPERSEDENCE Extends TStepEntityBase ; ID= 1802
   
 EndStructure 
  
  ; 1803 : RULED_SURFACE_SWEPT_AREA_SOLID
-Structure T_RULED_SURFACE_SWEPT_AREA_SOLID Extends TStepBase ; ID= 1803
+Structure T_RULED_SURFACE_SWEPT_AREA_SOLID Extends TStepEntityBase ; ID= 1803
   
 EndStructure 
  
  ; 1804 : RUNOUT_ZONE_DEFINITION
-Structure T_RUNOUT_ZONE_DEFINITION Extends TStepBase ; ID= 1804
+Structure T_RUNOUT_ZONE_DEFINITION Extends TStepEntityBase ; ID= 1804
   
 EndStructure 
  
  ; 1805 : RUNOUT_ZONE_ORIENTATION
-Structure T_RUNOUT_ZONE_ORIENTATION Extends TStepBase ; ID= 1805
+Structure T_RUNOUT_ZONE_ORIENTATION Extends TStepEntityBase ; ID= 1805
   
 EndStructure 
  
  ; 1806 : RUNOUT_ZONE_ORIENTATION_REFERENCE_DIRECTION
-Structure T_RUNOUT_ZONE_ORIENTATION_REFERENCE_DIRECTION Extends TStepBase ; ID= 1806
+Structure T_RUNOUT_ZONE_ORIENTATION_REFERENCE_DIRECTION Extends TStepEntityBase ; ID= 1806
   
 EndStructure 
  
  ; 1807 : SAME_AS_EXTERNAL_ITEM_ASSIGNMENT
-Structure T_SAME_AS_EXTERNAL_ITEM_ASSIGNMENT Extends TStepBase ; ID= 1807
+Structure T_SAME_AS_EXTERNAL_ITEM_ASSIGNMENT Extends TStepEntityBase ; ID= 1807
   
 EndStructure 
  
  ; 1808 : SATISFIED_REQUIREMENT
-Structure T_SATISFIED_REQUIREMENT Extends TStepBase ; ID= 1808
+Structure T_SATISFIED_REQUIREMENT Extends TStepEntityBase ; ID= 1808
   
 EndStructure 
  
  ; 1809 : SATISFIES_REQUIREMENT
-Structure T_SATISFIES_REQUIREMENT Extends TStepBase ; ID= 1809
+Structure T_SATISFIES_REQUIREMENT Extends TStepEntityBase ; ID= 1809
   
 EndStructure 
  
  ; 1810 : SATISFYING_ITEM
-Structure T_SATISFYING_ITEM Extends TStepBase ; ID= 1810
+Structure T_SATISFYING_ITEM Extends TStepEntityBase ; ID= 1810
   
 EndStructure 
  
  ; 1811 : SCALAR_VARIABLE
-Structure T_SCALAR_VARIABLE Extends TStepBase ; ID= 1811
+Structure T_SCALAR_VARIABLE Extends TStepEntityBase ; ID= 1811
   
 EndStructure 
  
  ; 1812 : SCAN_3D_MODEL
-Structure T_SCAN_3D_MODEL Extends TStepBase ; ID= 1812
+Structure T_SCAN_3D_MODEL Extends TStepEntityBase ; ID= 1812
   
 EndStructure 
  
  ; 1813 : SCAN_DATA_SHAPE_REPRESENTATION
-Structure T_SCAN_DATA_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1813
+Structure T_SCAN_DATA_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1813
   
 EndStructure 
  
  ; 1814 : SCANNED_DATA_ITEM
-Structure T_SCANNED_DATA_ITEM Extends TStepBase ; ID= 1814
+Structure T_SCANNED_DATA_ITEM Extends TStepEntityBase ; ID= 1814
   
 EndStructure 
  
  ; 1815 : SCANNER_BASIC_PROPERTIES
-Structure T_SCANNER_BASIC_PROPERTIES Extends TStepBase ; ID= 1815
+Structure T_SCANNER_BASIC_PROPERTIES Extends TStepEntityBase ; ID= 1815
   
 EndStructure 
  
  ; 1816 : SCANNER_PROPERTY
-Structure T_SCANNER_PROPERTY Extends TStepBase ; ID= 1816
+Structure T_SCANNER_PROPERTY Extends TStepEntityBase ; ID= 1816
   
 EndStructure 
  
  ; 1817 : SCATTERING_PARAMETER
-Structure T_SCATTERING_PARAMETER Extends TStepBase ; ID= 1817
+Structure T_SCATTERING_PARAMETER Extends TStepEntityBase ; ID= 1817
   
 EndStructure 
  
  ; 1818 : SCREW_PAIR
-Structure T_SCREW_PAIR Extends TStepBase ; ID= 1818
+Structure T_SCREW_PAIR Extends TStepEntityBase ; ID= 1818
   
 EndStructure 
  
  ; 1819 : SCREW_PAIR_RANGE
-Structure T_SCREW_PAIR_RANGE Extends TStepBase ; ID= 1819
+Structure T_SCREW_PAIR_RANGE Extends TStepEntityBase ; ID= 1819
   
 EndStructure 
  
  ; 1820 : SCREW_PAIR_VALUE
-Structure T_SCREW_PAIR_VALUE Extends TStepBase ; ID= 1820
+Structure T_SCREW_PAIR_VALUE Extends TStepEntityBase ; ID= 1820
   
 EndStructure 
  
  ; 1821 : SCREW_PAIR_WITH_RANGE
-Structure T_SCREW_PAIR_WITH_RANGE Extends TStepBase ; ID= 1821
+Structure T_SCREW_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 1821
   
 EndStructure 
  
  ; 1822 : SCULPTURED_SOLID
-Structure T_SCULPTURED_SOLID Extends TStepBase ; ID= 1822
+Structure T_SCULPTURED_SOLID Extends TStepEntityBase ; ID= 1822
   
 EndStructure 
  
  ; 1823 : SDGC_WITH_DIMENSION
-Structure T_SDGC_WITH_DIMENSION Extends TStepBase ; ID= 1823
+Structure T_SDGC_WITH_DIMENSION Extends TStepEntityBase ; ID= 1823
   
 EndStructure 
  
  ; 1824 : SEAM_CURVE
-Structure T_SEAM_CURVE Extends TStepBase ; ID= 1824
+Structure T_SEAM_CURVE Extends TStepEntityBase ; ID= 1824
   
 EndStructure 
  
  ; 1825 : SEAM_EDGE
-Structure T_SEAM_EDGE Extends TStepBase ; ID= 1825
+Structure T_SEAM_EDGE Extends TStepEntityBase ; ID= 1825
   
 EndStructure 
  
  ; 1826 : SECURITY_CLASSIFICATION
-Structure T_SECURITY_CLASSIFICATION Extends TStepBase ; ID= 1826
+Structure T_SECURITY_CLASSIFICATION Extends TStepEntityBase ; ID= 1826
   
 EndStructure 
  
  ; 1827 : SECURITY_CLASSIFICATION_ASSIGNMENT
-Structure T_SECURITY_CLASSIFICATION_ASSIGNMENT Extends TStepBase ; ID= 1827
+Structure T_SECURITY_CLASSIFICATION_ASSIGNMENT Extends TStepEntityBase ; ID= 1827
   
 EndStructure 
  
  ; 1828 : SECURITY_CLASSIFICATION_LEVEL
-Structure T_SECURITY_CLASSIFICATION_LEVEL Extends TStepBase ; ID= 1828
+Structure T_SECURITY_CLASSIFICATION_LEVEL Extends TStepEntityBase ; ID= 1828
   
 EndStructure 
  
  ; 1829 : SELECTOR_FUNCTION
-Structure T_SELECTOR_FUNCTION Extends TStepBase ; ID= 1829
+Structure T_SELECTOR_FUNCTION Extends TStepEntityBase ; ID= 1829
   
 EndStructure 
  
  ; 1830 : SELF_INTERSECTING_CURVE
-Structure T_SELF_INTERSECTING_CURVE Extends TStepBase ; ID= 1830
+Structure T_SELF_INTERSECTING_CURVE Extends TStepEntityBase ; ID= 1830
   
 EndStructure 
  
  ; 1831 : SELF_INTERSECTING_GEOMETRY
-Structure T_SELF_INTERSECTING_GEOMETRY Extends TStepBase ; ID= 1831
+Structure T_SELF_INTERSECTING_GEOMETRY Extends TStepEntityBase ; ID= 1831
   
 EndStructure 
  
  ; 1832 : SELF_INTERSECTING_LOOP
-Structure T_SELF_INTERSECTING_LOOP Extends TStepBase ; ID= 1832
+Structure T_SELF_INTERSECTING_LOOP Extends TStepEntityBase ; ID= 1832
   
 EndStructure 
  
  ; 1833 : SELF_INTERSECTING_SHELL
-Structure T_SELF_INTERSECTING_SHELL Extends TStepBase ; ID= 1833
+Structure T_SELF_INTERSECTING_SHELL Extends TStepEntityBase ; ID= 1833
   
 EndStructure 
  
  ; 1834 : SELF_INTERSECTING_SURFACE
-Structure T_SELF_INTERSECTING_SURFACE Extends TStepBase ; ID= 1834
+Structure T_SELF_INTERSECTING_SURFACE Extends TStepEntityBase ; ID= 1834
   
 EndStructure 
  
  ; 1835 : SEQUENTIAL_METHOD
-Structure T_SEQUENTIAL_METHOD Extends TStepBase ; ID= 1835
+Structure T_SEQUENTIAL_METHOD Extends TStepEntityBase ; ID= 1835
   
 EndStructure 
  
  ; 1836 : SERIAL_ACTION_METHOD
-Structure T_SERIAL_ACTION_METHOD Extends TStepBase ; ID= 1836
+Structure T_SERIAL_ACTION_METHOD Extends TStepEntityBase ; ID= 1836
   
 EndStructure 
  
  ; 1837 : SERIAL_NUMBERED_EFFECTIVITY
-Structure T_SERIAL_NUMBERED_EFFECTIVITY Extends TStepBase ; ID= 1837
+Structure T_SERIAL_NUMBERED_EFFECTIVITY Extends TStepEntityBase ; ID= 1837
   
 EndStructure 
  
  ; 1838 : SERIES_COMPOSED_FUNCTION
-Structure T_SERIES_COMPOSED_FUNCTION Extends TStepBase ; ID= 1838
+Structure T_SERIES_COMPOSED_FUNCTION Extends TStepEntityBase ; ID= 1838
   
 EndStructure 
  
  ; 1839 : SHAPE_ASPECT
-Structure T_SHAPE_ASPECT Extends TStepBase ; ID= 1839
+Structure T_SHAPE_ASPECT Extends TStepEntityBase ; ID= 1839
   
 EndStructure 
  
  ; 1840 : SHAPE_ASPECT_ASSOCIATIVITY
-Structure T_SHAPE_ASPECT_ASSOCIATIVITY Extends TStepBase ; ID= 1840
+Structure T_SHAPE_ASPECT_ASSOCIATIVITY Extends TStepEntityBase ; ID= 1840
   
 EndStructure 
  
  ; 1841 : SHAPE_ASPECT_DERIVING_RELATIONSHIP
-Structure T_SHAPE_ASPECT_DERIVING_RELATIONSHIP Extends TStepBase ; ID= 1841
+Structure T_SHAPE_ASPECT_DERIVING_RELATIONSHIP Extends TStepEntityBase ; ID= 1841
   
 EndStructure 
  
  ; 1842 : SHAPE_ASPECT_OCCURRENCE
-Structure T_SHAPE_ASPECT_OCCURRENCE Extends TStepBase ; ID= 1842
+Structure T_SHAPE_ASPECT_OCCURRENCE Extends TStepEntityBase ; ID= 1842
   
 EndStructure 
  
  ; 1843 : SHAPE_ASPECT_RELATIONSHIP
-Structure T_SHAPE_ASPECT_RELATIONSHIP Extends TStepBase ; ID= 1843
+Structure T_SHAPE_ASPECT_RELATIONSHIP Extends TStepEntityBase ; ID= 1843
   
 EndStructure 
  
  ; 1844 : SHAPE_ASPECT_RELATIONSHIP_REPRESENTATION_ASSOCIATION
-Structure T_SHAPE_ASPECT_RELATIONSHIP_REPRESENTATION_ASSOCIATION Extends TStepBase ; ID= 1844
+Structure T_SHAPE_ASPECT_RELATIONSHIP_REPRESENTATION_ASSOCIATION Extends TStepEntityBase ; ID= 1844
   
 EndStructure 
  
  ; 1845 : SHAPE_ASPECT_TRANSITION
-Structure T_SHAPE_ASPECT_TRANSITION Extends TStepBase ; ID= 1845
+Structure T_SHAPE_ASPECT_TRANSITION Extends TStepEntityBase ; ID= 1845
   
 EndStructure 
  
  ; 1846 : SHAPE_CRITERIA_REPRESENTATION_WITH_ACCURACY
-Structure T_SHAPE_CRITERIA_REPRESENTATION_WITH_ACCURACY Extends TStepBase ; ID= 1846
+Structure T_SHAPE_CRITERIA_REPRESENTATION_WITH_ACCURACY Extends TStepEntityBase ; ID= 1846
   
 EndStructure 
  
  ; 1847 : SHAPE_DATA_QUALITY_ASSESSMENT_BY_LOGICAL_TEST
-Structure T_SHAPE_DATA_QUALITY_ASSESSMENT_BY_LOGICAL_TEST Extends TStepBase ; ID= 1847
+Structure T_SHAPE_DATA_QUALITY_ASSESSMENT_BY_LOGICAL_TEST Extends TStepEntityBase ; ID= 1847
   
 EndStructure 
  
  ; 1848 : SHAPE_DATA_QUALITY_ASSESSMENT_BY_NUMERICAL_TEST
-Structure T_SHAPE_DATA_QUALITY_ASSESSMENT_BY_NUMERICAL_TEST Extends TStepBase ; ID= 1848
+Structure T_SHAPE_DATA_QUALITY_ASSESSMENT_BY_NUMERICAL_TEST Extends TStepEntityBase ; ID= 1848
   
 EndStructure 
  
  ; 1849 : SHAPE_DATA_QUALITY_CRITERIA_REPRESENTATION
-Structure T_SHAPE_DATA_QUALITY_CRITERIA_REPRESENTATION Extends TStepBase ; ID= 1849
+Structure T_SHAPE_DATA_QUALITY_CRITERIA_REPRESENTATION Extends TStepEntityBase ; ID= 1849
   
 EndStructure 
  
  ; 1850 : SHAPE_DATA_QUALITY_CRITERION
-Structure T_SHAPE_DATA_QUALITY_CRITERION Extends TStepBase ; ID= 1850
+Structure T_SHAPE_DATA_QUALITY_CRITERION Extends TStepEntityBase ; ID= 1850
   
 EndStructure 
  
  ; 1851 : SHAPE_DATA_QUALITY_CRITERION_AND_ACCURACY_ASSOCIATION
-Structure T_SHAPE_DATA_QUALITY_CRITERION_AND_ACCURACY_ASSOCIATION Extends TStepBase ; ID= 1851
+Structure T_SHAPE_DATA_QUALITY_CRITERION_AND_ACCURACY_ASSOCIATION Extends TStepEntityBase ; ID= 1851
   
 EndStructure 
  
  ; 1852 : SHAPE_DATA_QUALITY_INSPECTED_SHAPE_AND_RESULT_RELATIONSHIP
-Structure T_SHAPE_DATA_QUALITY_INSPECTED_SHAPE_AND_RESULT_RELATIONSHIP Extends TStepBase ; ID= 1852
+Structure T_SHAPE_DATA_QUALITY_INSPECTED_SHAPE_AND_RESULT_RELATIONSHIP Extends TStepEntityBase ; ID= 1852
   
 EndStructure 
  
  ; 1853 : SHAPE_DATA_QUALITY_INSPECTION_CRITERION_REPORT
-Structure T_SHAPE_DATA_QUALITY_INSPECTION_CRITERION_REPORT Extends TStepBase ; ID= 1853
+Structure T_SHAPE_DATA_QUALITY_INSPECTION_CRITERION_REPORT Extends TStepEntityBase ; ID= 1853
   
 EndStructure 
  
  ; 1854 : SHAPE_DATA_QUALITY_INSPECTION_INSTANCE_REPORT
-Structure T_SHAPE_DATA_QUALITY_INSPECTION_INSTANCE_REPORT Extends TStepBase ; ID= 1854
+Structure T_SHAPE_DATA_QUALITY_INSPECTION_INSTANCE_REPORT Extends TStepEntityBase ; ID= 1854
   
 EndStructure 
  
  ; 1855 : SHAPE_DATA_QUALITY_INSPECTION_INSTANCE_REPORT_ITEM
-Structure T_SHAPE_DATA_QUALITY_INSPECTION_INSTANCE_REPORT_ITEM Extends TStepBase ; ID= 1855
+Structure T_SHAPE_DATA_QUALITY_INSPECTION_INSTANCE_REPORT_ITEM Extends TStepEntityBase ; ID= 1855
   
 EndStructure 
  
  ; 1856 : SHAPE_DATA_QUALITY_INSPECTION_RESULT
-Structure T_SHAPE_DATA_QUALITY_INSPECTION_RESULT Extends TStepBase ; ID= 1856
+Structure T_SHAPE_DATA_QUALITY_INSPECTION_RESULT Extends TStepEntityBase ; ID= 1856
   
 EndStructure 
  
  ; 1857 : SHAPE_DATA_QUALITY_INSPECTION_RESULT_REPRESENTATION
-Structure T_SHAPE_DATA_QUALITY_INSPECTION_RESULT_REPRESENTATION Extends TStepBase ; ID= 1857
+Structure T_SHAPE_DATA_QUALITY_INSPECTION_RESULT_REPRESENTATION Extends TStepEntityBase ; ID= 1857
   
 EndStructure 
  
  ; 1858 : SHAPE_DATA_QUALITY_LOWER_VALUE_LIMIT
-Structure T_SHAPE_DATA_QUALITY_LOWER_VALUE_LIMIT Extends TStepBase ; ID= 1858
+Structure T_SHAPE_DATA_QUALITY_LOWER_VALUE_LIMIT Extends TStepEntityBase ; ID= 1858
   
 EndStructure 
  
  ; 1859 : SHAPE_DATA_QUALITY_UPPER_VALUE_LIMIT
-Structure T_SHAPE_DATA_QUALITY_UPPER_VALUE_LIMIT Extends TStepBase ; ID= 1859
+Structure T_SHAPE_DATA_QUALITY_UPPER_VALUE_LIMIT Extends TStepEntityBase ; ID= 1859
   
 EndStructure 
  
  ; 1860 : SHAPE_DATA_QUALITY_VALUE_LIMIT
-Structure T_SHAPE_DATA_QUALITY_VALUE_LIMIT Extends TStepBase ; ID= 1860
+Structure T_SHAPE_DATA_QUALITY_VALUE_LIMIT Extends TStepEntityBase ; ID= 1860
   
 EndStructure 
  
  ; 1861 : SHAPE_DATA_QUALITY_VALUE_RANGE
-Structure T_SHAPE_DATA_QUALITY_VALUE_RANGE Extends TStepBase ; ID= 1861
+Structure T_SHAPE_DATA_QUALITY_VALUE_RANGE Extends TStepEntityBase ; ID= 1861
   
 EndStructure 
  
  ; 1862 : SHAPE_DEFINING_RELATIONSHIP
-Structure T_SHAPE_DEFINING_RELATIONSHIP Extends TStepBase ; ID= 1862
+Structure T_SHAPE_DEFINING_RELATIONSHIP Extends TStepEntityBase ; ID= 1862
   
 EndStructure 
  
  ; 1863 : SHAPE_DEFINITION_REPRESENTATION
-Structure T_SHAPE_DEFINITION_REPRESENTATION Extends TStepBase ; ID= 1863
+Structure T_SHAPE_DEFINITION_REPRESENTATION Extends TStepEntityBase ; ID= 1863
   
 EndStructure 
  
  ; 1864 : SHAPE_DIMENSION_REPRESENTATION
-Structure T_SHAPE_DIMENSION_REPRESENTATION Extends TStepBase ; ID= 1864
+Structure T_SHAPE_DIMENSION_REPRESENTATION Extends TStepEntityBase ; ID= 1864
   
 EndStructure 
  
  ; 1865 : SHAPE_FEATURE_DEFINITION
-Structure T_SHAPE_FEATURE_DEFINITION Extends TStepBase ; ID= 1865
+Structure T_SHAPE_FEATURE_DEFINITION Extends TStepEntityBase ; ID= 1865
   
 EndStructure 
  
  ; 1866 : SHAPE_FEATURE_DEFINITION_ELEMENT_RELATIONSHIP
-Structure T_SHAPE_FEATURE_DEFINITION_ELEMENT_RELATIONSHIP Extends TStepBase ; ID= 1866
+Structure T_SHAPE_FEATURE_DEFINITION_ELEMENT_RELATIONSHIP Extends TStepEntityBase ; ID= 1866
   
 EndStructure 
  
  ; 1867 : SHAPE_FEATURE_DEFINITION_FIT_RELATIONSHIP
-Structure T_SHAPE_FEATURE_DEFINITION_FIT_RELATIONSHIP Extends TStepBase ; ID= 1867
+Structure T_SHAPE_FEATURE_DEFINITION_FIT_RELATIONSHIP Extends TStepEntityBase ; ID= 1867
   
 EndStructure 
  
  ; 1868 : SHAPE_FEATURE_DEFINITION_RELATIONSHIP
-Structure T_SHAPE_FEATURE_DEFINITION_RELATIONSHIP Extends TStepBase ; ID= 1868
+Structure T_SHAPE_FEATURE_DEFINITION_RELATIONSHIP Extends TStepEntityBase ; ID= 1868
   
 EndStructure 
  
  ; 1869 : SHAPE_FEATURE_FIT_RELATIONSHIP
-Structure T_SHAPE_FEATURE_FIT_RELATIONSHIP Extends TStepBase ; ID= 1869
+Structure T_SHAPE_FEATURE_FIT_RELATIONSHIP Extends TStepEntityBase ; ID= 1869
   
 EndStructure 
  
  ; 1870 : SHAPE_INSPECTION_RESULT_ACCURACY_ASSOCIATION
-Structure T_SHAPE_INSPECTION_RESULT_ACCURACY_ASSOCIATION Extends TStepBase ; ID= 1870
+Structure T_SHAPE_INSPECTION_RESULT_ACCURACY_ASSOCIATION Extends TStepEntityBase ; ID= 1870
   
 EndStructure 
  
  ; 1871 : SHAPE_INSPECTION_RESULT_REPRESENTATION_WITH_ACCURACY
-Structure T_SHAPE_INSPECTION_RESULT_REPRESENTATION_WITH_ACCURACY Extends TStepBase ; ID= 1871
+Structure T_SHAPE_INSPECTION_RESULT_REPRESENTATION_WITH_ACCURACY Extends TStepEntityBase ; ID= 1871
   
 EndStructure 
  
  ; 1872 : SHAPE_MEASUREMENT_ACCURACY
-Structure T_SHAPE_MEASUREMENT_ACCURACY Extends TStepBase ; ID= 1872
+Structure T_SHAPE_MEASUREMENT_ACCURACY Extends TStepEntityBase ; ID= 1872
   
 EndStructure 
  
  ; 1873 : SHAPE_REPRESENTATION
-Structure T_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1873
+Structure T_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1873
   
 EndStructure 
  
  ; 1874 : SHAPE_REPRESENTATION_REFERENCE
-Structure T_SHAPE_REPRESENTATION_REFERENCE Extends TStepBase ; ID= 1874
+Structure T_SHAPE_REPRESENTATION_REFERENCE Extends TStepEntityBase ; ID= 1874
   
 EndStructure 
  
  ; 1875 : SHAPE_REPRESENTATION_RELATIONSHIP
-Structure T_SHAPE_REPRESENTATION_RELATIONSHIP Extends TStepBase ; ID= 1875
+Structure T_SHAPE_REPRESENTATION_RELATIONSHIP Extends TStepEntityBase ; ID= 1875
   
 EndStructure 
  
  ; 1876 : SHAPE_REPRESENTATION_WITH_PARAMETERS
-Structure T_SHAPE_REPRESENTATION_WITH_PARAMETERS Extends TStepBase ; ID= 1876
+Structure T_SHAPE_REPRESENTATION_WITH_PARAMETERS Extends TStepEntityBase ; ID= 1876
   
 EndStructure 
  
  ; 1877 : SHAPE_SUMMARY_REQUEST_WITH_REPRESENTATIVE_VALUE
-Structure T_SHAPE_SUMMARY_REQUEST_WITH_REPRESENTATIVE_VALUE Extends TStepBase ; ID= 1877
+Structure T_SHAPE_SUMMARY_REQUEST_WITH_REPRESENTATIVE_VALUE Extends TStepEntityBase ; ID= 1877
   
 EndStructure 
  
  ; 1878 : SHELL_BASED_SURFACE_MODEL
-Structure T_SHELL_BASED_SURFACE_MODEL Extends TStepBase ; ID= 1878
+Structure T_SHELL_BASED_SURFACE_MODEL Extends TStepEntityBase ; ID= 1878
   
 EndStructure 
  
  ; 1879 : SHELL_BASED_WIREFRAME_MODEL
-Structure T_SHELL_BASED_WIREFRAME_MODEL Extends TStepBase ; ID= 1879
+Structure T_SHELL_BASED_WIREFRAME_MODEL Extends TStepEntityBase ; ID= 1879
   
 EndStructure 
  
  ; 1880 : SHELL_BASED_WIREFRAME_SHAPE_REPRESENTATION
-Structure T_SHELL_BASED_WIREFRAME_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1880
+Structure T_SHELL_BASED_WIREFRAME_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1880
   
 EndStructure 
  
  ; 1881 : SHELLED_SOLID
-Structure T_SHELLED_SOLID Extends TStepBase ; ID= 1881
+Structure T_SHELLED_SOLID Extends TStepEntityBase ; ID= 1881
   
 EndStructure 
  
  ; 1882 : SHORT_LENGTH_CURVE
-Structure T_SHORT_LENGTH_CURVE Extends TStepBase ; ID= 1882
+Structure T_SHORT_LENGTH_CURVE Extends TStepEntityBase ; ID= 1882
   
 EndStructure 
  
  ; 1883 : SHORT_LENGTH_CURVE_SEGMENT
-Structure T_SHORT_LENGTH_CURVE_SEGMENT Extends TStepBase ; ID= 1883
+Structure T_SHORT_LENGTH_CURVE_SEGMENT Extends TStepEntityBase ; ID= 1883
   
 EndStructure 
  
  ; 1884 : SHORT_LENGTH_EDGE
-Structure T_SHORT_LENGTH_EDGE Extends TStepBase ; ID= 1884
+Structure T_SHORT_LENGTH_EDGE Extends TStepEntityBase ; ID= 1884
   
 EndStructure 
  
  ; 1885 : SI_ABSORBED_DOSE_UNIT
-Structure T_SI_ABSORBED_DOSE_UNIT Extends TStepBase ; ID= 1885
+Structure T_SI_ABSORBED_DOSE_UNIT Extends TStepEntityBase ; ID= 1885
   
 EndStructure 
  
  ; 1886 : SI_CAPACITANCE_UNIT
-Structure T_SI_CAPACITANCE_UNIT Extends TStepBase ; ID= 1886
+Structure T_SI_CAPACITANCE_UNIT Extends TStepEntityBase ; ID= 1886
   
 EndStructure 
  
  ; 1887 : SI_CONDUCTANCE_UNIT
-Structure T_SI_CONDUCTANCE_UNIT Extends TStepBase ; ID= 1887
+Structure T_SI_CONDUCTANCE_UNIT Extends TStepEntityBase ; ID= 1887
   
 EndStructure 
  
  ; 1888 : SI_DOSE_EQUIVALENT_UNIT
-Structure T_SI_DOSE_EQUIVALENT_UNIT Extends TStepBase ; ID= 1888
+Structure T_SI_DOSE_EQUIVALENT_UNIT Extends TStepEntityBase ; ID= 1888
   
 EndStructure 
  
  ; 1889 : SI_ELECTRIC_CHARGE_UNIT
-Structure T_SI_ELECTRIC_CHARGE_UNIT Extends TStepBase ; ID= 1889
+Structure T_SI_ELECTRIC_CHARGE_UNIT Extends TStepEntityBase ; ID= 1889
   
 EndStructure 
  
  ; 1890 : SI_ELECTRIC_POTENTIAL_UNIT
-Structure T_SI_ELECTRIC_POTENTIAL_UNIT Extends TStepBase ; ID= 1890
+Structure T_SI_ELECTRIC_POTENTIAL_UNIT Extends TStepEntityBase ; ID= 1890
   
 EndStructure 
  
  ; 1891 : SI_ENERGY_UNIT
-Structure T_SI_ENERGY_UNIT Extends TStepBase ; ID= 1891
+Structure T_SI_ENERGY_UNIT Extends TStepEntityBase ; ID= 1891
   
 EndStructure 
  
  ; 1892 : SI_FORCE_UNIT
-Structure T_SI_FORCE_UNIT Extends TStepBase ; ID= 1892
+Structure T_SI_FORCE_UNIT Extends TStepEntityBase ; ID= 1892
   
 EndStructure 
  
  ; 1893 : SI_FREQUENCY_UNIT
-Structure T_SI_FREQUENCY_UNIT Extends TStepBase ; ID= 1893
+Structure T_SI_FREQUENCY_UNIT Extends TStepEntityBase ; ID= 1893
   
 EndStructure 
  
  ; 1894 : SI_ILLUMINANCE_UNIT
-Structure T_SI_ILLUMINANCE_UNIT Extends TStepBase ; ID= 1894
+Structure T_SI_ILLUMINANCE_UNIT Extends TStepEntityBase ; ID= 1894
   
 EndStructure 
  
  ; 1895 : SI_INDUCTANCE_UNIT
-Structure T_SI_INDUCTANCE_UNIT Extends TStepBase ; ID= 1895
+Structure T_SI_INDUCTANCE_UNIT Extends TStepEntityBase ; ID= 1895
   
 EndStructure 
  
  ; 1896 : SI_MAGNETIC_FLUX_DENSITY_UNIT
-Structure T_SI_MAGNETIC_FLUX_DENSITY_UNIT Extends TStepBase ; ID= 1896
+Structure T_SI_MAGNETIC_FLUX_DENSITY_UNIT Extends TStepEntityBase ; ID= 1896
   
 EndStructure 
  
  ; 1897 : SI_MAGNETIC_FLUX_UNIT
-Structure T_SI_MAGNETIC_FLUX_UNIT Extends TStepBase ; ID= 1897
+Structure T_SI_MAGNETIC_FLUX_UNIT Extends TStepEntityBase ; ID= 1897
   
 EndStructure 
  
  ; 1898 : SI_POWER_UNIT
-Structure T_SI_POWER_UNIT Extends TStepBase ; ID= 1898
+Structure T_SI_POWER_UNIT Extends TStepEntityBase ; ID= 1898
   
 EndStructure 
  
  ; 1899 : SI_PRESSURE_UNIT
-Structure T_SI_PRESSURE_UNIT Extends TStepBase ; ID= 1899
+Structure T_SI_PRESSURE_UNIT Extends TStepEntityBase ; ID= 1899
   
 EndStructure 
  
  ; 1900 : SI_RADIOACTIVITY_UNIT
-Structure T_SI_RADIOACTIVITY_UNIT Extends TStepBase ; ID= 1900
+Structure T_SI_RADIOACTIVITY_UNIT Extends TStepEntityBase ; ID= 1900
   
 EndStructure 
  
  ; 1901 : SI_RESISTANCE_UNIT
-Structure T_SI_RESISTANCE_UNIT Extends TStepBase ; ID= 1901
+Structure T_SI_RESISTANCE_UNIT Extends TStepEntityBase ; ID= 1901
   
 EndStructure 
  
  ; 1902 : SI_UNIT
-Structure T_SI_UNIT Extends TStepBase ; ID= 1902
+Structure T_SI_UNIT Extends TStepEntityBase ; ID= 1902
   
 EndStructure 
  
  ; 1903 : SIDE_MILLING_OPERATION
-Structure T_SIDE_MILLING_OPERATION Extends TStepBase ; ID= 1903
+Structure T_SIDE_MILLING_OPERATION Extends TStepEntityBase ; ID= 1903
   
 EndStructure 
  
  ; 1904 : SIMPLE_BOOLEAN_EXPRESSION
-Structure T_SIMPLE_BOOLEAN_EXPRESSION Extends TStepBase ; ID= 1904
+Structure T_SIMPLE_BOOLEAN_EXPRESSION Extends TStepEntityBase ; ID= 1904
   
 EndStructure 
  
  ; 1905 : SIMPLE_CLAUSE
-Structure T_SIMPLE_CLAUSE Extends TStepBase ; ID= 1905
+Structure T_SIMPLE_CLAUSE Extends TStepEntityBase ; ID= 1905
   
 EndStructure 
  
  ; 1906 : SIMPLE_GENERIC_EXPRESSION
-Structure T_SIMPLE_GENERIC_EXPRESSION Extends TStepBase ; ID= 1906
+Structure T_SIMPLE_GENERIC_EXPRESSION Extends TStepEntityBase ; ID= 1906
   
 EndStructure 
  
  ; 1907 : SIMPLE_NUMERIC_EXPRESSION
-Structure T_SIMPLE_NUMERIC_EXPRESSION Extends TStepBase ; ID= 1907
+Structure T_SIMPLE_NUMERIC_EXPRESSION Extends TStepEntityBase ; ID= 1907
   
 EndStructure 
  
  ; 1908 : SIMPLE_PAIR_RANGE
-Structure T_SIMPLE_PAIR_RANGE Extends TStepBase ; ID= 1908
+Structure T_SIMPLE_PAIR_RANGE Extends TStepEntityBase ; ID= 1908
   
 EndStructure 
  
  ; 1909 : SIMPLE_STRING_EXPRESSION
-Structure T_SIMPLE_STRING_EXPRESSION Extends TStepBase ; ID= 1909
+Structure T_SIMPLE_STRING_EXPRESSION Extends TStepEntityBase ; ID= 1909
   
 EndStructure 
  
  ; 1910 : SIMPLIFIED_COUNTERBORE_HOLE_DEFINITION
-Structure T_SIMPLIFIED_COUNTERBORE_HOLE_DEFINITION Extends TStepBase ; ID= 1910
+Structure T_SIMPLIFIED_COUNTERBORE_HOLE_DEFINITION Extends TStepEntityBase ; ID= 1910
   
 EndStructure 
  
  ; 1911 : SIMPLIFIED_COUNTERDRILL_HOLE_DEFINITION
-Structure T_SIMPLIFIED_COUNTERDRILL_HOLE_DEFINITION Extends TStepBase ; ID= 1911
+Structure T_SIMPLIFIED_COUNTERDRILL_HOLE_DEFINITION Extends TStepEntityBase ; ID= 1911
   
 EndStructure 
  
  ; 1912 : SIMPLIFIED_COUNTERSINK_HOLE_DEFINITION
-Structure T_SIMPLIFIED_COUNTERSINK_HOLE_DEFINITION Extends TStepBase ; ID= 1912
+Structure T_SIMPLIFIED_COUNTERSINK_HOLE_DEFINITION Extends TStepEntityBase ; ID= 1912
   
 EndStructure 
  
  ; 1913 : SIMPLIFIED_SPOTFACE_HOLE_DEFINITION
-Structure T_SIMPLIFIED_SPOTFACE_HOLE_DEFINITION Extends TStepBase ; ID= 1913
+Structure T_SIMPLIFIED_SPOTFACE_HOLE_DEFINITION Extends TStepEntityBase ; ID= 1913
   
 EndStructure 
  
  ; 1914 : SIMULTANEOUS_CONSTRAINT_GROUP
-Structure T_SIMULTANEOUS_CONSTRAINT_GROUP Extends TStepBase ; ID= 1914
+Structure T_SIMULTANEOUS_CONSTRAINT_GROUP Extends TStepEntityBase ; ID= 1914
   
 EndStructure 
  
  ; 1915 : SIN_FUNCTION
-Structure T_SIN_FUNCTION Extends TStepBase ; ID= 1915
+Structure T_SIN_FUNCTION Extends TStepEntityBase ; ID= 1915
   
 EndStructure 
  
  ; 1916 : SINGLE_AREA_CSG_2D_SHAPE_REPRESENTATION
-Structure T_SINGLE_AREA_CSG_2D_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1916
+Structure T_SINGLE_AREA_CSG_2D_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1916
   
 EndStructure 
  
  ; 1917 : SINGLE_BOUNDARY_CSG_2D_SHAPE_REPRESENTATION
-Structure T_SINGLE_BOUNDARY_CSG_2D_SHAPE_REPRESENTATION Extends TStepBase ; ID= 1917
+Structure T_SINGLE_BOUNDARY_CSG_2D_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 1917
   
 EndStructure 
  
  ; 1918 : SINGLE_PROPERTY_IS_DEFINITION
-Structure T_SINGLE_PROPERTY_IS_DEFINITION Extends TStepBase ; ID= 1918
+Structure T_SINGLE_PROPERTY_IS_DEFINITION Extends TStepEntityBase ; ID= 1918
   
 EndStructure 
  
  ; 1919 : SINGLE_TEXTURE_STYLE_TESSELLATION_SPECIFICATION
-Structure T_SINGLE_TEXTURE_STYLE_TESSELLATION_SPECIFICATION Extends TStepBase ; ID= 1919
+Structure T_SINGLE_TEXTURE_STYLE_TESSELLATION_SPECIFICATION Extends TStepEntityBase ; ID= 1919
   
 EndStructure 
  
  ; 1920 : SKEW_LINE_DISTANCE_GEOMETRIC_CONSTRAINT
-Structure T_SKEW_LINE_DISTANCE_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 1920
+Structure T_SKEW_LINE_DISTANCE_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 1920
   
 EndStructure 
  
  ; 1921 : SLASH_EXPRESSION
-Structure T_SLASH_EXPRESSION Extends TStepBase ; ID= 1921
+Structure T_SLASH_EXPRESSION Extends TStepEntityBase ; ID= 1921
   
 EndStructure 
  
  ; 1922 : SLIDING_CURVE_PAIR
-Structure T_SLIDING_CURVE_PAIR Extends TStepBase ; ID= 1922
+Structure T_SLIDING_CURVE_PAIR Extends TStepEntityBase ; ID= 1922
   
 EndStructure 
  
  ; 1923 : SLIDING_CURVE_PAIR_VALUE
-Structure T_SLIDING_CURVE_PAIR_VALUE Extends TStepBase ; ID= 1923
+Structure T_SLIDING_CURVE_PAIR_VALUE Extends TStepEntityBase ; ID= 1923
   
 EndStructure 
  
  ; 1924 : SLIDING_SURFACE_PAIR
-Structure T_SLIDING_SURFACE_PAIR Extends TStepBase ; ID= 1924
+Structure T_SLIDING_SURFACE_PAIR Extends TStepEntityBase ; ID= 1924
   
 EndStructure 
  
  ; 1925 : SLIDING_SURFACE_PAIR_VALUE
-Structure T_SLIDING_SURFACE_PAIR_VALUE Extends TStepBase ; ID= 1925
+Structure T_SLIDING_SURFACE_PAIR_VALUE Extends TStepEntityBase ; ID= 1925
   
 EndStructure 
  
  ; 1926 : SLOT
-Structure T_SLOT Extends TStepBase ; ID= 1926
+Structure T_SLOT Extends TStepEntityBase ; ID= 1926
   
 EndStructure 
  
  ; 1927 : SLOT_END
-Structure T_SLOT_END Extends TStepBase ; ID= 1927
+Structure T_SLOT_END Extends TStepEntityBase ; ID= 1927
   
 EndStructure 
  
  ; 1928 : SMALL_AREA_FACE
-Structure T_SMALL_AREA_FACE Extends TStepBase ; ID= 1928
+Structure T_SMALL_AREA_FACE Extends TStepEntityBase ; ID= 1928
   
 EndStructure 
  
  ; 1929 : SMALL_AREA_SURFACE
-Structure T_SMALL_AREA_SURFACE Extends TStepBase ; ID= 1929
+Structure T_SMALL_AREA_SURFACE Extends TStepEntityBase ; ID= 1929
   
 EndStructure 
  
  ; 1930 : SMALL_AREA_SURFACE_PATCH
-Structure T_SMALL_AREA_SURFACE_PATCH Extends TStepBase ; ID= 1930
+Structure T_SMALL_AREA_SURFACE_PATCH Extends TStepEntityBase ; ID= 1930
   
 EndStructure 
  
  ; 1931 : SMALL_VOLUME_SOLID
-Structure T_SMALL_VOLUME_SOLID Extends TStepBase ; ID= 1931
+Structure T_SMALL_VOLUME_SOLID Extends TStepEntityBase ; ID= 1931
   
 EndStructure 
  
  ; 1932 : SMEARED_MATERIAL_DEFINITION
-Structure T_SMEARED_MATERIAL_DEFINITION Extends TStepBase ; ID= 1932
+Structure T_SMEARED_MATERIAL_DEFINITION Extends TStepEntityBase ; ID= 1932
   
 EndStructure 
  
  ; 1933 : SOFTWARE_FOR_DATA_QUALITY_CHECK
-Structure T_SOFTWARE_FOR_DATA_QUALITY_CHECK Extends TStepBase ; ID= 1933
+Structure T_SOFTWARE_FOR_DATA_QUALITY_CHECK Extends TStepEntityBase ; ID= 1933
   
 EndStructure 
  
  ; 1934 : SOLID_ANGLE_MEASURE_WITH_UNIT
-Structure T_SOLID_ANGLE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 1934
+Structure T_SOLID_ANGLE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 1934
   
 EndStructure 
  
  ; 1935 : SOLID_ANGLE_UNIT
-Structure T_SOLID_ANGLE_UNIT Extends TStepBase ; ID= 1935
+Structure T_SOLID_ANGLE_UNIT Extends TStepEntityBase ; ID= 1935
   
 EndStructure 
  
  ; 1936 : SOLID_CURVE_FONT
-Structure T_SOLID_CURVE_FONT Extends TStepBase ; ID= 1936
+Structure T_SOLID_CURVE_FONT Extends TStepEntityBase ; ID= 1936
   
 EndStructure 
  
  ; 1937 : SOLID_MODEL
-Structure T_SOLID_MODEL Extends TStepBase ; ID= 1937
+Structure T_SOLID_MODEL Extends TStepEntityBase ; ID= 1937
   
 EndStructure 
  
  ; 1938 : SOLID_REPLICA
-Structure T_SOLID_REPLICA Extends TStepBase ; ID= 1938
+Structure T_SOLID_REPLICA Extends TStepEntityBase ; ID= 1938
   
 EndStructure 
  
  ; 1939 : SOLID_WITH_ANGLE_BASED_CHAMFER
-Structure T_SOLID_WITH_ANGLE_BASED_CHAMFER Extends TStepBase ; ID= 1939
+Structure T_SOLID_WITH_ANGLE_BASED_CHAMFER Extends TStepEntityBase ; ID= 1939
   
 EndStructure 
  
  ; 1940 : SOLID_WITH_CHAMFERED_EDGES
-Structure T_SOLID_WITH_CHAMFERED_EDGES Extends TStepBase ; ID= 1940
+Structure T_SOLID_WITH_CHAMFERED_EDGES Extends TStepEntityBase ; ID= 1940
   
 EndStructure 
  
  ; 1941 : SOLID_WITH_CIRCULAR_PATTERN
-Structure T_SOLID_WITH_CIRCULAR_PATTERN Extends TStepBase ; ID= 1941
+Structure T_SOLID_WITH_CIRCULAR_PATTERN Extends TStepEntityBase ; ID= 1941
   
 EndStructure 
  
  ; 1942 : SOLID_WITH_CIRCULAR_POCKET
-Structure T_SOLID_WITH_CIRCULAR_POCKET Extends TStepBase ; ID= 1942
+Structure T_SOLID_WITH_CIRCULAR_POCKET Extends TStepEntityBase ; ID= 1942
   
 EndStructure 
  
  ; 1943 : SOLID_WITH_CIRCULAR_PROTRUSION
-Structure T_SOLID_WITH_CIRCULAR_PROTRUSION Extends TStepBase ; ID= 1943
+Structure T_SOLID_WITH_CIRCULAR_PROTRUSION Extends TStepEntityBase ; ID= 1943
   
 EndStructure 
  
  ; 1944 : SOLID_WITH_CONICAL_BOTTOM_ROUND_HOLE
-Structure T_SOLID_WITH_CONICAL_BOTTOM_ROUND_HOLE Extends TStepBase ; ID= 1944
+Structure T_SOLID_WITH_CONICAL_BOTTOM_ROUND_HOLE Extends TStepEntityBase ; ID= 1944
   
 EndStructure 
  
  ; 1945 : SOLID_WITH_CONSTANT_RADIUS_EDGE_BLEND
-Structure T_SOLID_WITH_CONSTANT_RADIUS_EDGE_BLEND Extends TStepBase ; ID= 1945
+Structure T_SOLID_WITH_CONSTANT_RADIUS_EDGE_BLEND Extends TStepEntityBase ; ID= 1945
   
 EndStructure 
  
  ; 1946 : SOLID_WITH_CURVED_SLOT
-Structure T_SOLID_WITH_CURVED_SLOT Extends TStepBase ; ID= 1946
+Structure T_SOLID_WITH_CURVED_SLOT Extends TStepEntityBase ; ID= 1946
   
 EndStructure 
  
  ; 1947 : SOLID_WITH_DEPRESSION
-Structure T_SOLID_WITH_DEPRESSION Extends TStepBase ; ID= 1947
+Structure T_SOLID_WITH_DEPRESSION Extends TStepEntityBase ; ID= 1947
   
 EndStructure 
  
  ; 1948 : SOLID_WITH_DOUBLE_OFFSET_CHAMFER
-Structure T_SOLID_WITH_DOUBLE_OFFSET_CHAMFER Extends TStepBase ; ID= 1948
+Structure T_SOLID_WITH_DOUBLE_OFFSET_CHAMFER Extends TStepEntityBase ; ID= 1948
   
 EndStructure 
  
  ; 1949 : SOLID_WITH_EXCESSIVE_NUMBER_OF_VOIDS
-Structure T_SOLID_WITH_EXCESSIVE_NUMBER_OF_VOIDS Extends TStepBase ; ID= 1949
+Structure T_SOLID_WITH_EXCESSIVE_NUMBER_OF_VOIDS Extends TStepEntityBase ; ID= 1949
   
 EndStructure 
  
  ; 1950 : SOLID_WITH_FLAT_BOTTOM_ROUND_HOLE
-Structure T_SOLID_WITH_FLAT_BOTTOM_ROUND_HOLE Extends TStepBase ; ID= 1950
+Structure T_SOLID_WITH_FLAT_BOTTOM_ROUND_HOLE Extends TStepEntityBase ; ID= 1950
   
 EndStructure 
  
  ; 1951 : SOLID_WITH_GENERAL_POCKET
-Structure T_SOLID_WITH_GENERAL_POCKET Extends TStepBase ; ID= 1951
+Structure T_SOLID_WITH_GENERAL_POCKET Extends TStepEntityBase ; ID= 1951
   
 EndStructure 
  
  ; 1952 : SOLID_WITH_GENERAL_PROTRUSION
-Structure T_SOLID_WITH_GENERAL_PROTRUSION Extends TStepBase ; ID= 1952
+Structure T_SOLID_WITH_GENERAL_PROTRUSION Extends TStepEntityBase ; ID= 1952
   
 EndStructure 
  
  ; 1953 : SOLID_WITH_GROOVE
-Structure T_SOLID_WITH_GROOVE Extends TStepBase ; ID= 1953
+Structure T_SOLID_WITH_GROOVE Extends TStepEntityBase ; ID= 1953
   
 EndStructure 
  
  ; 1954 : SOLID_WITH_HOLE
-Structure T_SOLID_WITH_HOLE Extends TStepBase ; ID= 1954
+Structure T_SOLID_WITH_HOLE Extends TStepEntityBase ; ID= 1954
   
 EndStructure 
  
  ; 1955 : SOLID_WITH_INCOMPLETE_CIRCULAR_PATTERN
-Structure T_SOLID_WITH_INCOMPLETE_CIRCULAR_PATTERN Extends TStepBase ; ID= 1955
+Structure T_SOLID_WITH_INCOMPLETE_CIRCULAR_PATTERN Extends TStepEntityBase ; ID= 1955
   
 EndStructure 
  
  ; 1956 : SOLID_WITH_INCOMPLETE_RECTANGULAR_PATTERN
-Structure T_SOLID_WITH_INCOMPLETE_RECTANGULAR_PATTERN Extends TStepBase ; ID= 1956
+Structure T_SOLID_WITH_INCOMPLETE_RECTANGULAR_PATTERN Extends TStepEntityBase ; ID= 1956
   
 EndStructure 
  
  ; 1957 : SOLID_WITH_POCKET
-Structure T_SOLID_WITH_POCKET Extends TStepBase ; ID= 1957
+Structure T_SOLID_WITH_POCKET Extends TStepEntityBase ; ID= 1957
   
 EndStructure 
  
  ; 1958 : SOLID_WITH_PROTRUSION
-Structure T_SOLID_WITH_PROTRUSION Extends TStepBase ; ID= 1958
+Structure T_SOLID_WITH_PROTRUSION Extends TStepEntityBase ; ID= 1958
   
 EndStructure 
  
  ; 1959 : SOLID_WITH_RECTANGULAR_PATTERN
-Structure T_SOLID_WITH_RECTANGULAR_PATTERN Extends TStepBase ; ID= 1959
+Structure T_SOLID_WITH_RECTANGULAR_PATTERN Extends TStepEntityBase ; ID= 1959
   
 EndStructure 
  
  ; 1960 : SOLID_WITH_RECTANGULAR_POCKET
-Structure T_SOLID_WITH_RECTANGULAR_POCKET Extends TStepBase ; ID= 1960
+Structure T_SOLID_WITH_RECTANGULAR_POCKET Extends TStepEntityBase ; ID= 1960
   
 EndStructure 
  
  ; 1961 : SOLID_WITH_RECTANGULAR_PROTRUSION
-Structure T_SOLID_WITH_RECTANGULAR_PROTRUSION Extends TStepBase ; ID= 1961
+Structure T_SOLID_WITH_RECTANGULAR_PROTRUSION Extends TStepEntityBase ; ID= 1961
   
 EndStructure 
  
  ; 1962 : SOLID_WITH_SHAPE_ELEMENT_PATTERN
-Structure T_SOLID_WITH_SHAPE_ELEMENT_PATTERN Extends TStepBase ; ID= 1962
+Structure T_SOLID_WITH_SHAPE_ELEMENT_PATTERN Extends TStepEntityBase ; ID= 1962
   
 EndStructure 
  
  ; 1963 : SOLID_WITH_SINGLE_OFFSET_CHAMFER
-Structure T_SOLID_WITH_SINGLE_OFFSET_CHAMFER Extends TStepBase ; ID= 1963
+Structure T_SOLID_WITH_SINGLE_OFFSET_CHAMFER Extends TStepEntityBase ; ID= 1963
   
 EndStructure 
  
  ; 1964 : SOLID_WITH_SLOT
-Structure T_SOLID_WITH_SLOT Extends TStepBase ; ID= 1964
+Structure T_SOLID_WITH_SLOT Extends TStepEntityBase ; ID= 1964
   
 EndStructure 
  
  ; 1965 : SOLID_WITH_SPHERICAL_BOTTOM_ROUND_HOLE
-Structure T_SOLID_WITH_SPHERICAL_BOTTOM_ROUND_HOLE Extends TStepBase ; ID= 1965
+Structure T_SOLID_WITH_SPHERICAL_BOTTOM_ROUND_HOLE Extends TStepEntityBase ; ID= 1965
   
 EndStructure 
  
  ; 1966 : SOLID_WITH_STEPPED_ROUND_HOLE
-Structure T_SOLID_WITH_STEPPED_ROUND_HOLE Extends TStepBase ; ID= 1966
+Structure T_SOLID_WITH_STEPPED_ROUND_HOLE Extends TStepEntityBase ; ID= 1966
   
 EndStructure 
  
  ; 1967 : SOLID_WITH_STEPPED_ROUND_HOLE_AND_CONICAL_TRANSITIONS
-Structure T_SOLID_WITH_STEPPED_ROUND_HOLE_AND_CONICAL_TRANSITIONS Extends TStepBase ; ID= 1967
+Structure T_SOLID_WITH_STEPPED_ROUND_HOLE_AND_CONICAL_TRANSITIONS Extends TStepEntityBase ; ID= 1967
   
 EndStructure 
  
  ; 1968 : SOLID_WITH_STRAIGHT_SLOT
-Structure T_SOLID_WITH_STRAIGHT_SLOT Extends TStepBase ; ID= 1968
+Structure T_SOLID_WITH_STRAIGHT_SLOT Extends TStepEntityBase ; ID= 1968
   
 EndStructure 
  
  ; 1969 : SOLID_WITH_TEE_SECTION_SLOT
-Structure T_SOLID_WITH_TEE_SECTION_SLOT Extends TStepBase ; ID= 1969
+Structure T_SOLID_WITH_TEE_SECTION_SLOT Extends TStepEntityBase ; ID= 1969
   
 EndStructure 
  
  ; 1970 : SOLID_WITH_THROUGH_DEPRESSION
-Structure T_SOLID_WITH_THROUGH_DEPRESSION Extends TStepBase ; ID= 1970
+Structure T_SOLID_WITH_THROUGH_DEPRESSION Extends TStepEntityBase ; ID= 1970
   
 EndStructure 
  
  ; 1971 : SOLID_WITH_TRAPEZOIDAL_SECTION_SLOT
-Structure T_SOLID_WITH_TRAPEZOIDAL_SECTION_SLOT Extends TStepBase ; ID= 1971
+Structure T_SOLID_WITH_TRAPEZOIDAL_SECTION_SLOT Extends TStepEntityBase ; ID= 1971
   
 EndStructure 
  
  ; 1972 : SOLID_WITH_VARIABLE_RADIUS_EDGE_BLEND
-Structure T_SOLID_WITH_VARIABLE_RADIUS_EDGE_BLEND Extends TStepBase ; ID= 1972
+Structure T_SOLID_WITH_VARIABLE_RADIUS_EDGE_BLEND Extends TStepEntityBase ; ID= 1972
   
 EndStructure 
  
  ; 1973 : SOLID_WITH_WRONG_NUMBER_OF_VOIDS
-Structure T_SOLID_WITH_WRONG_NUMBER_OF_VOIDS Extends TStepBase ; ID= 1973
+Structure T_SOLID_WITH_WRONG_NUMBER_OF_VOIDS Extends TStepEntityBase ; ID= 1973
   
 EndStructure 
  
  ; 1974 : SOURCE_FOR_REQUIREMENT
-Structure T_SOURCE_FOR_REQUIREMENT Extends TStepBase ; ID= 1974
+Structure T_SOURCE_FOR_REQUIREMENT Extends TStepEntityBase ; ID= 1974
   
 EndStructure 
  
  ; 1975 : SOURCED_REQUIREMENT
-Structure T_SOURCED_REQUIREMENT Extends TStepBase ; ID= 1975
+Structure T_SOURCED_REQUIREMENT Extends TStepEntityBase ; ID= 1975
   
 EndStructure 
  
  ; 1976 : SPECIFICATION_DEFINITION
-Structure T_SPECIFICATION_DEFINITION Extends TStepBase ; ID= 1976
+Structure T_SPECIFICATION_DEFINITION Extends TStepEntityBase ; ID= 1976
   
 EndStructure 
  
  ; 1977 : SPECIFIED_HIGHER_USAGE_OCCURRENCE
-Structure T_SPECIFIED_HIGHER_USAGE_OCCURRENCE Extends TStepBase ; ID= 1977
+Structure T_SPECIFIED_HIGHER_USAGE_OCCURRENCE Extends TStepEntityBase ; ID= 1977
   
 EndStructure 
  
  ; 1978 : SPHERE
-Structure T_SPHERE Extends TStepBase ; ID= 1978
+Structure T_SPHERE Extends TStepEntityBase ; ID= 1978
   
 EndStructure 
  
  ; 1979 : SPHERICAL_CAP
-Structure T_SPHERICAL_CAP Extends TStepBase ; ID= 1979
+Structure T_SPHERICAL_CAP Extends TStepEntityBase ; ID= 1979
   
 EndStructure 
  
  ; 1980 : SPHERICAL_PAIR
-Structure T_SPHERICAL_PAIR Extends TStepBase ; ID= 1980
+Structure T_SPHERICAL_PAIR Extends TStepEntityBase ; ID= 1980
   
 EndStructure 
  
  ; 1981 : SPHERICAL_PAIR_RANGE
-Structure T_SPHERICAL_PAIR_RANGE Extends TStepBase ; ID= 1981
+Structure T_SPHERICAL_PAIR_RANGE Extends TStepEntityBase ; ID= 1981
   
 EndStructure 
  
  ; 1982 : SPHERICAL_PAIR_VALUE
-Structure T_SPHERICAL_PAIR_VALUE Extends TStepBase ; ID= 1982
+Structure T_SPHERICAL_PAIR_VALUE Extends TStepEntityBase ; ID= 1982
   
 EndStructure 
  
  ; 1983 : SPHERICAL_PAIR_WITH_PIN
-Structure T_SPHERICAL_PAIR_WITH_PIN Extends TStepBase ; ID= 1983
+Structure T_SPHERICAL_PAIR_WITH_PIN Extends TStepEntityBase ; ID= 1983
   
 EndStructure 
  
  ; 1984 : SPHERICAL_PAIR_WITH_PIN_AND_RANGE
-Structure T_SPHERICAL_PAIR_WITH_PIN_AND_RANGE Extends TStepBase ; ID= 1984
+Structure T_SPHERICAL_PAIR_WITH_PIN_AND_RANGE Extends TStepEntityBase ; ID= 1984
   
 EndStructure 
  
  ; 1985 : SPHERICAL_PAIR_WITH_RANGE
-Structure T_SPHERICAL_PAIR_WITH_RANGE Extends TStepBase ; ID= 1985
+Structure T_SPHERICAL_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 1985
   
 EndStructure 
  
  ; 1986 : SPHERICAL_POINT
-Structure T_SPHERICAL_POINT Extends TStepBase ; ID= 1986
+Structure T_SPHERICAL_POINT Extends TStepEntityBase ; ID= 1986
   
 EndStructure 
  
  ; 1987 : SPHERICAL_SURFACE
-Structure T_SPHERICAL_SURFACE Extends TStepBase ; ID= 1987
+Structure T_SPHERICAL_SURFACE Extends TStepEntityBase ; ID= 1987
   
 EndStructure 
  
  ; 1988 : SPHERICAL_VOLUME
-Structure T_SPHERICAL_VOLUME Extends TStepBase ; ID= 1988
+Structure T_SPHERICAL_VOLUME Extends TStepEntityBase ; ID= 1988
   
 EndStructure 
  
  ; 1989 : SPOTFACE_DEFINITION
-Structure T_SPOTFACE_DEFINITION Extends TStepBase ; ID= 1989
+Structure T_SPOTFACE_DEFINITION Extends TStepEntityBase ; ID= 1989
   
 EndStructure 
  
  ; 1990 : SPOTFACE_HOLE_DEFINITION
-Structure T_SPOTFACE_HOLE_DEFINITION Extends TStepBase ; ID= 1990
+Structure T_SPOTFACE_HOLE_DEFINITION Extends TStepEntityBase ; ID= 1990
   
 EndStructure 
  
  ; 1991 : SPOTFACE_OCCURRENCE
-Structure T_SPOTFACE_OCCURRENCE Extends TStepBase ; ID= 1991
+Structure T_SPOTFACE_OCCURRENCE Extends TStepEntityBase ; ID= 1991
   
 EndStructure 
  
  ; 1992 : SPOTFACE_OCCURRENCE_IN_ASSEMBLY
-Structure T_SPOTFACE_OCCURRENCE_IN_ASSEMBLY Extends TStepBase ; ID= 1992
+Structure T_SPOTFACE_OCCURRENCE_IN_ASSEMBLY Extends TStepEntityBase ; ID= 1992
   
 EndStructure 
  
  ; 1993 : SQL_MAPPABLE_DEFINED_FUNCTION
-Structure T_SQL_MAPPABLE_DEFINED_FUNCTION Extends TStepBase ; ID= 1993
+Structure T_SQL_MAPPABLE_DEFINED_FUNCTION Extends TStepEntityBase ; ID= 1993
   
 EndStructure 
  
  ; 1994 : SQUARE_ROOT_FUNCTION
-Structure T_SQUARE_ROOT_FUNCTION Extends TStepBase ; ID= 1994
+Structure T_SQUARE_ROOT_FUNCTION Extends TStepEntityBase ; ID= 1994
   
 EndStructure 
  
  ; 1995 : SQUARE_U_PROFILE
-Structure T_SQUARE_U_PROFILE Extends TStepBase ; ID= 1995
+Structure T_SQUARE_U_PROFILE Extends TStepEntityBase ; ID= 1995
   
 EndStructure 
  
  ; 1996 : STANDARD_TABLE_FUNCTION
-Structure T_STANDARD_TABLE_FUNCTION Extends TStepBase ; ID= 1996
+Structure T_STANDARD_TABLE_FUNCTION Extends TStepEntityBase ; ID= 1996
   
 EndStructure 
  
  ; 1997 : STANDARD_UNCERTAINTY
-Structure T_STANDARD_UNCERTAINTY Extends TStepBase ; ID= 1997
+Structure T_STANDARD_UNCERTAINTY Extends TStepEntityBase ; ID= 1997
   
 EndStructure 
  
  ; 1998 : START_REQUEST
-Structure T_START_REQUEST Extends TStepBase ; ID= 1998
+Structure T_START_REQUEST Extends TStepEntityBase ; ID= 1998
   
 EndStructure 
  
  ; 1999 : START_WORK
-Structure T_START_WORK Extends TStepBase ; ID= 1999
+Structure T_START_WORK Extends TStepEntityBase ; ID= 1999
   
 EndStructure 
  
  ; 2000 : STATE_DEFINITION_TO_STATE_ASSIGNMENT_RELATIONSHIP
-Structure T_STATE_DEFINITION_TO_STATE_ASSIGNMENT_RELATIONSHIP Extends TStepBase ; ID= 2000
+Structure T_STATE_DEFINITION_TO_STATE_ASSIGNMENT_RELATIONSHIP Extends TStepEntityBase ; ID= 2000
   
 EndStructure 
  
  ; 2001 : STATE_OBSERVED
-Structure T_STATE_OBSERVED Extends TStepBase ; ID= 2001
+Structure T_STATE_OBSERVED Extends TStepEntityBase ; ID= 2001
   
 EndStructure 
  
  ; 2002 : STATE_OBSERVED_ASSIGNMENT
-Structure T_STATE_OBSERVED_ASSIGNMENT Extends TStepBase ; ID= 2002
+Structure T_STATE_OBSERVED_ASSIGNMENT Extends TStepEntityBase ; ID= 2002
   
 EndStructure 
  
  ; 2003 : STATE_OBSERVED_RELATIONSHIP
-Structure T_STATE_OBSERVED_RELATIONSHIP Extends TStepBase ; ID= 2003
+Structure T_STATE_OBSERVED_RELATIONSHIP Extends TStepEntityBase ; ID= 2003
   
 EndStructure 
  
  ; 2004 : STATE_OBSERVED_ROLE
-Structure T_STATE_OBSERVED_ROLE Extends TStepBase ; ID= 2004
+Structure T_STATE_OBSERVED_ROLE Extends TStepEntityBase ; ID= 2004
   
 EndStructure 
  
  ; 2005 : STATE_PREDICTED
-Structure T_STATE_PREDICTED Extends TStepBase ; ID= 2005
+Structure T_STATE_PREDICTED Extends TStepEntityBase ; ID= 2005
   
 EndStructure 
  
  ; 2006 : STATE_TYPE
-Structure T_STATE_TYPE Extends TStepBase ; ID= 2006
+Structure T_STATE_TYPE Extends TStepEntityBase ; ID= 2006
   
 EndStructure 
  
  ; 2007 : STATE_TYPE_ASSIGNMENT
-Structure T_STATE_TYPE_ASSIGNMENT Extends TStepBase ; ID= 2007
+Structure T_STATE_TYPE_ASSIGNMENT Extends TStepEntityBase ; ID= 2007
   
 EndStructure 
  
  ; 2008 : STATE_TYPE_RELATIONSHIP
-Structure T_STATE_TYPE_RELATIONSHIP Extends TStepBase ; ID= 2008
+Structure T_STATE_TYPE_RELATIONSHIP Extends TStepEntityBase ; ID= 2008
   
 EndStructure 
  
  ; 2009 : STATE_TYPE_ROLE
-Structure T_STATE_TYPE_ROLE Extends TStepBase ; ID= 2009
+Structure T_STATE_TYPE_ROLE Extends TStepEntityBase ; ID= 2009
   
 EndStructure 
  
  ; 2010 : STATECHAR_APPLIED_OBJECT
-Structure T_STATECHAR_APPLIED_OBJECT Extends TStepBase ; ID= 2010
+Structure T_STATECHAR_APPLIED_OBJECT Extends TStepEntityBase ; ID= 2010
   
 EndStructure 
  
  ; 2011 : STATECHAR_OBJECT
-Structure T_STATECHAR_OBJECT Extends TStepBase ; ID= 2011
+Structure T_STATECHAR_OBJECT Extends TStepEntityBase ; ID= 2011
   
 EndStructure 
  
  ; 2012 : STATECHAR_RELATIONSHIP_OBJECT
-Structure T_STATECHAR_RELATIONSHIP_OBJECT Extends TStepBase ; ID= 2012
+Structure T_STATECHAR_RELATIONSHIP_OBJECT Extends TStepEntityBase ; ID= 2012
   
 EndStructure 
  
  ; 2013 : STATECHAR_TYPE_APPLIED_OBJECT
-Structure T_STATECHAR_TYPE_APPLIED_OBJECT Extends TStepBase ; ID= 2013
+Structure T_STATECHAR_TYPE_APPLIED_OBJECT Extends TStepEntityBase ; ID= 2013
   
 EndStructure 
  
  ; 2014 : STATECHAR_TYPE_OBJECT
-Structure T_STATECHAR_TYPE_OBJECT Extends TStepBase ; ID= 2014
+Structure T_STATECHAR_TYPE_OBJECT Extends TStepEntityBase ; ID= 2014
   
 EndStructure 
  
  ; 2015 : STATECHAR_TYPE_RELATIONSHIP_OBJECT
-Structure T_STATECHAR_TYPE_RELATIONSHIP_OBJECT Extends TStepBase ; ID= 2015
+Structure T_STATECHAR_TYPE_RELATIONSHIP_OBJECT Extends TStepEntityBase ; ID= 2015
   
 EndStructure 
  
  ; 2016 : STEEP_ANGLE_BETWEEN_ADJACENT_EDGES
-Structure T_STEEP_ANGLE_BETWEEN_ADJACENT_EDGES Extends TStepBase ; ID= 2016
+Structure T_STEEP_ANGLE_BETWEEN_ADJACENT_EDGES Extends TStepEntityBase ; ID= 2016
   
 EndStructure 
  
  ; 2017 : STEEP_ANGLE_BETWEEN_ADJACENT_FACES
-Structure T_STEEP_ANGLE_BETWEEN_ADJACENT_FACES Extends TStepBase ; ID= 2017
+Structure T_STEEP_ANGLE_BETWEEN_ADJACENT_FACES Extends TStepEntityBase ; ID= 2017
   
 EndStructure 
  
  ; 2018 : STEEP_GEOMETRY_TRANSITION_ACROSS_EDGE
-Structure T_STEEP_GEOMETRY_TRANSITION_ACROSS_EDGE Extends TStepBase ; ID= 2018
+Structure T_STEEP_GEOMETRY_TRANSITION_ACROSS_EDGE Extends TStepEntityBase ; ID= 2018
   
 EndStructure 
  
  ; 2019 : STEP
-Structure T_STEP Extends TStepBase ; ID= 2019
+Structure T_STEP Extends TStepEntityBase ; ID= 2019
   
 EndStructure 
  
  ; 2020 : STRAIGHTNESS_TOLERANCE
-Structure T_STRAIGHTNESS_TOLERANCE Extends TStepBase ; ID= 2020
+Structure T_STRAIGHTNESS_TOLERANCE Extends TStepEntityBase ; ID= 2020
   
 EndStructure 
  
  ; 2021 : STRICT_TRIANGULAR_MATRIX
-Structure T_STRICT_TRIANGULAR_MATRIX Extends TStepBase ; ID= 2021
+Structure T_STRICT_TRIANGULAR_MATRIX Extends TStepEntityBase ; ID= 2021
   
 EndStructure 
  
  ; 2022 : STRING_DEFINED_FUNCTION
-Structure T_STRING_DEFINED_FUNCTION Extends TStepBase ; ID= 2022
+Structure T_STRING_DEFINED_FUNCTION Extends TStepEntityBase ; ID= 2022
   
 EndStructure 
  
  ; 2023 : STRING_EXPRESSION
-Structure T_STRING_EXPRESSION Extends TStepBase ; ID= 2023
+Structure T_STRING_EXPRESSION Extends TStepEntityBase ; ID= 2023
   
 EndStructure 
  
  ; 2024 : STRING_LITERAL
-Structure T_STRING_LITERAL Extends TStepBase ; ID= 2024
+Structure T_STRING_LITERAL Extends TStepEntityBase ; ID= 2024
   
 EndStructure 
  
  ; 2025 : STRING_VARIABLE
-Structure T_STRING_VARIABLE Extends TStepBase ; ID= 2025
+Structure T_STRING_VARIABLE Extends TStepEntityBase ; ID= 2025
   
 EndStructure 
  
  ; 2026 : STRUCTURED_DIMENSION_CALLOUT
-Structure T_STRUCTURED_DIMENSION_CALLOUT Extends TStepBase ; ID= 2026
+Structure T_STRUCTURED_DIMENSION_CALLOUT Extends TStepEntityBase ; ID= 2026
   
 EndStructure 
  
  ; 2027 : STRUCTURED_MESSAGE
-Structure T_STRUCTURED_MESSAGE Extends TStepBase ; ID= 2027
+Structure T_STRUCTURED_MESSAGE Extends TStepEntityBase ; ID= 2027
   
 EndStructure 
  
  ; 2028 : STRUCTURED_TEXT_COMPOSITION
-Structure T_STRUCTURED_TEXT_COMPOSITION Extends TStepBase ; ID= 2028
+Structure T_STRUCTURED_TEXT_COMPOSITION Extends TStepEntityBase ; ID= 2028
   
 EndStructure 
  
  ; 2029 : STRUCTURED_TEXT_REPRESENTATION
-Structure T_STRUCTURED_TEXT_REPRESENTATION Extends TStepBase ; ID= 2029
+Structure T_STRUCTURED_TEXT_REPRESENTATION Extends TStepEntityBase ; ID= 2029
   
 EndStructure 
  
  ; 2030 : STYLED_ITEM
-Structure T_STYLED_ITEM Extends TStepBase ; ID= 2030
+Structure T_STYLED_ITEM Extends TStepEntityBase ; ID= 2030
   
 EndStructure 
  
  ; 2031 : STYLED_TESSELLATED_ITEM_WITH_COLOURS
-Structure T_STYLED_TESSELLATED_ITEM_WITH_COLOURS Extends TStepBase ; ID= 2031
+Structure T_STYLED_TESSELLATED_ITEM_WITH_COLOURS Extends TStepEntityBase ; ID= 2031
   
 EndStructure 
  
  ; 2032 : SU_PARAMETERS
-Structure T_SU_PARAMETERS Extends TStepBase ; ID= 2032
+Structure T_SU_PARAMETERS Extends TStepEntityBase ; ID= 2032
   
 EndStructure 
  
  ; 2033 : SUBEDGE
-Structure T_SUBEDGE Extends TStepBase ; ID= 2033
+Structure T_SUBEDGE Extends TStepEntityBase ; ID= 2033
   
 EndStructure 
  
  ; 2034 : SUBFACE
-Structure T_SUBFACE Extends TStepBase ; ID= 2034
+Structure T_SUBFACE Extends TStepEntityBase ; ID= 2034
   
 EndStructure 
  
  ; 2035 : SUBPATH
-Structure T_SUBPATH Extends TStepBase ; ID= 2035
+Structure T_SUBPATH Extends TStepEntityBase ; ID= 2035
   
 EndStructure 
  
  ; 2036 : SUBSKETCH
-Structure T_SUBSKETCH Extends TStepBase ; ID= 2036
+Structure T_SUBSKETCH Extends TStepEntityBase ; ID= 2036
   
 EndStructure 
  
  ; 2037 : SUBSTRING_EXPRESSION
-Structure T_SUBSTRING_EXPRESSION Extends TStepBase ; ID= 2037
+Structure T_SUBSTRING_EXPRESSION Extends TStepEntityBase ; ID= 2037
   
 EndStructure 
  
  ; 2038 : SUMMARY_REPORT_REQUEST
-Structure T_SUMMARY_REPORT_REQUEST Extends TStepBase ; ID= 2038
+Structure T_SUMMARY_REPORT_REQUEST Extends TStepEntityBase ; ID= 2038
   
 EndStructure 
  
  ; 2039 : SUMMARY_REPORT_REQUEST_WITH_NUMBER_OF_INSTANCES
-Structure T_SUMMARY_REPORT_REQUEST_WITH_NUMBER_OF_INSTANCES Extends TStepBase ; ID= 2039
+Structure T_SUMMARY_REPORT_REQUEST_WITH_NUMBER_OF_INSTANCES Extends TStepEntityBase ; ID= 2039
   
 EndStructure 
  
  ; 2040 : SUPPLIED_PART_RELATIONSHIP
-Structure T_SUPPLIED_PART_RELATIONSHIP Extends TStepBase ; ID= 2040
+Structure T_SUPPLIED_PART_RELATIONSHIP Extends TStepEntityBase ; ID= 2040
   
 EndStructure 
  
  ; 2041 : SURFACE
-Structure T_SURFACE Extends TStepBase ; ID= 2041
+Structure T_SURFACE Extends TStepEntityBase ; ID= 2041
   
 EndStructure 
  
  ; 2042 : SURFACE_CONDITION_CALLOUT
-Structure T_SURFACE_CONDITION_CALLOUT Extends TStepBase ; ID= 2042
+Structure T_SURFACE_CONDITION_CALLOUT Extends TStepEntityBase ; ID= 2042
   
 EndStructure 
  
  ; 2043 : SURFACE_CURVE
-Structure T_SURFACE_CURVE Extends TStepBase ; ID= 2043
+Structure T_SURFACE_CURVE Extends TStepEntityBase ; ID= 2043
   
 EndStructure 
  
  ; 2044 : SURFACE_CURVE_SWEPT_AREA_SOLID
-Structure T_SURFACE_CURVE_SWEPT_AREA_SOLID Extends TStepBase ; ID= 2044
+Structure T_SURFACE_CURVE_SWEPT_AREA_SOLID Extends TStepEntityBase ; ID= 2044
   
 EndStructure 
  
  ; 2045 : SURFACE_CURVE_SWEPT_SURFACE
-Structure T_SURFACE_CURVE_SWEPT_SURFACE Extends TStepBase ; ID= 2045
+Structure T_SURFACE_CURVE_SWEPT_SURFACE Extends TStepEntityBase ; ID= 2045
   
 EndStructure 
  
  ; 2046 : SURFACE_DISTANCE_ASSEMBLY_CONSTRAINT_WITH_DIMENSION
-Structure T_SURFACE_DISTANCE_ASSEMBLY_CONSTRAINT_WITH_DIMENSION Extends TStepBase ; ID= 2046
+Structure T_SURFACE_DISTANCE_ASSEMBLY_CONSTRAINT_WITH_DIMENSION Extends TStepEntityBase ; ID= 2046
   
 EndStructure 
  
  ; 2047 : SURFACE_DISTANCE_GEOMETRIC_CONSTRAINT
-Structure T_SURFACE_DISTANCE_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 2047
+Structure T_SURFACE_DISTANCE_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 2047
   
 EndStructure 
  
  ; 2048 : SURFACE_OF_LINEAR_EXTRUSION
-Structure T_SURFACE_OF_LINEAR_EXTRUSION Extends TStepBase ; ID= 2048
+Structure T_SURFACE_OF_LINEAR_EXTRUSION Extends TStepEntityBase ; ID= 2048
   
 EndStructure 
  
  ; 2049 : SURFACE_OF_REVOLUTION
-Structure T_SURFACE_OF_REVOLUTION Extends TStepBase ; ID= 2049
+Structure T_SURFACE_OF_REVOLUTION Extends TStepEntityBase ; ID= 2049
   
 EndStructure 
  
  ; 2050 : SURFACE_PAIR
-Structure T_SURFACE_PAIR Extends TStepBase ; ID= 2050
+Structure T_SURFACE_PAIR Extends TStepEntityBase ; ID= 2050
   
 EndStructure 
  
  ; 2051 : SURFACE_PAIR_RANGE
-Structure T_SURFACE_PAIR_RANGE Extends TStepBase ; ID= 2051
+Structure T_SURFACE_PAIR_RANGE Extends TStepEntityBase ; ID= 2051
   
 EndStructure 
  
  ; 2052 : SURFACE_PAIR_WITH_RANGE
-Structure T_SURFACE_PAIR_WITH_RANGE Extends TStepBase ; ID= 2052
+Structure T_SURFACE_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 2052
   
 EndStructure 
  
  ; 2053 : SURFACE_PATCH
-Structure T_SURFACE_PATCH Extends TStepBase ; ID= 2053
+Structure T_SURFACE_PATCH Extends TStepEntityBase ; ID= 2053
   
 EndStructure 
  
  ; 2054 : SURFACE_PATCH_SET
-Structure T_SURFACE_PATCH_SET Extends TStepBase ; ID= 2054
+Structure T_SURFACE_PATCH_SET Extends TStepEntityBase ; ID= 2054
   
 EndStructure 
  
  ; 2055 : SURFACE_PROFILE_TOLERANCE
-Structure T_SURFACE_PROFILE_TOLERANCE Extends TStepBase ; ID= 2055
+Structure T_SURFACE_PROFILE_TOLERANCE Extends TStepEntityBase ; ID= 2055
   
 EndStructure 
  
  ; 2056 : SURFACE_RENDERING_PROPERTIES
-Structure T_SURFACE_RENDERING_PROPERTIES Extends TStepBase ; ID= 2056
+Structure T_SURFACE_RENDERING_PROPERTIES Extends TStepEntityBase ; ID= 2056
   
 EndStructure 
  
  ; 2057 : SURFACE_REPLICA
-Structure T_SURFACE_REPLICA Extends TStepBase ; ID= 2057
+Structure T_SURFACE_REPLICA Extends TStepEntityBase ; ID= 2057
   
 EndStructure 
  
  ; 2058 : SURFACE_SIDE_STYLE
-Structure T_SURFACE_SIDE_STYLE Extends TStepBase ; ID= 2058
+Structure T_SURFACE_SIDE_STYLE Extends TStepEntityBase ; ID= 2058
   
 EndStructure 
  
  ; 2059 : SURFACE_SMOOTHNESS_GEOMETRIC_CONSTRAINT
-Structure T_SURFACE_SMOOTHNESS_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 2059
+Structure T_SURFACE_SMOOTHNESS_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 2059
   
 EndStructure 
  
  ; 2060 : SURFACE_STYLE_BOUNDARY
-Structure T_SURFACE_STYLE_BOUNDARY Extends TStepBase ; ID= 2060
+Structure T_SURFACE_STYLE_BOUNDARY Extends TStepEntityBase ; ID= 2060
   
 EndStructure 
  
  ; 2061 : SURFACE_STYLE_CONTROL_GRID
-Structure T_SURFACE_STYLE_CONTROL_GRID Extends TStepBase ; ID= 2061
+Structure T_SURFACE_STYLE_CONTROL_GRID Extends TStepEntityBase ; ID= 2061
   
 EndStructure 
  
  ; 2062 : SURFACE_STYLE_FILL_AREA
-Structure T_SURFACE_STYLE_FILL_AREA Extends TStepBase ; ID= 2062
+Structure T_SURFACE_STYLE_FILL_AREA Extends TStepEntityBase ; ID= 2062
   
 EndStructure 
  
  ; 2063 : SURFACE_STYLE_PARAMETER_LINE
-Structure T_SURFACE_STYLE_PARAMETER_LINE Extends TStepBase ; ID= 2063
+Structure T_SURFACE_STYLE_PARAMETER_LINE Extends TStepEntityBase ; ID= 2063
   
 EndStructure 
  
  ; 2064 : SURFACE_STYLE_REFLECTANCE_AMBIENT
-Structure T_SURFACE_STYLE_REFLECTANCE_AMBIENT Extends TStepBase ; ID= 2064
+Structure T_SURFACE_STYLE_REFLECTANCE_AMBIENT Extends TStepEntityBase ; ID= 2064
   
 EndStructure 
  
  ; 2065 : SURFACE_STYLE_REFLECTANCE_AMBIENT_DIFFUSE
-Structure T_SURFACE_STYLE_REFLECTANCE_AMBIENT_DIFFUSE Extends TStepBase ; ID= 2065
+Structure T_SURFACE_STYLE_REFLECTANCE_AMBIENT_DIFFUSE Extends TStepEntityBase ; ID= 2065
   
 EndStructure 
  
  ; 2066 : SURFACE_STYLE_REFLECTANCE_AMBIENT_DIFFUSE_SPECULAR
-Structure T_SURFACE_STYLE_REFLECTANCE_AMBIENT_DIFFUSE_SPECULAR Extends TStepBase ; ID= 2066
+Structure T_SURFACE_STYLE_REFLECTANCE_AMBIENT_DIFFUSE_SPECULAR Extends TStepEntityBase ; ID= 2066
   
 EndStructure 
  
  ; 2067 : SURFACE_STYLE_RENDERING
-Structure T_SURFACE_STYLE_RENDERING Extends TStepBase ; ID= 2067
+Structure T_SURFACE_STYLE_RENDERING Extends TStepEntityBase ; ID= 2067
   
 EndStructure 
  
  ; 2068 : SURFACE_STYLE_RENDERING_WITH_PROPERTIES
-Structure T_SURFACE_STYLE_RENDERING_WITH_PROPERTIES Extends TStepBase ; ID= 2068
+Structure T_SURFACE_STYLE_RENDERING_WITH_PROPERTIES Extends TStepEntityBase ; ID= 2068
   
 EndStructure 
  
  ; 2069 : SURFACE_STYLE_SEGMENTATION_CURVE
-Structure T_SURFACE_STYLE_SEGMENTATION_CURVE Extends TStepBase ; ID= 2069
+Structure T_SURFACE_STYLE_SEGMENTATION_CURVE Extends TStepEntityBase ; ID= 2069
   
 EndStructure 
  
  ; 2070 : SURFACE_STYLE_SILHOUETTE
-Structure T_SURFACE_STYLE_SILHOUETTE Extends TStepBase ; ID= 2070
+Structure T_SURFACE_STYLE_SILHOUETTE Extends TStepEntityBase ; ID= 2070
   
 EndStructure 
  
  ; 2071 : SURFACE_STYLE_TRANSPARENT
-Structure T_SURFACE_STYLE_TRANSPARENT Extends TStepBase ; ID= 2071
+Structure T_SURFACE_STYLE_TRANSPARENT Extends TStepEntityBase ; ID= 2071
   
 EndStructure 
  
  ; 2072 : SURFACE_STYLE_USAGE
-Structure T_SURFACE_STYLE_USAGE Extends TStepBase ; ID= 2072
+Structure T_SURFACE_STYLE_USAGE Extends TStepEntityBase ; ID= 2072
   
 EndStructure 
  
  ; 2073 : SURFACE_TEXTURE_REPRESENTATION
-Structure T_SURFACE_TEXTURE_REPRESENTATION Extends TStepBase ; ID= 2073
+Structure T_SURFACE_TEXTURE_REPRESENTATION Extends TStepEntityBase ; ID= 2073
   
 EndStructure 
  
  ; 2074 : SURFACE_WITH_EXCESSIVE_PATCHES_IN_ONE_DIRECTION
-Structure T_SURFACE_WITH_EXCESSIVE_PATCHES_IN_ONE_DIRECTION Extends TStepBase ; ID= 2074
+Structure T_SURFACE_WITH_EXCESSIVE_PATCHES_IN_ONE_DIRECTION Extends TStepEntityBase ; ID= 2074
   
 EndStructure 
  
  ; 2075 : SURFACE_WITH_SMALL_CURVATURE_RADIUS
-Structure T_SURFACE_WITH_SMALL_CURVATURE_RADIUS Extends TStepBase ; ID= 2075
+Structure T_SURFACE_WITH_SMALL_CURVATURE_RADIUS Extends TStepEntityBase ; ID= 2075
   
 EndStructure 
  
  ; 2076 : SURFACED_OPEN_SHELL
-Structure T_SURFACED_OPEN_SHELL Extends TStepBase ; ID= 2076
+Structure T_SURFACED_OPEN_SHELL Extends TStepEntityBase ; ID= 2076
   
 EndStructure 
  
  ; 2077 : SWEPT_AREA_SOLID
-Structure T_SWEPT_AREA_SOLID Extends TStepBase ; ID= 2077
+Structure T_SWEPT_AREA_SOLID Extends TStepEntityBase ; ID= 2077
   
 EndStructure 
  
  ; 2078 : SWEPT_CURVE_SURFACE_GEOMETRIC_CONSTRAINT
-Structure T_SWEPT_CURVE_SURFACE_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 2078
+Structure T_SWEPT_CURVE_SURFACE_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 2078
   
 EndStructure 
  
  ; 2079 : SWEPT_DISK_SOLID
-Structure T_SWEPT_DISK_SOLID Extends TStepBase ; ID= 2079
+Structure T_SWEPT_DISK_SOLID Extends TStepEntityBase ; ID= 2079
   
 EndStructure 
  
  ; 2080 : SWEPT_FACE_SOLID
-Structure T_SWEPT_FACE_SOLID Extends TStepBase ; ID= 2080
+Structure T_SWEPT_FACE_SOLID Extends TStepEntityBase ; ID= 2080
   
 EndStructure 
  
  ; 2081 : SWEPT_POINT_CURVE_GEOMETRIC_CONSTRAINT
-Structure T_SWEPT_POINT_CURVE_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 2081
+Structure T_SWEPT_POINT_CURVE_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 2081
   
 EndStructure 
  
  ; 2082 : SWEPT_SURFACE
-Structure T_SWEPT_SURFACE Extends TStepBase ; ID= 2082
+Structure T_SWEPT_SURFACE Extends TStepEntityBase ; ID= 2082
   
 EndStructure 
  
  ; 2083 : SYMBOL
-Structure T_SYMBOL Extends TStepBase ; ID= 2083
+Structure T_SYMBOL Extends TStepEntityBase ; ID= 2083
   
 EndStructure 
  
  ; 2084 : SYMBOL_COLOUR
-Structure T_SYMBOL_COLOUR Extends TStepBase ; ID= 2084
+Structure T_SYMBOL_COLOUR Extends TStepEntityBase ; ID= 2084
   
 EndStructure 
  
  ; 2085 : SYMBOL_REPRESENTATION
-Structure T_SYMBOL_REPRESENTATION Extends TStepBase ; ID= 2085
+Structure T_SYMBOL_REPRESENTATION Extends TStepEntityBase ; ID= 2085
   
 EndStructure 
  
  ; 2086 : SYMBOL_REPRESENTATION_MAP
-Structure T_SYMBOL_REPRESENTATION_MAP Extends TStepBase ; ID= 2086
+Structure T_SYMBOL_REPRESENTATION_MAP Extends TStepEntityBase ; ID= 2086
   
 EndStructure 
  
  ; 2087 : SYMBOL_STYLE
-Structure T_SYMBOL_STYLE Extends TStepBase ; ID= 2087
+Structure T_SYMBOL_STYLE Extends TStepEntityBase ; ID= 2087
   
 EndStructure 
  
  ; 2088 : SYMBOL_TARGET
-Structure T_SYMBOL_TARGET Extends TStepBase ; ID= 2088
+Structure T_SYMBOL_TARGET Extends TStepEntityBase ; ID= 2088
   
 EndStructure 
  
  ; 2089 : SYMMETRIC_BANDED_MATRIX
-Structure T_SYMMETRIC_BANDED_MATRIX Extends TStepBase ; ID= 2089
+Structure T_SYMMETRIC_BANDED_MATRIX Extends TStepEntityBase ; ID= 2089
   
 EndStructure 
  
  ; 2090 : SYMMETRIC_MATRIX
-Structure T_SYMMETRIC_MATRIX Extends TStepBase ; ID= 2090
+Structure T_SYMMETRIC_MATRIX Extends TStepEntityBase ; ID= 2090
   
 EndStructure 
  
  ; 2091 : SYMMETRIC_SHAPE_ASPECT
-Structure T_SYMMETRIC_SHAPE_ASPECT Extends TStepBase ; ID= 2091
+Structure T_SYMMETRIC_SHAPE_ASPECT Extends TStepEntityBase ; ID= 2091
   
 EndStructure 
  
  ; 2092 : SYMMETRY_GEOMETRIC_CONSTRAINT
-Structure T_SYMMETRY_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 2092
+Structure T_SYMMETRY_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 2092
   
 EndStructure 
  
  ; 2093 : SYMMETRY_TOLERANCE
-Structure T_SYMMETRY_TOLERANCE Extends TStepBase ; ID= 2093
+Structure T_SYMMETRY_TOLERANCE Extends TStepEntityBase ; ID= 2093
   
 EndStructure 
  
  ; 2094 : SYSTEM_BREAKDOWN_CONTEXT
-Structure T_SYSTEM_BREAKDOWN_CONTEXT Extends TStepBase ; ID= 2094
+Structure T_SYSTEM_BREAKDOWN_CONTEXT Extends TStepEntityBase ; ID= 2094
   
 EndStructure 
  
  ; 2095 : SYSTEM_ELEMENT_USAGE
-Structure T_SYSTEM_ELEMENT_USAGE Extends TStepBase ; ID= 2095
+Structure T_SYSTEM_ELEMENT_USAGE Extends TStepEntityBase ; ID= 2095
   
 EndStructure 
  
  ; 2096 : TABLE_REPRESENTATION_ITEM
-Structure T_TABLE_REPRESENTATION_ITEM Extends TStepBase ; ID= 2096
+Structure T_TABLE_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 2096
   
 EndStructure 
  
  ; 2097 : TACTILE_APPEARANCE_REPRESENTATION
-Structure T_TACTILE_APPEARANCE_REPRESENTATION Extends TStepBase ; ID= 2097
+Structure T_TACTILE_APPEARANCE_REPRESENTATION Extends TStepEntityBase ; ID= 2097
   
 EndStructure 
  
  ; 2098 : TAGGED_TEXT_FORMAT
-Structure T_TAGGED_TEXT_FORMAT Extends TStepBase ; ID= 2098
+Structure T_TAGGED_TEXT_FORMAT Extends TStepEntityBase ; ID= 2098
   
 EndStructure 
  
  ; 2099 : TAGGED_TEXT_ITEM
-Structure T_TAGGED_TEXT_ITEM Extends TStepBase ; ID= 2099
+Structure T_TAGGED_TEXT_ITEM Extends TStepEntityBase ; ID= 2099
   
 EndStructure 
  
  ; 2100 : TAN_FUNCTION
-Structure T_TAN_FUNCTION Extends TStepBase ; ID= 2100
+Structure T_TAN_FUNCTION Extends TStepEntityBase ; ID= 2100
   
 EndStructure 
  
  ; 2101 : TANGENT
-Structure T_TANGENT Extends TStepBase ; ID= 2101
+Structure T_TANGENT Extends TStepEntityBase ; ID= 2101
   
 EndStructure 
  
  ; 2102 : TANGENT_ASSEMBLY_CONSTRAINT
-Structure T_TANGENT_ASSEMBLY_CONSTRAINT Extends TStepBase ; ID= 2102
+Structure T_TANGENT_ASSEMBLY_CONSTRAINT Extends TStepEntityBase ; ID= 2102
   
 EndStructure 
  
  ; 2103 : TANGENT_GEOMETRIC_CONSTRAINT
-Structure T_TANGENT_GEOMETRIC_CONSTRAINT Extends TStepBase ; ID= 2103
+Structure T_TANGENT_GEOMETRIC_CONSTRAINT Extends TStepEntityBase ; ID= 2103
   
 EndStructure 
  
  ; 2104 : TAPER
-Structure T_TAPER Extends TStepBase ; ID= 2104
+Structure T_TAPER Extends TStepEntityBase ; ID= 2104
   
 EndStructure 
  
  ; 2105 : TAPPING_OPERATION
-Structure T_TAPPING_OPERATION Extends TStepBase ; ID= 2105
+Structure T_TAPPING_OPERATION Extends TStepEntityBase ; ID= 2105
   
 EndStructure 
  
  ; 2106 : TEE_PROFILE
-Structure T_TEE_PROFILE Extends TStepBase ; ID= 2106
+Structure T_TEE_PROFILE Extends TStepEntityBase ; ID= 2106
   
 EndStructure 
  
  ; 2107 : TERMINAL_FEATURE
-Structure T_TERMINAL_FEATURE Extends TStepBase ; ID= 2107
+Structure T_TERMINAL_FEATURE Extends TStepEntityBase ; ID= 2107
   
 EndStructure 
  
  ; 2108 : TERMINAL_LOCATION_GROUP
-Structure T_TERMINAL_LOCATION_GROUP Extends TStepBase ; ID= 2108
+Structure T_TERMINAL_LOCATION_GROUP Extends TStepEntityBase ; ID= 2108
   
 EndStructure 
  
  ; 2109 : TERMINATOR_SYMBOL
-Structure T_TERMINATOR_SYMBOL Extends TStepBase ; ID= 2109
+Structure T_TERMINATOR_SYMBOL Extends TStepEntityBase ; ID= 2109
   
 EndStructure 
  
  ; 2110 : TESSELLATED_ANNOTATION_OCCURRENCE
-Structure T_TESSELLATED_ANNOTATION_OCCURRENCE Extends TStepBase ; ID= 2110
+Structure T_TESSELLATED_ANNOTATION_OCCURRENCE Extends TStepEntityBase ; ID= 2110
   
 EndStructure 
  
  ; 2111 : TESSELLATED_CONNECTING_EDGE
-Structure T_TESSELLATED_CONNECTING_EDGE Extends TStepBase ; ID= 2111
+Structure T_TESSELLATED_CONNECTING_EDGE Extends TStepEntityBase ; ID= 2111
   
 EndStructure 
  
  ; 2112 : TESSELLATED_CURVE_SET
-Structure T_TESSELLATED_CURVE_SET Extends TStepBase ; ID= 2112
+Structure T_TESSELLATED_CURVE_SET Extends TStepEntityBase ; ID= 2112
   
 EndStructure 
  
  ; 2113 : TESSELLATED_EDGE
-Structure T_TESSELLATED_EDGE Extends TStepBase ; ID= 2113
+Structure T_TESSELLATED_EDGE Extends TStepEntityBase ; ID= 2113
   
 EndStructure 
  
  ; 2114 : TESSELLATED_FACE
-Structure T_TESSELLATED_FACE Extends TStepBase ; ID= 2114
+Structure T_TESSELLATED_FACE Extends TStepEntityBase ; ID= 2114
   
 EndStructure 
  
  ; 2115 : TESSELLATED_GEOMETRIC_SET
-Structure T_TESSELLATED_GEOMETRIC_SET Extends TStepBase ; ID= 2115
+Structure T_TESSELLATED_GEOMETRIC_SET Extends TStepEntityBase ; ID= 2115
   
 EndStructure 
  
  ; 2116 : TESSELLATED_ITEM
-Structure T_TESSELLATED_ITEM Extends TStepBase ; ID= 2116
+Structure T_TESSELLATED_ITEM Extends TStepEntityBase ; ID= 2116
   
 EndStructure 
  
  ; 2117 : TESSELLATED_POINT_SET
-Structure T_TESSELLATED_POINT_SET Extends TStepBase ; ID= 2117
+Structure T_TESSELLATED_POINT_SET Extends TStepEntityBase ; ID= 2117
   
 EndStructure 
  
  ; 2118 : TESSELLATED_SHAPE_REPRESENTATION
-Structure T_TESSELLATED_SHAPE_REPRESENTATION Extends TStepBase ; ID= 2118
+Structure T_TESSELLATED_SHAPE_REPRESENTATION Extends TStepEntityBase ; ID= 2118
   
 EndStructure 
  
  ; 2119 : TESSELLATED_SHAPE_REPRESENTATION_WITH_ACCURACY_PARAMETERS
-Structure T_TESSELLATED_SHAPE_REPRESENTATION_WITH_ACCURACY_PARAMETERS Extends TStepBase ; ID= 2119
+Structure T_TESSELLATED_SHAPE_REPRESENTATION_WITH_ACCURACY_PARAMETERS Extends TStepEntityBase ; ID= 2119
   
 EndStructure 
  
  ; 2120 : TESSELLATED_SHELL
-Structure T_TESSELLATED_SHELL Extends TStepBase ; ID= 2120
+Structure T_TESSELLATED_SHELL Extends TStepEntityBase ; ID= 2120
   
 EndStructure 
  
  ; 2121 : TESSELLATED_SOLID
-Structure T_TESSELLATED_SOLID Extends TStepBase ; ID= 2121
+Structure T_TESSELLATED_SOLID Extends TStepEntityBase ; ID= 2121
   
 EndStructure 
  
  ; 2122 : TESSELLATED_STRUCTURED_ITEM
-Structure T_TESSELLATED_STRUCTURED_ITEM Extends TStepBase ; ID= 2122
+Structure T_TESSELLATED_STRUCTURED_ITEM Extends TStepEntityBase ; ID= 2122
   
 EndStructure 
  
  ; 2123 : TESSELLATED_SURFACE_SET
-Structure T_TESSELLATED_SURFACE_SET Extends TStepBase ; ID= 2123
+Structure T_TESSELLATED_SURFACE_SET Extends TStepEntityBase ; ID= 2123
   
 EndStructure 
  
  ; 2124 : TESSELLATED_VERTEX
-Structure T_TESSELLATED_VERTEX Extends TStepBase ; ID= 2124
+Structure T_TESSELLATED_VERTEX Extends TStepEntityBase ; ID= 2124
   
 EndStructure 
  
  ; 2125 : TESSELLATED_WIRE
-Structure T_TESSELLATED_WIRE Extends TStepBase ; ID= 2125
+Structure T_TESSELLATED_WIRE Extends TStepEntityBase ; ID= 2125
   
 EndStructure 
  
  ; 2126 : TETRAHEDRON
-Structure T_TETRAHEDRON Extends TStepBase ; ID= 2126
+Structure T_TETRAHEDRON Extends TStepEntityBase ; ID= 2126
   
 EndStructure 
  
  ; 2127 : TETRAHEDRON_VOLUME
-Structure T_TETRAHEDRON_VOLUME Extends TStepBase ; ID= 2127
+Structure T_TETRAHEDRON_VOLUME Extends TStepEntityBase ; ID= 2127
   
 EndStructure 
  
  ; 2128 : TEXT_FONT
-Structure T_TEXT_FONT Extends TStepBase ; ID= 2128
+Structure T_TEXT_FONT Extends TStepEntityBase ; ID= 2128
   
 EndStructure 
  
  ; 2129 : TEXT_FONT_FAMILY
-Structure T_TEXT_FONT_FAMILY Extends TStepBase ; ID= 2129
+Structure T_TEXT_FONT_FAMILY Extends TStepEntityBase ; ID= 2129
   
 EndStructure 
  
  ; 2130 : TEXT_FONT_IN_FAMILY
-Structure T_TEXT_FONT_IN_FAMILY Extends TStepBase ; ID= 2130
+Structure T_TEXT_FONT_IN_FAMILY Extends TStepEntityBase ; ID= 2130
   
 EndStructure 
  
  ; 2131 : TEXT_LITERAL
-Structure T_TEXT_LITERAL Extends TStepBase ; ID= 2131
+Structure T_TEXT_LITERAL Extends TStepEntityBase ; ID= 2131
   
 EndStructure 
  
  ; 2132 : TEXT_LITERAL_WITH_ASSOCIATED_CURVES
-Structure T_TEXT_LITERAL_WITH_ASSOCIATED_CURVES Extends TStepBase ; ID= 2132
+Structure T_TEXT_LITERAL_WITH_ASSOCIATED_CURVES Extends TStepEntityBase ; ID= 2132
   
 EndStructure 
  
  ; 2133 : TEXT_LITERAL_WITH_BLANKING_BOX
-Structure T_TEXT_LITERAL_WITH_BLANKING_BOX Extends TStepBase ; ID= 2133
+Structure T_TEXT_LITERAL_WITH_BLANKING_BOX Extends TStepEntityBase ; ID= 2133
   
 EndStructure 
  
  ; 2134 : TEXT_LITERAL_WITH_DELINEATION
-Structure T_TEXT_LITERAL_WITH_DELINEATION Extends TStepBase ; ID= 2134
+Structure T_TEXT_LITERAL_WITH_DELINEATION Extends TStepEntityBase ; ID= 2134
   
 EndStructure 
  
  ; 2135 : TEXT_LITERAL_WITH_EXTENT
-Structure T_TEXT_LITERAL_WITH_EXTENT Extends TStepBase ; ID= 2135
+Structure T_TEXT_LITERAL_WITH_EXTENT Extends TStepEntityBase ; ID= 2135
   
 EndStructure 
  
  ; 2136 : TEXT_STRING_REPRESENTATION
-Structure T_TEXT_STRING_REPRESENTATION Extends TStepBase ; ID= 2136
+Structure T_TEXT_STRING_REPRESENTATION Extends TStepEntityBase ; ID= 2136
   
 EndStructure 
  
  ; 2137 : TEXT_STYLE
-Structure T_TEXT_STYLE Extends TStepBase ; ID= 2137
+Structure T_TEXT_STYLE Extends TStepEntityBase ; ID= 2137
   
 EndStructure 
  
  ; 2138 : TEXT_STYLE_FOR_DEFINED_FONT
-Structure T_TEXT_STYLE_FOR_DEFINED_FONT Extends TStepBase ; ID= 2138
+Structure T_TEXT_STYLE_FOR_DEFINED_FONT Extends TStepEntityBase ; ID= 2138
   
 EndStructure 
  
  ; 2139 : TEXT_STYLE_WITH_BOX_CHARACTERISTICS
-Structure T_TEXT_STYLE_WITH_BOX_CHARACTERISTICS Extends TStepBase ; ID= 2139
+Structure T_TEXT_STYLE_WITH_BOX_CHARACTERISTICS Extends TStepEntityBase ; ID= 2139
   
 EndStructure 
  
  ; 2140 : TEXT_STYLE_WITH_MIRROR
-Structure T_TEXT_STYLE_WITH_MIRROR Extends TStepBase ; ID= 2140
+Structure T_TEXT_STYLE_WITH_MIRROR Extends TStepEntityBase ; ID= 2140
   
 EndStructure 
  
  ; 2141 : TEXT_STYLE_WITH_SPACING
-Structure T_TEXT_STYLE_WITH_SPACING Extends TStepBase ; ID= 2141
+Structure T_TEXT_STYLE_WITH_SPACING Extends TStepEntityBase ; ID= 2141
   
 EndStructure 
  
  ; 2142 : TEXTURE_STYLE_SPECIFICATION
-Structure T_TEXTURE_STYLE_SPECIFICATION Extends TStepBase ; ID= 2142
+Structure T_TEXTURE_STYLE_SPECIFICATION Extends TStepEntityBase ; ID= 2142
   
 EndStructure 
  
  ; 2143 : TEXTURE_STYLE_TESSELLATION_SPECIFICATION
-Structure T_TEXTURE_STYLE_TESSELLATION_SPECIFICATION Extends TStepBase ; ID= 2143
+Structure T_TEXTURE_STYLE_TESSELLATION_SPECIFICATION Extends TStepEntityBase ; ID= 2143
   
 EndStructure 
  
  ; 2144 : THERMAL_COMPONENT
-Structure T_THERMAL_COMPONENT Extends TStepBase ; ID= 2144
+Structure T_THERMAL_COMPONENT Extends TStepEntityBase ; ID= 2144
   
 EndStructure 
  
  ; 2145 : THERMAL_RESISTANCE_MEASURE_WITH_UNIT
-Structure T_THERMAL_RESISTANCE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 2145
+Structure T_THERMAL_RESISTANCE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 2145
   
 EndStructure 
  
  ; 2146 : THERMAL_RESISTANCE_UNIT
-Structure T_THERMAL_RESISTANCE_UNIT Extends TStepBase ; ID= 2146
+Structure T_THERMAL_RESISTANCE_UNIT Extends TStepEntityBase ; ID= 2146
   
 EndStructure 
  
  ; 2147 : THERMODYNAMIC_TEMPERATURE_MEASURE_WITH_UNIT
-Structure T_THERMODYNAMIC_TEMPERATURE_MEASURE_WITH_UNIT Extends TStepBase ; ID= 2147
+Structure T_THERMODYNAMIC_TEMPERATURE_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 2147
   
 EndStructure 
  
  ; 2148 : THERMODYNAMIC_TEMPERATURE_UNIT
-Structure T_THERMODYNAMIC_TEMPERATURE_UNIT Extends TStepBase ; ID= 2148
+Structure T_THERMODYNAMIC_TEMPERATURE_UNIT Extends TStepEntityBase ; ID= 2148
   
 EndStructure 
  
  ; 2149 : THICKENED_FACE_SOLID
-Structure T_THICKENED_FACE_SOLID Extends TStepBase ; ID= 2149
+Structure T_THICKENED_FACE_SOLID Extends TStepEntityBase ; ID= 2149
   
 EndStructure 
  
  ; 2150 : THICKNESS_LAMINATE_DEFINITION
-Structure T_THICKNESS_LAMINATE_DEFINITION Extends TStepBase ; ID= 2150
+Structure T_THICKNESS_LAMINATE_DEFINITION Extends TStepEntityBase ; ID= 2150
   
 EndStructure 
  
  ; 2151 : THICKNESS_LAMINATE_TABLE
-Structure T_THICKNESS_LAMINATE_TABLE Extends TStepBase ; ID= 2151
+Structure T_THICKNESS_LAMINATE_TABLE Extends TStepEntityBase ; ID= 2151
   
 EndStructure 
  
  ; 2152 : THREAD
-Structure T_THREAD Extends TStepBase ; ID= 2152
+Structure T_THREAD Extends TStepEntityBase ; ID= 2152
   
 EndStructure 
  
  ; 2153 : THREAD_RUNOUT
-Structure T_THREAD_RUNOUT Extends TStepBase ; ID= 2153
+Structure T_THREAD_RUNOUT Extends TStepEntityBase ; ID= 2153
   
 EndStructure 
  
  ; 2154 : THREADING_TURNING_OPERATION
-Structure T_THREADING_TURNING_OPERATION Extends TStepBase ; ID= 2154
+Structure T_THREADING_TURNING_OPERATION Extends TStepEntityBase ; ID= 2154
   
 EndStructure 
  
  ; 2155 : TIME_INTERVAL
-Structure T_TIME_INTERVAL Extends TStepBase ; ID= 2155
+Structure T_TIME_INTERVAL Extends TStepEntityBase ; ID= 2155
   
 EndStructure 
  
  ; 2156 : TIME_INTERVAL_ASSIGNMENT
-Structure T_TIME_INTERVAL_ASSIGNMENT Extends TStepBase ; ID= 2156
+Structure T_TIME_INTERVAL_ASSIGNMENT Extends TStepEntityBase ; ID= 2156
   
 EndStructure 
  
  ; 2157 : TIME_INTERVAL_BASED_EFFECTIVITY
-Structure T_TIME_INTERVAL_BASED_EFFECTIVITY Extends TStepBase ; ID= 2157
+Structure T_TIME_INTERVAL_BASED_EFFECTIVITY Extends TStepEntityBase ; ID= 2157
   
 EndStructure 
  
  ; 2158 : TIME_INTERVAL_RELATIONSHIP
-Structure T_TIME_INTERVAL_RELATIONSHIP Extends TStepBase ; ID= 2158
+Structure T_TIME_INTERVAL_RELATIONSHIP Extends TStepEntityBase ; ID= 2158
   
 EndStructure 
  
  ; 2159 : TIME_INTERVAL_ROLE
-Structure T_TIME_INTERVAL_ROLE Extends TStepBase ; ID= 2159
+Structure T_TIME_INTERVAL_ROLE Extends TStepEntityBase ; ID= 2159
   
 EndStructure 
  
  ; 2160 : TIME_INTERVAL_WITH_BOUNDS
-Structure T_TIME_INTERVAL_WITH_BOUNDS Extends TStepBase ; ID= 2160
+Structure T_TIME_INTERVAL_WITH_BOUNDS Extends TStepEntityBase ; ID= 2160
   
 EndStructure 
  
  ; 2161 : TIME_MEASURE_WITH_UNIT
-Structure T_TIME_MEASURE_WITH_UNIT Extends TStepBase ; ID= 2161
+Structure T_TIME_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 2161
   
 EndStructure 
  
  ; 2162 : TIME_UNIT
-Structure T_TIME_UNIT Extends TStepBase ; ID= 2162
+Structure T_TIME_UNIT Extends TStepEntityBase ; ID= 2162
   
 EndStructure 
  
  ; 2163 : TOLERANCE_VALUE
-Structure T_TOLERANCE_VALUE Extends TStepBase ; ID= 2163
+Structure T_TOLERANCE_VALUE Extends TStepEntityBase ; ID= 2163
   
 EndStructure 
  
  ; 2164 : TOLERANCE_ZONE
-Structure T_TOLERANCE_ZONE Extends TStepBase ; ID= 2164
+Structure T_TOLERANCE_ZONE Extends TStepEntityBase ; ID= 2164
   
 EndStructure 
  
  ; 2165 : TOLERANCE_ZONE_DEFINITION
-Structure T_TOLERANCE_ZONE_DEFINITION Extends TStepBase ; ID= 2165
+Structure T_TOLERANCE_ZONE_DEFINITION Extends TStepEntityBase ; ID= 2165
   
 EndStructure 
  
  ; 2166 : TOLERANCE_ZONE_FORM
-Structure T_TOLERANCE_ZONE_FORM Extends TStepBase ; ID= 2166
+Structure T_TOLERANCE_ZONE_FORM Extends TStepEntityBase ; ID= 2166
   
 EndStructure 
  
  ; 2167 : TOLERANCE_ZONE_WITH_DATUM
-Structure T_TOLERANCE_ZONE_WITH_DATUM Extends TStepBase ; ID= 2167
+Structure T_TOLERANCE_ZONE_WITH_DATUM Extends TStepEntityBase ; ID= 2167
   
 EndStructure 
  
  ; 2168 : TOPOLOGICAL_REPRESENTATION_ITEM
-Structure T_TOPOLOGICAL_REPRESENTATION_ITEM Extends TStepBase ; ID= 2168
+Structure T_TOPOLOGICAL_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 2168
   
 EndStructure 
  
  ; 2169 : TOPOLOGY_RELATED_TO_MULTIPLY_DEFINED_GEOMETRY
-Structure T_TOPOLOGY_RELATED_TO_MULTIPLY_DEFINED_GEOMETRY Extends TStepBase ; ID= 2169
+Structure T_TOPOLOGY_RELATED_TO_MULTIPLY_DEFINED_GEOMETRY Extends TStepEntityBase ; ID= 2169
   
 EndStructure 
  
  ; 2170 : TOPOLOGY_RELATED_TO_NEARLY_DEGENERATE_GEOMETRY
-Structure T_TOPOLOGY_RELATED_TO_NEARLY_DEGENERATE_GEOMETRY Extends TStepBase ; ID= 2170
+Structure T_TOPOLOGY_RELATED_TO_NEARLY_DEGENERATE_GEOMETRY Extends TStepEntityBase ; ID= 2170
   
 EndStructure 
  
  ; 2171 : TOPOLOGY_RELATED_TO_OVERLAPPING_GEOMETRY
-Structure T_TOPOLOGY_RELATED_TO_OVERLAPPING_GEOMETRY Extends TStepBase ; ID= 2171
+Structure T_TOPOLOGY_RELATED_TO_OVERLAPPING_GEOMETRY Extends TStepEntityBase ; ID= 2171
   
 EndStructure 
  
  ; 2172 : TOPOLOGY_RELATED_TO_SELF_INTERSECTING_GEOMETRY
-Structure T_TOPOLOGY_RELATED_TO_SELF_INTERSECTING_GEOMETRY Extends TStepBase ; ID= 2172
+Structure T_TOPOLOGY_RELATED_TO_SELF_INTERSECTING_GEOMETRY Extends TStepEntityBase ; ID= 2172
   
 EndStructure 
  
  ; 2173 : TOROIDAL_SURFACE
-Structure T_TOROIDAL_SURFACE Extends TStepBase ; ID= 2173
+Structure T_TOROIDAL_SURFACE Extends TStepEntityBase ; ID= 2173
   
 EndStructure 
  
  ; 2174 : TOROIDAL_VOLUME
-Structure T_TOROIDAL_VOLUME Extends TStepBase ; ID= 2174
+Structure T_TOROIDAL_VOLUME Extends TStepEntityBase ; ID= 2174
   
 EndStructure 
  
  ; 2175 : TORUS
-Structure T_TORUS Extends TStepBase ; ID= 2175
+Structure T_TORUS Extends TStepEntityBase ; ID= 2175
   
 EndStructure 
  
  ; 2176 : TOTAL_RUNOUT_TOLERANCE
-Structure T_TOTAL_RUNOUT_TOLERANCE Extends TStepBase ; ID= 2176
+Structure T_TOTAL_RUNOUT_TOLERANCE Extends TStepEntityBase ; ID= 2176
   
 EndStructure 
  
  ; 2177 : TRACK_BLENDED_SOLID
-Structure T_TRACK_BLENDED_SOLID Extends TStepBase ; ID= 2177
+Structure T_TRACK_BLENDED_SOLID Extends TStepEntityBase ; ID= 2177
   
 EndStructure 
  
  ; 2178 : TRACK_BLENDED_SOLID_WITH_END_CONDITIONS
-Structure T_TRACK_BLENDED_SOLID_WITH_END_CONDITIONS Extends TStepBase ; ID= 2178
+Structure T_TRACK_BLENDED_SOLID_WITH_END_CONDITIONS Extends TStepEntityBase ; ID= 2178
   
 EndStructure 
  
  ; 2179 : TRANSFORMATION_WITH_DERIVED_ANGLE
-Structure T_TRANSFORMATION_WITH_DERIVED_ANGLE Extends TStepBase ; ID= 2179
+Structure T_TRANSFORMATION_WITH_DERIVED_ANGLE Extends TStepEntityBase ; ID= 2179
   
 EndStructure 
  
  ; 2180 : TRANSITION_FEATURE
-Structure T_TRANSITION_FEATURE Extends TStepBase ; ID= 2180
+Structure T_TRANSITION_FEATURE Extends TStepEntityBase ; ID= 2180
   
 EndStructure 
  
  ; 2181 : TRANSPORT_FEATURE
-Structure T_TRANSPORT_FEATURE Extends TStepBase ; ID= 2181
+Structure T_TRANSPORT_FEATURE Extends TStepEntityBase ; ID= 2181
   
 EndStructure 
  
  ; 2182 : TRIANGULAR_MATRIX
-Structure T_TRIANGULAR_MATRIX Extends TStepBase ; ID= 2182
+Structure T_TRIANGULAR_MATRIX Extends TStepEntityBase ; ID= 2182
   
 EndStructure 
  
  ; 2183 : TRIANGULATED_FACE
-Structure T_TRIANGULATED_FACE Extends TStepBase ; ID= 2183
+Structure T_TRIANGULATED_FACE Extends TStepEntityBase ; ID= 2183
   
 EndStructure 
  
  ; 2184 : TRIANGULATED_POINT_CLOUD_DATASET
-Structure T_TRIANGULATED_POINT_CLOUD_DATASET Extends TStepBase ; ID= 2184
+Structure T_TRIANGULATED_POINT_CLOUD_DATASET Extends TStepEntityBase ; ID= 2184
   
 EndStructure 
  
  ; 2185 : TRIANGULATED_SURFACE_SET
-Structure T_TRIANGULATED_SURFACE_SET Extends TStepBase ; ID= 2185
+Structure T_TRIANGULATED_SURFACE_SET Extends TStepEntityBase ; ID= 2185
   
 EndStructure 
  
  ; 2186 : TRIMMED_CURVE
-Structure T_TRIMMED_CURVE Extends TStepBase ; ID= 2186
+Structure T_TRIMMED_CURVE Extends TStepEntityBase ; ID= 2186
   
 EndStructure 
  
  ; 2187 : TURNED_KNURL
-Structure T_TURNED_KNURL Extends TStepBase ; ID= 2187
+Structure T_TURNED_KNURL Extends TStepEntityBase ; ID= 2187
   
 EndStructure 
  
  ; 2188 : TURNING_TYPE_OPERATION
-Structure T_TURNING_TYPE_OPERATION Extends TStepBase ; ID= 2188
+Structure T_TURNING_TYPE_OPERATION Extends TStepEntityBase ; ID= 2188
   
 EndStructure 
  
  ; 2189 : TURNING_TYPE_STRATEGY
-Structure T_TURNING_TYPE_STRATEGY Extends TStepBase ; ID= 2189
+Structure T_TURNING_TYPE_STRATEGY Extends TStepEntityBase ; ID= 2189
   
 EndStructure 
  
  ; 2190 : TWISTED_CROSS_SECTIONAL_GROUP_SHAPE_ELEMENT
-Structure T_TWISTED_CROSS_SECTIONAL_GROUP_SHAPE_ELEMENT Extends TStepBase ; ID= 2190
+Structure T_TWISTED_CROSS_SECTIONAL_GROUP_SHAPE_ELEMENT Extends TStepEntityBase ; ID= 2190
   
 EndStructure 
  
  ; 2191 : TWO_DIRECTION_REPEAT_FACTOR
-Structure T_TWO_DIRECTION_REPEAT_FACTOR Extends TStepBase ; ID= 2191
+Structure T_TWO_DIRECTION_REPEAT_FACTOR Extends TStepEntityBase ; ID= 2191
   
 EndStructure 
  
  ; 2192 : TYPE_QUALIFIER
-Structure T_TYPE_QUALIFIER Extends TStepBase ; ID= 2192
+Structure T_TYPE_QUALIFIER Extends TStepEntityBase ; ID= 2192
   
 EndStructure 
  
  ; 2193 : UNARY_BOOLEAN_EXPRESSION
-Structure T_UNARY_BOOLEAN_EXPRESSION Extends TStepBase ; ID= 2193
+Structure T_UNARY_BOOLEAN_EXPRESSION Extends TStepEntityBase ; ID= 2193
   
 EndStructure 
  
  ; 2194 : UNARY_FUNCTION_CALL
-Structure T_UNARY_FUNCTION_CALL Extends TStepBase ; ID= 2194
+Structure T_UNARY_FUNCTION_CALL Extends TStepEntityBase ; ID= 2194
   
 EndStructure 
  
  ; 2195 : UNARY_GENERIC_EXPRESSION
-Structure T_UNARY_GENERIC_EXPRESSION Extends TStepBase ; ID= 2195
+Structure T_UNARY_GENERIC_EXPRESSION Extends TStepEntityBase ; ID= 2195
   
 EndStructure 
  
  ; 2196 : UNARY_NUMERIC_EXPRESSION
-Structure T_UNARY_NUMERIC_EXPRESSION Extends TStepBase ; ID= 2196
+Structure T_UNARY_NUMERIC_EXPRESSION Extends TStepEntityBase ; ID= 2196
   
 EndStructure 
  
  ; 2197 : UNBOUND_PARAMETER_ENVIRONMENT
-Structure T_UNBOUND_PARAMETER_ENVIRONMENT Extends TStepBase ; ID= 2197
+Structure T_UNBOUND_PARAMETER_ENVIRONMENT Extends TStepEntityBase ; ID= 2197
   
 EndStructure 
  
  ; 2198 : UNBOUND_VARIATIONAL_PARAMETER
-Structure T_UNBOUND_VARIATIONAL_PARAMETER Extends TStepBase ; ID= 2198
+Structure T_UNBOUND_VARIATIONAL_PARAMETER Extends TStepEntityBase ; ID= 2198
   
 EndStructure 
  
  ; 2199 : UNBOUND_VARIATIONAL_PARAMETER_SEMANTICS
-Structure T_UNBOUND_VARIATIONAL_PARAMETER_SEMANTICS Extends TStepBase ; ID= 2199
+Structure T_UNBOUND_VARIATIONAL_PARAMETER_SEMANTICS Extends TStepEntityBase ; ID= 2199
   
 EndStructure 
  
  ; 2200 : UNCERTAINTY_ASSIGNED_REPRESENTATION
-Structure T_UNCERTAINTY_ASSIGNED_REPRESENTATION Extends TStepBase ; ID= 2200
+Structure T_UNCERTAINTY_ASSIGNED_REPRESENTATION Extends TStepEntityBase ; ID= 2200
   
 EndStructure 
  
  ; 2201 : UNCERTAINTY_MEASURE_WITH_UNIT
-Structure T_UNCERTAINTY_MEASURE_WITH_UNIT Extends TStepBase ; ID= 2201
+Structure T_UNCERTAINTY_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 2201
   
 EndStructure 
  
  ; 2202 : UNCERTAINTY_QUALIFIER
-Structure T_UNCERTAINTY_QUALIFIER Extends TStepBase ; ID= 2202
+Structure T_UNCERTAINTY_QUALIFIER Extends TStepEntityBase ; ID= 2202
   
 EndStructure 
  
  ; 2203 : UNCONSTRAINED_PAIR
-Structure T_UNCONSTRAINED_PAIR Extends TStepBase ; ID= 2203
+Structure T_UNCONSTRAINED_PAIR Extends TStepEntityBase ; ID= 2203
   
 EndStructure 
  
  ; 2204 : UNCONSTRAINED_PAIR_VALUE
-Structure T_UNCONSTRAINED_PAIR_VALUE Extends TStepBase ; ID= 2204
+Structure T_UNCONSTRAINED_PAIR_VALUE Extends TStepEntityBase ; ID= 2204
   
 EndStructure 
  
  ; 2205 : UNEQUALLY_DISPOSED_GEOMETRIC_TOLERANCE
-Structure T_UNEQUALLY_DISPOSED_GEOMETRIC_TOLERANCE Extends TStepBase ; ID= 2205
+Structure T_UNEQUALLY_DISPOSED_GEOMETRIC_TOLERANCE Extends TStepEntityBase ; ID= 2205
   
 EndStructure 
  
  ; 2206 : UNIFORM_CURVE
-Structure T_UNIFORM_CURVE Extends TStepBase ; ID= 2206
+Structure T_UNIFORM_CURVE Extends TStepEntityBase ; ID= 2206
   
 EndStructure 
  
  ; 2207 : UNIFORM_PRODUCT_SPACE
-Structure T_UNIFORM_PRODUCT_SPACE Extends TStepBase ; ID= 2207
+Structure T_UNIFORM_PRODUCT_SPACE Extends TStepEntityBase ; ID= 2207
   
 EndStructure 
  
  ; 2208 : UNIFORM_RESOURCE_IDENTIFIER
-Structure T_UNIFORM_RESOURCE_IDENTIFIER Extends TStepBase ; ID= 2208
+Structure T_UNIFORM_RESOURCE_IDENTIFIER Extends TStepEntityBase ; ID= 2208
   
 EndStructure 
  
  ; 2209 : UNIFORM_SURFACE
-Structure T_UNIFORM_SURFACE Extends TStepBase ; ID= 2209
+Structure T_UNIFORM_SURFACE Extends TStepEntityBase ; ID= 2209
   
 EndStructure 
  
  ; 2210 : UNIFORM_VOLUME
-Structure T_UNIFORM_VOLUME Extends TStepBase ; ID= 2210
+Structure T_UNIFORM_VOLUME Extends TStepEntityBase ; ID= 2210
   
 EndStructure 
  
  ; 2211 : UNIVERSAL_PAIR
-Structure T_UNIVERSAL_PAIR Extends TStepBase ; ID= 2211
+Structure T_UNIVERSAL_PAIR Extends TStepEntityBase ; ID= 2211
   
 EndStructure 
  
  ; 2212 : UNIVERSAL_PAIR_RANGE
-Structure T_UNIVERSAL_PAIR_RANGE Extends TStepBase ; ID= 2212
+Structure T_UNIVERSAL_PAIR_RANGE Extends TStepEntityBase ; ID= 2212
   
 EndStructure 
  
  ; 2213 : UNIVERSAL_PAIR_VALUE
-Structure T_UNIVERSAL_PAIR_VALUE Extends TStepBase ; ID= 2213
+Structure T_UNIVERSAL_PAIR_VALUE Extends TStepEntityBase ; ID= 2213
   
 EndStructure 
  
  ; 2214 : UNIVERSAL_PAIR_WITH_RANGE
-Structure T_UNIVERSAL_PAIR_WITH_RANGE Extends TStepBase ; ID= 2214
+Structure T_UNIVERSAL_PAIR_WITH_RANGE Extends TStepEntityBase ; ID= 2214
   
 EndStructure 
  
  ; 2215 : UNUSED_PATCHES
-Structure T_UNUSED_PATCHES Extends TStepBase ; ID= 2215
+Structure T_UNUSED_PATCHES Extends TStepEntityBase ; ID= 2215
   
 EndStructure 
  
  ; 2216 : UNUSED_SHAPE_ELEMENT
-Structure T_UNUSED_SHAPE_ELEMENT Extends TStepBase ; ID= 2216
+Structure T_UNUSED_SHAPE_ELEMENT Extends TStepEntityBase ; ID= 2216
   
 EndStructure 
  
  ; 2217 : USAGE_ASSOCIATION
-Structure T_USAGE_ASSOCIATION Extends TStepBase ; ID= 2217
+Structure T_USAGE_ASSOCIATION Extends TStepEntityBase ; ID= 2217
   
 EndStructure 
  
  ; 2218 : USER_DEFINED_11
-Structure T_USER_DEFINED_11 Extends TStepBase ; ID= 2218
+Structure T_USER_DEFINED_11 Extends TStepEntityBase ; ID= 2218
   
 EndStructure 
  
  ; 2219 : USER_DEFINED_CURVE_FONT
-Structure T_USER_DEFINED_CURVE_FONT Extends TStepBase ; ID= 2219
+Structure T_USER_DEFINED_CURVE_FONT Extends TStepEntityBase ; ID= 2219
   
 EndStructure 
  
  ; 2220 : USER_DEFINED_MARKER
-Structure T_USER_DEFINED_MARKER Extends TStepBase ; ID= 2220
+Structure T_USER_DEFINED_MARKER Extends TStepEntityBase ; ID= 2220
   
 EndStructure 
  
  ; 2221 : USER_DEFINED_TERMINATOR_SYMBOL
-Structure T_USER_DEFINED_TERMINATOR_SYMBOL Extends TStepBase ; ID= 2221
+Structure T_USER_DEFINED_TERMINATOR_SYMBOL Extends TStepEntityBase ; ID= 2221
   
 EndStructure 
  
  ; 2222 : USER_SELECTED_ELEMENTS
-Structure T_USER_SELECTED_ELEMENTS Extends TStepBase ; ID= 2222
+Structure T_USER_SELECTED_ELEMENTS Extends TStepEntityBase ; ID= 2222
   
 EndStructure 
  
  ; 2223 : USER_SELECTED_SHAPE_ELEMENTS
-Structure T_USER_SELECTED_SHAPE_ELEMENTS Extends TStepBase ; ID= 2223
+Structure T_USER_SELECTED_SHAPE_ELEMENTS Extends TStepEntityBase ; ID= 2223
   
 EndStructure 
  
  ; 2224 : VALIDATION
-Structure T_VALIDATION Extends TStepBase ; ID= 2224
+Structure T_VALIDATION Extends TStepEntityBase ; ID= 2224
   
 EndStructure 
  
  ; 2225 : VALIDATION_SOFTWARE_IDENTIFICATION
-Structure T_VALIDATION_SOFTWARE_IDENTIFICATION Extends TStepBase ; ID= 2225
+Structure T_VALIDATION_SOFTWARE_IDENTIFICATION Extends TStepEntityBase ; ID= 2225
   
 EndStructure 
  
  ; 2226 : VALUE_FORMAT_TYPE_QUALIFIER
-Structure T_VALUE_FORMAT_TYPE_QUALIFIER Extends TStepBase ; ID= 2226
+Structure T_VALUE_FORMAT_TYPE_QUALIFIER Extends TStepEntityBase ; ID= 2226
   
 EndStructure 
  
  ; 2227 : VALUE_FUNCTION
-Structure T_VALUE_FUNCTION Extends TStepBase ; ID= 2227
+Structure T_VALUE_FUNCTION Extends TStepEntityBase ; ID= 2227
   
 EndStructure 
  
  ; 2228 : VALUE_RANGE
-Structure T_VALUE_RANGE Extends TStepBase ; ID= 2228
+Structure T_VALUE_RANGE Extends TStepEntityBase ; ID= 2228
   
 EndStructure 
  
  ; 2229 : VALUE_REPRESENTATION_ITEM
-Structure T_VALUE_REPRESENTATION_ITEM Extends TStepBase ; ID= 2229
+Structure T_VALUE_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 2229
   
 EndStructure 
  
  ; 2230 : VARIABLE
-Structure T_VARIABLE Extends TStepBase ; ID= 2230
+Structure T_VARIABLE Extends TStepEntityBase ; ID= 2230
   
 EndStructure 
  
  ; 2231 : VARIABLE_EXPRESSION
-Structure T_VARIABLE_EXPRESSION Extends TStepBase ; ID= 2231
+Structure T_VARIABLE_EXPRESSION Extends TStepEntityBase ; ID= 2231
   
 EndStructure 
  
  ; 2232 : VARIABLE_SEMANTICS
-Structure T_VARIABLE_SEMANTICS Extends TStepBase ; ID= 2232
+Structure T_VARIABLE_SEMANTICS Extends TStepEntityBase ; ID= 2232
   
 EndStructure 
  
  ; 2233 : VARIATIONAL_CURRENT_REPRESENTATION_RELATIONSHIP
-Structure T_VARIATIONAL_CURRENT_REPRESENTATION_RELATIONSHIP Extends TStepBase ; ID= 2233
+Structure T_VARIATIONAL_CURRENT_REPRESENTATION_RELATIONSHIP Extends TStepEntityBase ; ID= 2233
   
 EndStructure 
  
  ; 2234 : VARIATIONAL_PARAMETER
-Structure T_VARIATIONAL_PARAMETER Extends TStepBase ; ID= 2234
+Structure T_VARIATIONAL_PARAMETER Extends TStepEntityBase ; ID= 2234
   
 EndStructure 
  
  ; 2235 : VARIATIONAL_REPRESENTATION
-Structure T_VARIATIONAL_REPRESENTATION Extends TStepBase ; ID= 2235
+Structure T_VARIATIONAL_REPRESENTATION Extends TStepEntityBase ; ID= 2235
   
 EndStructure 
  
  ; 2236 : VARIATIONAL_REPRESENTATION_ITEM
-Structure T_VARIATIONAL_REPRESENTATION_ITEM Extends TStepBase ; ID= 2236
+Structure T_VARIATIONAL_REPRESENTATION_ITEM Extends TStepEntityBase ; ID= 2236
   
 EndStructure 
   
  ; 2238 : VECTOR_STYLE
-Structure T_VECTOR_STYLE Extends TStepBase ; ID= 2238
+Structure T_VECTOR_STYLE Extends TStepEntityBase ; ID= 2238
   
 EndStructure 
  
  ; 2239 : VEE_PROFILE
-Structure T_VEE_PROFILE Extends TStepBase ; ID= 2239
+Structure T_VEE_PROFILE Extends TStepEntityBase ; ID= 2239
   
 EndStructure 
  
  ; 2240 : VELOCITY_MEASURE_WITH_UNIT
-Structure T_VELOCITY_MEASURE_WITH_UNIT Extends TStepBase ; ID= 2240
+Structure T_VELOCITY_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 2240
   
 EndStructure 
  
  ; 2241 : VELOCITY_UNIT
-Structure T_VELOCITY_UNIT Extends TStepBase ; ID= 2241
+Structure T_VELOCITY_UNIT Extends TStepEntityBase ; ID= 2241
   
 EndStructure 
  
  ; 2242 : VERIFICATION
-Structure T_VERIFICATION Extends TStepBase ; ID= 2242
+Structure T_VERIFICATION Extends TStepEntityBase ; ID= 2242
   
 EndStructure 
  
  ; 2243 : VERIFICATION_RELATIONSHIP
-Structure T_VERIFICATION_RELATIONSHIP Extends TStepBase ; ID= 2243
+Structure T_VERIFICATION_RELATIONSHIP Extends TStepEntityBase ; ID= 2243
   
 EndStructure 
  
  ; 2244 : VERSIONED_ACTION_REQUEST
-Structure T_VERSIONED_ACTION_REQUEST Extends TStepBase ; ID= 2244
+Structure T_VERSIONED_ACTION_REQUEST Extends TStepEntityBase ; ID= 2244
   
 EndStructure 
  
  ; 2245 : VERSIONED_ACTION_REQUEST_RELATIONSHIP
-Structure T_VERSIONED_ACTION_REQUEST_RELATIONSHIP Extends TStepBase ; ID= 2245
+Structure T_VERSIONED_ACTION_REQUEST_RELATIONSHIP Extends TStepEntityBase ; ID= 2245
   
 EndStructure 
  
  ; 2246 : VERTEX
-Structure T_VERTEX Extends TStepBase ; ID= 2246
+Structure T_VERTEX Extends TStepEntityBase ; ID= 2246
   
 EndStructure 
  
  ; 2247 : VERTEX_LOOP
-Structure T_VERTEX_LOOP Extends TStepBase ; ID= 2247
+Structure T_VERTEX_LOOP Extends TStepEntityBase ; ID= 2247
   
 EndStructure 
  
  ; 2248 : VERTEX_ON_EDGE
-Structure T_VERTEX_ON_EDGE Extends TStepBase ; ID= 2248
+Structure T_VERTEX_ON_EDGE Extends TStepEntityBase ; ID= 2248
   
 EndStructure 
  
   
  ; 2250 : VERTEX_SHELL
-Structure T_VERTEX_SHELL Extends TStepBase ; ID= 2250
+Structure T_VERTEX_SHELL Extends TStepEntityBase ; ID= 2250
   
 EndStructure 
  
  ; 2251 : VIA_ARC_POINT
-Structure T_VIA_ARC_POINT Extends TStepBase ; ID= 2251
+Structure T_VIA_ARC_POINT Extends TStepEntityBase ; ID= 2251
   
 EndStructure 
  
  ; 2252 : VIA_HELIX_POINT
-Structure T_VIA_HELIX_POINT Extends TStepBase ; ID= 2252
+Structure T_VIA_HELIX_POINT Extends TStepEntityBase ; ID= 2252
   
 EndStructure 
  
  ; 2253 : VIEW_VOLUME
-Structure T_VIEW_VOLUME Extends TStepBase ; ID= 2253
+Structure T_VIEW_VOLUME Extends TStepEntityBase ; ID= 2253
   
 EndStructure 
  
  ; 2254 : VISUAL_APPEARANCE_REPRESENTATION
-Structure T_VISUAL_APPEARANCE_REPRESENTATION Extends TStepBase ; ID= 2254
+Structure T_VISUAL_APPEARANCE_REPRESENTATION Extends TStepEntityBase ; ID= 2254
   
 EndStructure 
  
  ; 2255 : VOLUME
-Structure T_VOLUME Extends TStepBase ; ID= 2255
+Structure T_VOLUME Extends TStepEntityBase ; ID= 2255
   
 EndStructure 
  
  ; 2256 : VOLUME_MEASURE_WITH_UNIT
-Structure T_VOLUME_MEASURE_WITH_UNIT Extends TStepBase ; ID= 2256
+Structure T_VOLUME_MEASURE_WITH_UNIT Extends TStepEntityBase ; ID= 2256
   
 EndStructure 
  
  ; 2257 : VOLUME_UNIT
-Structure T_VOLUME_UNIT Extends TStepBase ; ID= 2257
+Structure T_VOLUME_UNIT Extends TStepEntityBase ; ID= 2257
   
 EndStructure 
  
  ; 2258 : VOLUME_WITH_FACES
-Structure T_VOLUME_WITH_FACES Extends TStepBase ; ID= 2258
+Structure T_VOLUME_WITH_FACES Extends TStepEntityBase ; ID= 2258
   
 EndStructure 
  
  ; 2259 : VOLUME_WITH_PARAMETRIC_BOUNDARY
-Structure T_VOLUME_WITH_PARAMETRIC_BOUNDARY Extends TStepBase ; ID= 2259
+Structure T_VOLUME_WITH_PARAMETRIC_BOUNDARY Extends TStepEntityBase ; ID= 2259
   
 EndStructure 
  
  ; 2260 : VOLUME_WITH_SHELL
-Structure T_VOLUME_WITH_SHELL Extends TStepBase ; ID= 2260
+Structure T_VOLUME_WITH_SHELL Extends TStepEntityBase ; ID= 2260
   
 EndStructure 
  
  ; 2261 : WEDGE_VOLUME
-Structure T_WEDGE_VOLUME Extends TStepBase ; ID= 2261
+Structure T_WEDGE_VOLUME Extends TStepEntityBase ; ID= 2261
   
 EndStructure 
  
  ; 2262 : WEEK_OF_YEAR_AND_DAY_DATE
-Structure T_WEEK_OF_YEAR_AND_DAY_DATE Extends TStepBase ; ID= 2262
+Structure T_WEEK_OF_YEAR_AND_DAY_DATE Extends TStepEntityBase ; ID= 2262
   
 EndStructure 
  
  ; 2263 : WIRE_SHELL
-Structure T_WIRE_SHELL Extends TStepBase ; ID= 2263
+Structure T_WIRE_SHELL Extends TStepEntityBase ; ID= 2263
   
 EndStructure 
  
  ; 2264 : WRONG_ELEMENT_NAME
-Structure T_WRONG_ELEMENT_NAME Extends TStepBase ; ID= 2264
+Structure T_WRONG_ELEMENT_NAME Extends TStepEntityBase ; ID= 2264
   
 EndStructure 
  
  ; 2265 : WRONGLY_ORIENTED_VOID
-Structure T_WRONGLY_ORIENTED_VOID Extends TStepBase ; ID= 2265
+Structure T_WRONGLY_ORIENTED_VOID Extends TStepEntityBase ; ID= 2265
   
 EndStructure 
  
  ; 2266 : WRONGLY_PLACED_LOOP
-Structure T_WRONGLY_PLACED_LOOP Extends TStepBase ; ID= 2266
+Structure T_WRONGLY_PLACED_LOOP Extends TStepEntityBase ; ID= 2266
   
 EndStructure 
  
  ; 2267 : WRONGLY_PLACED_VOID
-Structure T_WRONGLY_PLACED_VOID Extends TStepBase ; ID= 2267
+Structure T_WRONGLY_PLACED_VOID Extends TStepEntityBase ; ID= 2267
   
 EndStructure 
  
  ; 2268 : XOR_EXPRESSION
-Structure T_XOR_EXPRESSION Extends TStepBase ; ID= 2268
+Structure T_XOR_EXPRESSION Extends TStepEntityBase ; ID= 2268
   
 EndStructure 
  
  ; 2269 : YEAR_MONTH
-Structure T_YEAR_MONTH Extends TStepBase ; ID= 2269
+Structure T_YEAR_MONTH Extends TStepEntityBase ; ID= 2269
   
 EndStructure 
  
  ; 2270 : ZERO_SURFACE_NORMAL
-Structure T_ZERO_SURFACE_NORMAL Extends TStepBase ; ID= 2270
+Structure T_ZERO_SURFACE_NORMAL Extends TStepEntityBase ; ID= 2270
   
 EndStructure 
  
  ; 2271 : ZONE_BREAKDOWN_CONTEXT
-Structure T_ZONE_BREAKDOWN_CONTEXT Extends TStepBase ; ID= 2271
+Structure T_ZONE_BREAKDOWN_CONTEXT Extends TStepEntityBase ; ID= 2271
   
 EndStructure 
  
  ; 2272 : ZONE_ELEMENT_USAGE
-Structure T_ZONE_ELEMENT_USAGE Extends TStepBase ; ID= 2272
+Structure T_ZONE_ELEMENT_USAGE Extends TStepEntityBase ; ID= 2272
   
 EndStructure 
  
  ; 2273 : ZONE_STRUCTURAL_MAKEUP
-Structure T_ZONE_STRUCTURAL_MAKEUP Extends TStepBase ; ID= 2273
+Structure T_ZONE_STRUCTURAL_MAKEUP Extends TStepEntityBase ; ID= 2273
   
 EndStructure 
 
@@ -34163,6 +34353,7 @@ DataSection
 EndDataSection
 
 ; IDE Options = PureBasic 6.11 LTS (Windows - x64)
+; CursorPosition = 2
 ; Folding = --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ; Optimizer
 ; CPU = 5
