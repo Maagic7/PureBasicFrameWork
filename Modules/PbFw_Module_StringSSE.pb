@@ -14,7 +14,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/12/04
-; VERSION  :  0.52 Developper Version
+; VERSION  :  0.53 Developper Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -23,8 +23,8 @@
 ;{ ChangeLog: 
  ; 2024/03/01 S.Maag : 16 Byte Aling check and manually align unaligend Strings
  ; 2024/01/09 S.Maag : SSE_StringCompare: now return -1,0,1 instead of char difference
- ;                     to be compatible with PB Command CompareMemoryString()
- ;                     Tested and Bugfixed FindStr
+ ;                     to be compatible with PB Command CompareMemoryString().
+ ;                     Tested and bugfixed FindStr
  ; 2023/07/31 S.Maag : SSE_StringCompare: compare Bug fixed
 
 ;} 
@@ -156,7 +156,7 @@
 ; if we process 16 Bytes at 8 Byte align starting at Byte 4088 we read until Byte 4103
 ; we read 8 Bytes into the next page. Now it will crash if the next page is not
 ; allocated to our process! We can use 16 Byte PCMPISTRI operation
-; only if we are not at the end of a memory page or we have a 16 Byte align memory. 
+; only if we are not at the end of a memory page or we have a 16 Byte aligned memory. 
 ;}
 ;- ----------------------------------------------------------------------
 ;- Include Files
@@ -277,7 +277,7 @@ Module StrSSE
         !MOV DL, BYTE[EAX]    ;   process Char by Char until aligned
         !TEST EDX, EDX        ;   Check for EndOfString
         !JZ .Return           ;   Break if EndOfString
-        !INC EAX              ; Pointer to NextChar
+        !INC EAX              ;   Pointer to NextChar
       !JMP @b                 ; Jump back to @@      
       !@@:                    ; from here we have 16Byte aligned address
       
@@ -333,14 +333,14 @@ Module StrSSE
         !MOV RAX, [p.p_String] 
         
         !@@:
-        !TEST RAX, 0Fh
-        !JZ @f
-          !MOV DX, WORD [RAX]
-          !TEST RDX, RDX
-          !JZ .Return
-          !INC RAX
-        !JMP @b    
-        !@@:
+        !TEST RAX, 0Fh            ; Test for 16Byte align
+        !JZ @f                    ; If NOT aligned
+          !MOV DX, WORD [RAX]     ;   process Char by Char until aligned
+          !TEST RDX, RDX          ;   Check for EndOfString
+          !JZ .Return             ;   Break if EndOfString
+          !INC RAX                ;   Pointer to NextChar
+        !JMP @b                   ; Jump back to @@   
+        !@@:                      ; from here we have 16Byte aligned address
         
         !PXOR XMM0, XMM0
         !SUB RAX, 16      
@@ -367,15 +367,15 @@ Module StrSSE
         !MOV EAX, [p.p_String] 
         
         !@@:
-        !TEST EAX, 0Fh
-        !JZ @f
-          !MOV DX, WORD [EAX]
-          !TEST EDX, EDX
-          !JZ .Return
-          !INC EAX
-        !JMP @b
+        !TEST EAX, 0Fh            ; Test for 16Byte align
+        !JZ @f                    ; If NOT aligned
+          !MOV DX, WORD [EAX]     ;   process Char by Char until aligned
+          !TEST EDX, EDX          ;   Check for EndOfString
+          !JZ .Return             ;   Break if EndOfString
+          !INC EAX                ;   Pointer to NextChar
+        !JMP @b                   ; Jump back to @@   
         
-        !@@:
+        !@@:                      ; from here we have 16Byte aligned address
         !PXOR XMM0, XMM0
         !SUB EAX, 16      
         
@@ -396,9 +396,7 @@ Module StrSSE
       
     CompilerElse  ; #PB_Compiler_Backend = #PB_Backend_C
       
-      Protected *pStr.String 
-      *pStr = *String
-      ProcedureReturn Len(*pStr\s)
+      ProcedureReturn MemoryStringLength(*String)
         
     CompilerEndIf
     
@@ -430,7 +428,7 @@ Module StrSSE
         ;   RDX : operating Register
         
         ; ----------------------------------------------------------------------
-        ; Check the *String1 abd *String2 align
+        ; Check the *String1 and *String2 align
         ; The Problem of not aligend 16 is: Reading over the end of a 
         ; memory page. If the next page is not allocated to our programm we
         ; produce a crash! So we have to be sure do not read over the 
@@ -454,7 +452,7 @@ Module StrSSE
         !JNE .NotAligned      
         
         !TEST RCX, RCX          ; Test if it is aligend to 16Bytes (Offset ==0)
-        !JZ .a16                ; aligned to 16 Bytes, we have to to nothing
+        !JZ .a16                ; aligned to 16 Bytes, we have to do nothing
         
         ; ----------------------------------------------------------------------
         ; Case I: Not aligned to 16 Bytes but it's possilbe to align manually
@@ -474,7 +472,7 @@ Module StrSSE
           !JA .GREATER
           !JB .LOWER
           ; if identical check for EndOfString
-          !TEST CX, 0             ; TEST results in 0 if CX==0
+          !TEST CX, CX            ; TEST results in 0 if CX==0
           !JZ .EQUAL
         !JMP @b                   ; Not EndOfString -> Repeat Loop  
         
@@ -489,7 +487,7 @@ Module StrSSE
         ;      complicated
         ; ----------------------------------------------------------------------
         
-        !.NotAligned:             ; Not aligned : a complet different align       
+        !.NotAligned:             ; Not aligned : a complete different align       
         !SUB RAX, 2
          
         !@@:
@@ -642,7 +640,7 @@ Module StrSSE
           !JA .GREATER
           !JB .LOWER
           ; if identical check for EndOfString
-          !TEST CX, 0             ; TEST results in 0 if CX==0
+          !TEST CX, CX            ; TEST results in 0 if CX==0
           !JZ .EQUAL
         !JMP @b                   ; Not EndOfString -> Repeat Loop  
         
@@ -667,7 +665,7 @@ Module StrSSE
           !JA .GREATER
           !JB .LOWER         
           ; if identical check for EndOfString
-          !TEST CX, 0             ; TEST results in 0 if CX==0 
+          !TEST CX, CX            ; TEST results in 0 if CX==0 
           !JZ .EQUAL
         !JMP @b                   ; Not EndOfString -> Repeat Loop
                        
@@ -1026,11 +1024,9 @@ CompilerIf #PB_Compiler_IsMainFile
   sQ.s = Chr('"') ; Quotes
        ;1        10                                    48
   S0 = "Ich bin ein langer String, in welchem man nach 1234 suchen kann 5677"
-  S1 = "Ich bin ein langer String, in welchem man nach 1234 suchen kann 5677"
+  S1 = "Ich bin ein langer String, in welchem man nach 1234 suchen kann 5678"
   S2 = "Ich bin ein langer String, in welchem man nach 1234 suchen kann 5679"
-  SL = "abcdefghijklmnopqrstuvwABCDEFGHIJKLMNOPQRSRUVW"
-  SL = SL + SL + SL + SL + SL + SL + SL + SL + SL + SL + "search" + SL + SL
-  
+   
   Debug "--------------------------------------------------"
   Debug "StringCompare"
   Debug "--------------------------------------------------"
@@ -1074,8 +1070,8 @@ CompilerIf #PB_Compiler_IsMainFile
   
   ; ----------------    StringLength ----------------------
   ; SSE Assembler Version
-  ; S1 = Space(15000)
-  
+  ; S1 = Space(255)
+
   T1 = ElapsedMilliseconds()
   For I = 1 To #cst_Loops
     ret = SSE_Len(@S1) 
@@ -1218,9 +1214,9 @@ CompilerEndIf
 ;   pop edi
 ;   pop esi
 ;   ret
-; IDE Options = PureBasic 6.04 LTS (Windows - x64)
-; CursorPosition = 956
-; FirstLine = 518
+; IDE Options = PureBasic 6.11 LTS (Windows - x64)
+; CursorPosition = 1072
+; FirstLine = 1061
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

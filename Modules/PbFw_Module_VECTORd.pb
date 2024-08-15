@@ -43,13 +43,15 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/12/04
-; VERSION  :  0.14 untested Developper Version
+; VERSION  :  0.15 untested Developper Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
+; 2024/08/15 S.Maag : added SeMatrixRotAxis and SetMatrixRotXYZ with direct calculation : 
+;                     solved Code Error in Vector_Lerp and Vector_Remap
 ; 2024/07/23 S.Maag : changed wrong PS commands to PD commands in ASM Macros Vector Min, Max, MinMax
 ; 2024/02/24 S.Maag : included "PbFw_ASM_Macros.pbi"
 ; 2023/07/29 S.Maag : changed come comments
@@ -98,6 +100,11 @@ XIncludeFile "PbFw_Module_Debug.pb"        ; DBG::      Debug Module
 DeclareModule VECd
   EnableExplicit
   
+  ;- ----------------------------------------------------------------------
+  ;- PbFw Module local configurations
+  ;- ----------------------------------------------------------------------
+  #PbFwCfg_Module_CheckPointerException = #True     ; This constant must have same Name in all Modules. On/Off PoninterExeption for this Module
+ 
   ; ----------------------------------------------------------------------
   ;- STRUCTURES and CONSTANTS
   ;- ----------------------------------------------------------------------
@@ -214,6 +221,7 @@ DeclareModule VECd
 	Declare.i SetMatrixRotY(*Matrix, Angle.d)
 	Declare.i SetMatrixRotZ(*Matrix, Angle.d)
 	Declare.i SetMatrixRotXYZ(*Matrix.TMatrix, AngleX.d, AngleY.d, AngleZ.d)
+  Declare.i SetMatrixRotAxis(*Matrix.TMatrix, *vecUnit.TVector, Angle.d)
 	
   Declare.i Vector_X_Matrix(*OUT.TVector, *IN.TVector, *Matrix.TMatrix) 
   Declare.i Matrix_X_Matrix(*OUT.TMatrix, *M1.TMatrix, *M2.TMatrix)
@@ -325,7 +333,7 @@ Module VECd
 			!MOV    REGD, [p.p_IN2]
 			!VMOVUPD YMM1, [REGC]       ; IN1
 			!VMOVUPD YMM2, [REGD]       ; IN2
-			!VMAXPd  YMM0, YMM1, YMM3
+			!VMAXPD  YMM0, YMM1, YMM3
 			!VMOVUPD [REGA], YMM0    
   EndMacro
   
@@ -669,13 +677,43 @@ Module VECd
 		Out\W = 0
 	EndMacro
 	
-	Macro mac_Vector_Lerp(OUT, A, B, T)
-	  ; Blend from A to B ret = A + (B-A) * T   ; A*(1-T) + B*T  
-	  OUT\X = A\X + (B\X - A\X) * T
-	  OUT\Y = A\Y + (B\Y - A\Y) * T
-	  OUT\Z = A\Z + (B\Z - A\Z) * T
-	  OUT\W = A\W + (B\W - A\W) * T
-	EndMacro
+	Macro mac_Lerp(ValStart, ValEnd, T)   
+  ; ============================================================================
+  ; NAME: Lerp
+  ; DESC: Blending between ValStart..ValEnd from 0..100% with T={0..1}
+  ; DESC: 
+  ; VAR(ValStart): Startvalue A 
+  ; VAR(ValEnd)  : Endvalue   B 
+  ; VAR(T) : Time Value {0..1} = {0..100%}
+  ; RET : Lerped Value in the Range {ValStart..ValEnd}
+  ; ============================================================================
+	  
+	 ; For Lerp we have to call the Macro for each Coordinate X,Y,Z,[W]
+
+    ValStart + (ValEnd-ValStart) * T   ; A*(1-T) + B*T
+  EndMacro
+	
+  Macro mac_Remap(val, inMin, inMax, outMin, outMax)
+  ; ============================================================================
+  ; NAME: Remap
+  ; DESC: Scales a value what is in the 
+  ; DESC: Range {inMin..inMax} ro a new Range {outMin..outMax}
+  ; DESC: 
+  ; DESC:                       (outMax - outMinOut)
+  ; DESC: ret = (val - inMin) ------------------------  + outMin
+  ; DESC:                         (inMax - inMin) 
+  ; DESC: 
+  ; VAR(val) : Pointer to Return-Vector VECf::TVector
+  ; VAR(inMin) : Input Range Minimum
+  ; VAR(inMax) : Input Range Maximum
+  ; VAR(outMin): Output Range Minimum
+  ; VAR(outMax): Output Range Maximum
+  ; RET : the Value val scaled to the Output Range
+  ; ============================================================================
+    
+    ; For Remap we have to call the Macro for each Coordinate X,Y,Z,[W]
+    (outMax - outMin)/(inMax - inMin) * (val - inMin) + outMin
+  EndMacro
 
 	Macro mac_Vector_X_Matrix(OUT, IN, Matrix)
  	  ; 3D
@@ -1239,11 +1277,17 @@ Module VECd
         ProcedureReturn ; EAX
         
       CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
-        mac_Vector_Lerp(*OUT, *IN1 *IN2, T)        
+        *OUT\x = mac_Lerp(*A\x, *B\x, T)        
+        *OUT\y = mac_Lerp(*A\y, *B\y, T)        
+        *OUT\z = mac_Lerp(*A\x, *B\z, T)        
+        *OUT\w = mac_Lerp(*A\w, *B\w, T)   
         ProcedureReturn *OUT
 
       CompilerDefault                     ; Classic Version
-        mac_Vector_Lerp(*OUT, *IN1, *IN2, T)        
+        *OUT\x = mac_Lerp(*A\x, *B\x, T)        
+        *OUT\y = mac_Lerp(*A\y, *B\y, T)        
+        *OUT\z = mac_Lerp(*A\x, *B\z, T)        
+        *OUT\w = mac_Lerp(*A\w, *B\w, T)   
         ProcedureReturn *OUT
 
     CompilerEndSelect   
@@ -1321,23 +1365,23 @@ Module VECd
         ProcedureReturn ; EAX
         
       CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
-        mac_Vector_Remap(*OUT\x, *IN\x, *inMin\x, *inMax\x, *outMin\x, *outMax\x)        
-        mac_Vector_Remap(*OUT\y, *IN\y, *inMin\y, *inMax\y, *outMin\y, *outMax\y)        
-        mac_Vector_Remap(*OUT\z, *IN\z, *inMin\z, *inMax\z, *outMin\z, *outMax\z)
+        *OUT\x = mac_Remap(*IN\x, *inMin\x, *inMax\x, *outMin\x, *outMax\x)        
+        *OUT\x = mac_Remap(*IN\y, *inMin\y, *inMax\y, *outMin\y, *outMax\y)        
+        *OUT\x = mac_Remap(*IN\z, *inMin\z, *inMax\z, *outMin\z, *outMax\z)
         
         If xRemapW
-          mac_Vector_Remap(*OUT\w, *IN\w, *inMin\w, *inMax\w, *outMin\w, *outMax\w)        
+          *OUT\x = mac_Remap(*IN\w, *inMin\w, *inMax\w, *outMin\w, *outMax\w)        
         EndIf        
         
         ProcedureReturn *OUT
 
       CompilerDefault                       ; Classic Version
-        mac_Vector_Remap(*OUT\x, *IN\x, *inMin\x, *inMax\x, *outMin\x, *outMax\x)        
-        mac_Vector_Remap(*OUT\y, *IN\y, *inMin\y, *inMax\y, *outMin\y, *outMax\y)        
-        mac_Vector_Remap(*OUT\z, *IN\z, *inMin\z, *inMax\z, *outMin\z, *outMax\z)
+        *OUT\x = mac_Remap(*IN\x, *inMin\x, *inMax\x, *outMin\x, *outMax\x)        
+        *OUT\x = mac_Remap(*IN\y, *inMin\y, *inMax\y, *outMin\y, *outMax\y)        
+        *OUT\x = mac_Remap(*IN\z, *inMin\z, *inMax\z, *outMin\z, *outMax\z)
         
         If xRemapW
-          mac_Vector_Remap(*OUT\w, *IN\w, *inMin\w, *inMax\w, *outMin\w, *outMax\w)        
+          *OUT\x = mac_Remap(*IN\w, *inMin\w, *inMax\w, *outMin\w, *outMax\w)        
         EndIf
         
         ProcedureReturn *OUT
@@ -1524,6 +1568,44 @@ Module VECd
   ; RET.i : *Matrix
   ; ============================================================================
     
+    ; compared with DirecDraw3D::_Draw3D_Orientation! It's same - seems o.k.!
+    ; Rotation YX                                XYZ
+    ; | cX     0     sY      0 |  cYcZ          -cYsZ           sY      0
+    ; | sXsY  cX   -sXcY     0 |  sXsYcZ+cXsZ   -sXsYsZ-cXsZ   -sXcY    0
+    ; |-cXsY  sX    cXcY     0 | -cXsYcZ+sXsZ    cXsYsZ-sXcZ    cXcY    0
+    ; | 0      0     0       1 |  0              0              0       0
+    
+    DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
+
+    
+    Protected.d sX, sY, sZ 
+    Protected.d cX, cY, cZ
+      
+    sX=Sin(AngleX) : cX=Cos(AngleX)
+    sY=Sin(AngleY) : cY=Cos(AngleY)
+    sZ=Sin(AngleZ) : cZ=Cos(AngleZ)
+      
+    With *Matrix         
+      \m11= cY*cZ               : \m12= -cY*sZ              :  \m13= sY       : \m14= 0
+      \m21= sX*sY*cZ + cX*sZ    : \m22= -sX*sY*sZ - cX*sZ   :  \M23= -sX*cY   : \m24= 0
+      \m31= sX*sZ - cX*sY*cZ    : \m32= cX*sY*sZ  - sX*cZ   :  \m33= cX*cY    : \m34= 0
+      \m41= 0                   : \m42= 0                   :  \m43= 0        : \m44= 1  
+    EndWith 
+
+    ProcedureReturn *Matrix
+  EndProcedure
+
+	Procedure.i SetMatrixRotXYZ_old(*Matrix.TMatrix, AngleX.d, AngleY.d, AngleZ.d)
+  ; ============================================================================
+  ; NAME: SetMatrixRotXYZ
+  ; DESC: Set the Matrix for Rotation arround all 3-Axis
+  ; VAR(*Matrix.TMatrix) : Pointer to VECf::TMatrix
+  ; VAR(AngleX.d) : Angle X in Radian (use Radain() to convert Degree to Radian
+  ; VAR(AngleY.d) : Angle Y in Radian (use Radain() to convert Degree to Radian
+  ; VAR(AngleZ.d) : Angle Z in Radian (use Radain() to convert Degree to Radian   
+  ; RET.i : *Matrix
+  ; ============================================================================
+    
     Protected m1.TMatrix, m2.TMatrix, m3.TMatrix
     
     DBG::mac_CheckPointer(*Matrix)    ; Check Pointer Exception
@@ -1537,6 +1619,65 @@ Module VECd
     
     Matrix_X_Matrix(*Matrix, m1, m3)  ; OUT = Z-Matrix * XY-Matrix
     
+    ProcedureReturn *Matrix
+  EndProcedure
+  
+  Procedure.i SetMatrixRotAxis(*Matrix.TMatrix, *vecUnit.TVector, Angle.d)
+  ; ============================================================================
+  ; NAME: SetMatrixRotAxis
+  ; DESC: Set the Matrix for Rotation arround an Axis
+  ; VAR(*Matrix.TMatrix) : Pointer to VECf::TMatrix
+  ; VAR(*vecUnit.TVector) : unit Vector of the Axis
+  ; VAR(AngleZ) : Angle in Radian (use Radain() to convert Degree to Radian   
+  ; RET.i : *Matrix
+  ; ============================================================================
+    
+    ; https://de.wikipedia.org/wiki/Drehmatrix
+    ; https://www.geogebra.org/m/pbzkpnwg
+    
+    ; Rotation arround an Axis - AxisUnitVector[x, y, z]
+    
+    ; | x²(1-cos)+cos       x*y(1-cos)-z*sin    x*z(1-cos)+y*sin     0 |
+    ; | x*y(1-cos)+z*sin    y²(1-cos)+cos       y*z(1-cos)-x*sin     0 |  
+    ; | x*z(1-cos)-y*sin    y*z(1-cos)+x*sin    z²(1-cos)+cos        0 |
+    ; | 0                   0                   0                    1 |  
+    
+    DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
+    
+    Protected.d s, c, c1
+    Protected.d xx_c1, yy_c1 , zz_c1, xy_c1, xz_c1, yz_c1, xsA, ysA, zsA
+      
+    s=Sin(Angle)
+    c=Cos(Angle) 
+    c1=1-c    
+     
+    With *vecUnit
+      xx_c1= \x * \x * c1     ; x²(1-cos)
+      yy_c1= \y * \y * c1     ; y²(1-cos)
+      zz_c1= \z * \z * c1     ; z²(1-cos)
+      
+      xy_c1 = \x * \y * c1    ; xy(1-cos)
+      xz_c1 = \x * \z * c1    ; xz(1-cos)
+      yz_c1 = \y * \z * c1    ; xz(1-cos)
+      
+      xsA = \x * s            ; x*sin
+      ysA = \y * s            ; y*sin
+      zsA = \z * s            ; z*sin
+    EndWith
+    
+    With *Matrix         
+     ;\m11= x*x*c1 + c      : \m12= y*x*c1 - z*sA   :  \m13= z*x*c1 + y*sA  : \m14= 0
+      \m11 = xx_c1 + c      : \m12= xy_c1 - zsA     :  \m13= xz_c1 + ysA    : \m14= 0
+      
+     ;\m21= x*y*c1 + z*sA   : \m22= y*y*c1 + c      :  \M23= z*y*c1 - x*sA  : \m24= 0
+      \m21= xy_c1 + zsA     : \m22= yy_c1 + c       :  \M23= yz_c1 - xsA    : \m24= 0
+      
+     ;\m31= x*z*c1 - y*sA   : \m32= y*z*c1 + c      :  \m33= z*z*c1 + c     : \m34= 0
+      \m31= xz_c1 - ysA     : \m32= yz_c1 + c       :  \m33= zz_c1 + c      : \m34= 0
+      
+      \m41= 0               : \m42= 0               :  \m43= 0              : \m44= 1  
+    EndWith 
+
     ProcedureReturn *Matrix
   EndProcedure
 
@@ -1789,7 +1930,7 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 45
+; CursorPosition = 54
 ; Folding = -------------
 ; Optimizer
 ; CPU = 5
