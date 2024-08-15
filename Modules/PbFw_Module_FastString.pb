@@ -7,7 +7,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2024/02/02
-; VERSION  :  0.1 untested Developer Version
+; VERSION  :  0.1 Brainstroming Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -62,7 +62,7 @@ DeclareModule FStr
   Declare.i UCase255(*String)
   Declare.s GetVisibleAsciiCharset()
   
-  CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And  #PB_Compiler_64Bit And #PB_Compiler_Unicode
+  CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit And #PB_Compiler_Unicode
     Macro LenStrFast(String)
       LenStr_x64(@String)  
     EndMacro
@@ -90,9 +90,9 @@ Module FStr
   ; DESC: A faster Len() function as the PB's Len()
   ; DESC: Speeding up Len() it's only faster in x64.
   ; DESC: On Ryzen 5800 it's double speed on PB 6.03
-  ; DESC: !PointerVersion! Be sure to call it with LenStrW(@MyString)
+  ; DESC: !PointerVersion! Be sure to call it with LenStr_x64(@MyString)
   ; DESC: Better use the Macro LenStrFast() because this calls
-  ; DESC: LenStrW_x64() only at x64 ASM Backend otherwise it use PB's Len()
+  ; DESC: LenStr_x64() only at x64 ASM Backend otherwise it use PB's Len()
   ; DESC: wihout loss of speed!
   ; DESC: To not crash out of x64 ASM, LenStrW_x64() implements the 
   ; DESC: PB's Len() too. But it will be slower as using Len() directly because
@@ -101,60 +101,56 @@ Module FStr
   ; RET.i : Length of String; Number of Characters
   ; ============================================================================
        
-  CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit And #PB_Compiler_Unicode
-  
-    ; Used Registers:
-    ;   RAX : Pointer *String
-    ;   RCX : -
-    ;   RDX : operating Register
-    ;   R8  : -
-    ;   R9  : -
-    ;   XMM0 : the 4 Chars
-    ;   XMM1 : -
-    ;   XMM2 : 0 to search for EndOfString    
-    ;   XMM3 : -
-   
-    ; ----------------------------------------------------------------------
-    ; Check *String-Pointer and MOV it to RAX as operating register
-    ; ----------------------------------------------------------------------
-    !MOV RAX, [p.p_String]    ; load String address
-    !CMP RAX, 0               ; If *String = 0
-    !JE len_Return            ;   Exit    
-    !SUB RAX, 8               ; Sub 8 to start with Add 8 in the Loop     
+    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit And #PB_Compiler_Unicode
+    
+      ; Used Registers:
+      ;   RAX : Pointer *String
+      ;   RCX : -
+      ;   RDX : operating Register
+      ;   R8  : -
+      ;   R9  : -
+      ;   XMM0 : the 4 Chars
+      ;   XMM1 : -
+      ;   XMM2 : 0 to search for EndOfString    
+      ;   XMM3 : -
      
-    ; here are the standard setup parameters
-    !PXOR XMM2, XMM2          ; XMM2 = 0 ; Mask to search for NullChar = EndOfString         
-    ; ----------------------------------------------------------------------
-    ; Main Loop
-    ; ----------------------------------------------------------------------     
-    !len_Loop:
-      !ADD RAX, 8                     ; *String + 8 => NextChars    
-      !MOVQ XMM0, [RAX]               ; load 4 Chars to XMM0  
-      !PCMPEQW XMM0, XMM2             ; Compare with 0
-      !MOVQ RDX, XMM0                 ; RDX CompareResult contains FFFF for each NullChar 
-      !CMP RDX, 0                     ; If 0 : No NullChar found
-      !JE len_Loop                    ;  Continue Loop  
+      ; ----------------------------------------------------------------------
+      ; Check *String-Pointer and MOV it to RAX as operating register
+      ; ----------------------------------------------------------------------
+      !MOV RAX, [p.p_String]    ; load String address
+      !Test RAX, RAX            ; If *String = 0
+      !JZ .Return               ;   Exit    
+      !SUB RAX, 8               ; Sub 8 to start with Add 8 in the Loop     
+       
+      ; here are the standard setup parameters
+      !PXOR XMM2, XMM2          ; XMM2 = 0 ; Mask to search for NullChar = EndOfString         
+      ; ----------------------------------------------------------------------
+      ; Main Loop
+      ; ----------------------------------------------------------------------     
+      !@@:
+        !ADD RAX, 8                 ; *String + 8 => NextChars    
+        !MOVQ XMM0, [RAX]           ; load 4 Chars to XMM0  
+        !PCMPEQW XMM0, XMM2         ; Compare with 0
+        !MOVQ RDX, XMM0             ; RDX CompareResult contains FFFF for each NullChar 
+        !TEST RDX, RDX              ; If 0 : No NullChar found
+      !JZ @b                        ;  Continue Loop  
+      
       ; If EndOfStringFound  
-        ; Caclulate the Bytepostion of EndOfString [0..3] using Bitscan
-        !BSF RDX, RDX                 ; BitSanForward => No of the LSB   
-        !SHR RDX, 3                   ; BitNo to ByteNo
-        !ADD RAX, RDX                 ; Actual StringPointer + OffsetOf_NullChar
-        !SUB RAX, [p.p_String]        ; RAX *EndOfString - *String
-        !SHR RAX, 1                   ; NoOfBytes to NoOfWord => Len(String)
-        
-    !len_Return:
-    ProcedureReturn   ; RAX
-         
+      ; Caclulate the Bytepostion of EndOfString [0..3] using Bitscan
+      !BSF RDX, RDX                 ; BitScanForward => No of the LSB   
+      !SHR RDX, 3                   ; BitNo to ByteNo
+      !ADD RAX, RDX                 ; Actual StringPointer + OffsetOf(NullChar)
+      !SUB RAX, [p.p_String]        ; RAX = *EndOfString - *String
+      !SHR RAX, 1                   ; NoOfBytes to NoOfWord => Len(String)
+          
+      !.Return:
+      ProcedureReturn   ; RAX
+           
     CompilerElse ; #PB_Compiler_Backend = #PB_Backend_C or Ascii
       
-      ; to work in all circumstances we implement the Standard PB's Len() Function!
-      ; but this is slower than uing Len() directly in the PB-Code because
-      ; it is an extra Procedure call. If we use Macro LenStrFast() instead of
-      ; LenStr_x64() we do not have the loss of speed when calling Len()
-      Protected sString.String
-      PokeI(@sString, *String)    ; now the Structre String get's the StringPointer
-      ProcedureReturn Len(sString\s)
-     CompilerEndIf
+      ProcedureReturn MemoryStringLength(*String)
+      
+    CompilerEndIf
       
   EndProcedure
   
@@ -192,8 +188,8 @@ Module FStr
     ; Check *String-Pointer and MOV it to RAX as operating register
     ; ----------------------------------------------------------------------
     !MOV RAX, [p.p_String]    ; load String address
-    !CMP RAX, 0               ; If *String = 0
-    !JE .Return            ; Exit    
+    !Test RAX, RAX            ; If *String = 0
+    !JZ .Return               ; Exit    
     !SUB RAX, 8               ; Sub 8 to start with Add 8 in the Loop     
     ; ----------------------------------------------------------------------
     ; Setup start parameter for registers 
@@ -228,8 +224,8 @@ Module FStr
         !SHR RAX, 1                   ; NoOfBytes to NoOfWord => Len(String)
         ;check for Return of Length and and move it to *outLength 
         !MOV RDX, [p.p_outLength]
-        !CMP RDX, 0
-        !JE @f                        ; If *outLength
+        !TEST RDX, RDX
+        !JZ @f                        ; If *outLength
           !MOV [RDX], RAX             ;   *outLength = Len()
         !@@:                          ; Endif
       
@@ -268,8 +264,7 @@ Module FStr
       ; ------------------------------------------------------------
       
       !TEST RCX, RCX                ; Check BOOL EndOfStringFound      
-      !JZ .Loop                  ; Continue Loop if Not EndOfStringFound
-    !.EndLoop:
+    !JZ .Loop                       ; Continue Loop if Not EndOfStringFound
     
     ; ----------------------------------------------------------------------
     ; Handle Return value an POP-Registers
@@ -304,8 +299,8 @@ Module FStr
     ;   MM6 :
     ;   MM7 :
       
-    ASM_PUSH_MM_0to3(RDX)     ; PUSH nonvolatile MMX-Registers
- ;   ASM_PUSH_MM_4to5(RDX)     ; PUSH nonvolatile MMX-Registers
+    ASM_PUSH_MM_0to3(RDX)      ; PUSH nonvolatile MMX-Registers
+    ; ASM_PUSH_MM_4to5(RDX)     ; PUSH nonvolatile MMX-Registers
          
     ; ----------------------------------------------------------------------
     ; Check *String-Pointer and MOV it to EAX as operating register
@@ -376,8 +371,8 @@ Module FStr
       !MOVQ MM0, MM3                ; Load the 4 Chars to operating Register
       !PCMPEQW MM0, MM1             ; Compare the 4 Chars with cSearch
       !MOVD EDX, MM0                ; CompareResult to EDX
-      !CMP EDX, 0
-      !JE @f                        ; Jump to Endif if cSearch not found
+      !TEST EDX, EDX
+      !JZ @f                        ; Jump to Endif if cSearch not found
         !POPCNT EDX, EDX            ; Count number of set Bits (16 for each found Char)
         !SHR EDX, 4                 ; NoOfBits [0..64] to NoOfWords [0..4]
         !MOV ECX, DWORD [p.v_N]
@@ -388,8 +383,7 @@ Module FStr
                 
       !MOV ECX, DWORD [p.v_eos]
       !Test ECX, ECX                ; Check BOOL EndOfStringFound      
-      !JZ .Loop                   ; Continue Loop if Not EndOfStringFound
-    !.EndLoop: 
+    !JZ .Loop                       ; Continue Loop if Not EndOfStringFound
               
     ;  Move yur ReturnValue to EAX, here it's the counter
     !MOV EAX, [p.v_N]         ; ReturnValue to EAX
@@ -448,9 +442,8 @@ Module FStr
       !@@:
       ; ------------------------------------------------------------
          
-      !JMP .Loop
-    !.EndLoop:
-    
+    !JMP .Loop
+     
     ; optional Return Lenth
     !MOV ECX, [p.p_outLength]
     !TEST ECX, ECX
@@ -603,7 +596,7 @@ Module FStr
     ; ----------------------------------------------------------------------
     !MOV RAX, [p.p_String]    ; load String address
     !CMP RAX, 0               ; If *String = 0
-    !JE cc_Return             ; Exit    
+    !JE .Return             ; Exit    
     !SUB RAX, 8               ; Sub 8 to start with Add 8 in the Loop     
     ; ----------------------------------------------------------------------
     ; Setup start parameter for registers 
@@ -627,7 +620,7 @@ Module FStr
       !PCMPEQW XMM0, XMM2             ; Compare with 0
       !MOVQ RDX, XMM0                 ; RDX CompareResult contains FFFF for each NullChar 
       !CMP RDX, 0                     ; If 0 : No NullChar found
-      !JE cc_EndIf                    ; JumpIfEqual 0 => JumpToEndif if Not EndOfString  
+      !JE .EndIf                      ; JumpIfEqual 0 => JumpToEndif if Not EndOfString  
       ; If EndOfStringFound  
         ; Caclulate the Bytepostion of EndOfString [0..3] using Bitscan
         !BSF RDX, RDX                 ; BitSanForward => No of the LSB   
@@ -646,7 +639,7 @@ Module FStr
         !MOVQ RCX, XMM0               ; Load compare Result of 4xChars=0 to RCX
         !BSF RCX, RCX                 ; Find No of LSB [0..63] (if no Bit found it returns 0 too)
         !CMP RCX, 48                  ; If LSB >= 48 the EndOfString is the last of the 4 Chars
-        !JGE cc_MaskEndif             ;  => we don't have to eliminate chars from testing
+        !JGE @f                       ;  => we don't have to eliminate chars from testing
         ; If WordPos(EndOfString) <> 3  ; Word3 if EndOfString is in Bit 48..63 = Word 3
           !NEG RCX                      ; RCX = -LSB 
           !ADD RCX, 63                  ; RCX = (63-LSB)
@@ -656,10 +649,10 @@ Module FStr
           !NOT RDX                      ; Now invert our Mask so we get a Mask to fileter out all Chars after EndOfString $0000.0000.FFFF.FFFF or $0000.0000.0000.FFFF
           !MOVQ XMM0, RDX               ; Now move this Mask to XMM0, the operating Register
           !PAND XMM3, XMM0              ; XMM3 the CharBackup AND Mask => we select only Chars up to EndOfString 
-        !cc_MaskEndif:
+        !@@:
         
         !MOV RCX, 1                     ; BOOL EndOfStringFound = #TRUE
-      !cc_EndIf:                      ; Endif ; EndOfStringFound    
+      !.EndIf:                      ; Endif ; EndOfStringFound    
       
       ; ------------------------------------------------------------
       ; Start of function individual code! Do not use RCX here!
@@ -676,7 +669,7 @@ Module FStr
     ; Handle Return value an POP-Registers
     ; ----------------------------------------------------------------------     
     !MOV RAX, R8      ; ReturnValue to RAX
-    !cc_Return:
+    !.Return:
     
     ASM_POP_XMM_4to5(RDX)     ; POP non volatile Registers we PUSH'ed at start
     ASM_POP_XMM_6to7(RDX)     ; POP non volatile Registers we PUSH'ed at start
@@ -714,7 +707,7 @@ Module FStr
     ; ----------------------------------------------------------------------
     !MOV EAX, [p.p_String]    ; load String address
     !CMP EAX, 0               ; If *String = 0
-    !JE cc_Return             ; Exit    
+    !JE .Return               ; Exit    
     !SUB EAX, 4               ; Sub 4 to start with Add 8 in the Loop     
     
     ; ----------------------------------------------------------------------
@@ -731,14 +724,14 @@ Module FStr
     ; ----------------------------------------------------------------------
     ; Main Loop
     ; ----------------------------------------------------------------------     
-    !cc_Loop:
+    !.Loop:
       !ADD EAX, 4                     ; *String + 8 => NextChars    
       !MOVD MM0, [EAX]                ; load 4 Chars to MM0  
       !MOVD MM3, [EAX]                ; load 4 Chars to MM3
       !PCMPEQW MM0, MM2               ; Compare with 0
       !MOVD EDX, MM0                  ; EDX CompareResult contains FFFF for each NullChar 
       !CMP EDX, 0                     ; If 0 : No NullChar found
-      !JE cc_EndIf                    ; JumpIfEqual 0 => JumpToEndif if Not EndOfString  
+      !JE .EndIf                      ; JumpIfEqual 0 => JumpToEndif if Not EndOfString  
       ; If EndOfStringFound  
         ; Caclulate the Bytepostion of EndOfString [0..3] using Bitscan
         !BSF EDX, EDX                 ; BitSanForward => No of the LSB   
@@ -771,7 +764,7 @@ Module FStr
                   
         ;!MOV ECX, 1                   ; BOOL EndOfStringFound = #TRUE
         !MOV [p.v_eos], DWORD 1        ; at x32 we need ECX, so Bool EndOfstring in Var 
-      !cc_EndIf:                      ; Endif ; EndOfStringFound    
+      !.EndIf:                         ; Endif ; EndOfStringFound    
       
       ; ------------------------------------------------------------
       ; Start of function individual code! You can use ECX here!
@@ -782,12 +775,11 @@ Module FStr
                 
       !MOV ECX, DWORD [p.v_eos]
       !TEST ECX, EXC                ; Check BOOL EndOfStringFound      
-      !JZ cc_Loop                   ; Continue Loop if Not EndOfStringFound
-    !cc_EndLoop: 
-             
+    !JZ .Loop                   ; Continue Loop if Not EndOfStringFound
+                 
     ;  Move yur ReturnValue to EAX, here it's the counter
     !MOV EAX, [p.v_N]         ; ReturnValue to EAX
-    !cc_Return:
+    !.Return:
     
     ASM_POP_MM_0to3(RDX)      ; POP non volatile Registers we PUSH'ed at start
     ASM_POP_MM_4to5(RDX)      ; POP non volatile Registers we PUSH'ed at start
@@ -1102,7 +1094,7 @@ Module FStr
       ; ----------------------------------------------------------------------
       !MOV RAX, [p.p_String]    ; load String address
       !CMP RAX, 0               ; If *String = 0
-      !JE rc_Return             ; Exit    
+      !JE .Return               ; Exit    
       !SUB RAX, 8               ; Sub 8 to start with Add 8 in the Loop     
       ; ----------------------------------------------------------------------
       ; Backup Registers which are not free to use (like MM4..MM7 or R10..R15)
@@ -1131,7 +1123,7 @@ Module FStr
       ; ----------------------------------------------------------------------
       ; Main Loop
       ; ----------------------------------------------------------------------     
-      !rc_Loop:
+      !.Loop:
         !ADD RAX, 8                     ; *String + 8 => NextChars    
         !MOVQ MM0, [RAX]                ; load 4 Chars to MM0  
         !MOVQ MM3, [RAX]                ; load 4 Chars to MM3
@@ -1180,7 +1172,7 @@ Module FStr
         !PCMPEQW MM0, MM4             ; Compare the 4 Chars with cSearch
         !MOVQ RDX, MM0                ; CompareResult to RDX
         !CMP RDX, 0
-        !JE rc_ReplaceEndif           ; Jump to Endif if cSearch not found
+        !JE @f                        ; Jump to Endif if cSearch not found
           ; Filter CharsToReplace -> MM0
           !PAND MM0, MM5              ; Filter ReplaceChars from 4xReplaeChar to get BlendMask
           ; Filter CharsToKeep -> MM1
@@ -1195,12 +1187,11 @@ Module FStr
           !POPCNT RDX, RDX            ; Count number of set Bits in RDX, CompareResultMask (16 Bits set for each found Char)
           !SHR RDX, 4                 ; BitNo to ByteNo because of Words => RDX coantians the No. of found cSearch\c
           !ADD R8, RDX                ; Add number of found cSearch\c to Counter R8
-        !rc_ReplaceEndif:
+        !@@:
         ; ------------------------------------------------------------
   
         !CMP RCX, 0                   ; Check BOOL EndOfStringFound      
-        !JE rc_Loop                   ; Continue Loop if Not EndOfStringFound
-      !rc_EndLoop:
+      !JE .Loop                       ; Continue Loop if Not EndOfStringFound
       
       ; ----------------------------------------------------------------------
       ; Restore Registers which are not free to use (like MM4..MM7 or R10..R15)
@@ -1214,7 +1205,7 @@ Module FStr
       ;  Move yur ReturnValue to RAX, here it's the counter in R8
       !MOV RAX, R8      ;  ReturnValue to RAX
       !EMMS             ; Empty MMX Technology State, enables FPU Register use
-      !rc_Return:
+      !.Return:
       ProcedureReturn   ; RAX
       
     CompilerElse        ; C-Backend OR x32 OR Ascii
@@ -1274,7 +1265,7 @@ Module FStr
     ; load *String
     !MOV RAX, [p.p_StringW]
     !CMP RAX, 0
-    !JE cuni_return
+    !JE .Return
     !SUB RAX, 8
     
     ; save MM4 Register in free Registers R9
@@ -1286,14 +1277,14 @@ Module FStr
     !XOR RCX, RCX                 ; Bool for NullCharFound 
     !XOR R8, R8
     
-    !cuni_loop:
+    !.Loop:
       !ADD RAX, 8                 ; *String +8 
       !MOVQ MM0, [RAX]            ; load 4 Chars
       !MOVQ MM4, [RAX]            ; Backup the 4 Chars
       !PCMPEQW MM0, MM1           ; Compare with 0
       !MOVQ RDX, MM0              ; RDX CompareResult
       !CMP RDX, 0                 ; If 0 : No NullChar found
-      !JE cuni_cont
+      !JE .cont
       ; If NullCharFound
          
         !MOVQ MM0, MM4
@@ -1329,7 +1320,7 @@ Module FStr
         
         !MOV RCX,1                      ; RCX = 1 => EndOfString found
       ; Endif
-      !cuni_cont:
+      !.cont:
   
       !MOVQ MM0, MM4          ; The 4 Chars back to MM0
       ; hi saturation Chars > 255
@@ -1341,15 +1332,14 @@ Module FStr
       !Add R8, RDX            ; Add number of found UnicodeChars
       
       !CMP RCX, 0             ; RCX<>0 => NullChar was found
-      !JE cuni_loop           ;  If RCX=0 Then Repeat Loop
-    !cuni_exit:
-        
+    !JE .Loop                 ;  If RCX=0 Then Repeat Loop
+         
     ; Restore MM4 Register from R9
     !MOVQ MM4, R9
     ;return counter
     !MOV RAX, R8
     !EMMS             ; Empty MMX Technology State, enables FPU Register use
-    !cuni_return:
+    !.Return:
     ProcedureReturn  ; RAX = R = Counter
     
     DataSection
@@ -1415,7 +1405,7 @@ Module FStr
       
       !MOV RAX, [p.p_String]    ; load String address
       !CMP RAX, 0               ; If *String = 0
-      !JE fcr_end               ;   End
+      !JE .Return               ;   End
       
       !SUB RAX, 8               ; Sub 8 to start with Add 2 in the Loop
       !XOR RCX, RCX             ; RCX = 0
@@ -1429,7 +1419,7 @@ Module FStr
       !PXOR MM2, MM2              ; MM2 = 0 ; Mask to search for NullChar = EndOfString 
       
       ; PCMPEQW 
-      !fcr_loop:
+      !.Loop:
         !ADD RAX, 8                   ; *String + 8 => NextChar    
         !MOVQ MM0, [RAX]              ; load 4 Chars to MM0  
         !MOVQ MM3, [RAX]              ; load 4 Chars to MM3
@@ -1437,7 +1427,7 @@ Module FStr
         !PCMPEQW MM3, MM2             ; now compare the 4 Chars in MM3 with 00 to find EndOfString
         !MOVQ RCX, MM3                ; Move compare result to RCX
         !CMP RCX, 0                   ; If CompareResult = 0 Then No NullChar found
-        !JE fcr_cnt                   ;   Goto Count cSearch\c
+        !JE .cont                   ;   Goto Count cSearch\c
         
         !XOR R8, R8                   ; If a NullChar was found set RAX = 0, it's our Pointer
         
@@ -1445,7 +1435,7 @@ Module FStr
         !BSF RCX, RCX                 ; Find No of LSB [0..63]
         !PUSH RCX                     ; save Bitposition for calculating ByteOffset for *outEndOfString
         !CMP RCX, 47                  ; If LSB > 47 the EndOfString is the last of the 4 Chars
-        !JG fcr_cnt                   ;  => we don't have to eliminate chars from testing
+        !JG .cont                     ;  => we don't have to eliminate chars from testing
           !NEG RCX                      ; RCX = -LSB 
           !ADD RCX, 63                  ; RCX = (63-LSB)
           !MOV RDX, 8000000000000000h   ; Move a 1 to Bit 63, the Sign Bit
@@ -1453,7 +1443,7 @@ Module FStr
           !NOT RDX                      ; Now invert our Mask so we get NoOfSetBits on the riht sight = NoOfMostSignificantBit of compare Result
           !MOVQ MM3, RDX                ; Now move this Mask to MM4
           !PAND MM0, MM3                ; MM0 AND Mask => we select only Bits up to EndOfString included       
-        !fcr_cnt:
+        !.cont:
           
         !PCMPEQW MM0, MM1           ; Compare all 4 Chars in MM0 with cSearch\c in MM1 
         !MOVQ RCX, MM0              ; now MM0 contains FFh for each char which is equal -> RCX
@@ -1462,8 +1452,9 @@ Module FStr
         !MOV R9, RAX                ; *LastChar = Actual StringPointer
         !ADD R9, RCX                ; *LastChar + ByteNo ; Address of last found Character
         !CMP R8, 0                  ; If NullChar was found RAX was set to 0 => EndOfString
-      !JNE fcr_loop                   ; Jump Not Equal => Repeat Until RAX = 0
-      !fcr_end:   
+      !JNE .Loop                   ; Jump Not Equal => Repeat Until RAX = 0
+      
+      !.Return:   
       
       ; *outEndOfString
       !POP RCX                        ; Get back BSF result for EndOfString Offset
@@ -1522,7 +1513,7 @@ Module FStr
     DisableDebugger
     !MOV RAX, [p.p_String]      ; String Pointer to RAX
     !TEST RAX, RAX
-    !JZ .exit
+    !JZ .Return
     !SUB RAX, 8                 ; Sub 16 to start with an ADD in the While Loop 
     
     !PXOR XMM2, XMM2
@@ -1537,8 +1528,9 @@ Module FStr
       !PCMPEQW XMM1, XMM0       ; search for NullChar
       !MOVQ RDX, XMM1           ; Move the ResultMask to RDX
       !TEST RDX, RDX            ; If ResultMask = 0 ; no NullChar found
-      !JZ .loop                 ;   Repeat Loop   
-    !.exit:
+    !JZ .loop                   ;   Repeat Loop   
+    
+    !.Return:
     !MOV RAX, [p.p_String]      ; Return *String  
     ProcedureReturn   ; if using ASM Datasection, without PB DataSection command need a Return first
     
@@ -1643,9 +1635,8 @@ Module FStr
                 
       !MOV ECX, DWORD [p.v_eos]
       !Test ECX, ECX                ; Check BOOL EndOfStringFound      
-      !JZ .Loop                   ; Continue Loop if Not EndOfStringFound
-    !.EndLoop: 
-              
+    !JZ .Loop                       ; Continue Loop if Not EndOfStringFound
+               
     ;  Move yur ReturnValue to EAX, here it's the counter
     !MOV EAX, [p.p_String]        ; ReturnValue to EAX
     !.Return:
@@ -1688,7 +1679,7 @@ Module FStr
        
         !MOV RAX, [p.p_String]      ; String Pointer to RAX
         !CMP RAX, 0                 ; If *String = 0
-        !JE ts_exit                 ;   Exit
+        !JE .Return                 ;   Exit
         !SUB RAX, 8                 ; Sub 8 to start with an ADD in the Loop 
         
         !MOVQ MM2, qword[ts_mask]   ; load Shuffle Mask
@@ -1704,7 +1695,8 @@ Module FStr
           !CMP RDX, 0               ; If ResultMask = 0 ; no NullChar found
           !JE ts_loop               ;   Repeat Loop   
         !EMMS             ; Empty MMX Technology State, enables FPU Register use
-        !ts_exit:
+        
+        !.Return:
         !MOV RAX, [p.p_String]      ; Return *String
         ProcedureReturn   ; if using ASM Datasection, without PB DataSection command need a Return first  
         
@@ -1724,23 +1716,24 @@ Module FStr
         ;   ECX : operating register
 
         !MOV EAX, [p.p_String]  ; *String to EAX
-        !ts_loop:
+        !.Loop:
           !MOV EDX, DWORD[EAX]  ; 2 chars to EDX
           !MOV ECX, EDX         ; Backup the 2 chars in ECX
           !BSWAP EDX            ; do a ByteSwap
           !ROR EDX, 16          ; swap the 2 Chars because ByteSwap swaped the 2 Chars
           
           !AND ECX, FFFFh       ; Test if 1st Char = 0, EndOfString
-          !JZ ts_exit           ; End If NullChar
+          !JZ .Return           ; End If NullChar
           
           !MOV DWORD[EAX], EDX  ; save the Chars with changed ByteOrder
           ; because we operate 2 Chars simultan, we have to check the 2nd Char for EndOfString
           !AND EDX, 0FFFF0000h  ; Test the 2nd Char = 0
-          !JZ ts_exit           ; End If NullChar
+          !JZ .Return           ; End If NullChar
           !ADD EAX, 4           ; *String + 4
-          !JMP ts_loop          ; Repeat Loop  
+        !JMP .Loop          ; Repeat Loop  
         !EMMS             ; Empty MMX Technology State, enables FPU Register use
-        !ts_exit:   
+        
+        !.Return:   
         !MOV EAX, [p.p_String]  ; Return *String
         ProcedureReturn
       CompilerEndIf
@@ -1798,7 +1791,7 @@ Module FStr
       ; load *String
       !MOV RAX, [p.p_String]
       !CMP RAX, 0
-      !JE lc_return
+      !JE .Return
       !SUB RAX, 8
       
       ; Save MM4..MM7 beause PB allow only MM0..MM3 for free use! MMX Registers are: MM0..MM7
@@ -1813,16 +1806,16 @@ Module FStr
       !MOVQ MM6, [lc_sat]       ; [lc_sat] Mask FFFF.FFFF.FFFF.FFFFh
       !MOVQ MM7, [lc_of]        ; [lc_of]  Mask 0020.0020.0020.0020
       
-      !lc_loop:
+      !.Loop:
         !ADD RAX, 8             ; *String +8 
         !MOVQ MM4, [RAX]        ; load 4 Chars to Backup Register
         !MOVQ MM0, [RAX]        ; MM0 = 4 Chars
         !PCMPEQW MM0, MM5       ; [lc_00]  Compare with 0
         !MOVQ RDX, MM0          ; RDX CompareResult
         !CMP RDX, 0             ; If 0 : No NullChar found
-        !JE lc_cont
+        !JE @f
           !INC RCX              ; RCX = 1 => EndOfString found
-        !lc_cont:
+        !@@:
           
         ; ----------------------------------------------------------------------
         ;  1st standard Chars 'A'..'Z'
@@ -1844,12 +1837,12 @@ Module FStr
         !PAND MM1, MM0          ; combine both Masks Chars <='Z' and Chars >='A'      
         !MOVQ RDX, MM1          ; combined Mask to RDX
         !CMP RDX, 0             ; Check for 0  
-        !JE lc_m01              ; If Mask = 0 => No char to Lcase
+        !JE @f                  ; If Mask = 0 => No char to Lcase
           !PAND MM1, MM7        ; [lc_of] Now filter all postions for adding 32 to lowercase the Char
           !MOVQ MM0, MM4
           !PADDW MM0, MM1       ; Add 32 to each filtered Char
           !MOVQ MM4, MM0        ; save the new Chars in MM4
-        !lc_m01:
+        !@@:
           
         ; ----------------------------------------------------------------------
         ;  2nd special Chars 'À'..Chr(222)
@@ -1871,20 +1864,19 @@ Module FStr
         !PAND MM1, MM0          ; combine both Masks Chars <=Chr(222) and Chars >='à' Chr(192)   
         !MOVQ RDX, MM1          ; combined Mask to RDX
         !CMP RDX, 0             ; Check for 0  
-        !JE lc_m02              ; If Mask = 0 => No char to Lcase
+        !JE @f                  ; If Mask = 0 => No char to Lcase
           !PAND MM1, MM7        ; [lc_of] Now filter all postions for adding 32 to lowercase the Char
           !MOVQ MM0, MM4
           !PADDW MM0, MM1       ; Add 32 to each filtered Char
           !MOVQ MM4, MM0
-        !lc_m02:
+        !@@:
         
         ; ----------------------------------------------------------------------
         ;  save the modified Chars back to memory
         ; ----------------------------------------------------------------------
         !MOVQ [RAX], MM4        ; save back to memory
         !CMP RCX, 0             ; RCX<>0 => NullChar was found
-        !JE lc_loop             ;  If RCX=0 Then Repeat Loop
-      !lc_exit:
+      !JE .Loop                 ;  If RCX=0 Then Repeat Loop
       
       ; Return  Len(String)
       !PCMPEQW MM4, MM5         ; Compare the 4 Chars with 0 to search EndOfString
@@ -1903,11 +1895,11 @@ Module FStr
       !MOVQ MM7, [RDX+24]
       
      !EMMS             ; Empty MMX Technology State, enables FPU Register use
-     !lc_return:
+     !.Return:
       ProcedureReturn  ; RAX = Len(String)
       
       DataSection
-        ; Attention: FASM nees a leading 0 for hex values
+        ; Attention: FASM needs a leading 0 for hex values
         ; !lc_00:  dq 00h                  ; not needed because we use MM5=0
         !lc_lo:  dq 0005A005A005A005Ah    ; 'Z' = 90 = 5A     Mask to filter Chars <=Z
         !lc_hi:  dq 0FFBEFFBEFFBEFFBEh    ; FFFFh-65 ; 'A'=65 Mask to tilter Chars >=A
@@ -1978,7 +1970,7 @@ Module FStr
       ; load *String
       !MOV RAX, [p.p_String]
       !CMP RAX, 0
-      !JE lu_return
+      !JE .Return
       !SUB RAX, 8
       
       ; Save MM4..MM7 beause PB allow only MM0..MM3 for free use! MMX Registers are: MM0..MM7
@@ -1993,16 +1985,16 @@ Module FStr
       !MOVQ MM6, [lu_sat]       ; [lu_sat] Mask FFFF.FFFF.FFFF.FFFFh
       !MOVQ MM7, [lu_of]        ; [lu_of]  Mask 0020.0020.0020.0020
       
-      !lu_loop:
+      !.Loop:
         !ADD RAX, 8             ; *String +8 
         !MOVQ MM4, [RAX]        ; load 4 Chars to Backup Register
         !MOVQ MM0, [RAX]        ; MM0 = 4 Chars
         !PCMPEQW MM0, MM5       ; [lu_00]  Compare with 0
         !MOVQ RDX, MM0          ; RDX CompareResult
         !CMP RDX, 0             ; If 0 : No NullChar found
-        !JE lu_cont
+        !JE @f
           !INC RCX              ; RCX = 1 => EndOfString found
-        !lu_cont:
+        !@@:
           
         ; ----------------------------------------------------------------------
         ;  1st standard Chars 'a'..'z'
@@ -2024,12 +2016,12 @@ Module FStr
         !PAND MM1, MM0          ; combine both Masks Chars <='Z' and Chars >='A'      
         !MOVQ RDX, MM1          ; combined Mask to RDX
         !CMP RDX, 0             ; Check for 0  
-        !JE lu_m01              ; If Mask = 0 => No char to Lcase
+        !JE @f                  ; If Mask = 0 => No char to Lcase
           !PAND MM1, MM7        ; [lu_of] Now filter all postions for adding 32 to lowercase the Char
           !MOVQ MM0, MM4
           !PSUBW MM0, MM1       ; Sub 32 from each filtered Char
           !MOVQ MM4, MM0        ; save the new Chars in MM4
-        !lu_m01:
+        !@@:
         
         ; ----------------------------------------------------------------------
         ;  2nd special Chars 'à'..Chr(254)
@@ -2051,21 +2043,20 @@ Module FStr
         !PAND MM1, MM0          ; combine both Masks Chars <=Chr(254) and Chars >='à' Chr(224)   
         !MOVQ RDX, MM1          ; combined Mask to RDX
         !CMP RDX, 0             ; Check for 0  
-        !JE lu_m02              ; If Mask = 0 => No char to Lcase
+        !JE @f                  ; If Mask = 0 => No char to Lcase
           !PAND MM1, MM7        ; [lu_of] Now filter all postions for adding 32 to lowercase the Char
           !MOVQ MM0, MM4
           !PSUBW MM0, MM1       ; Sub 32 from each filtered Char
           !MOVQ MM4, MM0
-        !lu_m02:
+        !@@:
         
         ; ----------------------------------------------------------------------
         ;  save the modified Chars back to memory
         ; ----------------------------------------------------------------------
         !MOVQ [RAX], MM4        ; save back to memory
         !CMP RCX, 0             ; RCX<>0 => NullChar was found
-        !JE lu_loop             ;  If RCX=0 Then Repeat Loop
-      !lu_exit:
-      
+      !JE .Loop                 ;  If RCX=0 Then Repeat Loop
+       
       ; Return  Len(String)
       !PCMPEQW MM4, MM5         ; Compare the 4 Chars with 0 to search EndOfString
       !MOVQ RDX, MM4            ; Compare Result Mask -> RDX, contains now FFFFh for each Word which was 0
@@ -2083,7 +2074,7 @@ Module FStr
       !MOVQ MM7, [RDX+24]
       
       !EMMS             ; Empty MMX Technology State, enables FPU Register use
-      !lu_return:
+      !.Return:
       ProcedureReturn  ; RAX = Len(String)
       
       DataSection
@@ -2227,10 +2218,10 @@ CompilerIf #False
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.04 LTS (Windows - x64)
-; CursorPosition = 1653
-; FirstLine = 1560
+; IDE Options = PureBasic 6.11 LTS (Windows - x64)
+; CursorPosition = 64
+; FirstLine = 44
 ; Folding = ---------
-; Markers = 668
+; Markers = 661
 ; Optimizer
 ; CPU = 5
