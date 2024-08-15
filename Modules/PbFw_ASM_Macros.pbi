@@ -18,8 +18,9 @@
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog: 
-;{ 
-;}
+;{ 2024/08/01 S.Maag : added Register Load/Save Macros and Vector Macros
+;                      for packed SingleFloat and packed DoubleWord
+
 ;{ TODO:
 ;}
 ; ===========================================================================
@@ -94,9 +95,17 @@
 ; PSHUFHW         : SSE2  : Shuffle Packed High Words
 ; PSHUFB          : SSE3  : Packed Shuffle Bytes
 ; PEXTR[B/W/D/Q]  : SSE4.1 : PEXTRB RAX, XMM0, 1 : loads Byte 1 of XMM0[Byte 0..7] 
-; PINSR[B/W/D/Q]  : SSE4.1 : PINSRB XMM0, RAX,   : transfers RAX LoByte to Byte 1 of XMM0 
+; PINSR[B/W/D/Q]  : SSE4.1 : PINSRB XMM0, RAX, 1 : transfers RAX LoByte to Byte 1 of XMM0 
 ; PCMPESTRI       : SSE4.2 : Packed Compare Implicit Length Strings, Return Index
 ; PCMPISTRM       : SSE4.2 : Packed Compare Implicit Length Strings, Return Mask
+
+
+;- ----------------------------------------------------------------------
+;- NaN Value 32/64 Bit
+; #Nan32 = $FFC00000            ; Bit representaion for the 32Bit Float NaN value
+; #Nan64 = $FFF8000000000000    ; Bit representaion for the 64Bit Float NaN value
+;  ----------------------------------------------------------------------
+
 ; ----------------------------------------------------------------------
 ;  Structures to reserve Space on the Stack for ASM_PUSH, ASM_POP
 ; ----------------------------------------------------------------------
@@ -143,16 +152,16 @@ Macro ASM_PUSH_EBX()
   !MOV [p.v_mEBX], EBX
 EndMacro
 
-Macro ASM_POP_EBX(ptrREG)
+Macro ASM_POP_EBX()
    !MOV EBX, [p.v_mEBX]
 EndMacro
 
-Macro ASM_PUSH_RBX(ptrREG)
+Macro ASM_PUSH_RBX()
   Protected mRBX
   !MOV [p.v_mRBX], RBX
 EndMacro
 
-Macro ASM_POP_RBX(ptrREG)
+Macro ASM_POP_RBX()
    !MOV RBX, [p.v_mRBX]
 EndMacro
  
@@ -185,7 +194,7 @@ Macro ASM_POP_R12to15(ptrREG)
   !MOV R13, [ptrREG+8]
   !MOV R14, [ptrREG+16]
   !MOV R15, [ptrREG+24]
- EndMacro
+EndMacro
  
 ;- ----------------------------------------------------------------------
 ;- MMX Registers
@@ -370,9 +379,151 @@ Macro ASM_POP_YMM_6to7(ptrREG)
   !VMOVAPD YMM7, [ptrREG+32]
 EndMacro
 
-; IDE Options = PureBasic 6.04 LTS (Windows - x64)
-; CursorPosition = 132
-; FirstLine = 99
-; Folding = -----
+;- ----------------------------------------------------------------------
+;- Load/Save Registers from/to Value or Pointer
+;- ----------------------------------------------------------------------
+
+; Attention! This Macros only work only when called inside a Procedure
+; because we use Procedure Prefix for the variables in ASM p.v_ p.p.
+Macro ASM_LoadReg_Val(REG, Val)
+  !MOV REG, [p.v_#Val] 
+EndMacro
+
+Macro ASM_SaveReg_Val(REG, Val)
+  !MOV [p.v_#Val], REG 
+EndMacro
+
+Macro ASM_LoadReg_Ptr(REG, ptrVar)
+  !MOV REG, [p.p_#ptrVar]  
+EndMacro
+
+Macro ASM_SaveReg_Ptr(REG, ptrVar)
+  !MOV [p.p_#ptrVar], REG  
+EndMacro
+
+; SSE Extention Functions
+; MOVDQU := MoveDQuadUnalingned
+Macro ASM_LoadXMM(REG_XMM, ptrVar, _REGA=RAX)
+  !MOV _REGA, [p.p_#ptrVar]
+  !MOVDQU REG_XMM, [RAX]
+EndMacro
+
+Macro ASM_SaveXMM(REG_XMM, ptrVar, _REGA=RAX)
+  !MOV _REGA, [p.p_#ptrVar]
+  !MOVDQU [_REGA], REG_XMM
+EndMacro
+
+;- ----------------------------------------------------------------------
+;- Vector PackedSingle ADD, SUB, MUL, DIV
+;- ----------------------------------------------------------------------
+
+; SSE Extention Functions
+
+Macro ASM_Vec4Add_PS(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
+  !MOV _REGA, [p.p_#ptrVec1]  
+  !MOV _REGD, [p.p_#ptrVec2]  
+  !MOVDQU _XMMA, [_REGA]
+  !MOVDQU _XMMB, [_REGD]
+  !ADDPS _XMMA, _XMMB       ; Add packed single float
+EndMacro
+
+Macro ASM_Vec4Sub_PS(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
+  !MOV _REGA, [p.p_#ptrVec1]  
+  !MOV _REGD, [p.p_#ptrVec2]  
+  !MOVDQU _XMMA, [_REGA]
+  !MOVDQU _XMMB, [_REGD]
+  !SUBPS _XMMA, _XMMB       ; Sub packed single float
+EndMacro
+
+Macro ASM_Vec4Mul_PS(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
+  !MOV _REGA, [p.p_#ptrVec1]  
+  !MOV _REGD, [p.p_#ptrVec2]  
+  !MOVDQU _XMMA, [_REGA]
+  !MOVDQU _XMMB, [_REGD]
+  !MULPS _XMMA, _XMMB       ; Mul packed single float
+EndMacro
+
+Macro ASM_Vec4Div_PS(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
+  !MOV _REGA, [p.p_#ptrVec1]  
+  !MOV _REGD, [p.p_#ptrVec2]  
+  !MOVDQU _XMMA, [_REGA]
+  !MOVDQU _XMMB, [_REGD]
+  !DIVPS _XMMA, _XMMB
+EndMacro
+
+Macro ASM_Vec4Min_PS(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
+  !MOV _REGA, [p.p_#ptrVec1]  
+  !MOV _REGD, [p.p_#ptrVec2]  
+  !MOVDQU _XMMA, [_REGA]
+  !MOVDQU _XMMB, [_REGD]
+  !MINPS _XMMA, _XMMB       ; Minimum of packed single float
+EndMacro
+
+Macro ASM_Vec4Max_PS(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
+  !MOV _REGA, [p.p_#ptrVec1]  
+  !MOV _REGD, [p.p_#ptrVec2]  
+  !MOVDQU _XMMA, [_REGA]
+  !MOVDQU _XMMB, [_REGD]
+  !MAXPS _XMMA, _XMMB       ; Maximum of packed single float
+EndMacro
+
+;- ----------------------------------------------------------------------
+;- Vector PackedDoubleWord ADD, SUB, MUL
+;- ----------------------------------------------------------------------
+
+; SSE Extention Functions
+
+Macro ASM_Vec4Add_PDW(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
+  !MOV _REGA, [p.p_#ptrVec1]  
+  !MOV _REGD, [p.p_#ptrVec2]  
+  !MOVDQU _XMMA, [_REGA]
+  !MOVDQU _XMMB, [_REGD]
+  !PADDW _XMMA, _XMMB
+EndMacro
+
+Macro ASM_Vec4Sub_PDW(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
+  !MOV _REGA, [p.p_#ptrVec1]  
+  !MOV _REGD, [p.p_#ptrVec2]  
+  !MOVDQU _XMMA, [_REGA]
+  !MOVDQU _XMMB, [_REGD]
+  !PSUBDW _XMMA, _XMMB       ; Subtract packed DoubleWord integers
+EndMacro
+
+Macro ASM_Vec4Mul_PDW(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
+  !MOV _REGA, [p.p_#ptrVec1]  
+  !MOV _REGD, [p.p_#ptrVec2]  
+  !MOVDQU _XMMA, [_REGA]
+  !MOVDQU _XMMB, [_REGD]
+  !PMULDQ _XMMA, _XMMB      ; Multiply packed DoubleWord Integers
+EndMacro
+
+; A PDIVDQ to devide packed Doubleword Integers do not exixt because of the CPU cycles are depending on the operands 
+
+Macro ASM_Vec4Min_PDW(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
+  !MOV _REGA, [p.p_#ptrVec1]  
+  !MOV _REGD, [p.p_#ptrVec2]  
+  !MOVDQU _XMMA, [_REGA]
+  !MOVDQU _XMMB, [_REGD]
+  !PMINSD _XMMA, _XMMB      ; Minimum of signed packed Doubleword Integers
+EndMacro
+
+Macro ASM_Vec4Max_PDW(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
+  !MOV _REGA, [p.p_#ptrVec1]  
+  !MOV _REGD, [p.p_#ptrVec2]  
+  !MOVDQU _XMMA, [_REGA]
+  !MOVDQU _XMMB, [_REGD]
+  !PMAXSD _XMMA, _XMMB      ; Maximum of signed packed Doubleword Integers
+EndMacro
+
+
+; Debug ASM_Reg2Pointer(myptr, RAX)
+
+; Debug ASM_VecMul_PDW(In1, In2)
+
+
+; IDE Options = PureBasic 6.11 LTS (Windows - x64)
+; CursorPosition = 496
+; FirstLine = 433
+; Folding = --------
 ; Optimizer
 ; CPU = 5
