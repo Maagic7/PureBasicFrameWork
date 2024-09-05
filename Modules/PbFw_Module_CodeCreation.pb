@@ -41,7 +41,8 @@ DeclareModule CC
   
   ; Test to make 'End-Commands easier! Use automatic shift
   Enumeration EEndCommand
-    #PbFw_CC_CMD_Else             
+    #PbFw_CC_CMD_Else  
+    #PbFw_CC_CMD_EndEnumeration  
     #PbFw_CC_CMD_EndIf   
     #PbFw_CC_CMD_EndMacro   
     #PbFw_CC_CMD_EndProcedure     
@@ -52,6 +53,14 @@ DeclareModule CC
     #PbFw_CC_CMD_ForEver          
     #PbFw_CC_CMD_Wend             
   EndEnumeration
+  
+  Macro DQ
+    "
+  EndMacro
+  
+  Macro QuoteIt(TextToQuote)
+    CC::DQ#TextToQuote#CC::DQ
+  EndMacro
   
   Declare ClrShift()          ; Clear the ShiftLevel
   Declare SHR(Levels=1)       ; Set the CodeShiftLevel No of Levels right
@@ -140,6 +149,7 @@ Module CC
   ; RET : -
   ; ============================================================================
     Protected I
+    
     If sCodeLine
       
       ; Test SHIFT_BEFOR adding line
@@ -197,8 +207,11 @@ Module CC
         ; at 'Else' we have to shift left before and shift right after
         ShiftMode + #PbFw_CC_SHR_AFTER
         
-      Case #PbFw_CC_CMD_EndIf            
+      Case #PbFw_CC_CMD_EndEnumeration           
          sText = "EndIf"
+       
+      Case #PbFw_CC_CMD_EndIf            
+         sText = "EndEnumeration"
          
        Case #PbFw_CC_CMD_EndMacro            
          sText = "EndIf"
@@ -249,19 +262,61 @@ Module CC
   ; ============================================================================
     
     ClearClipboard()
-    
+ 
     ; use the JoinList Function from String Module to produce a singel String 
     ; from all Code-Lines
-    SetClipboardText(STR::JoinList(lstCodeLine(), #CRLF$)) 
+    SetClipboardText(STR::JoinList(lstCodeLine(), #CRLF$))
     
+    ; Protected txt.s  
+    ; ForEach lstCodeLine()
+    ;   txt + lstCodeLine() +   #CRLF$
+    ;  Next
+    ; SetClipboardText(txt)
   EndProcedure
    
 EndModule
 
+CompilerIf #PB_Compiler_IsMainFile
+  Debug "----"
+  Debug CC::QuoteIt(blablabla)  
+CompilerEndIf
+
+;- ----------------------------------------------------------------------
+;- Templeates
+;- ----------------------------------------------------------------------
+
+;   Procedure CreateDataSection()
+;     Protected txt.s
+;     Protected I
+;     UseModule CC
+;     ClearCode()
+;     #DQ = Chr(34)       ; DoubleQuotes
+;     #SEP = ", "         ; Separator [,]
+;     #DQS = #DQ + #SEP   ; DoubleQuotes + Separator [",]
+;     
+;     ADD("DataSection", #PbFw_CC_SHR_AFTER)
+;     ADD("MyData:")  
+;     ADD(" ; Column1, Column2, Column3") ; Column Comments 
+;     
+;     For I = 0 To ArraySize(ary())
+;       With ary(I)
+;         txt = "Data.s "
+;         txt + #DQ + Str(I) + #DQS
+;         txt + #DQ + \Name + #DQS
+;         txt + #DQ + \Value + #DQ
+;          ADD(txt)
+;       EndWith      
+;     Next
+;     
+;     Add("EndDatasection", #PbFw_CC_SHL_BEFORE)
+;     
+;     CopyToClipBoard()
+;   EndProcedure
+
 
 ; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 202
-; FirstLine = 180
+; CursorPosition = 58
+; FirstLine = 30
 ; Folding = ---
 ; Optimizer
 ; CPU = 5
