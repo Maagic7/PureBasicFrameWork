@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.11 LTS (Windows - x64)">
+  <section name="config">
+    <options closefiles="1" openmode="0" name="FastString"/>
+  </section>
+  <section name="data">
+    <explorer view="D:\PureBasic\" pattern="0"/>
+    <log show="1"/>
+    <lastopen date="2024-07-19 16:52" user="user1" host="AMD5800X"/>
+  </section>
+  <section name="files">
+    <file name="FastString_Main.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
+      <fingerprint md5="9fc40ef574a5bfcb3f5da9b368839387"/>
+    </file>
+    <file name="..\..\PbFw_Module_FastString.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="b3a2a6a22c031bffd610158c6426f5ca"/>
+    </file>
+    <file name="..\..\PbFw_ASM_Macros.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="0bf20e8ccac99178a8824116bee36d9b"/>
+    </file>
+  </section>
+  <section name="targets">
+    <target name="Default Target" enabled="1" default="1">
+      <inputfile value="FastString_Main.pb"/>
+      <outputfile value=""/>
+      <options debug="1" optimizer="1"/>
+      <format exe="default" cpu="5"/>
+    </target>
+  </section>
+</project>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.11 LTS (Windows - x64)">
+  <section name="config">
+    <options closefiles="1" openmode="0" name="Bits"/>
+  </section>
+  <section name="data">
+    <explorer view="D:\PureBasic\" pattern="0"/>
+    <log show="1"/>
+    <lastopen date="2024-09-02 14:28" user="user1" host="AMD5800X"/>
+  </section>
+  <section name="files">
+    <file name="..\..\PbFw_Module_Bits.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="++"/>
+      <fingerprint md5="2fdb4fdfc260a2be4d0445b02fdb6a98"/>
+    </file>
+    <file name="..\..\PbFw_Module_Debug.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="f2eface161de3e45cab6c6f98e10941d"/>
+    </file>
+    <file name="..\..\PbFw_ASM_Macros.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="7347f59f56d9b16a10ef0b4b85672565"/>
+    </file>
+    <file name="..\..\PbFw_Module_PbFw.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="988b3ba821171c6c7e287f1fcf2ca77b"/>
+    </file>
+    <file name="..\..\PbFw_Module_RealTimeCounter.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="791496682e5ede957ed2970552603fa2"/>
+    </file>
+  </section>
+  <section name="targets">
+    <target name="Default Target" enabled="1" default="1">
+      <inputfile value="Bits_Main.pb"/>
+      <outputfile value=""/>
+      <options debug="1" optimizer="1"/>
+      <format exe="default" cpu="5"/>
+    </target>
+  </section>
+</project>
