@@ -1203,8 +1203,7 @@ Module ModBus
     ; for Register Functions, WORD it is NumberOfElements * 2
     ; for BitBased Functions Coils, Inputs it is the NumberOfBytes needed to store the Bits
     
-    NoOfElements =  _WordFromBuffer(*Modbus\SendBuffer(), #TCP_idx_PDU+3)  ; NumberOfElements
-
+    NoOfElements =  _WordFromBuffer(*Modbus\SendBuffer(), #RTU_idx_PDU+3)  ; NumberOfElements
     
     If *OutHeader
       With *OutHeader
@@ -2049,9 +2048,8 @@ EndModule
 
 
 ; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 925
-; FirstLine = 439
-; Folding = 0----------
-; Markers = 1197,1730
+; CursorPosition = 1205
+; FirstLine = 1179
+; Folding = -----------
 ; Optimizer
 ; CPU = 5
