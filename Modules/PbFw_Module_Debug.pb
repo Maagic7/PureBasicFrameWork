@@ -7,7 +7,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/10/28
-; VERSION  :  0.1 untested Developer Version
+; VERSION  :  0.12 untested Developer Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -15,6 +15,13 @@
 ; ===========================================================================
 ; ChangeLog: 
 ;{
+; 2024/09/01: S.Maag : now use RTC_GetTimeStamp() for ms based Timestamp instead
+;                      of Date() what is sec based! 
+; 2024/07/29: S.Maag : added Macro mac_CheckPointer5! 
+;                      added #PbFwCfg_Module_CheckPointerException and
+;                      PbFw::#PbFwCfg_Global_CheckPointerException to switch On/Off
+;                      Pointer Exception Check globaly or local for Module
+;   
 ; 2024/01/06: S.Maag : added Assert macro and Procedure from PB forum
 ;                      http://www.purebasic.fr/english/viewtopic.php?f=12&t=50842
 ; 2023/02/18: S.Maag : added Macros for Check Pointers
@@ -26,7 +33,8 @@
 ;- ----------------------------------------------------------------------
 ;- Include Files
 ;  ----------------------------------------------------------------------
-XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
+XIncludeFile "PbFw_Module_PbFw.pb"              ; PbFw::    FrameWork control Module
+XIncludeFile "PbFw_Module_RealTimeCounter.pb"   ; RTC::     CPU's RealTimeCounter
 
 ; All files are already included in ECAD_Main.pb! 
 ; It's just to know which Include Files are necessary
@@ -35,7 +43,7 @@ XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 
 DeclareModule DBG
   
-  #PbFw_DBG_ListProcedureCalls = #True
+  #PbFwCfg_DBG_ListProcedureCalls = #True
   
   Enumeration EExceptions 0
     #PbFw_DBG_Err_Unknown
@@ -58,40 +66,62 @@ DeclareModule DBG
   Declare Exception(ModuleName.s, FunctionName.s, ExeptionType, *Text.String=0)
   Declare ErrorHandler()
   
+  ; !! ATTENTION !!! #PbFwCfg_Module_CheckPointerException has to be defined in each Module what is using the Pointer
+  ;                  Exception Macros. #PbFwCfg_Module_CheckPointerException is the Module local Switch for On/Off 
+  ;                  Pointer Exception Check in the local Module calling CheckPointer Macros
   
   Macro mac_CheckPointer(ptr, ret=0)
-    If Not ptr
-      DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
-      ProcedureReturn ret
-    EndIf 
+    CompilerIf #PbFwCfg_Module_CheckPointerException And PbFw::#PbFwCfg_Global_CheckPointerException
+      If Not ptr
+        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
+        ProcedureReturn ret
+      EndIf 
+    CompilerEndIf
   EndMacro
   
   Macro mac_CheckPointer2(ptr1, ptr2, ProcRet=0)
-    If (Not ptr1) Or (Not ptr2)
-      DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
-      ProcedureReturn ProcRet
-    EndIf 
+    CompilerIf #PbFwCfg_Module_CheckPointerException And PbFw::#PbFwCfg_Global_CheckPointerException
+      If (Not ptr1) Or (Not ptr2)
+        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
+        ProcedureReturn ProcRet
+      EndIf 
+    CompilerEndIf
   EndMacro
   
   Macro mac_CheckPointer3(ptr1, ptr2, ptr3, ProcRet=0)
-    If (Not ptr1) Or (Not ptr2) Or (Not ptr3)
-      DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
-      ProcedureReturn ProcRet
-   EndIf 
- EndMacro
+    CompilerIf #PbFwCfg_Module_CheckPointerException And PbFw::#PbFwCfg_Global_CheckPointerException
+      If (Not ptr1) Or (Not ptr2) Or (Not ptr3)
+        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
+        ProcedureReturn ProcRet
+      EndIf 
+    CompilerEndIf
+  EndMacro
  
   Macro mac_CheckPointer4(ptr1, ptr2, ptr3, ptr4, ProcRet=0)
-    If (Not ptr1) Or (Not ptr2) Or (Not ptr3) Or (Not ptr4)
-      DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
-      ProcedureReturn ProcRet
-   EndIf 
+    CompilerIf #PbFwCfg_Module_CheckPointerException And PbFw::#PbFwCfg_Global_CheckPointerException
+      If (Not ptr1) Or (Not ptr2) Or (Not ptr3) Or (Not ptr4)
+        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
+        ProcedureReturn ProcRet
+      EndIf 
+     CompilerEndIf
+  EndMacro
+  
+  Macro mac_CheckPointer5(ptr1, ptr2, ptr3, ptr4, ptr5, ProcRet=0)
+    CompilerIf #PbFwCfg_Module_CheckPointerException And PbFw::#PbFwCfg_Global_CheckPointerException
+      If (Not ptr1) Or (Not ptr2) Or (Not ptr3) Or (Not ptr4) Or (Not ptr5)
+        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
+        ProcedureReturn ProcRet
+      EndIf 
+    CompilerEndIf
   EndMacro
 
   Macro mac_Check_2PointerIdenticalException(ptr1, ptr2, ProcRet=0)
-    If ptr1 = ptr2
-      DBG::Exception((#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_IdenticalPointers)       
-      ProcedureReturn ProcRet
-    EndIf 
+    CompilerIf #PbFwCfg_Module_CheckPointerException And PbFw::#PbFwCfg_Global_CheckPointerException
+      If ptr1 = ptr2
+        DBG::Exception((#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_IdenticalPointers)       
+        ProcedureReturn ProcRet
+      EndIf 
+     CompilerEndIf
   EndMacro
   
   Structure TProcedureCall
@@ -253,12 +283,31 @@ Module DBG
    Protected txt.s
     
     Select Code
-      Case #PbFw_DBG_Err_ObjectNotExist
-        txt = "#PbFw_DBG_ObjectNotExist"
-        
-      Case #PbFw_DBG_Err_VectorDrawingNotStarted
-         txt = "VectorDrawingNotStarted"
        
+      Case #PbFw_DBG_Err_Unknown
+        txt="#PbFw_DBG_Err_Unknown"
+       
+      Case  #PbFw_DBG_Err_PointerIsNull              ; 1
+        txt="#PbFw_DBG_Err_Unknown"
+        
+      Case #PbFw_DBG_Err_IdenticalPointers          ; if 2 identical pointers are not allowd
+        txt="#PbFw_DBG_Err_IdenticalPointers"
+        
+      Case #PbFw_DBG_Err_ObjectNotExist
+        txt = "#PbFw_DBG_Err_PointerIsNull"
+        
+      Case #PbFw_DBG_Err_DrawingNotStarted
+        txt = "#PbFw_DBG_Err_DrawingNotStarted"
+       
+      Case #PbFw_DBG_Err_VectorDrawingNotStarted
+         txt = "#PbFw_DBG_Err_VectorDrawingNotStarted"
+         
+      Case #PbFw_DBG_Err_IsNotImage
+         txt = "#PbFw_DBG_Err_IsNotImage"
+      
+      Case #PbFw_DBG_Err_IsNotGadget
+         txt = "#PbFw_DBG_Err_IsNotGadget"
+   
     EndSelect
     
     ProcedureReturn txt
@@ -288,7 +337,7 @@ Module DBG
     Protected INFO.TExceptionInfo
     
     With INFO
-      \Timestamp = 1
+      \Timestamp = RTC::GetTimeStamp()    ; Get millisecond second TimeStamp ; Date()*1000+MilliSeconds
       \ModuleName = ModuleName
       \FunctionName = FunctionName
       \ExceptionCode = ExceptionType
@@ -300,7 +349,7 @@ Module DBG
     
     MessageRequester("Purebasic Framework Pointer Exception dedected in", "Module : " + ModuleName + #CRLF$ + "Procedure : " + FunctionName + "()", #PB_MessageRequester_Error )
     
-    ; !!! Write the Info in a Log-File
+    ; TODO! !!! Write the Info in a Log-File
     
     ProcedureReturn ExceptionType  
   EndProcedure
@@ -523,8 +572,7 @@ CompilerEndIf
 DisableExplicit
 
 ; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 94
-; FirstLine = 68
+; CursorPosition = 9
 ; Folding = -----
 ; Optimizer
 ; CPU = 5

@@ -46,7 +46,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/12/04
-; VERSION  :  0.512 Developper Version
+; VERSION  :  0.513 Developper Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -54,6 +54,7 @@
 ; ===========================================================================
 ;{ ChangeLog: 
 ; 
+; 2024/09/08 S.Maag : added new Module local configurations
 ; 2024/08/15 S.Maag : added SeMatrixRotAxis and SetMatrixRotXYZ with direct calculation : 
 ;                     solved Code Error in Vector_Lerp and Vector_Remap
 ; 2024/02/24 S.Maag : included "PbFw_ASM_Macros.pbi"
@@ -219,10 +220,54 @@ Module VECf
   ;- ----------------------------------------------------------------------
   ;- PbFw Module local configurations
   ;  ----------------------------------------------------------------------
-  #PbFwCfg_Module_CheckPointerException = #True     ; This constant must have same Name in all Modules. On/Off PoninterExeption for this Module
+  ; This constants must have same Name in all Modules
+  
+  ; ATTENTION: with the PbFw::CONST Macro the PB-IDE Intellisense do not registrate the ConstantName
+  
+  ; #PbFwCfg_Module_CheckPointerException = #True     ; On/Off PoninterExeption for this Module
+  PbFw::CONST(PbFwCfg_Module_CheckPointerException, #True)
+  
+  ;#PbFwCfg_Module_ASM_Enable = #True                ; On/Off Assembler Versions when compling in ASM Backend
+  PbFw::CONST(PbFwCfg_Module_ASM_Enable, #True)
+ 
+  ; -----------------------------------------------------------------------
+      
+  ; ************************************************************************
+  ; PbFw::mac_CompilerModeSettting      ; using Macro for CompilerSetting is a problem for the IDE
+  ; so better use the MacroCode directly
+  ; Do not change! Must be changed globaly in PbFw:: and then copied to each Module
+  Enumeration
+    #PbFwCfg_Module_Compile_Classic                 ; use Classic PB Code
+    #PbFwCfg_Module_Compile_ASM32                   ; x32 Bit Assembler
+    #PbFwCfg_Module_Compile_ASM64                   ; x64 Bit Assembler
+    #PbFwCfg_Module_Compile_C                       ; use optimations for C-Backend
+  EndEnumeration
+  
+  CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PbFwCfg_Module_ASM_Enable And PbFw::#PbFwCfg_Global_ASM_Enable 
+    ; A S M   B A C K E N D
+    CompilerIf #PB_Compiler_32Bit
+      #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_ASM32     
+    ; **********  64 BIT  **********
+    CompilerElseIf #PB_Compiler_64Bit
+      #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_ASM64     
+    ; **********  Classic Code  **********
+    CompilerElse
+      #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_Classic     
+    CompilerEndIf
+      
+  CompilerElseIf  #PB_Compiler_Backend = #PB_Backend_C
+    ;  C - B A C K E N D
+     #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_C     
+  CompilerElse
+    Debug "Classic" 
+    ;  To force Classic Code Compilation
+    #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_Classic     
+  CompilerEndIf 
+  ; ************************************************************************
+  ;Debug "PbFwCfg_Module_Compile = " + #PbFwCfg_Module_Compile
   
   ; ----------------------------------------------------------------------
- 
+  
   PbFw::ListModule(#PB_Compiler_Module)   ; Lists the Module in the ModuleList (for statistics)
   
   IncludeFile "PbFw_ASM_Macros.pbi"       ; Standard Assembler Macros
@@ -832,17 +877,17 @@ Module VECf
     
     DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)    ; Check Pointer Exception
   
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
       
-      CompilerCase PbFw::#PbFw_SSE_x64        ; 64 Bit-Version        
+      CompilerCase #PbFwCfg_Module_Compile_ASM64        ; 64 Bit-Version        
         ASM_Vector_Add(RAX, RDX, RCX)         ; for x64 we use RAX,RDX,RCX
         ProcedureReturn ; RAX
                
-      CompilerCase PbFw::#PbFw_SSE_x32        ; 32 Bit Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM32        ; 32 Bit Version
         ASM_Vector_Add(EAX, EDX, ECX)         ; for x32 we use Registers EAX,EDX,ECX
         ProcedureReturn ; EAX
       
-      CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
         mac_Vector_ADD(*OUT, *IN1, *IN2)    
         ProcedureReturn *OUT
 
@@ -865,17 +910,17 @@ Module VECf
     
     DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)    ; Check Pointer Exception
 
-     CompilerSelect PbFw::#PbFw_USE_MMX_Type
+     CompilerSelect #PbFwCfg_Module_Compile
           
-      CompilerCase PbFw::#PbFw_SSE_x64        ; 64 Bit-Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM64        ; 64 Bit-Version
         ASM_Vector_SUB(RAX, RDX, RCX)         ; for x64 we use RAX,RDX,RCX
         ProcedureReturn ; RAX
         
-      CompilerCase PbFw::#PbFw_SSE_x32        ; 32 Bit Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM32        ; 32 Bit Version
         ASM_Vector_SUB(EAX, EDX, ECX)         ; for x32 we use Registers EAX,EDX,ECX
         ProcedureReturn ; EAX
         
-      CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
         mac_Vector_SUB(*OUT, *IN1, *IN2)        
         ProcedureReturn *OUT
 
@@ -898,17 +943,17 @@ Module VECf
     
     DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)    ; Check Pointer Exception
 
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
       
-      CompilerCase PbFw::#PbFw_SSE_x64        ; 64 Bit-Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM64        ; 64 Bit-Version
         ASM_Vector_Mul(RAX, RDX, RCX)         ; for x64 we use RAX,RDX,RCX
         ProcedureReturn ; RAX
         
-      CompilerCase PbFw::#PbFw_SSE_x32        ; 32 Bit Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM32        ; 32 Bit Version
         ASM_Vector_Mul(EAX, EDX, ECX)         ; for x32 we use Registers EAX,EDX,ECX
         ProcedureReturn ; EAX
         
-      CompilerCase PbFw::#PbFw_SSE_C_Backend  ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C  ; for the C-Backend
          mac_Vector_MUL(*OUT, *IN1, *IN2)        
          ProcedureReturn *OUT 
 
@@ -931,17 +976,17 @@ Module VECf
     
     DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)    ; Check Pointer Exception
 
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
    
-      CompilerCase PbFw::#PbFw_SSE_x64       ; 64 Bit-Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM64       ; 64 Bit-Version
         ASM_Vector_Div(RAX, RDX, RCX) ; for x64 we use RAX,RDX,RCX
         ProcedureReturn ; RAX
         
-      CompilerCase PbFw::#PbFw_SSE_x32       ; 32 Bit Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM32       ; 32 Bit Version
         ASM_Vector_Div(EAX, EDX, ECX) ; for x32 we use Registers EAX,EDX,ECX
         ProcedureReturn ; EAX
        
-      CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
         mac_Vector_DIV(*OUT, *IN1, *IN2)        
         ProcedureReturn *OUT
 
@@ -966,17 +1011,17 @@ Module VECf
     
     DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)    ; Check Pointer Exception
 
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
         
-      CompilerCase PbFw::#PbFw_SSE_x64             ; 64 Bit-Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM64             ; 64 Bit-Version
         ASM_Vector_Min(RAX, RDX, RCX)       ; for x64 we use RAX,RDX,RCX
  			  ProcedureReturn ; RAX
  			   			
-      CompilerCase PbFw::#PbFw_SSE_x32             ; 32 Bit Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM32             ; 32 Bit Version
         ASM_Vector_Min(EAX, EDX, ECX)       ; for x32 we use Registers EAX,EDX,ECX
   			ProcedureReturn ; EAX
   			
-      CompilerCase PbFw::#PbFw_SSE_C_Backend       ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C       ; for the C-Backend
         mac_Vector_Min(*OUT, *IN1, *IN2)       
         ProcedureReturn *OUT
 
@@ -1001,17 +1046,17 @@ Module VECf
     
     DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)    ; Check Pointer Exception
 
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
         
-      CompilerCase PbFw::#PbFw_SSE_x64             ; 64 Bit-Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM64             ; 64 Bit-Version
         ASM_Vector_Min(RAX, RDX, RCX)       ; for x64 we use RAX,RDX,RCX
  			  ProcedureReturn ; RAX
   			
-      CompilerCase PbFw::#PbFw_SSE_x32             ; 32 Bit Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM32             ; 32 Bit Version
         ASM_Vector_Min(EAX, EDX, ECX)       ; for x32 we use Registers EAX,EDX,ECX
   			ProcedureReturn ; EAX
   			
-      CompilerCase PbFw::#PbFw_SSE_C_Backend       ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C       ; for the C-Backend
         mac_Vector_Min(*OUT, *IN1, *IN2)       
         ProcedureReturn *OUT
 
@@ -1049,17 +1094,17 @@ Module VECf
     
     DBG::mac_CheckPointer2(*OUT, *IN)    ; Check Pointer Exception
 
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
       
-      CompilerCase PbFw::#PbFw_SSE_x64   ; 64 Bit-Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM64   ; 64 Bit-Version
         ASM_Vector_Swap(RAX, RDX, RCX) ; for x64 we use RAX,RDX,RCX
         ProcedureReturn ; RAX
        
-      CompilerCase PbFw::#PbFw_SSE_x32   ; 32 Bit Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM32   ; 32 Bit Version
         ASM_Vector_Swap(EAX, EDX, ECX) ; for x32 we use Registers EAX,EDX,ECX
         ProcedureReturn ; EAX
         
-      CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
         *OUT\x = *IN\w
         *OUT\y = *IN\z
         *OUT\y = *IN\y
@@ -1090,9 +1135,9 @@ Module VECf
     
     DBG::mac_CheckPointer2(*OUT, *IN)    ; Check Pointer Exception
     
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
         
-      CompilerCase PbFw::#PbFw_SSE_x64       ; 64 Bit-Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM64       ; 64 Bit-Version
         !MOV RAX, [p.p_OUT]
         !MOV RDX, [p.p_IN]
         !MOVLPS XMM0, [RDX]           ; IN Lo-64
@@ -1101,7 +1146,7 @@ Module VECf
         !MOVHPS [RAX+8], XMM0         ; Out Hi 64
         ProcedureReturn     ; RAX
         
-      CompilerCase PbFw::#PbFw_SSE_x32     ; 32 Bit Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM32     ; 32 Bit Version
         !MOV EAX, [p.p_OUT]
         !MOV EDX, [p.p_IN]
         !MOVLPS XMM0, [EDX]           ; IN Lo-64
@@ -1110,7 +1155,7 @@ Module VECf
         !MOVHPS [EAX+8], XMM0         ; Out Hi 64
         ProcedureReturn     ; EAX
         
-      CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
         CopyMemory(*IN, *OUT, SizeOf(TVector))
         ProcedureReturn *OUT
         
@@ -1135,14 +1180,14 @@ Module VECf
     
     DBG::mac_CheckPointer(*OUT)    ; Check Pointer Exception
     
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
       ; using MMX-Register to copy 4xFloat directly from Stack to destination
       ; AMD Code Optimation Guide: for unaligned Data, 2x 64Bit Moves are better
       ; MOVLPS and MOVHPS do not clear upper Bits of the Register
       ; MOVLPS = 2 Cyles! MOVUPS on 128Bit = 4 Cycles; MOVLPS + MOVHPS are proceeded
       ; parallel, so the to commands MOVLPS + MOVHPS together need 2 Cycles
        
-     CompilerCase PbFw::#PbFw_SSE_x64     ; 64 Bit-Version
+     CompilerCase #PbFwCfg_Module_Compile_ASM64     ; 64 Bit-Version
        ; at x64 an 8-Byte-Align is used, so we can not copy the complete Vector
        ; directly from the Stack. We have to use 4 seperate operations!
       With *OUT
@@ -1156,7 +1201,7 @@ Module VECf
 ;       Debug @Y
 ;       Debug @Z
               
-      CompilerCase PbFw::#PbFw_SSE_x32     ; 32 Bit Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM32     ; 32 Bit Version
         !LEA EDX, [p.v_X]
         !MOV EAX, [p.p_OUT]
         ;!MOVUPS XMM0, [EDX]          ; AMD Code Optimation Guide page 214:
@@ -1167,7 +1212,7 @@ Module VECf
         !MOVHPS [EAX+8], XMM0
         ProcedureReturn   ; EAX
        
-      CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
         With *OUT
           \X = X
       	  \Y = Y
@@ -1249,17 +1294,17 @@ Module VECf
    
     DBG::mac_CheckPointer2(*OUT, *IN)     ; Check Pointer Exception
 
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
       
-      CompilerCase PbFw::#PbFw_SSE_x64    ; 64 Bit-Version       
+      CompilerCase #PbFwCfg_Module_Compile_ASM64    ; 64 Bit-Version       
         ASM_Vector_Scale(RAX, RDX, RCX)   ; for x64 we use RAX,RDX,RCX
         ProcedureReturn ; RAX
         
-      CompilerCase PbFw::#PbFw_SSE_x32    ; 32 Bit Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM32    ; 32 Bit Version
         ASM_Vector_Scale(EAX, EDX, ECX)   ; for x32 we use Registers EAX,EDX,ECX
         ProcedureReturn ; EAX
         
-      CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
         mac_Vector_Scale(*OUT, *IN, Factor)        
         ProcedureReturn *OUT
 
@@ -1283,17 +1328,17 @@ Module VECf
      
     DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)      ; Check Pointer Exception
     
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
         
-      CompilerCase PbFw::#PbFw_SSE_x64            ; 64 Bit-Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM64            ; 64 Bit-Version
         ASM_Vector_CrossProduct(RAX, RDX, RCX)    ; for x64 we use RAX,RDX,RCX
  			  ProcedureReturn ; RAX
   			
-      CompilerCase PbFw::#PbFw_SSE_x32            ; 32 Bit Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM32            ; 32 Bit Version
         ASM_Vector_CrossProduct(EAX, EDX, ECX)    ; for x32 we use Registers EAX,EDX,ECX
   			ProcedureReturn ; EAX
   			
-      CompilerCase PbFw::#PbFw_SSE_C_Backend      ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C      ; for the C-Backend
         mac_Vector_CrossProduct(*Out, *IN1, *IN2)       
         ProcedureReturn *OUT
 
@@ -1319,19 +1364,19 @@ Module VECf
     
     DBG::mac_CheckPointer3(*OUT, *A, *B)     ; Check Pointer Exception
 
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
       
-      CompilerCase PbFw::#PbFw_SSE_x64    ; 64 Bit-Version              
+      CompilerCase #PbFwCfg_Module_Compile_ASM64    ; 64 Bit-Version              
         ASM_Vector_Lerp(RAX, RDX, RCX)    ; for x64 we use RAX,RDX,RCX
         ; maybe here we must save EAX, to not overwrite during following If
         ProcedureReturn ; RAX
         
-      CompilerCase PbFw::#PbFw_SSE_x32    ; 32 Bit Version        
+      CompilerCase #PbFwCfg_Module_Compile_ASM32    ; 32 Bit Version        
         ASM_Vector_Lerp(EAX, EDX, ECX)    ; for x32 we use Registers EAX,EDX,ECX
         ; maybe here we must save EAX, to not overwrite during following If
        ProcedureReturn ; EAX
         
-      CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
         *OUT\x = mac_Lerp(*A\x, *B\x, T)        
         *OUT\y = mac_Lerp(*A\y, *B\y, T)        
         *OUT\z = mac_Lerp(*A\x, *B\z, T)        
@@ -1409,17 +1454,17 @@ Module VECf
     DBG::mac_CheckPointer3(*OUT, *IN, *inMin)         ; Check Pointer Exception
     DBG::mac_CheckPointer3(*inMax, *outMin, *outMax)  ; Check Pointer Exception
 
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
       
-      CompilerCase PbFw::#PbFw_SSE_x64      ; 64 Bit-Version             
+      CompilerCase #PbFwCfg_Module_Compile_ASM64      ; 64 Bit-Version             
         ASM_Vector_Remap(RAX, RDX, RCX)     ; for x64 we use RAX,RDX,RCX
         ProcedureReturn ; RAX
         
-      CompilerCase PbFw::#PbFw_SSE_x32      ; 32 Bit Version        
+      CompilerCase #PbFwCfg_Module_Compile_ASM32      ; 32 Bit Version        
         ASM_Vector_Remap(EAX, EDX, ECX)     ; for x32 we use Registers EAX,EDX,ECX
         ProcedureReturn ; EAX
         
-      CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
         *OUT\x = mac_Remap(*IN\x, *inMin\x, *inMax\x, *outMin\x, *outMax\x)        
         *OUT\x = mac_Remap(*IN\y, *inMin\y, *inMax\y, *outMin\y, *outMax\y)        
         *OUT\x = mac_Remap(*IN\z, *inMin\z, *inMax\z, *outMin\z, *outMax\z)
@@ -1765,20 +1810,20 @@ Module VECf
    
     DBG::mac_CheckPointer3(*OUT, *IN, *Matrix)      ; Check Pointer Exception
     
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
         
-      CompilerCase PbFw::#PbFw_SSE_x64             ; 64 Bit-Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM64             ; 64 Bit-Version
        ASM_Vector_X_Matrix(RAX, RDX, RCX)  ; for x64 we use RAX,RDX,RCX
        ProcedureReturn ; RAX
                  
-  		CompilerCase PbFw::#PbFw_SSE_x32             ; 32 Bit Version
+  		CompilerCase #PbFwCfg_Module_Compile_ASM32             ; 32 Bit Version
         ASM_Vector_X_Matrix(EAX, EDX, ECX) ; for x32 we use Registers EAX,EDX,ECX
         ProcedureReturn ; EAX
   		  
 ;   		  mac_Vector_X_Matrix(*OUT, *IN, *Matrix)
 ;         ProcedureReturn *OUT
 
-      CompilerCase PbFw::#PbFw_SSE_C_Backend   ; for the C-Backend  
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend  
         mac_Vector_X_Matrix(*OUT, *IN, *Matrix)
         ProcedureReturn *OUT
 
@@ -1803,23 +1848,23 @@ Module VECf
         
     DBG::mac_CheckPointer3(*OUT, *M1, *M2)      ; Check Pointer Exception
     
-    CompilerSelect PbFw::#PbFw_USE_MMX_Type
+    CompilerSelect #PbFwCfg_Module_Compile
         
-      CompilerCase PbFw::#PbFw_SSE_x64     ; 64 Bit-Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM64     ; 64 Bit-Version
           ASM_Matrix_X_Matrix(RAX, RDX, RCX)  ; for x64 we use RAX,RDX,RCX
           ProcedureReturn  ; RAX
          
 ;          mac_Matrix_X_Matrix(*OUT, *M1, *M2) 
 ;          ProcedureReturn *OUT
         
-      CompilerCase PbFw::#PbFw_SSE_x32     ; 32 Bit Version
+      CompilerCase #PbFwCfg_Module_Compile_ASM32     ; 32 Bit Version
          ASM_Matrix_X_Matrix(EAX, EDX, ECX) ; for x32 we use Registers EAX,EDX,ECX
          ProcedureReturn  ; EAX
          
 ;         mac_Matrix_X_Matrix(*OUT, *M1, *M2) 
 ;         ProcedureReturn *OUT
         
-      CompilerCase PbFw::#PbFw_SSE_C_Backend     ; for the C-Backend
+      CompilerCase #PbFwCfg_Module_Compile_C     ; for the C-Backend
         mac_Matrix_X_Matrix(*OUT, *M1, *M2) 
         ProcedureReturn *OUT
 
@@ -2029,8 +2074,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 58
-; FirstLine = 13
+; CursorPosition = 271
+; FirstLine = 194
 ; Folding = --------------
 ; Optimizer
 ; CPU = 5

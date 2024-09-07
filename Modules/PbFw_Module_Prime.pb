@@ -7,14 +7,17 @@
 ;
 ; AUTHOR   : Stefan Maag
 ; DATE     : 2023/03/28
-; VERSION  : 0.5 Developer Version
+; VERSION  : 0.51 Developer Version
 ; COMPILER : PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
-; 
+;  2024/08/23 S.Maag : added a general #_x64BranchPredictionOptimation constat
+;                      to activate, deactivate special Code for x64 AMD/INTEL
+;  2024/08/19 S.Maag : removed PrimeSive_SumAlog() because it is to slow compared
+;                      to other Methodes. Use hand made Modulo in IsPrime_x64
 ;}
 ;{ TODO:
 ;}
@@ -144,11 +147,14 @@ DeclareModule Prime
 ;   EndStructure
   
   Declare.q GetMaxNoOfPrimes(Limit.q)
-  Declare.q PrimeFactors(Number.q, List lstPrimeFactors.q())
-  Declare.i IsPrime(Number.q)
-  Declare.i IsPrime_x64(Value.q)
-  Declare.i PrimeSieve_SumAlgo (Limit.i, Array *Primes(1)) ; *Primes(1) Pointer to a 1 dimensional Array of Integer
+  Declare.q PrimeFactors(Num.q, List lstPrimeFactors.q())
+  Declare.i IsPrime(Num.q)
+  Declare.i IsPrime_x64(Num.q)
+  Declare.i IsPrimeMod30_x64(Num.q)
+
   Declare.q ListPrimes(Limit.q, Array *Primes(1))
+  Declare.q CountPrimes(Limit.q)
+
   Declare CountMod120(Array *Primes(1), N.q, Array *OutCnt(1))
 
 
@@ -178,18 +184,26 @@ EndDeclareModule
 
 Module Prime
   
+  ; The modern x64 CPU Branch prediction has strange speed effects. 
+  ; A lot of Modulo devisions is fastern than a single Modulo with testing the remiander
+  ; It seems the Branch prediction of x64 CPU's do some precalculculations so the CPU don't have this!
+  ; This effect we can see on INTEL and AMD CPU's
+  ; On my Ryzen 5800 the code using the BranchPreictionOptimation this is aprox. 17% faster!
+  ; I tried to bet this speed with hand optimized SSE Assembler Code - it was slower!
+  #_x64BranchPredictionOptimation = #True ;#False/#True For 2 different versions
+
   EnableExplicit
   PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
   IncludeFile "PbFw_ASM_Macros.pbi"
     
   ; in x64: HandMade Modulo is ~13% fastern than PB's (Number % div) tested on Ryzen 5800
   ; in x32: for Quads PureBasic Modulo is faster
-  CompilerIf #PB_Compiler_32Bit ; Or #True
-    Macro _mac_Modulo(Number, div)
-      Number % div
+  CompilerIf #True; #PB_Compiler_32Bit ; Or #True
+    Macro _MOD(Number, div)
+      (Number % div)
     EndMacro
   CompilerElse
-    Macro _mac_Modulo(Number, div)
+    Macro _MOD(Number, div)
       (Number-(Number/div)*div)
     EndMacro
   CompilerEndIf
@@ -304,7 +318,7 @@ Module Prime
     ProcedureReturn res
   EndProcedure
 
-  Procedure.q PrimeFactors(Number.q, List lstPrimeFactors.q())
+  Procedure.q PrimeFactors(Num.q, List lstPrimeFactors.q())
   ; ============================================================================
   ; NAME: PrimeFactors
   ; DESC: Do a Prime-Number-Crunching! Calculates all PrimFactors of Number.
@@ -317,7 +331,7 @@ Module Prime
   ; DESC: To crunch (2^63)-1 needs 24.729 Iterations <1ms
   ; DESC: The longest time was 595ms for 404.933.400 Iterations
   ; DESC: This is for the 9th Mersenn Prim (1^61)-1
-  ; VAR(Number.q) : The Number to chrunch
+  ; VAR(Num.q) : The Number to chrunch
   ; VAR(List lstPrimeFactors.q()) : The List() for the Prime Factors
   ; RET.i : #True: if Number is Prim; 
   ; ============================================================================
@@ -330,15 +344,15 @@ Module Prime
     CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit
       ; in x64 Assembler we can do a extrem fast MillerRabin Test
       ; before trying to crunch
-      If IsPrime_x64(Number)
+      If IsPrime_x64(Num)
         AddElement(lstPrimeFactors())
-        lstPrimeFactors() = Number
+        lstPrimeFactors() = Num
         
         ProcedureReturn 1  
       EndIf
     CompilerEndIf
   
-    memN = Number
+    memN = Num
     
     ; ----------------------------------------------------------------------
     ; First the MOD30 = (2*3*5) Factors
@@ -349,15 +363,15 @@ Module Prime
       lstPrimeFactors() = 2
       ;Debug "Factor 2"
     Wend
-    
-    While Not (memN % 3)  
+   
+    While _MOD(memN,3)=0 ; Not (memN % 3)  
       memN / 3           
       AddElement(lstPrimeFactors())
       lstPrimeFactors() = 3
       ;Debug "Factor 3"
     Wend
     
-    While Not (memN % 5)
+    While  _MOD(memN,5)=0; Not (memN % 5)
       memN / 5           
       AddElement(lstPrimeFactors())
       lstPrimeFactors() = 5
@@ -373,11 +387,11 @@ Module Prime
     
     While P <= Max  
      ; While Not (memN % P)         ; (memN % P) = 0, Rest =0 => Found a PrimFactor
-      While _mac_Modulo(memN, P)  = 0   ; HandMade Modulo is Faster 682 -> 597ms
+      While _MOD(memN, P)=0   ; HandMade Modulo is Faster 682 -> 597ms
         ; Found a PrimeFactor
         AddElement(lstPrimeFactors())
         lstPrimeFactors() = P
-        memN = memN / P           ; calculates the new Value to crunch
+        memN = memN / P           ; calculates the new Number to crunch
         Max = Sqr(memN)+1         ; Limit for the new divider
       Wend      
       I = I + 1                 ; Iterations; With I we calculate the Index of RCdelta(I & 7) 
@@ -392,15 +406,15 @@ Module Prime
     EndIf 
     
     ProcedureReturn I ; Return the Iterations needed for Calculation
-    ;ProcedureReturn Bool(Number=memN) ; #True If IsPrim(Number)
+    ;ProcedureReturn Bool(Num=memN) ; #True If IsPrim(Num)
   EndProcedure
     
-  Procedure.i IsPrime(Number.q)
+  Procedure.i IsPrime(Num.q)
   ; ============================================================================
   ; NAME: IsPrime
   ; DESC: See at PrimeFactors() for a more detailed description of how
   ; DESC: it works
-  ; VAR(Number.q) : The Number to chrunch
+  ; VAR(Num.q) : The Number to chrunch
   ; RET.i : #True: if Number is Prim; 
   ; ============================================================================
    
@@ -412,51 +426,55 @@ Module Prime
     ; First the MOD30 = (2*3*5) Factors
     ; ----------------------------------------------------------------------
     
-    CompilerIf #False 
-      If Number < 30
-        Select Number
+    CompilerIf #_x64BranchPredictionOptimation 
+      If Num < 30
+        Select Num
           Case 2, 3, 5, 7, 11, 13, 17, 19, 23, 29
             ProcedureReturn #True
           Default
             ProcedureReturn #False   
         EndSelect 
         
-      ElseIf Number&1=0 Or Number%3=0 Or Number%5=0 Or Number%7=0 Or Number%11=0 Or Number%13=0 Or Number%17=0 Or Number%19=0 Or Number%23=0 Or Number%29=0
-        ProcedureReturn #False         
+      ; eleminate multiple of primes up to 30  
+      ElseIf Num&1=0 Or _MOD(Num,3)=0 Or _MOD(Num,5)=0 Or _MOD(Num,7)=0 Or _MOD(Num,11)=0
+        ProcedureReturn #False
+      ElseIf _MOD(Num, 13)=0 Or _MOD(Num,17)=0 Or _MOD(Num,19)=0 Or _MOD(Num,23)=0 Or _MOD(Num,29)=0
+        ProcedureReturn #False
       EndIf
     
     CompilerElse
-      
-      If Number < 30
-        Select Number
+      ; Classic code what should be faster on the first view! But x64 CPU with BranchPrediction process this
+      ; code slower!
+      If Num < 30
+        Select Num
           Case 2, 3, 5, 7, 11, 13, 17, 19, 23, 29
             ProcedureReturn #True
           Default
             ProcedureReturn #False   
         EndSelect 
         
-      ElseIf (Number & 1) = 0
+      ElseIf (Num & 1) = 0
         ProcedureReturn #False
       Else  
-        Select Number % 30
-          Case 3,5,9,15,21,25,27      ; Prime not possible
+        Select Num % 30                   ; eleminate multiple of primes up to 30
+          Case 3,5,9,15,21,25,27          ; Prime not possible
             ProcedureReturn #False
-          ; Case 1,7,11,13,17,19,23,29   ; Prime possible      
+          ; Case 1,7,11,13,17,19,23,29    ; Prime possible      
         EndSelect             
       EndIf
    
     CompilerEndIf
           
-    P = 7  ; now we can start with the Next possible Prim Divider :=7
+    P = 7   ; now we can start with the Next possible Prim Divider :=7
     I = 0   ; Iteration counter and Index for RCdelta() LookUpTable
     
     ; ATTENTION Sqr works with double Float. 52Bit + 12Bit Exponent.
     ; This is no Problem because the FPU internal works with at least 80 Bits
-    Max = Sqr(Number)+1 
+    Max = Sqr(Num)+1 
   
     While P <= Max  
-       ; If (Number % P) = 0          ; (Number % P) = 0, Rest =0 => Found a PrimFactor
-      If _mac_Modulo(Number, P)=0   ; HandMade Modulo is Faster 682 -> 597ms
+       ; If (Num % P) = 0       ; (Num % P) = 0, Rest =0 => Found a PrimFactor
+      If _MOD(Num, P) =0        ; HandMade Modulo is Faster 682 -> 597ms
        ; Found a PrimFactor 
         xIsPrime = #False
         Break
@@ -467,7 +485,7 @@ Module Prime
     ProcedureReturn xIsPrime  
   EndProcedure
   
-  Procedure.i IsPrime_x64(Value.q)
+  Procedure.i IsPrime_x64(Num.q)
   ; ============================================================================
   ; NAME: IsPrime_x64
   ; DESC: Attention! Only for ASM Backend and x64
@@ -477,7 +495,244 @@ Module Prime
   ; DESC: 128Bit results. The CPU internal computes x64 MUL, DIV
   ; DESC: with 128Bit in RAX:RDX, so we can use 128Bit in ASM-Code.
   ; DESC: In normal PB-Code this isn't possible without a BigInt Lib.
-  ; VAR(Value.q) : The Number to chrunch
+  ; VAR(Num.q) : The Number to chrunch
+  ; RET.i : #True: if Number is Prime
+  ; ============================================================================
+    
+    ; based on Code from PB-Forum from STARGATE
+    ; https://www.purebasic.fr/german/viewtopic.php?p=361719&hilit=Primzahlen#p361719
+    
+    ; https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test
+  	; https://en.wikipedia.org/wiki/Exponentiation_by_squaring
+  	; https://www.purebasic.fr/german/viewtopic.php?f=8&t=30523
+  	; Thanks to NicknameFJ und Helle
+        
+    CompilerIf  #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit
+      Protected ret = #True
+      Protected *Try.Integer
+      Protected.i Loops, Exponent, Base
+      
+    	If Num < 0
+     	  Num = -Num
+     	EndIf 	
+     	   	
+      CompilerIf #_x64BranchPredictionOptimation
+        ; ---------------------------------------------------------------------- 
+        ; This Version with the seperate Modulo functions performs aprox. 
+        ; 18% better. The Reason might be the BranchPrediction which 
+        ; precalculates the ElseIf so the CPU don't have to do all the Modulos
+        ; ---------------------------------------------------------------------- 
+    
+        If Num <=30                     ; Values up to 30 (2*3*5) , We handle direct    	 	   
+          Select Num 
+            Case 2, 3, 5, 7, 11, 13, 17, 19, 23, 29   ; all Primes <30
+              ProcedureReturn #True
+            Default
+              ProcedureReturn #False   
+          EndSelect 
+          
+        ; ElseIf Num&1=0 Or Num%3=0 Or Num%5=0 Or Num%7=0 Or Num%11=0 Or Num%13=0 Or Num%17=0 Or Num%19=0 Or Num%23=0 Or Num%29=0 
+          
+        ; hand made modulo is a little faster on x64 than PB's Modulo!  
+        ElseIf Num&1=0 Or _MOD(Num,3)=0 Or _MOD(Num,5)=0 Or _MOD(Num,7)=0 Or _MOD(Num,11)=0
+          ProcedureReturn #False
+        ElseIf _MOD(Num,13)=0 Or _MOD(Num,17)=0 Or _MOD(Num,19)=0 Or _MOD(Num,23)=0 Or _MOD(Num,29)=0
+          ProcedureReturn #False
+        EndIf
+        
+      CompilerElse
+       ; ----------------------------------------------------------------------  
+       ; This Version looks like to be the better and faster Code. 
+       ; But it isn't. I tested the 2 Versions on new and older CPU 
+       ; from 2011, 2016, 2020 and this version is always slower!
+       ; ---------------------------------------------------------------------- 
+        
+        If Num <=30                     ; Values up to 30 (2*3*5) , We handle direct    	 	
+          
+          Select Num 
+            Case 2, 3, 5, 7, 11, 13, 17, 19, 23, 29   ; all Primes <30
+              ProcedureReturn #True
+            Default
+              ProcedureReturn #False   
+          EndSelect 
+          
+        ElseIf (Num & 1) =0               ; If Even(Num) 
+          ProcedureReturn #False          ;   Not a Prime!
+          
+        Else                              ; from here on we have: Even Values > 30                                       
+          Select (Num % 30)               ; Check Mod30 RestClasses: (Num Mod 5 =0) or (Num Mod 3 =0)
+            Case 3,5,9,15,21,25,27        ; Prime not possible! Num IsNotElementOf Mod30 RestClass for PirmeCandidates
+              ProcedureReturn #False       
+            ; Case 1,7,11,13,17,19,23,29  ; Prime possible! Num IsElementOf Mod30 RestClass for PrimeCandidates [1,7,11,13, 17,19,23,29]      
+          EndSelect    
+        EndIf
+        
+      ; ----------------------------------------------------------------------   
+      CompilerEndIf
+    
+    	; with unrolling the loop we get a little faster code 	
+    	If Num < 2047
+    	  *Try = ?Lower_2047 
+    	 
+    	ElseIf Num <  1373653
+    	  *Try = ?Lower_1373653	  
+    	  
+    	ElseIf Num <  9080191
+    	  *Try = ?Lower_9080191
+    	              
+    	ElseIf Num <  25326001 
+    	  *Try = ?Lower_25326001
+    	              
+    	ElseIf Num <  3215031751
+    	  *Try = ?Lower_3215031751
+    	              
+    	ElseIf Num <  4759123141
+    	  *Try = ?Lower_4759123141	  
+    	  
+    	ElseIf Num <  1122004669633
+    	  *Try = ?Lower_1122004669633	  
+    	  
+    	ElseIf Num <  2152302898747
+    	  *Try = ?Lower_2152302898747	  
+    	  
+    	ElseIf Num <  3474749660383
+    	  *Try = ?Lower_3474749660383	  
+    	  
+    	ElseIf Num <  341550071728321
+    	  *Try = ?Lower_341550071728321	  
+    	  
+    	ElseIf Num <  3825123056546413051
+    	  *Try = ?Lower_3825123056546413051	  
+    	Else   
+    	  *Try = ?Lower_18446744073709551616  	  
+    	EndIf
+    	
+      ; because for MillerRabin we need 128Bit, this is not possible in standard PB-Code
+    
+    	; used Registers
+      ;   RAX : operating Register MUL, DIV
+      ;   RCX : Counter
+      ;   RDX : operating Register MUL, DIV
+      ;   R8  : Exponent
+      ;   R9  : Num
+      ;   R10 : -
+    	  	
+    	; Solve: 2^Loops * Exponent + 1 = Num
+    	!XOR RDX, RDX
+    	!MOV   RAX, [p.v_Num]          ; RAX = Num
+    	!DEC   RAX                       ; RAX - 1
+    	!BSF   RCX, RAX                  ; Find LSB [0..63]
+    	!MOV   [p.v_Loops], RCX          ; Loops = LSB(Num)
+    	!SHR   RAX, cl                   ; RAX = (Num-1) >> LSB(Num)
+    	!MOV   [p.v_Exponent], RAX       ; Exponent = (Num-1) >> LSB(Num)
+    	
+    	; Witness loop
+    	!_WhileTry:
+    	!MOV RAX, QWORD [p.p_Try]         ; RAX = *Try
+    	!MOV RAX, [RAX]                   ; RAX = *Try\i
+    	!TEST RAX, RAX                    ; RAX == 0     
+    	!JZ _Return                       ; Jump _Retrun if 0 
+      ;	While *Try\i
+    		
+    		;Base = *Try\i
+    		!MOV RAX, QWORD [p.p_Try]       ; RAX = *Try
+    		!MOV RAX, [RAX]                 ; RAX = *Try\i
+        !MOV QWORD [p.v_Base],RAX       ; Base = *Try\i
+    
+    		; RAX = Base^Exponent % Num
+    		!MOV  R8, [p.v_Exponent]        ; R8 = Exponent
+    		!MOV  R9, [p.v_Num]             ; R9 = Num
+    		!MOV  RAX, 1                    ; RAX = 1
+    		!BSR  RCX, R8                   ; RCX = MSB(Exponent)
+    		;Loop:
+    		!_InnerLoop:
+    			!MUL  RAX                     ; RAX = RAX * RAX
+    			!DIV  R9                      ; RAX:RDX = RAX:RDX / Num  
+    			!MOV  RAX, RDX                ; RAX = RAX % Num : Move Devision Remainder to RAX
+    			!BT   R8, RCX                 ; BitTest(Exponent, RCX), starts with RDX =  MSB(Exponent)
+    			!JNC @F
+    				!MUL  QWORD [p.v_Base]      ; RAX:RDX * Base
+    				!DIV  R9                    ; RAX:RDX / Num
+    				!MOV  RAX, RDX              ; RAX = Devision Remainder
+    			!@@:
+    			!DEC  RCX                     ; RCX-1 : Bitcounter - 1
+    		!JNS _InnerLoop
+    		
+    		; RAX = 1 or RAX = Num-1 ?
+    		!MOV  R8, R9                    ; R8 = Num
+    		!DEC  R8                        ; R8 = Num -1
+    		!CMP  RAX, 1                    ; If RAX = 1
+    		!JE  _Continue                  ;   Continue  
+    		!CMP  RAX, R8                   ; If RAX = Num -1
+     		!JE  _Continue                  ;   Continue
+    	
+    		; Square-Mod-Loop: RAX = RAX^2 % Num  and check for  RAX = Num-1
+    		!MOV  RCX, [p.v_Loops]          ; RCX = Loops
+    		!@@:                            ; Repeat
+    			!MUL  RAX                     ; RAX * RAX
+    			!DIV  R9                      ; RAX:RDX / Num
+    			!MOV  RAX, rdx                ; RAX = Devsion Remainder
+    			!CMP  RAX, R8                 ; If RAX = Num -1
+    			!JE  _Continue                ;  Countinue
+    			!CMP  RAX, 1                  ; If RAX = 1
+      		!JBE  _NoPrime                ; NoPrime	
+      		!DEC  RCX                     ; RCX-1 : Bitcounter - 1
+      	!JNZ @B                         ; Repeat If RCX<> 0
+      		
+    	  ;	noprime:
+    		!_NoPrime:                      ; NoPrime
+      		!XOR RAX, RAX                 ; RAX = 0
+      		!MOV [p.v_ret], RAX           ; ret = 0
+      		!JMP _Return                  ; Jump to Return
+     		
+    		!_Continue:                     ; Continue
+    		;*Try + SizeOf(Integer)
+      		!MOV    RAX, QWORD [p.p_Try]  ; RAX = *Try
+          !ADD    RAX,8                 ; RAX + 8
+          !MOV    QWORD [p.p_Try],RAX   ; *Try = *Try + 8   
+        !JMP _WhileTry                  ; Repeat While Loop
+      ;Wend
+      !_Return:
+      ProcedureReturn ret 
+    		
+    	; Witness bases
+    	DataSection 
+    		Lower_2047:                 : Data.q 2, 0
+    		Lower_1373653:              : Data.q 2, 3, 0
+    		Lower_9080191:              : Data.q 31, 73, 0
+    		Lower_25326001:             : Data.q 2, 3, 5, 0
+    		Lower_3215031751:           : Data.q 2, 3, 5, 7, 0
+    		Lower_4759123141:           : Data.q 2, 7, 61, 0
+    		Lower_1122004669633:        : Data.q 2, 13, 23, 1662803, 0
+    		Lower_2152302898747:        : Data.q 2, 3, 5, 7, 11, 0
+    		Lower_3474749660383:        : Data.q 2, 3, 5, 7, 11, 13, 0
+    		Lower_341550071728321:      : Data.q 2, 3, 5, 7, 11, 13, 17, 0
+    		Lower_3825123056546413051:  : Data.q 2, 3, 5, 7, 11, 13, 17, 19, 23, 0
+    		Lower_18446744073709551616: : Data.q 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 0
+    	EndDataSection
+    	
+    CompilerElse
+      ; CompilerError
+      ; CompilerWarning "Module Prime::IsPrime_x64() use x64 128Bit Assembler operation and needs ASM x64 Backend - it will be an empty Prodedure at other Compilers"  
+     
+   CompilerEndIf
+    
+      
+  EndProcedure
+  
+  Procedure.i IsPrimeMod30_x64(Num.q)
+   ; ============================================================================
+  ; NAME: IsPrimeMod30_x64
+  ; DESC: All pretests for even and Mod30() are eliminated to be faster!
+  ; DESC: If we pass only PrimeCandidates in Mod30()
+  ; DESC: Attention! Only for ASM Backend and x64
+  ; DESC: Performes a full deterministic Miller Rabin Test for signed 
+  ; DESC: 64 Bit Intger.
+  ; DESC: Because Miller Rabin use x², the caculation reaches
+  ; DESC: 128Bit results. The CPU internal computes x64 MUL, DIV
+  ; DESC: with 128Bit in RAX:RDX, so we can use 128Bit in ASM-Code.
+  ; DESC: In normal PB-Code this isn't possible without a BigInt Lib.
+  ; VAR(Num.q) : The Number to chrunch
   ; RET.i : #True: if Number is Prime
   ; ============================================================================
     
@@ -489,300 +744,168 @@ Module Prime
   	; https://www.purebasic.fr/german/viewtopic.php?f=8&t=30523
   	; Thanks to NicknameFJ und Helle
     
-    Protected ret = #True
-    Protected *Try.Integer
-    Protected.i Loops, Exponent, Base
-    
-  	If Value < 0
-   	  Value = -Value
-   	EndIf 	
-   	
-   	#BranchPrediction = #True
-   	
-    CompilerIf #BranchPrediction
-      ; ---------------------------------------------------------------------- 
-      ; This Version with the seperate Modulo functions performs aprox. 
-      ; 10% better. The Reason might be the BranchPrediction which 
-      ; precalculates the ElseIf so the CPU don't have to do all the Modulos
-      ; ---------------------------------------------------------------------- 
+    CompilerIf  #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit
   
-      If Value <=30                     ; Values up to 30 (2*3*5) , We handle direct    	 	   
-        Select Value 
-          Case 2, 3, 5, 7, 11, 13, 17, 19, 23, 29   ; all Primes <30
-            ProcedureReturn #True
-          Default
-            ProcedureReturn #False   
-        EndSelect 
-        
-      ElseIf Value&1=0 Or Value%3=0 Or Value%5=0 Or Value%7=0 Or Value%11=0 Or Value%13=0 Or Value%17=0 Or Value%19=0 Or Value%23=0 Or Value%29=0 
-        ProcedureReturn #False  
-      EndIf
+      Protected ret = #True
+      Protected *Try.Integer
+      Protected.i Loops, Exponent, Base
       
-    CompilerElse
-     ; ----------------------------------------------------------------------  
-     ; This Version looks like to be the better and faster Code. 
-     ; But it isn't. I tested the 2 Versions on new and older CPU 
-     ; from 2011, 2016, 2020 and this version is always slower!
-     ; ---------------------------------------------------------------------- 
-      
-      If Value <=30                     ; Values up to 30 (2*3*5) , We handle direct    	 	
-        
-        Select Value 
-          Case 2, 3, 5, 7, 11, 13, 17, 19, 23, 29   ; all Primes <30
-            ProcedureReturn #True
-          Default
-            ProcedureReturn #False   
-        EndSelect 
-        
-      ElseIf (Value & 1) = 0            ; If Even(Value) 
-        ProcedureReturn #False          ;   Not a Prime!
-        
-      Else                              ; from here on we have: Even Values > 30                                       
-        Select (Value % 30)             ; Check Mod30 RestClasses: (Value Mod 5 =0) or (Value Mod 3 =0)
-          Case 3,5,9,15,21,25,27        ; Prime not possible! Value IsNotElementOf Mod30 RestClass for PirmeCandidates
-            ProcedureReturn #False       
-          ; Case 1,7,11,13,17,19,23,29  ; Prime possible! Value IsElementOf Mod30 RestClass for PrimeCandidates [1,7,11,13, 17,19,23,29]      
-        EndSelect    
-      EndIf
-      
-    ; ----------------------------------------------------------------------   
-    CompilerEndIf
-  
-  	; with unrolling the loop we get a little faster code 	
-  	If Value < 2047
-  	  *Try = ?Lower_2047 
-  	 
-  	ElseIf Value <  1373653
-  	  *Try = ?Lower_1373653	  
-  	  
-  	ElseIf Value <  9080191
-  	  *Try = ?Lower_9080191
-  	  
-  	ElseIf Value <  25326001 
-  	  *Try = ?Lower_25326001
-  	  
-  	ElseIf Value <  3215031751
-  	  *Try = ?Lower_3215031751
-  	  
-  	ElseIf Value <  4759123141
-  	  *Try = ?Lower_4759123141	  
-  	  
-  	ElseIf Value <  1122004669633
-  	  *Try = ?Lower_1122004669633	  
-  	  
-  	ElseIf Value <  2152302898747
-  	  *Try = ?Lower_2152302898747	  
-  	  
-  	ElseIf Value <  3474749660383
-  	  *Try = ?Lower_3474749660383	  
-  	  
-  	ElseIf Value <  341550071728321
-  	  *Try = ?Lower_341550071728321	  
-  	  
-  	ElseIf Value <  3825123056546413051
-  	  *Try = ?Lower_3825123056546413051	  
-  	Else   
-  	  *Try = ?Lower_18446744073709551616  	  
-  	EndIf
-  	
- 		; because for MillerRabin we need 128Bit, this is not possible in standard PB-Code
+  ;       If Num < 0
+  ;      	  Num = -Num
+  ;      	EndIf 	
 
-  	; used Registers
-    ;   RAX : operating Register MUL, DIV
-    ;   RCX : Counter
-    ;   RDX : operating Register MUL, DIV
-    ;   R8  : Exponent
-    ;   R9  : Value
-    ;   R10 : -
-  	  	
-  	; Solve: 2^Loops * Exponent + 1 = Value
-  	! MOV   RAX, [p.v_Value]          ; RAX = Value
-  	! DEC   RAX                       ; RAX - 1
-  	! BSF   RCX, RAX                  ; Find LSB [0..63]
-  	! MOV   [p.v_Loops], RCX          ; Loops = LSB(Value)
-  	! SHR   RAX, cl                   ; RAX = (Value-1) >> LSB(Value)
-  	! MOV   [p.v_Exponent], RAX       ; Exponent = (Value-1) >> LSB(Value)
-  	
-  	; Witness loop
-  	!_WhileTry:
-  	!MOV RAX, QWORD [p.p_Try]         ; RAX = *Try
-  	!MOV RAX, [RAX]                   ; RAX = *Try\i
-  	!TEST RAX, RAX                    ; RAX == 0     
-  	!JZ _Return                       ; Jump _Retrun if 0 
-  ;	While *Try\i
-  		
-  		;Base = *Try\i
-  		!MOV RAX, QWORD [p.p_Try]       ; RAX = *Try
-  		!MOV RAX, [RAX]                 ; RAX = *Try\i
-      !MOV QWORD [p.v_Base],RAX       ; Base = *Try\i
-  
-  		; RAX = Base^Exponent % Value
-  		!MOV  R8, [p.v_Exponent]        ; R8 = Exponent
-  		!MOV  R9, [p.v_Value]           ; R9 = Value
-  		!MOV  RAX, 1                    ; RAX = 1
-  		!BSR  RCX, R8                   ; RCX = MSB(Exponent)
-  		;Loop:
-  		!_InnerLoop:
-  			!MUL  RAX                     ; RAX = RAX * RAX
-  			!DIV  R9                      ; RAX:RDX = RAX:RDX / Value  
-  			!MOV  RAX, rdx                ; RAX = RAX % Value : Move Devision Remainder to RAX
-  			!BT   R8, RCX                 ; BitTest(Exponent, RCX), starts with RDX =  MSB(Exponent)
-  			!JNC @F
-  				!MUL  QWORD [p.v_Base]      ; RAX:RDX * Base
-  				!DIV  R9                    ; RAX:RDX / Value
-  				!MOV  RAX, rdx              ; RAX = Devision Remainder
-  			!@@:
-  			!DEC  RCX                     ; RCX-1 : Bitcounter - 1
-  		!JNS _InnerLoop
-  		
-  		; RAX = 1 or RAX = Value-1 ?
-  		!MOV  R8, R9                    ; R8 = Value
-  		!DEC  R8                        ; R8 = Value -1
-  		!CMP  RAX, 1                    ; If RAX = 1
-  		!JE  _Continue                  ;   Continue  
-  		!CMP  RAX, R8                   ; If RAX = Value -1
-   		!JE  _Continue                  ;   Continue
-  	
-  		; Square-Mod-Loop: RAX = RAX^2 % Value  and check for  RAX = Value-1
-  		!MOV  RCX, [p.v_Loops]          ; RCX = Loops
-  		!@@:                            ; Repeat
-  			!MUL  RAX                     ; RAX * RAX
-  			!DIV  R9                      ; RAX:RDX / Value
-  			!MOV  RAX, rdx                ; RAX = Devsion Remainder
-  			!CMP  RAX, R8                 ; If RAX = VAlue -1
-  			!JE  _Continue                ;  Countinue
-  			!CMP  RAX, 1                  ; If RAX = 1
-    		!JBE  _NoPrime                ; NoPrime	
-    		!DEC  RCX                     ; RCX-1 : Bitcounter - 1
-    	!JNZ @B                         ; Repeat If RCX<> 0
-    		
-  	  ;	noprime:
-  		!_NoPrime:                      ; NoPrime
-    		!XOR RAX, RAX                 ; RAX = 0
-    		!MOV [p.v_ret], RAX           ; ret = 0
-    		!JMP _Return                  ; Jump to Return
-   		
-  		!_Continue:                     ; Continue
-  		;*Try + SizeOf(Integer)
-    		!MOV    RAX, QWORD [p.p_Try]  ; RAX = *Try
-        !ADD    RAX,8                 ; RAX + 8
-        !MOV    QWORD [p.p_Try],RAX   ; *Try = *Try + 8   
-      !JMP _WhileTry                  ; Repeat While Loop
-    ;Wend
-    !_Return:
-    ProcedureReturn ret 
-  		
-  	; Witness bases
-  	DataSection 
-  		Lower_2047:                 : Data.q 2, 0
-  		Lower_1373653:              : Data.q 2, 3, 0
-  		Lower_9080191:              : Data.q 31, 73, 0
-  		Lower_25326001:             : Data.q 2, 3, 5, 0
-  		Lower_3215031751:           : Data.q 2, 3, 5, 7, 0
-  		Lower_4759123141:           : Data.q 2, 7, 61, 0
-  		Lower_1122004669633:        : Data.q 2, 13, 23, 1662803, 0
-  		Lower_2152302898747:        : Data.q 2, 3, 5, 7, 11, 0
-  		Lower_3474749660383:        : Data.q 2, 3, 5, 7, 11, 13, 0
-  		Lower_341550071728321:      : Data.q 2, 3, 5, 7, 11, 13, 17, 0
-  		Lower_3825123056546413051:  : Data.q 2, 3, 5, 7, 11, 13, 17, 19, 23, 0
-  		Lower_18446744073709551616: : Data.q 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 0
-  	EndDataSection
-  		
-  EndProcedure
-  
-  Procedure.i PrimeSieve_SumAlgo (Limit.i, Array *Primes(1)) ; *Primes(1) Pointer to a 1 dimensional Array of Integer
-  ; ============================================================================
-  ; NAME: PrimeSieve_SumAlgo
-  ; DESC: Calculates all Primes up to users Limit with the sum algorithm
-  ; DESC: and returns all found Primes in the Integer Array Primes().
-  ; DESC: And the number of found Primes as Retrun Value
-  ; VAR(Limit.i) : The limit up to primes are searched
-  ; RET.i : Number of found Prime numbers.
-  ; ============================================================================
     
-  ;   Die Funktion wurde nach Hinweisen von Holger Suhr gegenüber der Original-Funktion (s.u.) verbessert.
-  ; 	Summenverfahren
-    Protected K, J, N   ; Counter
-    Protected idxPrim, X, p, IsPrime, root
-    Protected NoP
-    
-    ; Tschebyscheff aproximation for the number of Primes: 0.912*x/ln(x) < pi(x) < 1,1056*x/ln(x)
-    NoP = GetMaxNoOfPrimes(Limit) * 1.1
-    
-    #BufferEntries = 10000
-    
-   	Dim *Primes(NoP)
-   	Dim psum(NoP)
-   	
-   	root = Sqr(Limit) + 1
-   	
-   	; the first Primes we know. 2x3x5=30 This is the Mod30 Filter which elemiates all products of 2,3,5
-   	*Primes(0) = 2
-   	*Primes(1) = 3
-   	*Primes(2) = 5
-   	
-   	X = 7              ; The 1st Prime Candidate we start To test
-   	idxPrim = 2        ; The index of 5 in P() is 2
-   	
-   	psum(3) = 7*7     ; we can start with the sum at p² because the lower values are reached with prims < 7
-   	
-   	; J is our Prime-Candidate counter. With this counter (J & 7) we step trough RCdelta() and calculate next candidate 
-    ; we have to start at J=1 because we start with 7 as first candiate and the next candidate will be 11 so the
-   	; difference 11-7 = 4 and this is entray No 1 RCdelta() : RCdelata(1)= 4 =  11-7
-   	J = 1
+    	; with unrolling the loop we get a little faster code 	
+    	If Num < 2047
+    	  *Try = ?Lower_2047 
+    	 
+    	ElseIf Num <  1373653
+    	  *Try = ?Lower_1373653	  
+    	  
+    	ElseIf Num <  9080191
+    	  *Try = ?Lower_9080191
+    	              
+    	ElseIf Num <  25326001 
+    	  *Try = ?Lower_25326001
+    	              
+    	ElseIf Num <  3215031751
+    	  *Try = ?Lower_3215031751
+    	              
+    	ElseIf Num <  4759123141
+    	  *Try = ?Lower_4759123141	  
+    	  
+    	ElseIf Num <  1122004669633
+    	  *Try = ?Lower_1122004669633	  
+    	  
+    	ElseIf Num <  2152302898747
+    	  *Try = ?Lower_2152302898747	  
+    	  
+    	ElseIf Num <  3474749660383
+    	  *Try = ?Lower_3474749660383	  
+    	  
+    	ElseIf Num <  341550071728321
+    	  *Try = ?Lower_341550071728321	  
+    	  
+    	ElseIf Num <  3825123056546413051
+    	  *Try = ?Lower_3825123056546413051	  
+    	Else   
+    	  *Try = ?Lower_18446744073709551616  	  
+    	EndIf
     	
-   	; ----------------------------------------------------------------------
-   	;   Main Loop: do for all Prime Candidates up to users limit
-   	; ----------------------------------------------------------------------
-   	While X <= Limit      ; As long as out Prime test candidate is lower than the user requested limit
-  
-   		K = 3               ; we start with indes of p() at 3 what is 7 because 2,3,5 is eliminated with Mod30() filter
-   		IsPrime = #True      
-   		
-   		; ----------------------------------------------------------------------
-   		;  Sum up all Primes from [7.. Sqr(X)] up to X
-   	  ; ----------------------------------------------------------------------
-  		While  (K < idxPrim) And (*Primes(K) <= root)   ; K is lower than the index of our Prime Candidate and p(k) < lower than users Limit
-  		 ; N = 0   ; debug Counter         
-  		  
-  		  While psum(K) < X     ; Sum up all p(k) up to the actual Prime Candidate
-          ; Sum p(k)*2 because +p(k) would result in an even No. what can't be a Prime
-          ; it would be possible to sum p(k) * RCdelta([6,4,2,4,2,4,6,2])
-  		    ; I didn't test it but I guess a fewe mor Adds are faster than finding out the correct factor. 
-  			  psum(K) = psum(K) + *Primes(K)*2
-  			  N+1  ; debug Counter
-  			Wend
-  			
-  			; Debug "N = " + Str(N) + " : P = " + Str(*Primes(k)) + " : X = " + Str(X)	
-  			
-  			; If we reach with our sum exactly the value of the Prime Candidate, it is not a Prime!
-  			If psum(k) = X
-   			  IsPrime = #False
-          Break           ; leave While Loop and countinue with the next Candidate
-   			EndIf
-   			K + 1             ; Continue sum with next p(K+1)
-      Wend
-   	  ; ----------------------------------------------------------------------
+      ; because for MillerRabin we need 128Bit, this is not possible in standard PB-Code
+    
+    	; used Registers
+      ;   RAX : operating Register MUL, DIV
+      ;   RCX : Counter
+      ;   RDX : operating Register MUL, DIV
+      ;   R8  : Exponent
+      ;   R9  : Num
+      ;   R10 : -
+    	  	
+    	; Solve: 2^Loops * Exponent + 1 = Num
+   	  !XOR RDX, RDX
+     	!MOV   RAX, [p.v_Num]            ; RAX = Num
+    	!DEC   RAX                       ; RAX - 1
+    	!BSF   RCX, RAX                  ; Find LSB [0..63]
+    	!MOV   [p.v_Loops], RCX          ; Loops = LSB(Num)
+    	!SHR   RAX, cl                   ; RAX = (Num-1) >> LSB(Num)
+    	!MOV   [p.v_Exponent], RAX       ; Exponent = (Num-1) >> LSB(Num)
+    	
+    	; Witness loop
+    	!_WhileTry2:
+    	!MOV RAX, QWORD [p.p_Try]         ; RAX = *Try
+    	!MOV RAX, [RAX]                   ; RAX = *Try\i
+    	!TEST RAX, RAX                    ; RAX == 0     
+    	!JZ _Return2                       ; Jump _Retrun if 0 
+      ;	While *Try\i
+    		
+     		;Base = *Try\i
+    		!MOV RAX, QWORD [p.p_Try]       ; RAX = *Try
+    		!MOV RAX, [RAX]                 ; RAX = *Try\i
+        !MOV QWORD [p.v_Base],RAX       ; Base = *Try\i
+    
+    		; RAX = Base^Exponent % Num
+    		!MOV  R8, [p.v_Exponent]        ; R8 = Exponent
+    		!MOV  R9, [p.v_Num]             ; R9 = Num
+    		!MOV  RAX, 1                    ; RAX = 1
+    		!BSR  RCX, R8                   ; RCX = MSB(Exponent)
+    		;Loop:
+    		!_InnerLoop2:
+    			!MUL  RAX                     ; RAX = RAX * RAX
+    			!DIV  R9                      ; RAX:RDX = RAX:RDX / Num  
+    			!MOV  RAX, RDX                ; RAX = RAX % Num : Move Devision Remainder to RAX
+    			!BT   R8, RCX                 ; BitTest(Exponent, RCX), starts with RDX =  MSB(Exponent)
+    			!JNC @F
+    				!MUL  QWORD [p.v_Base]      ; RAX:RDX * Base
+    				!DIV  R9                    ; RAX:RDX / Num
+    				!MOV  RAX, RDX              ; RAX = Devision Remainder
+    			!@@:
+    			!DEC  RCX                     ; RCX-1 : Bitcounter - 1
+    		!JNS _InnerLoop2
+    		
+    		; RAX = 1 or RAX = Num-1 ?
+    		!MOV  R8, R9                    ; R8 = Num
+    		!DEC  R8                        ; R8 = Num -1
+    		!CMP  RAX, 1                    ; If RAX = 1
+    		!JE  _Continue2                  ;   Continue  
+    		!CMP  RAX, R8                   ; If RAX = Num -1
+     		!JE  _Continue2                  ;   Continue
+    	
+    		; Square-Mod-Loop: RAX = RAX^2 % Num  and check for  RAX = Num-1
+    		!MOV  RCX, [p.v_Loops]          ; RCX = Loops
+    		!@@:                            ; Repeat
+    			!MUL  RAX                     ; RAX * RAX
+    			!DIV  R9                      ; RAX:RDX / Num
+    			!MOV  RAX, rdx                ; RAX = Devsion Remainder
+    			!CMP  RAX, R8                 ; If RAX = Num -1
+    			!JE  _Continue2                ;  Countinue
+    			!CMP  RAX, 1                  ; If RAX = 1
+      		!JBE  _NoPrime2                ; NoPrime	
+      		!DEC  RCX                     ; RCX-1 : Bitcounter - 1
+      	!JNZ @B                         ; Repeat If RCX<> 0
+      		
+    	  ;	noprime:
+    		!_NoPrime2:                      ; NoPrime
+      		!XOR RAX, RAX                 ; RAX = 0
+      		!MOV [p.v_ret], RAX           ; ret = 0
+      		!JMP _Return2                  ; Jump to Return
+     		
+    		!_Continue2:                     ; Continue
+    		;*Try + SizeOf(Integer)
+      		!MOV    RAX, QWORD [p.p_Try]  ; RAX = *Try
+          !ADD    RAX,8                 ; RAX + 8
+          !MOV    QWORD [p.p_Try],RAX   ; *Try = *Try + 8   
+        !JMP _WhileTry2                  ; Repeat While Loop
+      ;Wend
+      !_Return2:
+      ProcedureReturn ret 
+    		
+    	; Witness bases
+    	DataSection 
+    		Lower_2047:                 : Data.q 2, 0
+    		Lower_1373653:              : Data.q 2, 3, 0
+    		Lower_9080191:              : Data.q 31, 73, 0
+    		Lower_25326001:             : Data.q 2, 3, 5, 0
+    		Lower_3215031751:           : Data.q 2, 3, 5, 7, 0
+    		Lower_4759123141:           : Data.q 2, 7, 61, 0
+    		Lower_1122004669633:        : Data.q 2, 13, 23, 1662803, 0
+    		Lower_2152302898747:        : Data.q 2, 3, 5, 7, 11, 0
+    		Lower_3474749660383:        : Data.q 2, 3, 5, 7, 11, 13, 0
+    		Lower_341550071728321:      : Data.q 2, 3, 5, 7, 11, 13, 17, 0
+    		Lower_3825123056546413051:  : Data.q 2, 3, 5, 7, 11, 13, 17, 19, 23, 0
+    		Lower_18446744073709551616: : Data.q 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 0
+    	EndDataSection
+    	
+   CompilerElse
       
-      ; If the Prime Candidate is a Prime, add it to the list of Primes.
-   		If IsPrime
-   			idxPrim= idxPrim + 1      ; next index in Prime List
-   			*Primes(idxPrim) = X        
-   			psum(idxPrim) = X*X       ; We can start the Sum at X². (The lowest value what can't be reached by lower Primes)
-       EndIf
+      ; CompilerError
+      ; CompilerWarning "Module Prime::IsPrime_x64() use x64 128Bit Assembler operation and needs ASM x64 Backend - it will be an empty Prodedure at other Compilers"  
+     
+   CompilerEndIf
+    
       
-      ; calculate the next Prime Candidate in the Mod(30) filter range 
-      X = X + RCdelta(J & 7)    ; here we add a value form RCdelta([6,4,2,4,2,4,6,2]) to get the next Prime Candidate Mod30() filtered
-      J = J + 1                 ; J is the iteration counter. It's value is the number of tested candidates
-   	Wend
-   	; ----------------------------------------------------------------------
-   	
-   	FreeArray(psum())
-   	; Debug "Cycles = " + J
-   	ProcedureReturn idxPrim + 1 	; Return the number of found Primes
-   	
   EndProcedure
-  
+
   Procedure.q ListPrimes(Limit.q, Array *Primes(1))
   ; ============================================================================
   ; NAME: ListPrimes
@@ -793,16 +916,80 @@ Module Prime
   ; VAR(*Primes(1)) : Array to List the Primes
   ; RET.i : Number of Primes found
   ; ============================================================================
-   Protected.q I, N
+   Protected.q I, N, P
     
     Dim *Primes(GetMaxNoOfPrimes(Limit))
     
-    For I = 3 To Limit Step 2
-      If IsPrime_x64(I)
-        *Primes(N) = I
-        N+1
+    *Primes(0) = 2
+    *Primes(1) = 3
+    *Primes(2) = 5
+    *Primes(3) = 7
+    *Primes(4) = 11
+    *Primes(5) = 13
+    *Primes(6) = 17
+    *Primes(7) = 19
+    *Primes(9) = 23
+    *Primes(9) = 29
+    N =10
+    
+    P = 31
+    While P <= Limit
+      If IsPrimeMod30_x64(P)
+        *Primes(N) = P
+        N + 1
       EndIf
-    Next
+      
+      P = P + RCdelta(I)
+      I = (I +1) & 7 
+    Wend
+    
+    ProcedureReturn N
+  EndProcedure
+  
+  Procedure.q CountPrimes(Limit.q)
+  ; ============================================================================
+  ; NAME: CountPrimes
+  ; DESC: Count all Primes from 2..Limit
+  ; DESC: 
+  ; DESC: 
+  ; VAR(Limit) : The limit up to primes are searched
+  ; RET.i : Number of Primes found
+  ; ============================================================================
+   Protected.q I, N, P
+        
+   
+;     *Primes(0) = 2
+;     *Primes(1) = 3
+;     *Primes(2) = 5
+;     *Primes(3) = 7
+;     *Primes(4) = 11
+;     *Primes(5) = 13
+;     *Primes(6) = 17
+;     *Primes(7) = 19
+;     *Primes(9) = 23
+;     *Primes(9) = 29
+    N =10
+    
+    P = 31    
+    While P <= Limit
+      If IsPrimeMod30_x64(P)
+        N + 1 
+      EndIf        
+      P = P + RCdelta(I)
+      I =  (I+1) & 7      
+    Wend
+    
+    ;only for timing test with unrolld Loop
+;     While P <= Limit
+;       If IsPrimeMod30_x64(P) : N + 1 : EndIf : P + 6
+;       If IsPrimeMod30_x64(P) : N + 1 : EndIf : P + 4
+;       If IsPrimeMod30_x64(P) : N + 1 : EndIf : P + 2
+;       If IsPrimeMod30_x64(P) : N + 1 : EndIf : P + 4
+;       If IsPrimeMod30_x64(P) : N + 1 : EndIf : P + 2
+;       If IsPrimeMod30_x64(P) : N + 1 : EndIf : P + 4
+;       If IsPrimeMod30_x64(P) : N + 1 : EndIf : P + 6
+;       If IsPrimeMod30_x64(P) : N + 1 : EndIf : P + 2
+;     Wend
     
     ProcedureReturn N
   EndProcedure
@@ -872,8 +1059,7 @@ CompilerIf #PB_Compiler_IsMainFile
           S = S * *Primes(I)  * *Primes(I)
           J = J + 1
           Debug "J= " +Str(J)   
-       Wend     
-     
+       Wend         
      
      S =  *Primes(I)
      S = S*S*S
@@ -951,41 +1137,46 @@ CompilerIf #PB_Compiler_IsMainFile
   
   
   Procedure Test_PrimeFactors()
-    Protected.q Number, res
+    Protected.q Num, res
     Protected.s str
     Protected I, cnt, cnt2, cnt3, IsP, t1, t2, t3
     
-    Number = 9007199254740991
-    ;Number = (1<<31)-1  ; 8te Mersenn Primzahl 2^31-1 =            2.147.483.647
-    ;Number = (1<<61)-1  ; 9te Mersenn Primzahl 2^61-1 = 2.305.843.009.213.693.951
-    Number = 715827881 * 2147483647
-    ;Number = 4294967295  ; Product of the first 5 Fermat Primes
+    Num = 9007199254740991
+    ;Num = (1<<31)-1  ; 8te Mersenn Primzahl 2^31-1 =            2.147.483.647
+    ;Num = (1<<61)-1  ; 9te Mersenn Primzahl 2^61-1 = 2.305.843.009.213.693.951
+    Num = 715827881 * 2147483647
+    ;Num = 4294967295  ; Product of the first 5 Fermat Primes
     
     NewList Factors.q()
     
     t1 = ElapsedMilliseconds()
-    cnt = PrimeFactors(Number, Factors())
+    cnt = PrimeFactors(Num, Factors())
     t1 = ElapsedMilliseconds()-t1
-    
-    #Loops = 1000000
+    #Mio = 1000000 
+    #Loops = 1 * #Mio
 
-    t2 = ElapsedMilliseconds()
-      For I = 1 To #Loops Step 2
-        If IsPrime(I)
-          cnt2+1
-        EndIf
-      Next
-    t2 = ElapsedMilliseconds()-t2
+;     t2 = ElapsedMilliseconds()
+;       For I = 1 To #Loops Step 2
+;         If IsPrime(I)
+;           cnt2+1
+;         EndIf
+;       Next
+;     t2 = ElapsedMilliseconds()-t2
     
+    t2 = ElapsedMilliseconds()
+      cnt2 = CountPrimes(#Loops)
+    t2 = ElapsedMilliseconds()-t2
+   
     ; IsPrime_x64 Miller Rabin Test
     t3 = ElapsedMilliseconds()
-      For I = 1 To #Loops Step 2
-        If IsPrime_x64(I)
+    cnt3 = 1
+    For I = 3 To #Loops Step 2
+      If IsPrime_x64(I)
           cnt3+1
-        EndIf
-      Next
+      EndIf
+    Next
     t3 = ElapsedMilliseconds()-t3
-
+    
     ResetList(Factors())
     
     res = 1
@@ -993,8 +1184,8 @@ CompilerIf #PB_Compiler_IsMainFile
       res * Factors()    
     Next
     
-    str = "Number   = " + Str(Number) + #CRLF$
-    Str + "SqrRoot  = " + Str(Int(Sqr(Number))) + #CRLF$
+    str = "Number   = " + Str(Num) + #CRLF$
+    Str + "SqrRoot  = " + Str(Int(Sqr(Num))) + #CRLF$
     str + "Result P!  = " + Str(res) + #CRLF$ 
     str + "Iterations = " + Str(cnt) + #CRLF$
     str + "Time       = " + Str(t1) + "ms" + #CRLF$
@@ -1014,12 +1205,22 @@ CompilerIf #PB_Compiler_IsMainFile
     MessageRequester("Prime Factors", str, #PB_MessageRequester_Ok)  
   EndProcedure
   
-  CountPrimesMod()
+  ;CountPrimesMod()
   ; RestCombi()
+   Test_PrimeFactors() 
+  
+;   NewList lstPF.q()
+;   
+;   Prime::PrimeFactors(441, lstPf())
+;   
+;   ForEach lstPF()
+;     Debug lstPF()  
+;   Next
+  
 CompilerEndIf
-; IDE Options = PureBasic 6.04 LTS (Windows - x64)
-; CursorPosition = 675
-; FirstLine = 578
-; Folding = ----
+; IDE Options = PureBasic 6.11 LTS (Windows - x64)
+; CursorPosition = 876
+; FirstLine = 881
+; Folding = -----
 ; Optimizer
 ; CPU = 5

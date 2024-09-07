@@ -27,6 +27,17 @@
 ;}
 ; ===========================================================================
 
+; --------------------------------------------------
+; Assembler Datasection Definition
+; --------------------------------------------------
+; db 	Define Byte = 1 byte
+; dw 	Define Word = 2 bytes
+; dd 	Define Doubleword = 4 bytes
+; dq 	Define Quadword = 8 bytes
+; dt 	Define Ten Bytes = 10 bytes
+; !label: dq 21, 22, 23
+; --------------------------------------------------
+
 ;- --------------------------------------------------
 ;- Include Files
 ;  --------------------------------------------------
@@ -57,12 +68,13 @@ DeclareModule FStr
   Prototype.i FindCharReverse(*String.Character, cSearch.c, cfgReturnValue = #PbFw_STR_ReturnCharNo)
   Global FindCharReverse.FindCharReverse                  ; define Prototype-Handler for CountChar
   
-  Declare.i ToggleStringEndianess(*String)
-  Declare.i LCase255(*String)
-  Declare.i UCase255(*String)
+  Declare.i ToggleStringEndianess(*String, *outLength.Integer=0)
+
+  Declare.i LCase255(*String, *outLength.Integer=0)
+  Declare.i UCase255(*String, *outLength.Integer=0)
   Declare.s GetVisibleAsciiCharset()
   
-  CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit And #PB_Compiler_Unicode
+  CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_64Bit And #PB_Compiler_Unicode
     Macro LenStrFast(String)
       LenStr_x64(@String)  
     EndMacro
@@ -79,6 +91,11 @@ Module FStr
   
   IncludeFile "PbFw_ASM_Macros.pbi"       ; Standard Assembler Macros
   
+  Structure pChar   ; virtual CHAR-ARRAY, used as Pointer to overlay on strings 
+    a.a[0]          ; fixed ARRAY Of CHAR Length 0
+    c.c[0]          
+  EndStructure
+
   ;- --------------------------------------------------
   ;- Len()
   ;- --------------------------------------------------
@@ -101,7 +118,7 @@ Module FStr
   ; RET.i : Length of String; Number of Characters
   ; ============================================================================
        
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit And #PB_Compiler_Unicode
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_64Bit And #PB_Compiler_Unicode
     
       ; Used Registers:
       ;   RAX : Pointer *String
@@ -517,7 +534,7 @@ Module FStr
   ; RET.i : Number of Characters found
   ; ============================================================================
  
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_Unicode
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_Unicode
       
       CompilerIf #PB_Compiler_64Bit
       ; ************************************************************
@@ -533,7 +550,7 @@ Module FStr
         ASMx32_MMX_CountChar()    ; x32 with MMX
       CompilerEndIf 
        
-    CompilerElseIf #PB_Compiler_Backend = #PB_Backend_C And #PB_Compiler_Unicode
+    CompilerElseIf (#PB_Compiler_Backend = #PB_Backend_C) And #PB_Compiler_Unicode
        
       CompilerIf #PB_Compiler_64Bit
       ; ************************************************************
@@ -541,7 +558,7 @@ Module FStr
       ; ************************************************************
         PB_CountChar_ptr()
         
-      CompilerElse #PB_Compiler_32Bit
+      CompilerElse ; #PB_Compiler_32Bit
       ; ************************************************************
       ; x32 C
       ; ************************************************************
@@ -595,8 +612,8 @@ Module FStr
     ; Check *String-Pointer and MOV it to RAX as operating register
     ; ----------------------------------------------------------------------
     !MOV RAX, [p.p_String]    ; load String address
-    !CMP RAX, 0               ; If *String = 0
-    !JE .Return             ; Exit    
+    !TEST RAX, RAX            ; If *String = 0
+    !JZ .Return               ; Exit    
     !SUB RAX, 8               ; Sub 8 to start with Add 8 in the Loop     
     ; ----------------------------------------------------------------------
     ; Setup start parameter for registers 
@@ -613,14 +630,14 @@ Module FStr
     ; ----------------------------------------------------------------------
     ; Main Loop
     ; ----------------------------------------------------------------------     
-    !cc_Loop:
+    !.Loop:
       !ADD RAX, 8                     ; *String + 8 => NextChars    
       !MOVQ XMM0, [RAX]               ; load 4 Chars to XMM0  
       !MOVQ XMM3, [RAX]               ; load 4 Chars to XMM3
       !PCMPEQW XMM0, XMM2             ; Compare with 0
       !MOVQ RDX, XMM0                 ; RDX CompareResult contains FFFF for each NullChar 
-      !CMP RDX, 0                     ; If 0 : No NullChar found
-      !JE .EndIf                      ; JumpIfEqual 0 => JumpToEndif if Not EndOfString  
+      !TEST RDX, RDX                  ; If 0 : No NullChar found
+      !JZ .EndIf                      ; JumpIfEqual 0 => JumpToEndif if Not EndOfString  
       ; If EndOfStringFound  
         ; Caclulate the Bytepostion of EndOfString [0..3] using Bitscan
         !BSF RDX, RDX                 ; BitSanForward => No of the LSB   
@@ -630,8 +647,8 @@ Module FStr
         !SHR RAX, 1                   ; NoOfBytes to NoOfWord => Len(String)
         ;check for Return of Length and and move it to *outLength 
         !MOV RDX, [p.p_outLength]
-        !CMP RDX, 0
-        !JE @f                        ; If *outLength
+        !TEST RDX, RDX
+        !JZ @f                        ; If *outLength
           !MOV [RDX], RAX             ;   *outLength = Len()
         !@@:                          ; Endif
       
@@ -652,7 +669,7 @@ Module FStr
         !@@:
         
         !MOV RCX, 1                     ; BOOL EndOfStringFound = #TRUE
-      !.EndIf:                      ; Endif ; EndOfStringFound    
+      !.EndIf:                        ; Endif ; EndOfStringFound    
       
       ; ------------------------------------------------------------
       ; Start of function individual code! Do not use RCX here!
@@ -662,9 +679,8 @@ Module FStr
       ; ------------------------------------------------------------
       
       !TEST RCX, RCX                  ; Check BOOL EndOfStringFound      
-      !JZ cc_Loop                     ; Continue Loop if Not EndOfStringFound
-    !cc_EndLoop:
-    
+    !JZ .Loop                       ; Continue Loop if Not EndOfStringFound
+     
     ; ----------------------------------------------------------------------
     ; Handle Return value an POP-Registers
     ; ----------------------------------------------------------------------     
@@ -706,8 +722,8 @@ Module FStr
     ; Check *String-Pointer and MOV it to EAX as operating register
     ; ----------------------------------------------------------------------
     !MOV EAX, [p.p_String]    ; load String address
-    !CMP EAX, 0               ; If *String = 0
-    !JE .Return               ; Exit    
+    !TEST EAX, EAX            ; If *String = 0
+    !JZ .Return               ; Exit    
     !SUB EAX, 4               ; Sub 4 to start with Add 8 in the Loop     
     
     ; ----------------------------------------------------------------------
@@ -730,8 +746,8 @@ Module FStr
       !MOVD MM3, [EAX]                ; load 4 Chars to MM3
       !PCMPEQW MM0, MM2               ; Compare with 0
       !MOVD EDX, MM0                  ; EDX CompareResult contains FFFF for each NullChar 
-      !CMP EDX, 0                     ; If 0 : No NullChar found
-      !JE .EndIf                      ; JumpIfEqual 0 => JumpToEndif if Not EndOfString  
+      !TEST EDX, EDX                  ; If 0 : No NullChar found
+      !JZ .EndIf                      ; JumpIfEqual 0 => JumpToEndif if Not EndOfString  
       ; If EndOfStringFound  
         ; Caclulate the Bytepostion of EndOfString [0..3] using Bitscan
         !BSF EDX, EDX                 ; BitSanForward => No of the LSB   
@@ -741,8 +757,8 @@ Module FStr
         !SHR EAX, 1                   ; NoOfBytes to NoOfWord => Len(String)
         ;check for Return of Length and and move it to *outLength 
         !MOV EDX, [p.p_outLength]
-        !CMP EDX, 0
-        !JE @f                        ; If *outLength
+        !TEST EDX, EDX
+        !JZ @f                        ; If *outLength
           !MOV [EDX], EAX             ;   *outLength = Len()
         !@@:                          ; Endif
       
@@ -869,8 +885,8 @@ Module FStr
     EndIf
     
     While *pRead\c    ; Step trough the String
-      If *pRead\c = cSearch.c
-        *pRead\c = cReplace\c
+      If *pRead\c = cSearch
+        *pRead\c = cReplace
         N + 1
       EndIf
       *pRead + SizeOf(Character)
@@ -920,7 +936,7 @@ Module FStr
   ; RET.i : Number of chars replaced
   ; ============================================================================
  
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_Unicode
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_Unicode
       
       CompilerIf #PB_Compiler_64Bit
       ; ************************************************************
@@ -937,7 +953,7 @@ Module FStr
         
       CompilerEndIf 
        
-    CompilerElseIf #PB_Compiler_Backend = #PB_Backend_C And #PB_Compiler_Unicode
+    CompilerElseIf (#PB_Compiler_Backend = #PB_Backend_C) And #PB_Compiler_Unicode
        
       CompilerIf #PB_Compiler_64Bit
       ; ************************************************************
@@ -945,7 +961,7 @@ Module FStr
       ; ************************************************************
         PB_ReplaceChar_ptr()
         
-      CompilerElse #PB_Compiler_32Bit
+      CompilerElse ; #PB_Compiler_32Bit
       ; ************************************************************
       ; x32 C
       ; ************************************************************
@@ -983,6 +999,8 @@ Module FStr
   ; **************************************************
   ; Purebasic Version with *Pointer-Code
   ; **************************************************
+  Macro PB_RemoveCharFast_ptr()
+  EndMacro
   
   ; **************************************************
   ; Purebasic Version using PB integrated functions
@@ -1000,24 +1018,28 @@ Module FStr
   ; RET: Number of removed Chars 
   ; ============================================================================
  
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_Unicode
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_Unicode
       
       CompilerIf #PB_Compiler_64Bit
       ; ************************************************************
       ; x64 Assembler
       ; ************************************************************
-        ASMx64_RemoveCharFast()      ; XMM-Version
+        
+        PB_RemoveCharFast_ptr()
+        ;ASMx64_RemoveCharFast()      ; XMM-Version
         
       CompilerElse ; #PB_Compiler_32Bit
       ; ************************************************************
       ; x32 Assembler
       ; ************************************************************
+        
+        PB_RemoveCharFast_ptr()
         ;ASMx32_RemoveCharFast()       ; classic x86 Assembler
-        ASMx32_MMX_RemoveCharFast()    ; x32 with MMX
+        ;ASMx32_MMX_RemoveCharFast()    ; x32 with MMX
         
       CompilerEndIf 
        
-    CompilerElseIf #PB_Compiler_Backend = #PB_Backend_C And #PB_Compiler_Unicode
+    CompilerElseIf (PB_Compiler_Backend = #PB_Backend_C) And #PB_Compiler_Unicode
        
       CompilerIf #PB_Compiler_64Bit
       ; ************************************************************
@@ -1025,7 +1047,7 @@ Module FStr
       ; ************************************************************
         PB_RemoveCharFast_ptr()
         
-      CompilerElse #PB_Compiler_32Bit
+      CompilerElse ; #PB_Compiler_32Bit
       ; ************************************************************
       ; x32 C
       ; ************************************************************
@@ -1055,8 +1077,7 @@ Module FStr
   ; DESC: Replace a Character in a String with an other Character
   ; DESC: To replace all ',' with a '.' use : _ReplaceChar(@MyString, ',', '.')
   ; DESC: This a replacement for ReplaceString() only for a single Char
-  ; DESC: and with direct *String Access. This is 2-3 tiems faster than
-  ; DESC: ReplaceString().
+  ; DESC: and with direct *String Access.
   ; DESC: To UCase a single char use ReplaceChar(MyString, 'e', 'E')
   ; DESC: RepleaceChar is 5-times faster than ReplaceString with Mode 
   ; DESC: #PB_String_InPlace 
@@ -1067,7 +1088,7 @@ Module FStr
   ; RET.i : Number of chars replaced
   ; ============================================================================
     
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit And #PB_Compiler_Unicode
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_64Bit And #PB_Compiler_Unicode
       
     Protected R64.TStack_32Byte
     
@@ -1093,8 +1114,8 @@ Module FStr
       ; Check *String-Pointer and MOV it to RAX as operating register
       ; ----------------------------------------------------------------------
       !MOV RAX, [p.p_String]    ; load String address
-      !CMP RAX, 0               ; If *String = 0
-      !JE .Return               ; Exit    
+      !TEST RAX, RAX            ; If *String = 0
+      !JZ .Return               ; Exit    
       !SUB RAX, 8               ; Sub 8 to start with Add 8 in the Loop     
       ; ----------------------------------------------------------------------
       ; Backup Registers which are not free to use (like MM4..MM7 or R10..R15)
@@ -1129,8 +1150,8 @@ Module FStr
         !MOVQ MM3, [RAX]                ; load 4 Chars to MM3
         !PCMPEQW MM0, MM2               ; Compare with 0
         !MOVQ RDX, MM0                  ; RDX CompareResult contains FFFF for each NullChar 
-        !CMP RDX, 0                     ; If 0 : No NullChar found
-        !JE rc_EndIf                      ; JumpIfEqual 0 => JumpToEndif if Not EndOfString  
+        !TEST RDX, RDX                  ; If 0 : No NullChar found
+        !JZ rc_EndIf                    ; JumpIfEqual 0 => JumpToEndif if Not EndOfString  
         ; If EndOfStringFound  
           ; Caclulate the Bytepostion of EndOfString [0..3] using Bitscan
           !BSF RDX, RDX                 ; BitSanForward => No of the LSB   
@@ -1140,8 +1161,8 @@ Module FStr
           !SHR RAX, 1                   ; NoOfBytes to NoOfWord => Len(String)
           ;check for Return of Length and and move it to *outLength 
           !MOV RDX, [p.p_outLength]
-          !CMP RDX, 0
-          !JE rc_LenEndif               ; If *outLength
+          !TEST RDX, RDX
+          !JZ rc_LenEndif               ; If *outLength
             !MOV [RDX], RAX             ;   *outLength = Len()
           !rc_LenEndif:                 ; Endif
         
@@ -1171,8 +1192,8 @@ Module FStr
         !MOVQ MM0, MM3                ; Load the 4 Chars to operating Register
         !PCMPEQW MM0, MM4             ; Compare the 4 Chars with cSearch
         !MOVQ RDX, MM0                ; CompareResult to RDX
-        !CMP RDX, 0
-        !JE @f                        ; Jump to Endif if cSearch not found
+        !TEST RDX, RDX
+        !JZ @f                        ; Jump to Endif if cSearch not found
           ; Filter CharsToReplace -> MM0
           !PAND MM0, MM5              ; Filter ReplaceChars from 4xReplaeChar to get BlendMask
           ; Filter CharsToKeep -> MM1
@@ -1190,8 +1211,8 @@ Module FStr
         !@@:
         ; ------------------------------------------------------------
   
-        !CMP RCX, 0                   ; Check BOOL EndOfStringFound      
-      !JE .Loop                       ; Continue Loop if Not EndOfStringFound
+        !TEST RCX, RCX                ; Check BOOL EndOfStringFound      
+      !JZ .Loop                       ; Continue Loop if Not EndOfStringFound
       
       ; ----------------------------------------------------------------------
       ; Restore Registers which are not free to use (like MM4..MM7 or R10..R15)
@@ -1248,7 +1269,7 @@ Module FStr
   ; RET.i : Number of Unicode Characters, Chr(>255), in the String
   ; ============================================================================
       
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit 
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_64Bit 
      
     ; used Registers
     ; RAX : *String
@@ -1264,8 +1285,8 @@ Module FStr
     
     ; load *String
     !MOV RAX, [p.p_StringW]
-    !CMP RAX, 0
-    !JE .Return
+    !TEST RAX, RAX
+    !JZ .Return
     !SUB RAX, 8
     
     ; save MM4 Register in free Registers R9
@@ -1283,8 +1304,8 @@ Module FStr
       !MOVQ MM4, [RAX]            ; Backup the 4 Chars
       !PCMPEQW MM0, MM1           ; Compare with 0
       !MOVQ RDX, MM0              ; RDX CompareResult
-      !CMP RDX, 0                 ; If 0 : No NullChar found
-      !JE .cont
+      !TEST RDX, RDX              ; If 0 : No NullChar found
+      !JZ .cont
       ; If NullCharFound
          
         !MOVQ MM0, MM4
@@ -1298,8 +1319,8 @@ Module FStr
         !SHR RAX, 1                 ; NoOfBytes to NoOfWord => Len(String)
         ;check for Return of Length and and move it to *outLength 
         !MOV RDX, [p.p_outLength]
-        !CMP RDX, 0
-        !JE cuni_m01
+        !TEST RDX, RDX
+        !JZ cuni_m01
           !MOV [RDX], RAX           ; Return Length
         !cuni_m01:
         
@@ -1331,8 +1352,8 @@ Module FStr
       !SHR RDX, 4             ; NoOfBits to NoOfWords
       !Add R8, RDX            ; Add number of found UnicodeChars
       
-      !CMP RCX, 0             ; RCX<>0 => NullChar was found
-    !JE .Loop                 ;  If RCX=0 Then Repeat Loop
+      !TEST RCX, RCX          ; RCX<>0 => NullChar was found
+    !JZ .Loop                 ;  If RCX=0 Then Repeat Loop
          
     ; Restore MM4 Register from R9
     !MOVQ MM4, R9
@@ -1390,7 +1411,7 @@ Module FStr
     
     Protected *LastChar
     
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit And #PB_Compiler_Unicode
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_64Bit And #PB_Compiler_Unicode
       
       ; Used Registers:
       ;   RAX : Pointer
@@ -1404,8 +1425,8 @@ Module FStr
       ;   MM3 : the 4 Chars Backup
       
       !MOV RAX, [p.p_String]    ; load String address
-      !CMP RAX, 0               ; If *String = 0
-      !JE .Return               ;   End
+      !TEST RAX, RAX            ; If *String = 0
+      !JZ .Return               ;   End
       
       !SUB RAX, 8               ; Sub 8 to start with Add 2 in the Loop
       !XOR RCX, RCX             ; RCX = 0
@@ -1426,8 +1447,8 @@ Module FStr
         
         !PCMPEQW MM3, MM2             ; now compare the 4 Chars in MM3 with 00 to find EndOfString
         !MOVQ RCX, MM3                ; Move compare result to RCX
-        !CMP RCX, 0                   ; If CompareResult = 0 Then No NullChar found
-        !JE .cont                   ;   Goto Count cSearch\c
+        !TEST RCX, RCX                   ; If CompareResult = 0 Then No NullChar found
+        !JZ .cont                   ;   Goto Count cSearch\c
         
         !XOR R8, R8                   ; If a NullChar was found set RAX = 0, it's our Pointer
         
@@ -1451,8 +1472,8 @@ Module FStr
         !SHR RCX, 3                 ; BitNo => ByteNO
         !MOV R9, RAX                ; *LastChar = Actual StringPointer
         !ADD R9, RCX                ; *LastChar + ByteNo ; Address of last found Character
-        !CMP R8, 0                  ; If NullChar was found RAX was set to 0 => EndOfString
-      !JNE .Loop                   ; Jump Not Equal => Repeat Until RAX = 0
+        !TEST R8, R8                ; If NullChar was found RAX was set to 0 => EndOfString
+      !JNZ .Loop                    ; Jump Not Equal => Repeat Until RAX = 0
       
       !.Return:   
       
@@ -1461,9 +1482,10 @@ Module FStr
       !SHR RCX, 3                     ; BitNo to ByteNo
       !ADD RAX, RCX                   ; Pointer to EndOfString      
       !MOV RDX, [p.p_outEndOfString]
-      !CMP RDX, 0                     ; If Not *outEndOfString Then
-      !CMOVNE [RDX], RAX              ;   [MoveIfNotEqual] *outEndOfString\i = RAX = PointerEndOfString
-      
+      !TEST RDX, RDX                  ; If Not *outEndOfString Then
+      !JZ @f
+        !MOV [RDX], RAX               ;   [MoveIfNotEqual] *outEndOfString\i = RAX = PointerEndOfString
+      !@@:
       ; *LastChar
       !MOV RDX, [p.p_LastChar]         ; Pointer of last found Char to RDX
       !MOV [RDX], R9                   ; *LastChar = R9
@@ -1663,7 +1685,7 @@ Module FStr
   ; RET.i : *String 
   ; ============================================================================
 
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm    
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm)    
       
       CompilerIf #PB_Compiler_64Bit   
         ; QuadChar Version
@@ -1678,8 +1700,8 @@ Module FStr
         ;   MM2 : Shuffle Mask
        
         !MOV RAX, [p.p_String]      ; String Pointer to RAX
-        !CMP RAX, 0                 ; If *String = 0
-        !JE .Return                 ;   Exit
+        !TEST RAX, RAX              ; If *String = 0
+        !JZ .Return                 ;   Exit
         !SUB RAX, 8                 ; Sub 8 to start with an ADD in the Loop 
         
         !MOVQ MM2, qword[ts_mask]   ; load Shuffle Mask
@@ -1767,7 +1789,7 @@ Module FStr
   ; RET.i : Len(String)
   ; ============================================================================
     
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit And #PB_Compiler_Unicode
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_64Bit And #PB_Compiler_Unicode
       ; On Ryzen 5800 the MMX version is 7x faster than PB's LCase()
       Protected MMX.TStack_32Byte   ; for MMX Register Backup
       
@@ -1790,8 +1812,8 @@ Module FStr
          
       ; load *String
       !MOV RAX, [p.p_String]
-      !CMP RAX, 0
-      !JE .Return
+      !TEST RAX, RAX
+      !JZ .Return   ; If RAX = 0
       !SUB RAX, 8
       
       ; Save MM4..MM7 beause PB allow only MM0..MM3 for free use! MMX Registers are: MM0..MM7
@@ -1812,8 +1834,8 @@ Module FStr
         !MOVQ MM0, [RAX]        ; MM0 = 4 Chars
         !PCMPEQW MM0, MM5       ; [lc_00]  Compare with 0
         !MOVQ RDX, MM0          ; RDX CompareResult
-        !CMP RDX, 0             ; If 0 : No NullChar found
-        !JE @f
+        !TEST RDX, RDX          ; If 0 : No NullChar found
+        !JZ @f
           !INC RCX              ; RCX = 1 => EndOfString found
         !@@:
           
@@ -1836,8 +1858,8 @@ Module FStr
         ; combine the Masks and Add 32 to each selected Char
         !PAND MM1, MM0          ; combine both Masks Chars <='Z' and Chars >='A'      
         !MOVQ RDX, MM1          ; combined Mask to RDX
-        !CMP RDX, 0             ; Check for 0  
-        !JE @f                  ; If Mask = 0 => No char to Lcase
+        !TEST RDX, RDX          ; Check for 0  
+        !JZ @f                  ; If Mask = 0 => No char to Lcase
           !PAND MM1, MM7        ; [lc_of] Now filter all postions for adding 32 to lowercase the Char
           !MOVQ MM0, MM4
           !PADDW MM0, MM1       ; Add 32 to each filtered Char
@@ -1863,8 +1885,8 @@ Module FStr
         ; combine the Masks and Add 32 to each selected Char
         !PAND MM1, MM0          ; combine both Masks Chars <=Chr(222) and Chars >='à' Chr(192)   
         !MOVQ RDX, MM1          ; combined Mask to RDX
-        !CMP RDX, 0             ; Check for 0  
-        !JE @f                  ; If Mask = 0 => No char to Lcase
+        !TEST RDX, RDX          ; Check for 0  
+        !JZ @f                  ; If Mask = 0 => No char to Lcase
           !PAND MM1, MM7        ; [lc_of] Now filter all postions for adding 32 to lowercase the Char
           !MOVQ MM0, MM4
           !PADDW MM0, MM1       ; Add 32 to each filtered Char
@@ -1875,8 +1897,8 @@ Module FStr
         ;  save the modified Chars back to memory
         ; ----------------------------------------------------------------------
         !MOVQ [RAX], MM4        ; save back to memory
-        !CMP RCX, 0             ; RCX<>0 => NullChar was found
-      !JE .Loop                 ;  If RCX=0 Then Repeat Loop
+        !TEST RCX, RCX          ; RCX<>0 => NullChar was found
+      !JZ .Loop                 ;  If RCX=0 Then Repeat Loop
       
       ; Return  Len(String)
       !PCMPEQW MM4, MM5         ; Compare the 4 Chars with 0 to search EndOfString
@@ -1945,7 +1967,7 @@ Module FStr
   ; RET.i : Len(String)
   ; ============================================================================
     
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_64Bit And #PB_Compiler_Unicode
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_64Bit And #PB_Compiler_Unicode
       ; On Ryzen 5800 the MMX version is 7x faster than PB's UCase()
     
       Protected MMX.TStack_32Byte   ; for MMX Register Backup
@@ -1969,8 +1991,8 @@ Module FStr
      
       ; load *String
       !MOV RAX, [p.p_String]
-      !CMP RAX, 0
-      !JE .Return
+      !TEST RAX, RAX
+      !JZ .Return
       !SUB RAX, 8
       
       ; Save MM4..MM7 beause PB allow only MM0..MM3 for free use! MMX Registers are: MM0..MM7
@@ -1991,8 +2013,8 @@ Module FStr
         !MOVQ MM0, [RAX]        ; MM0 = 4 Chars
         !PCMPEQW MM0, MM5       ; [lu_00]  Compare with 0
         !MOVQ RDX, MM0          ; RDX CompareResult
-        !CMP RDX, 0             ; If 0 : No NullChar found
-        !JE @f
+        !TEST RDX, RDX          ; If 0 : No NullChar found
+        !JZ @f
           !INC RCX              ; RCX = 1 => EndOfString found
         !@@:
           
@@ -2015,8 +2037,8 @@ Module FStr
         ; combine the Masks and Sub 32 from each selected Char
         !PAND MM1, MM0          ; combine both Masks Chars <='Z' and Chars >='A'      
         !MOVQ RDX, MM1          ; combined Mask to RDX
-        !CMP RDX, 0             ; Check for 0  
-        !JE @f                  ; If Mask = 0 => No char to Lcase
+        !TEST RDX, RDX          ; Check for 0  
+        !JZ @f                  ; If Mask = 0 => No char to Lcase
           !PAND MM1, MM7        ; [lu_of] Now filter all postions for adding 32 to lowercase the Char
           !MOVQ MM0, MM4
           !PSUBW MM0, MM1       ; Sub 32 from each filtered Char
@@ -2042,8 +2064,8 @@ Module FStr
         ; combine the Masks and Sub 32 from each selected Char
         !PAND MM1, MM0          ; combine both Masks Chars <=Chr(254) and Chars >='à' Chr(224)   
         !MOVQ RDX, MM1          ; combined Mask to RDX
-        !CMP RDX, 0             ; Check for 0  
-        !JE @f                  ; If Mask = 0 => No char to Lcase
+        !TEST RDX, RDX          ; Check for 0  
+        !JZ @f                  ; If Mask = 0 => No char to Lcase
           !PAND MM1, MM7        ; [lu_of] Now filter all postions for adding 32 to lowercase the Char
           !MOVQ MM0, MM4
           !PSUBW MM0, MM1       ; Sub 32 from each filtered Char
@@ -2054,8 +2076,8 @@ Module FStr
         ;  save the modified Chars back to memory
         ; ----------------------------------------------------------------------
         !MOVQ [RAX], MM4        ; save back to memory
-        !CMP RCX, 0             ; RCX<>0 => NullChar was found
-      !JE .Loop                 ;  If RCX=0 Then Repeat Loop
+        !TEST RCX, RCX          ; RCX<>0 => NullChar was found
+      !JZ .Loop                 ;  If RCX=0 Then Repeat Loop
        
       ; Return  Len(String)
       !PCMPEQW MM4, MM5         ; Compare the 4 Chars with 0 to search EndOfString
@@ -2178,7 +2200,7 @@ CompilerIf #False
   ; RET.i : 
   ; ============================================================================
  
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_Unicode
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_Unicode
       
       CompilerIf #PB_Compiler_64Bit
       ; ************************************************************
@@ -2192,7 +2214,7 @@ CompilerIf #False
         
       CompilerEndIf 
        
-    CompilerElseIf #PB_Compiler_Backend = #PB_Backend_C And #PB_Compiler_Unicode
+    CompilerElseIf (#PB_Compiler_Backend = #PB_Backend_C) And #PB_Compiler_Unicode
        
       CompilerIf #PB_Compiler_64Bit
       ; ************************************************************
@@ -2219,9 +2241,9 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 64
-; FirstLine = 44
+; CursorPosition = 684
+; FirstLine = 617
 ; Folding = ---------
-; Markers = 661
+; Markers = 678
 ; Optimizer
 ; CPU = 5

@@ -7,6 +7,10 @@
 ;  DESC : the in Procedure Assembler variable convetion is used
 ;  DESC : [p.p_] [p.v_] for Pointers / Variables
 ;  DESC : For use outside of Procedures you have to use [p_] [v_]
+; SOURCES:
+;   A full description of the Intel Assembler Commands
+;   https://hjlebbink.github.io/x86doc/
+
 ; ===========================================================================
 ;
 ; AUTHOR   :  Stefan Maag
@@ -105,6 +109,17 @@
 ; #Nan32 = $FFC00000            ; Bit representaion for the 32Bit Float NaN value
 ; #Nan64 = $FFF8000000000000    ; Bit representaion for the 64Bit Float NaN value
 ;  ----------------------------------------------------------------------
+
+; --------------------------------------------------
+; Assembler Datasection Definition
+; --------------------------------------------------
+; db 	Define Byte = 1 byte
+; dw 	Define Word = 2 bytes
+; dd 	Define Doubleword = 4 bytes
+; dq 	Define Quadword = 8 bytes
+; dt 	Define Ten Bytes = 10 bytes
+; !label: dq 21, 22, 23
+; --------------------------------------------------
 
 ; ----------------------------------------------------------------------
 ;  Structures to reserve Space on the Stack for ASM_PUSH, ASM_POP
@@ -522,8 +537,8 @@ EndMacro
 
 
 ; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 496
-; FirstLine = 433
+; CursorPosition = 115
+; FirstLine = 45
 ; Folding = --------
 ; Optimizer
 ; CPU = 5

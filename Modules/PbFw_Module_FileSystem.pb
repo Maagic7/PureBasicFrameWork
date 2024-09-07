@@ -1,5 +1,5 @@
 ﻿; ===========================================================================
-;  FILE : Module_FileSystem.pb
+;  FILE : PbFw_Module_FileSystem.pb
 ;  NAME : Module FileSystem [FS::]
 ;  DESC : File-System Functions 
 ;  DESC : 
@@ -7,39 +7,26 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/11/15
-; VERSION  :  0.1
+; VERSION  :  0.51 Developer Version
 ; COMPILER :  PureBasic 6.0
+;
+; LICENCE  :  MIT License see https://opensource.org/license/mit/
+;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog: 
 ;{
+; 2024/01/20 S.Maag :  added ListDirectories:
+; 2024/01/20 S.Maag :  moved String File-Functions from Module String Str::
+
 ;}
 ; ===========================================================================
-
-;{ ====================      M I T   L I C E N S E        ====================
-;
-; Permission is hereby granted, free of charge, to any person obtaining a copy
-; of this software and associated documentation files (the "Software"), to deal
-; in the Software without restriction, including without limitation the rights
-; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-; copies of the Software, and to permit persons to whom the Software is
-; furnished to do so, subject to the following conditions:
-; 
-; The above copyright notice and this permission notice shall be included in all
-; copies or substantial portions of the Software.
-;
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-; SOFTWARE.
-;} ============================================================================
 
 ;- ----------------------------------------------------------------------
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
+XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
+XIncludeFile "PbFw_Module_String.pb"       ; Str::      String Module
 ; XIncludeFile ""
 
 DeclareModule FS
@@ -90,14 +77,15 @@ DeclareModule FS
     ;  #PB_FileSystem_WriteAll
     ;  #PB_FileSystem_ExecAll
     
-    #FS_Files_All = #PB_FileSystem_Link|#PB_FileSystem_ReadUser|#PB_FileSystem_WriteUser|#PB_FileSystem_ExecUser|#PB_FileSystem_ReadGroup|#PB_FileSystem_WriteGroup|#PB_FileSystem_ReadAll|#PB_FileSystem_WriteAll|#PB_FileSystem_ExecAll
+    #FS_Files_All = #PB_FileSystem_Link|#PB_FileSystem_ReadUser|#PB_FileSystem_WriteUser|#PB_FileSystem_ExecUser|#PB_FileSystem_ReadGroup|#PB_FileSystem_WriteGroup|#PB_FileSystem_ExecGroup|#PB_FileSystem_ReadAll|#PB_FileSystem_WriteAll|#PB_FileSystem_ExecAll
     
     #PB_Files_Only_Link       = #PB_FileSystem_Link
     #PB_Files_Only_ReadUser   = #PB_FileSystem_ReadUser
     #PB_Files_Only_WriteUser  = #PB_FileSystem_WriteUser
     #PB_Files_Only_ExecUser   = #PB_FileSystem_ExecUser
     #PB_Files_Only_ReadGroup  = #PB_FileSystem_ReadGroup
-    #PB_Files_Only_WriteGroup = #PB_FileSystem_WriteGroup
+    #PB_Files_Only_WriteGroup = #PB_FileSystem_WriteGroup    
+    #PB_Files_Only_ExecGroup  = #PB_FileSystem_ExecGroup 
     #PB_Files_Only_ReadAll    = #PB_FileSystem_ReadAll
     #PB_Files_Only_WriteAll   = #PB_FileSystem_WriteAll
     #PB_Files_Only_ExecAll    = #PB_FileSystem_ExecAll
@@ -108,6 +96,7 @@ DeclareModule FS
     #FS_Files_Ignore_ExecUser   = #FS_Files_All & ~#PB_FileSystem_ExecUser
     #FS_Files_Ignore_ReadGroup  = #FS_Files_All & ~#PB_FileSystem_ReadGroup
     #FS_Files_Ignore_WriteGroup = #FS_Files_All & ~#PB_FileSystem_WriteGroup
+    #FS_Files_Ignore_ExecGroup  = #FS_Files_All & ~#PB_FileSystem_ExecGroup 
     #FS_Files_Ignore_ReadAll    = #FS_Files_All & ~#PB_FileSystem_ReadAll
     #FS_Files_Ignore_WriteAll   = #FS_Files_All & ~#PB_FileSystem_WriteAll
     #FS_Files_Ignore_ExecAll    = #FS_Files_All & ~#PB_FileSystem_ExecAll
@@ -127,10 +116,16 @@ DeclareModule FS
   
   Prototype.i FileFilterCallback(*TDirectoryEntry.TDirectoryEntry)
 
-  Declare.i  ListFilesEx(Directory$, List Files.TDirectoryEntry(), SubDirLevel=#PB_Default, RegExpr$="", Flags=#FS_Files_All, *FileFilterCallback=#Null)
+  Declare.i ListFilesEx(Directory$, List Files.TDirectoryEntry(), SubDirLevel=#PB_Default, RegExpr$="", Flags=#FS_Files_All, *FileFilterCallback=#Null)
+  Declare.i ListFiles(Dir$, List Files.s(), Pattern$="", SearchInSubDirecotries=#False)
+  Declare.i ListDirectories(Dir$, List lstDir.s(), Pattern$="", SearchInSubDirecotries=#False)
   Declare.s GetAttributesText(Attrib)
   Declare.i CreatePath(Path.s)
   
+  Declare.s FileToString(FileName.s, CharMode.i = #PB_Default, ReadUnsupportedModeAsASCII=#True)
+  Declare.i FileToStringList(FileName.s, List StringList.s(), CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
+  Declare.i FileToStringMap(FileName.s, Map StringMap.s(), CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
+
   Macro FileExist(FileName)
   ; ===========================================================================
   ;  NAME : FileExist
@@ -161,16 +156,66 @@ EndDeclareModule
 Module FS
   
   EnableExplicit
+  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
   
   ;- ----------------------------------------------------------------------
   ;- Module Private Functions
   ;- ----------------------------------------------------------------------
+  
+  Procedure.i _ReadFileBOM(FileNo, ReadUnsupportedModeAsASCII=#True)
+  ; ============================================================================
+  ; NAME: _ReadFileBOM
+  ; DESC: Read File Byte Order Mark and return the detected CharMode
+  ; VAR(FileNo.i) : PureBasic File Number
+  ; VAR( ReadUnsupportedModeAsASCII): #True: if CharMode is unsuported use #PB_Ascii
+  ; RET.i : CharMode [#PB_Ascii, #PB_Unicode, #PB_UTF8] nativ supported by PB
+  ;                  [#PB_UTF16BE, #PB_UTF32,  #PB_UTF32BE] unsupported by PB
+  ;                  or #Null
+  ; ============================================================================
+   
+    Protected BOM.i     ; ByteOrderMark : see PB Help for ReadStringFormat
+    Protected RET.i
+    ; ReadStringFormat(#File) Try to dedect the ByteOrderMark BOM of Strings 
+    ; in a File and returns one of the follwoing valus
     
+    ;   #PB_Ascii  : BOM not found. This is standard Text File with ASCII Byte code
+    ;   #PB_UTF8   : UTF-8 BOM found.
+    ;   #PB_Unicode: UTF-16 (Little Endian) BOM found
+    ;   
+    ;   The following BOMs are not supported in PureBasic ReadString()
+    ;   #PB_UTF16BE: UTF-16 (Big Endian) BOM gefunden.
+    ;   #PB_UTF32  : UTF-32 (Little Endian) BOM gefunden.
+    ;   #PB_UTF32BE: UTF-32 (Big Endian) BOM gefunden.
+    
+    If FileNo
+      BOM= ReadStringFormat(FileNo)   ; Try to read the ByteOrderMark of the File
+      
+      Select BOM                                  ; BOM is the Auto detected CharMode
+        Case #PB_Ascii, #PB_Unicode, #PB_UTF8     ; PB supported Character Modes
+          RET = BOM
+        
+        Case #PB_UTF16BE, #PB_UTF32,  #PB_UTF32BE ; unsupported Charcter Modes
+          RET = #Null
+        
+        Default                                   ; every other value is unsupported
+          RET = #Null           
+      EndSelect
+      
+      If RET = #Null 
+        If ReadUnsupportedModeAsASCII
+          RET = #PB_Ascii
+        EndIf
+      EndIf
+
+    EndIf
+    
+    ProcedureReturn RET
+  EndProcedure
+  
   ;- ----------------------------------------------------------------------
   ;- Module Public Functions
   ;- ----------------------------------------------------------------------
-  
-    
+   
   Procedure.s GetAttributesText(Attrib)
   ; ===========================================================================
   ;  NAME : GetAttributesText
@@ -231,6 +276,7 @@ Module FS
   
   Define SharedParams.TSharedParams
   
+  ; Private
   Procedure _ListFilesRecursive(*Dir.String, List Files.TDirectoryEntry())
   ; ===========================================================================
   ; NAME : _ListFilesRecursive
@@ -401,10 +447,21 @@ Module FS
     EndIf
   EndProcedure
   
-  Procedure ListFiles(Dir$, List Files.s(), Pattern$="", SearchInSubDirecotries=#False)
+  Procedure.i ListFiles(Dir$, List Files.s(), Pattern$="", SearchInSubDirecotries=#False)
+  ; ===========================================================================
+  ; NAME : ListFiles
+  ; DESC : This is the Standard function to list the Files
+  ; DESC : This Version to list files is a Code from the PureBasic Forum
+  ; VAR(Dir$) : Start Directory
+  ; VAR(List Files()) : List() to hold the FileNames
+  ; VAR(Pattern$) : List only Files which matches with the Pattern$
+  ; RET.i : Number of Files found
+  ; =========================================================================== 
     Protected NewList DirList.s(), hDir
     AddElement(DirList())
     DirList()=Dir$
+    
+    ClearList(Files())
     
     While ListSize(DirList())
       FirstElement(DirList())
@@ -433,6 +490,67 @@ Module FS
       FirstElement(DirList())
       DeleteElement(DirList())
     Wend
+    
+    ProcedureReturn ListSize(Files())
+
+  EndProcedure
+  
+  Procedure.i ListDirectories(Dir$, List lstDir.s(), Pattern$="", SearchInSubDirecotries=#False)
+  ; ===========================================================================
+  ; NAME : ListDirectories
+  ; DESC : This all Directories in a Driectory
+  ; VAR(Dir$) : Start Directory
+  ; VAR(List lstDir()) : List() to hold the Directory Entries
+  ; VAR(Pattern$) : List only Files which matches with the Pattern$
+  ; RET.i : Number of Directories found
+  ; =========================================================================== 
+    Protected NewList DirList.s(), hDir
+    AddElement(DirList())
+    DirList()=Dir$
+    
+    ClearList(lstDir())
+    
+    While ListSize(DirList())
+      FirstElement(DirList())
+      Dir$=DirList()
+      
+      hDir=ExamineDirectory(#PB_Any,Dir$, Pattern$)
+      If hDir
+        While NextDirectoryEntry(hDir)          
+          If DirectoryEntryType(hDir)=#PB_DirectoryEntry_File
+            
+          Else
+            If SearchInSubDirecotries
+              Select DirectoryEntryName(hDir)
+                Case ".", ".."
+                  ; ignore
+                Default
+                 AddElement(DirList())
+                 DirList()=Dir$ + #PS$ + DirectoryEntryName(hDir)
+              EndSelect 
+            Else 
+              Select DirectoryEntryName(hDir)
+                Case ".", ".."
+                 ; ignore
+                Default                 
+                  AddElement(lstDir())
+                  lstDir() = DirectoryEntryName(hDir)
+              EndSelect
+              
+             EndIf  
+          EndIf
+        Wend
+        FinishDirectory(hDir)
+      EndIf
+      FirstElement(DirList())      
+      DeleteElement(DirList())
+    Wend
+    
+    FirstElement(lstDir())
+    DeleteElement(lstDir())
+    
+    ProcedureReturn ListSize(lstDir())
+
   EndProcedure
 
   Procedure.i CreatePath(Path.s)
@@ -472,9 +590,167 @@ Module FS
     Wend
     ProcedureReturn ret
   EndProcedure 
+  
+  Procedure.s FileToString(FileName.s, CharMode.i=#PB_Default, ReadUnsupportedModeAsASCII=#True)
+  ; ============================================================================
+  ; NAME: FileToString
+  ; DESC: Reads a (Text)-File into a String variable
+  ; VAR(FileName.s) : Full FileName (with full Path)
+  ; VAR(CharMode.i) : Character Mode [#PB_Ascii, #PB_Unicode, #PB_UTF8]
+  ; VAR( ReadUnsupportedModeAsASCII): #True: if CharMode is unsuported use #PB_Ascii
+  ; RET.s : The String
+  ; ============================================================================
+   
+    Protected Text.s    
+    Protected FileNo.i  ; File number
+
+    FileNo= ReadFile(#PB_Any, FileName) ; OpenFile for read
+    
+    If FileNo
+            
+      Select CharMode
+          
+        Case #PB_Ascii, #PB_Unicode, #PB_UTF8   ; PB supported Character Modes
+          ; OK
+          
+        Case #PB_Default  ; if CharMode is #PB_Default (-1), try to Read the correct format from File         
+          CharMode =_ReadFileBOM(FileNo, ReadUnsupportedModeAsASCII)
+           
+        Default                                       ; every other value is unsupported
+          If ReadUnsupportedModeAsASCII
+             CharMode = #PB_Ascii
+          Else
+            CharMode = #Null
+          EndIf
+          
+      EndSelect
+            
+      If CharMode
+        Text = ReadString(FileNo, CharMode | #PB_File_IgnoreEOL)
+      Else
+        Text = #Null$
+      EndIf
+      
+      CloseFile(FileNo)
+    EndIf
+    
+    ProcedureReturn Text
+  EndProcedure
+  
+  Procedure.i FileToStringList(FileName.s, List StringList.s(), CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
+  ; ============================================================================
+  ; NAME: FileToStringList
+  ; DESC: Reads a (Text)-File Line by Line into a StringList()
+  ; VAR(FileName.s) : Full FileName (with full Path)
+  ; VAR(List StringList.s()): String-List() which receives the data 
+  ; VAR(CharMode.i) : Character Mode [#PB_Ascii, #PB_Unicode, #PB_UTF8]
+  ; VAR( ReadUnsupportedModeAsASCII): #True: if CharMode is unsuported use #PB_Ascii
+  ; RET.i : Returns the number of Lines
+  ; ============================================================================
+    
+    Protected FileNo
+    Protected sLine.s
+    
+    ClearList(StringList())               ; clears all elements from List()
+
+    FileNo = ReadFile(#PB_Any, FileName)  ; open File for read
+    
+    If FileNo      
+      
+      Select CharMode
+          
+        Case #PB_Ascii, #PB_Unicode, #PB_UTF8   ; PB supported Character Modes
+          ; OK
+          
+        Case #PB_Default  ; if CharMode is #PB_Default (-1), try to Read the correct format from File         
+          CharMode =_ReadFileBOM(FileNo, ReadUnsupportedModeAsASCII)
+           
+        Default                                       ; every other value is unsupported
+          If ReadUnsupportedModeAsASCII
+             CharMode = #PB_Ascii
+          Else
+            CharMode = #Null
+          EndIf
+          
+      EndSelect
+      
+      While (Not Eof(FileNo))
+        sLine = Trim(ReadString(FileNo,CharMode))     ; removes Spaces left and right
+        
+        If sLine      ; in PureBasic this works like: if sLine <> #Null$
+          AddElement(StringList())
+          StringList() = sLine
+        EndIf
+      Wend
+      
+      CloseFile(FileNo)
+    Else 
+      MessageRequester("File not found", FileName)
+    EndIf
+  
+    ProcedureReturn (ListSize(StringList()))  ; returns the number of Lines
+  EndProcedure
+
+  Procedure.i FileToStringMap(FileName.s, Map StringMap.s(), CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
+  ; ============================================================================
+  ; NAME: FileToStringMap
+  ; DESC: Reads a Text-File Line by Line into a StringMAP()
+  ; DESC: Use This function to read TextFiles which contains a strored MAP
+  ; DESC: with the following Text-Format
+  ; DESC: [KeyValue]=[Text];  0815=This is the Text for Key 0815
+  ; VAR(FileName.s) : Full FileName (with full Path)
+  ; VAR(LMap StringMap.s(): String-MAP() which receives the data 
+  ; VAR(CharMode.i) : Character Mode [#PB_Ascii, #PB_Unicode, #PB_UTF8]
+  ; VAR( ReadUnsupportedModeAsASCII): #True: if CharMode is unsuported use #PB_Ascii
+  ; RET.i : Returns the number of Lines
+  ; ============================================================================
+    
+    Protected FileNo, I
+    Protected sLine.s
+    
+    ClearMap(StringMap()) ; clears all elements from MAP()
+    
+    FileNo = ReadFile(#PB_Any, FileName) ; open File for read
+    
+    If FileNo
+      
+      Select CharMode
+          
+        Case #PB_Ascii, #PB_Unicode, #PB_UTF8   ; PB supported Character Modes
+          ; OK
+          
+        Case #PB_Default  ; if CharMode is #PB_Default (-1), try to Read the correct format from File         
+          CharMode =_ReadFileBOM(FileNo, ReadUnsupportedModeAsASCII)
+           
+        Default                                       ; every other value is unsupported
+          If ReadUnsupportedModeAsASCII
+             CharMode = #PB_Ascii
+          Else
+            CharMode = #Null
+          EndIf
+          
+      EndSelect
+            
+      While (Not Eof(FileNo))
+        sLine = Trim(ReadString(FileNo, CharMode))
+        
+        If sLine
+          ; Textformat: [KEY] = [TEXT]
+          I = FindString(sLine, "=")
+          If I
+            AddMapElement(StringMap(), Left(sLine, I-1))
+            StringMap() = Mid(sLine, I+1)
+          EndIf
+        EndIf
+        
+      Wend
+      CloseFile(FileNo)
+    EndIf
+    
+    ProcedureReturn (MapSize(StringMap())) ; returns the number of Lines
+  EndProcedure
 
 EndModule 
-
 
 CompilerIf #PB_Compiler_IsMainFile
  ; ----------------------------------------------------------------------
@@ -484,12 +760,12 @@ CompilerIf #PB_Compiler_IsMainFile
   EnableExplicit
   UseModule FS
   
-  CreatePath("D:\Temp\PureBasic\Test\CreatePath\MyPath\")
+  ; CreatePath("D:\Temp\PureBasic\Test\CreatePath\MyPath\")
   
 CompilerEndIf
-; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 19
-; Folding = ---
+; IDE Options = PureBasic 6.11 LTS (Windows - x64)
+; CursorPosition = 463
+; FirstLine = 447
+; Folding = ----
 ; Optimizer
 ; CPU = 5
-; Compiler = PureBasic 6.00 LTS (Windows - x86)

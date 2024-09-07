@@ -30,114 +30,61 @@
 
 DeclareModule PbFw
    EnableExplicit
-
+   
+  Macro HashTag
+  #
+  EndMacro
+  
+  ; define Constant if Not defined yet
+  Macro CONST(Constant, Value)
+    CompilerIf Not Defined(Constant, #PB_Constant)
+      PbFw::HashTag#Constant = Value
+    CompilerEndIf
+  EndMacro
+   
   ;- ----------------------------------------------------------------------
   ;- Library configuration Constants used for compiling
-  ;  ----------------------------------------------------------------------
+  ;- ----------------------------------------------------------------------
    
   ; The idea is, to set this in future with an PB IDE Tool
-  #PbFw_cfg_Use_MMX = #True     ; Configuration FLAG Use MMX 
-  #PbFw_cfg_Use_SSE = #True     ; Configuration FLAG Use SSE  
-  #PbFw_cfg_Use_AVX = #True     ; Configuration FLAG Use AVX
+  ; then the config Constants are set in a Project config file
+  CONST(PbFwCfg_Global_CheckPointerException, #True)  
+  CONST(PbFwCfg_Global_ASM_Enable,            #True)     ; Enables special ASM Version, if #False -> CompileClassicMode 
+  
   ;  ----------------------------------------------------------------------
-  
-  ; Use this Template to select differnt MMX-Use
-  ; CompilerSelect PbFw::#PbfW_USE_MMX_Type
-  ;   
-  ;   CompilerCase PbFw::#PbfW_SSE_x64          ; 64 Bit-Version
-  ;    
-  ;   CompilerCase PbFw::#PbfW_SSE_x32          ; 32 Bit Version
-  ;   
-  ;   CompilerCase PbFw::#PbfW_SSE_C_Backend    ; for the C-Backend
-  ;    
-  ;   CompilerDefault                           ; Classic Version
-  ; 
-  ; CompilerEndSelect       
-
-  Enumeration USE_MMX
-    #PbFw_MMX_OFF        ; MMX Extention not present
-    #PbFw_MMX_x32
-    #PbFw_MMX_X64
-    #PbFw_SSE_x32        ; 32-Bit Assembler SSE Code
-    #PbFw_SSE_x64        ; 64-Bot Assembler SSE Code
-    #PbFw_SSE_C_Backend  ; For Future use in the C-Backend (maybe it will be possible To force SSE optimation with the C intrinsic Macros)
-  EndEnumeration  
-
-  ; Constants to compile Application with features! 
-  ; DO Not modify For individual configuration! The user have to use the #PbFw_cfg_ Flags for configuration
-  CompilerIf #PB_Compiler_Processor = #PB_Processor_x86 Or #PB_Compiler_Processor = #PB_Processor_x64 And  #PB_Compiler_32Bit  
-    ; 32 Bit Application on AMD/INTEL x86, x64
-    #PbFw_APPx32_MMX = #PbFw_cfg_Use_MMX
-    #PbFw_APPx32_SSE = #PbFw_cfg_Use_SSE
-    #PbFw_APPx32_AVX = #PbFw_cfg_Use_AVX
     
-    #PbFw_APPx64_MMX = #False
-    #PbFw_APPx64_SSE = #False
-    #PbFw_APPx64_AVX = #False
+   ; use this Macro in Moduls where different Code is used for the same Funtion  
+  Macro mac_CompilerModeSettting
+ ; ************************************************************************
+    Enumeration
+      #PbFwCfg_Module_Compile_Classic                 ; use Classic PB Code
+      #PbFwCfg_Module_Compile_ASM32                   ; x32 Bit Assembler
+      #PbFwCfg_Module_Compile_ASM64                   ; x64 Bit Assembler
+      #PbFwCfg_Module_Compile_C                       ; use optimations for C-Backend
+    EndEnumeration
     
-  CompilerElseIf #PB_Compiler_Processor = #PB_Processor_x64 And  #PB_Compiler_64Bit 
-    ; 64 Bit Application on AMD/INTEL x64
-    #PbFw_APPx32_MMX = #False
-    #PbFw_APPx32_SSE = #False
-    #PbFw_APPx32_AVX = #False
-    
-    #PbFw_APPx64_MMX = #PbFw_cfg_Use_MMX
-    #PbFw_APPx64_SSE = #PbFw_cfg_Use_SSE
-    #PbFw_APPx64_AVX = #PbFw_cfg_Use_AVX
-   
-  CompilerElse
-    #PbFw_APPx32_MMX = #False
-    #PbFw_APPx32_SSE = #False
-    #PbFw_APPx32_AVX = #False
-    
-    #PbFw_APPx64_MMX = #False 
-    #PbFw_APPx64_SSE = #False 
-    #PbFw_APPx64_AVX = #False
-  CompilerEndIf
-  
-   Enumeration 
-    #PbFw_VEC_MMX_OFF        ; No SSE present
-    #PbFw_VEC_MMX_x32
-    #PbFw_VEC_MMX_X64
-    #PbFw_VEC_SSE_x32        ; 32-Bit Assembler SSE Code
-    #PbFw_VEC_SSE_x64        ; 64-Bot Assembler SSE Code
-    #PbFw_VEC_SSE_C_Backend  ; For Future use in the C-Backend (maybe it will be possible To force SSE optimation with the C intrinsic Macros)
-  EndEnumeration  
-  
-   
-  CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm
-    
-    ; **********  32 BIT  **********
-    CompilerIf PbFw::#PbFw_APPx32_SSE
-      #PbFw_USE_MMX_Type = #PbFw_SSE_x32             ; x32 SSE
-      
-    CompilerElseIf PbFw::#PbFw_APPx32_MMX
-      #PbFw_USE_MMX_Type = #PbFw_MMX_x32             ; X32 MMX
-      
-    ; **********  64 BIT  **********
-    CompilerElseIf PbFw::#PbFw_APPx64_SSE
-       #PbFw_USE_MMX_Type = #PbFw_SSE_x64            ; X64 SSE
-       
-     CompilerElseIf PbFw::#PbFw_APPx32_MMX
-      #PbFw_USE_MMX_Type = #PbFw_MMX_X64             ; x64 SSE
-      
-    CompilerElse
-       #PbFw_USE_MMX_Type = #PbFw_MMX_OFF            ; MMX OFF
-    CompilerEndIf
-      
-  CompilerElseIf    #PB_Compiler_Backend = #PB_Backend_C
-    
-    If PbFw::#PbFw_APPx32_SSE | PbFw::#PbFw_APPx32_MMX | PbFw::#PbFw_APPx64_SSE | PbFw::#PbFw_APPx64_MMX
-      
-      #PbFw_USE_MMX_Type = #PbFw_SSE_C_Backend       ; Activate C-Backend-MMX optimation 
-    Else
-       #PbFw_USE_MMX_Type = #PbFw_MMX_OFF            ; MMX OFF
-    EndIf
-    
-  CompilerElse
-    #PbFw_USE_MMX_Type = #PbFw_MMX_OFF
-  CompilerEndIf 
-  
+    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PbFwCfg_Module_ASM_Enable And PbFw::#PbFwCfg_Global_ASM_Enable 
+        ; A S M   B A C K E N D
+        CompilerIf #PB_Compiler_32Bit
+          #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_ASM32     
+        ; **********  64 BIT  **********
+        CompilerElseIf #PB_Compiler_64Bit
+          #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_ASM64     
+        ; **********  Classic Code  **********
+        CompilerElse
+          #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_Classic     
+        CompilerEndIf
+          
+      CompilerElseIf  #PB_Compiler_Backend = #PB_Backend_C
+        ;  C - B A C K E N D
+         #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_C     
+      CompilerElse
+        ;  To force Classic Code Compilation
+        #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_Classic     
+    CompilerEndIf 
+  ; ************************************************************************
+  EndMacro
+ 
   Structure TPbFw_cfgUseMMX
     Use_MMX.i     ; Configuration FLAG Use MMX 
     Use_SSE.i     ; Configuration FLAG Use SSE  
@@ -189,21 +136,6 @@ Module PbFw
   Procedure.s Get_MMX_STATE_TXT()
     Protected ret.s
     
-    Select PbFw::#PbFw_USE_MMX_Type
-        
-      Case PbFw::#PbfW_MMX_Off
-        ret = "MMX_OFF"
-        
-      Case PbFw::#PbfW_SSE_x32
-        ret = "MMX_SSE_x32_ASM"
-        
-      Case PbFw::#PbfW_SSE_x64
-         ret = "MMX_SSE_x64_ASM"
-       
-      Case PbFw::#PbfW_SSE_C_Backend
-         ret = "MMX_SSE_C_BackEnd"
-        
-     EndSelect
      ProcedureReturn ret    
   EndProcedure
   
@@ -214,8 +146,9 @@ EndModule
 DisableExplicit
 
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 23
+; IDE Options = PureBasic 6.11 LTS (Windows - x64)
+; CursorPosition = 44
+; FirstLine = 15
 ; Folding = --
 ; Optimizer
 ; CPU = 5
