@@ -34,10 +34,8 @@ DeclareModule clsText ; clsText
   EndMacro
    
   Interface IClass Extends BaseClass::IClass ; create the Interface
-    GetText.s()
-    SetText(NewText.s)
-    GetFont.i()
-    SetFont(NewFontID.i)
+    Text.s()
+    Text_(NewText$)
   EndInterface
   
   Structure TThis Extends BaseClass::TThis   ; Structure for the Instance Data
@@ -55,7 +53,7 @@ Module clsText
   PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
  
   Global Dim VTable.a(SizeOf(IClass)-1)   ; create VTable with the Size of the Interface 
-  BaseClass::Inherit_VTable(@VTable())    ; Inherit the Methodes of BaseClass (copy BaseClass::VTable => VTable)
+  BaseClass::_Inherit_VTable(@VTable())   ; Inherit the Methodes of BaseClass (copy BaseClass::VTable => VTable)
  
   ; Macro to write MethodeAdress into VTable. Use it after EndProcedure : AsMethode(MethodeName) 
   Macro AsMethode(MethodeName)
@@ -66,21 +64,21 @@ Module clsText
     PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @ProcedureName()) 
   EndMacro
 
-  Procedure.s GetText(*This.TThis)
+  Procedure.s Text(*This.TThis)
     ProcedureReturn  *This\Text
-  EndProcedure : AsMethode(GetText)
+  EndProcedure : AsMethode(Text)
     
-  Procedure SetText(*This.TThis, NewText.s)
+  Procedure Text_(*This.TThis, NewText.s)
     *This\Text = NewText  
-  EndProcedure : AsMethode(SetText)
+  EndProcedure : AsMethode(Text_)
   
-  Procedure.i GetFont(*This.TThis)
+  Procedure.i Font(*This.TThis)
     ProcedureReturn *This\FontID
-  EndProcedure : AsMethode(GetFont)
+  EndProcedure : AsMethode(Font)
 
-  Procedure SetFont(*This.TThis, NewFontID.i)
+  Procedure Font_(*This.TThis, NewFontID.i)
     *This\FontID = NewFontID
-  EndProcedure : AsMethode(SetFont)
+  EndProcedure : AsMethode(Font_)
       
   Procedure New() 
   ; ======================================================================
@@ -108,7 +106,7 @@ Module clsText
     ProcedureReturn *obj
   EndProcedure
   
-  Procedure.i Inherit_VTable(*Destination_VTable) 
+  Procedure.i _Inherit_VTable(*Destination_VTable) 
   ; ======================================================================
   ; NAME: Inherit_VTable 
   ; DESC: This Procedure has to be called from the derivate class to copy
@@ -118,7 +116,7 @@ Module clsText
   ; RET.i: Bytes copied
   ; ======================================================================
     
-    ProcedureReturn OOP::CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
+    ProcedureReturn OOP::_CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
   EndProcedure
 
 EndModule
@@ -129,9 +127,8 @@ Define *obj1.clsText::IClass = clsText::New()
 UseModule clsText
 Define *obj2.IClass = New()
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 127
-; FirstLine = 29
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 27
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

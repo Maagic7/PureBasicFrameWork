@@ -76,9 +76,9 @@ DeclareModule OOP
   
   Declare.i Release(*This.TThis)    ; make Release() Public, so it's possible to call over Interface or direct call
   
-  Declare.i CopyVTable(*Source, *Destination, ByteSize)
+  Declare.i _CopyVTable(*Source, *Destination, ByteSize)
   
-  Declare.i Inherit_VTable(*Destination_VTable) 
+  Declare.i _Inherit_VTable(*Destination_VTable) 
   ; ======================================================================
   ; NAME: Inherit_VTable 
   ; DESC: This Procedure has to be called from the derivate class to copy
@@ -182,7 +182,7 @@ Module OOP
   EndProcedure : AsMethode(Release)
   ; PokeI(@VTable() + OffsetOf(IOOP\Release()), @Release()) ; Write Methodes Address into VTable
 
-  Procedure.i CopyVTable(*Source, *Destination, ByteSize)
+  Procedure.i _CopyVTable(*Source, *Destination, ByteSize)
   ; ======================================================================
   ; NAME: CopyVTable()
   ; DESC: Copy a VTable to an other! From BaseClass to DerivateClass
@@ -199,7 +199,7 @@ Module OOP
     ProcedureReturn 0
   EndProcedure
   
-  Procedure.i Inherit_VTable(*Destination_VTable) 
+  Procedure.i _Inherit_VTable(*Destination_VTable) 
   ; ======================================================================
   ; NAME: Inherit_VTable 
   ; DESC: This Procedure has to be called from the derivate class to copy
@@ -209,7 +209,7 @@ Module OOP
   ; RET.i: Bytes copied
   ; ======================================================================
     
-    ProcedureReturn CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
+    ProcedureReturn _CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
   EndProcedure
 
   
@@ -219,8 +219,9 @@ Module OOP
   
 EndModule
 
-; IDE Options = PureBasic 6.03 LTS (Windows - x64)
-; CursorPosition = 23
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 211
+; FirstLine = 65
 ; Folding = 9-
 ; Optimizer
 ; CPU = 5

@@ -25,7 +25,7 @@
 ;  ----------------------------------------------------------------------
 XIncludeFile "..\Modules\PbFw_Module_PbFw.pb"   ; PbFw:: FrameWork control Module
 XIncludeFile "PbFw_Class_OOP.pb"                ; OOP::  FrameWork BaseClass
-XIncludeFile "PbFw_Class_GadgetBase.pb"         ; OOP::  FrameWork BaseClass
+XIncludeFile "PbFw_Class_GadgetBase.pb"         ; clsGadgetBase::  BaseClass for Gadgets
 
 ; individual Methodes to implement
 ; Color, Text, ToolTip, Attribute [#PB_String_MaximumLength]
@@ -46,7 +46,7 @@ DeclareModule clsStringGadget   ; String Gadget
     MaxInputLength_(NewMaxLength)
 
     Text.s()
-    Test_(NewText$)
+    Text_(NewText$)
     
     ToolTip_(NewToolTip$)
   EndInterface
@@ -121,7 +121,7 @@ Module clsStringGadget
     EndIf    
   EndProcedure : AsMethode(MaxInputLength_)
 
-  Procedure.i MaxInputLength(*This.TThis,)
+  Procedure.i MaxInputLength(*This.TThis)
      If *This\init
        ProcedureReturn GetGadgetAttribute(*This\hPB, #PB_String_MaximumLength)
      EndIf
@@ -136,7 +136,7 @@ Module clsStringGadget
   ; RET: -
   ; ============================================================================
     If *This\init
-      SetGadgetText(*This\hPB, NewText)
+      SetGadgetText(*This\hPB, NewText$)
     EndIf
   EndProcedure : AsMethode(Text_)
   
@@ -199,7 +199,7 @@ Module clsStringGadget
   ; RET.i: Bytes copied
   ; ======================================================================
     
-    ProcedureReturn OOP::CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
+    ProcedureReturn OOP::_CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
   EndProcedure
 
 EndModule
@@ -220,8 +220,8 @@ CompilerIf #PB_Compiler_IsMainFile
   DisableExplicit
 CompilerEndIf
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 9
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 60
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

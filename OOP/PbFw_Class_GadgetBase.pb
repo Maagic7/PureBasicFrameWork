@@ -1,6 +1,6 @@
 ﻿; ===========================================================================
 ; FILE : PbFw_Class_GadgetBase.pb 
-; NAME : PureBasic Framework: Base Class for Gadgets
+; NAME : PureBasic Framework: Base Class for Gadgets clsGadgetBase::
 ; DESC : This Class implements all Methodes which are supported by all
 ; DESC : Gadgets. 
 ; ===========================================================================
@@ -26,7 +26,7 @@
 XIncludeFile "..\Modules\PbFw_Module_PbFw.pb"   ; PbFw:: FrameWork control Module
 XIncludeFile "PbFw_Class_OOP.pb"                ; OOP::  FrameWork BaseClass
 
-DeclareModule clsGadgetBase ; clsText
+DeclareModule clsGadgetBase ; clsGadgetBase
   EnableExplicit
   
   ; Input the BasceClassName here! Attention do not add ;comments after BaseClassName. PB don't like this in Macros
@@ -60,7 +60,7 @@ DeclareModule clsGadgetBase ; clsText
     SetFocus()
     
     Tag.s()                     ; to store user defined data
-    Tag_(NewTag.s)
+    Tag_(NewTag$)
 
     Type.i()
     Width.i()
@@ -80,7 +80,7 @@ DeclareModule clsGadgetBase ; clsText
   EndStructure
   
   Declare.i New()
-  Declare.i Inherit_VTable(*Destination_VTable) 
+  Declare.i _Inherit_VTable(*Destination_VTable) 
   
   Global NewMap mapGadget()
 EndDeclareModule
@@ -90,7 +90,7 @@ Module clsGadgetBase
   PbFw::ListModule(#PB_Compiler_Module)   ; Lists the Module in the ModuleList (for statistics)
  
   Global Dim VTable.a(SizeOf(IClass)-1)   ; create VTable with the Size of the Interface 
-  BaseClass::Inherit_VTable(@VTable())    ; Inherit the Methodes of BaseClass (copy BaseClass::VTable => VTable)
+  BaseClass::_Inherit_VTable(@VTable())    ; Inherit the Methodes of BaseClass (copy BaseClass::VTable => VTable)
  
   ; Macro to write MethodeAdress into VTable. Use it after EndProcedure : AsMethode(MethodeName) 
   Macro AsMethode(MethodeName)
@@ -201,7 +201,6 @@ Module clsGadgetBase
     EndIf 
   EndProcedure : AsMethode(Group)
 
-  
   Procedure.i Height(*This.TThis, Mode = #PB_Gadget_ActualSize)
   ; ============================================================================
   ; NAME: Height
@@ -328,7 +327,7 @@ Module clsGadgetBase
   ; VAR(NewTag$): The new Tag-String
   ; ============================================================================
     If *This\init
-      *This\Tag  = NewTag
+      *This\Tag  = NewTag$
     EndIf
   EndProcedure : AsMethode(Tag_)
 
@@ -442,7 +441,7 @@ Module clsGadgetBase
     ProcedureReturn *obj
   EndProcedure
 
-  Procedure.i Inherit_VTable(*Destination_VTable) 
+  Procedure.i _Inherit_VTable(*Destination_VTable) 
   ; ======================================================================
   ; NAME: Inherit_VTable 
   ; DESC: This Procedure has to be called from the derivate class to copy
@@ -452,7 +451,7 @@ Module clsGadgetBase
   ; RET.i: Bytes copied
   ; ======================================================================
     
-    ProcedureReturn OOP::CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
+    ProcedureReturn OOP::_CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
   EndProcedure
 
 EndModule
@@ -471,9 +470,8 @@ CompilerIf #PB_Compiler_IsMainFile
   DisableExplicit
 CompilerEndIf
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 187
-; FirstLine = 147
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 14
 ; Folding = ------
 ; Optimizer
 ; CPU = 5

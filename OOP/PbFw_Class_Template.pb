@@ -46,7 +46,7 @@ DeclareModule clsTemplate ; clsText
   EndStructure
   
   Declare.i New()
-  Declare.i Inherit_VTable(*Destination_VTable) 
+  Declare.i _Inherit_VTable(*Destination_VTable) 
  
 EndDeclareModule
 
@@ -55,7 +55,7 @@ Module clsTemplate
   PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
  
   Global Dim VTable.a(SizeOf(IClass)-1)   ; create VTable with the Size of the Interface 
-  BaseClass::Inherit_VTable(@VTable())    ; Inherit the Methodes of BaseClass (copy BaseClass::VTable => VTable)
+  BaseClass::_Inherit_VTable(@VTable())    ; Inherit the Methodes of BaseClass (copy BaseClass::VTable => VTable)
  
   ; Macro to write MethodeAdress into VTable. Use it after EndProcedure : AsMethode(MethodeName) 
   Macro AsMethode(MethodeName)
@@ -72,11 +72,11 @@ Module clsTemplate
 
   Procedure.s Text(*This.TThis)
     ProcedureReturn  *This\Text
-  EndProcedure : AsMethode(GetText)
+  EndProcedure : AsMethode(Text)
     
   Procedure Text_(*This.TThis, NewText.s)
     *This\Text = NewText  
-  EndProcedure : AsMethode(SetText)
+  EndProcedure : AsMethode(Text_)
   
   ;- ---------------------------------------------------------------------
   ;- Public Procedures 
@@ -108,7 +108,7 @@ Module clsTemplate
     ProcedureReturn *obj
   EndProcedure
   
-  Procedure.i Inherit_VTable(*Destination_VTable) 
+  Procedure.i _Inherit_VTable(*Destination_VTable) 
   ; ======================================================================
   ; NAME: Inherit_VTable 
   ; DESC: This Procedure has to be called from the derivate class to copy
@@ -118,7 +118,7 @@ Module clsTemplate
   ; RET.i: Bytes copied
   ; ======================================================================
     
-    ProcedureReturn OOP::CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
+    ProcedureReturn OOP::_CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
   EndProcedure
 
 EndModule
@@ -137,9 +137,9 @@ CompilerIf #PB_Compiler_IsMainFile
   DisableExplicit
 CompilerEndIf
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 78
-; FirstLine = 11
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 76
+; FirstLine = 16
 ; Folding = ---
 ; Optimizer
 ; CPU = 5
