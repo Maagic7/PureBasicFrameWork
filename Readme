@@ -1,4 +1,3 @@
-
 PureBasic Framework
 It's  mostly in Beta or Brainstorming State
 See comments in Module Code for the actual relase State!
@@ -6,12 +5,29 @@ Do not use any code in your projects until you tested it!
 
 Download it, only if you want to be part of the development!
 
-Some highlights
-
+Some Module descriptions
+PbFw_ASM_Macros.pbi : Collection of Assembler optimation Macros					  
 PbFw_Module_Bits    : optimized Bit manipulation functions
-PbFW_Module_Roman   : Converter for Roman Numbers
-PbFw_Module_VECTORf : SSE optimized float Vector operations (3D Grafics)
-PbFw_Module_VECTORd : SSE optimized double Vector operations (3D Grafics)
-PbFw_Module_STL     : A STL-File-Format importer (3D Grafics)
+
+PbFw_Module_CodeCreation  : Helper Functions for Creating PB-Code and copy it to ClipBoard
+PbFw_Module_Complex       : Module for Math with complex numbers
+PbFw_Module_CPU           : CPU indentification und Featuer Flags
+
+PbFw_Module_DbCodeCreation: DataBase CodeCreation Module
+
+PbFw_Module_FileSystem : File-System Functions
+
+PbFW_Module_PB		: PureBasic Command extention. Add missing commands: 
+                      Min, Max,.., ElapsedMicrosenconds/Nanoseconds, Color Macros
+
 PbFw_Module_Prime   : fast 64Bit Prime Number Test and Prime Factorisation
                       using Modulo(30) distance for reducing caclculations
+
+PbFW_Module_Roman   : Converter for Roman Numbers
+
+PbFw_Module_STL       : A STL-File-Format importer (3D Grafics)
+PbFw_Module_StringSSE : Ultra fast String Functions using SSE 
+ 
+PbFw_Module_VisualBasic : nearly all VisualBasic6 Constants
+PbFw_Module_VECTORf : SSE optimized float Vector operations (3D Grafics)
+PbFw_Module_VECTORd : SSE optimized double Vector operations (3D Grafics)
