@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.12 LTS (Windows - x64)">
+  <section name="config">
+    <options closefiles="1" openmode="0" name="Color Modul Develop"/>
+  </section>
+  <section name="data">
+    <explorer view="D:\PureBasic\" pattern="0"/>
+    <log show="1"/>
+    <lastopen date="2025-02-02 20:59" user="user1" host="AMD5800X"/>
+  </section>
+  <section name="files">
+    <file name="..\..\PbFw_Module_Image.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="++"/>
+      <fingerprint md5="2fe7ada16abf5b93b939638e02d305a6"/>
+    </file>
+    <file name="..\..\PbFw_Module_Buffer.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="++"/>
+      <fingerprint md5="e806360f2599ffdcb1b0fd9edda753bc"/>
+    </file>
+    <file name="..\..\PbFw_Module_COLOR.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="++"/>
+      <fingerprint md5="afdac6cbe6ecda80fd030cf2fcc40417"/>
+    </file>
+    <file name="..\..\PbFw_Module_PB.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="4" panelstate="++"/>
+      <fingerprint md5="3a5bb55c4b584dc51a205b4a98d48e41"/>
+    </file>
+    <file name="..\..\PbFw_Module_X11Colors.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="491a581c48ed50d490b45224e5f5600d"/>
+    </file>
+  </section>
+  <section name="targets">
+    <target name="Default Target" enabled="1" default="1">
+      <inputfile value="Color_Main.pb"/>
+      <outputfile value=""/>
+      <options debug="1" optimizer="1"/>
+      <format exe="default" cpu="5"/>
+    </target>
+  </section>
+</project>
