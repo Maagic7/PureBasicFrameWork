@@ -7,7 +7,7 @@
 ;
 ; AUTHOR   : Stefan Maag
 ; DATE     : 2022/10/30
-; VERSION  : 0.01 untested Developer Version
+; VERSION  : 0.1 Brainstorming version
 ; COMPILER : PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -32,35 +32,19 @@ XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 DeclareModule Math
   EnableExplicit
   
-  ; in x64: HandMade Modulo is ~13% in fastern than PB's (Number % div) tested on Ryzen 5800
+  ; in x64: hand made Modulo is ~13% in fastern than PB's (Number % div) tested on Ryzen 5800
   ; in x32: for Quads PureBasic Modulo is faster
-  CompilerIf #PB_Compiler_64Bit
-    Macro _mac_Modulo(Number, div)
-      (Number-(Number/div)*div)
-    EndMacro
-  CompilerElse
-    Macro _mac_Modulo(Number, div)
-      Number % div
-    EndMacro
-  CompilerEndIf
-
-  Macro mac_IsInRange(value, min, max)
-    Bool(value >= min) And Bool(Val <= max)  
-  EndMacro 
+;   CompilerIf #PB_Compiler_64Bit
+;     Macro _mac_Modulo(Number, div)
+;       (Number-(Number/div)*div)
+;     EndMacro
+;   CompilerElse
+;     Macro _mac_Modulo(Number, div)
+;       Number % div
+;     EndMacro
+;   CompilerEndIf
   
-  Macro mac_IsEqual(x1, x2, delta)
-    (x1 <= (x2 +delta)) And (x1 >= (x2 -delta))
-  EndMacro
-
-  Macro _mac_Exp2(value)
-    (value * value)
-  EndMacro
-  
-  Macro _mac_Exp3(value)
-    (value * value * value)
-  EndMacro
-
-  Macro mac_Hypothenuse(A, B)
+  ;{ 2025/01/30} Now this functions are part of Module PB::
   ; ============================================================================
   ; NAME: Hypothenuse
   ; DESC: Calculates the Hypothenuse of a Triangle with Pythagoras c²=a²+b²
@@ -68,11 +52,11 @@ DeclareModule Math
   ; VAR(B): Legnth Triangel leg B 
   ; RET : Legnth of Hypothenuse c=Sqr(a²+b²)
   ; ============================================================================
+  Macro mac_Hypothenuse(A, B)
     Sqr(A*A + B*B)  
   EndMacro
   Declare.d Hypothenuse(A.d, B.d)   ; Procedure Version of Hypothenuse()
   
-  Macro mac_Lerp(A, B, T)   
   ; ============================================================================
   ; NAME: Lerp
   ; DESC: Blending between A..B from 0..100% with T={0..1}
@@ -82,13 +66,12 @@ DeclareModule Math
   ; VAR(T) : Time Value {0..1} = {0..100%}
   ; RET : Lerped Value in the Range {ValStart..ValEnd}
   ; ============================================================================
- 
+  Macro mac_Lerp(A, B, T)    
     A + (B-A) * T   ; A*(1-T) + B*T
   EndMacro
   ; InverseLerp Get the T={0..1} for the blended Value V in the Range {A..B}
   Declare.d Lerp(A.d, B.d, T.d)  ; Procedure Version of Lerp()
     
-  Macro mac_InverseLerp(A, B, V)
   ; ============================================================================
   ; NAME: InverseLerp
   ; DESC: Get the BlendingTime T{0..1} of the Value V in the Range 
@@ -99,29 +82,32 @@ DeclareModule Math
   ; VAR(T): Time Value {0..1} = {0..100%}
   ; RET : Blendig Time of the Value V {0..1} = {0..100%}
   ; ============================================================================  
+  Macro mac_InverseLerp(A, B, V)
     (V-A)/(B-A)
   EndMacro
-  Declare.d InverseLerp(A, B, V) ; Procedure Version of InverseLerp()
+  
+  Declare.d InverseLerp(A.d, B.d, V.d) ; Procedure Version of InverseLerp()
     
-  Macro mac_Remap(val, inMin, inMax, outMin, outMax)
   ; ============================================================================
   ; NAME: Remap
   ; DESC: Scales a value what is in the 
-  ; DESC: Range {inMin..inMax} ro a new Range {outMin..outMax}
+  ; DESC: Range {inMin..inMax} to a new Range {outMin..outMax}
   ; DESC: 
   ; DESC:                       (outMax - outMinOut)
   ; DESC: ret = (val - inMin) ------------------------  + outMin
   ; DESC:                         (inMax - inMin) 
   ; DESC: 
-  ; VAR(val) : Pointer to Return-Vector VECf::TVector
+  ; VAR(val) : The Value to scale
   ; VAR(inMin) : Input Range Minimum
   ; VAR(inMax) : Input Range Maximum
   ; VAR(outMin): Output Range Minimum
   ; VAR(outMax): Output Range Maximum
   ; RET : the Value val scaled to the Output Range
   ; ============================================================================     
+  Macro mac_Remap(val, inMin, inMax, outMin, outMax)
     (outMax - outMin)/(inMax - inMin) * (val - inMin) + outMin
   EndMacro
+  ;}
   
   Declare.d BinomialCoefficient(N.i, K.i)
   Declare.i GreatestCommonDivisor(A.i, B.i)
@@ -165,7 +151,7 @@ Module Math
   EndProcedure 
   
   ; InverseLerp Get the T={0..1} for the blended Value V in the Range {A..B}
-  Procedure.d InverseLerp(A, B, V) ; Return the Time of the blended Value T {0<= T <=1} 
+  Procedure.d InverseLerp(A.d, B.d, V.d) ; Return the Time of the blended Value T {0<= T <=1} 
   ; ============================================================================
   ; NAME: InverseLerp
   ; DESC: Get the BlendingTime T{0..1} of the Value V in the Range 
@@ -232,11 +218,11 @@ Module Math
   ; DESC: https://rosettacode.org/wiki/Evaluate_binomial_coefficients#Ada
   ; VAR(N): N
   ; VAR(K): K
-  ; RET.e : Binomial Coefficient 
+  ; RET.d : Binomial Coefficient 
   ; ======================================================================
      
     Protected.i I, M
-    Protected.d ret=1.0
+    Protected.d ret = 1.0
    
     If N>K
       If K>=1     
@@ -246,7 +232,7 @@ Module Math
           M=K
         EndIf     
         For I = 1 To M
-          ret= ret * ((N-M+I)/I)  
+          ret = ret * ((N-M+I)/I)  
         Next I     
       EndIf
     EndIf      
@@ -266,8 +252,7 @@ Module Math
     While B
       C = A
       A = B
-      ;B = C % B
-      B = _mac_Modulo(C, B) ; Macro with Modulo SpeedOptimation
+      B = C % B
     Wend
     ProcedureReturn A
   EndProcedure
@@ -453,12 +438,12 @@ Module Math
             dmax = temp2
           EndIf
           
-          ;-------------------------------------------------------------------------
-          ;extra conditional added here to insure that large values are not plotted
-          ;if an area should not be contoured, values above nullcode should be entered in
-          ;the matrix Z
+          ; -------------------------------------------------------------------------
+          ; extra condition added here to insure that large values are not plotted
+          ; if an area should not be contoured, values above nullcode should be entered in
+          ; the matrix Z
           
-          ;------------------------------------------------------------------------
+          ; ------------------------------------------------------------------------
           If dmax >= contour(0) And dmin <= contour(nc - 1) And dmax < Nullcode
             For k = 0 To nc - 1
               If contour(k) >= dmin And contour(k) < dmax 
@@ -595,16 +580,16 @@ Module Math
                         
                     EndSelect
                     
-                    ;--------------------------------------------------------------
-                    ;this is where the program specific drawing routine comes in.
-                    ;This specific command will work well for a properly dimensioned
-                    ;vb picture box or vb form (where "Form1" is the name of the form)                     
-                    ;-------------------------------------------------------------------
+                    ; --------------------------------------------------------------
+                    ; this is where the program specific drawing routine comes in.
+                    ; This specific command will work well for a properly dimensioned
+                    ; vb picture box or vb form (where "Form1" is the name of the form)                     
+                    ; -------------------------------------------------------------------
                     ; TODO! For PureBasic we need Startdrawing() and a OutPutChannel
                     ; maybe change to a CallBack Procedure for drawing 
                     LineXY(x1, y1, x2, y2, color(k))
                        
-                    ;-------------------------------------------------------------------
+                    ; -------------------------------------------------------------------
                   EndIf
                 Next m
               EndIf
@@ -629,51 +614,14 @@ CompilerIf #PB_Compiler_IsMainFile
   ;  Define Variables
   ; ----------------------------------------------------------------------
   
-  Procedure Test_PrimeFactors()
-    Protected.q Number, time, cnt, res
-    Protected.s str
-    Number = 9007199254740991
-    Number = (1<<31)-1  ; 8te Mersenn Primzahl 2^31-1 =            2.147.483.647
-    ;Number = (1<<61)-5  ; 9te Mersenn Primzahl 2^61-1 = 2.305.843.009.213.693.951
-    Number = 715827881 * 2147483647
-     ;Number = 4294967295  ; Produkt der 5 Fermat Primzahlen
-    
-    NewList Factors.q()
-    
-;     time = ElapsedMilliseconds()
-;     cnt = PrimeFactors(Number, Factors())
-;     time = ElapsedMilliseconds()-time
-    
-    ResetList(Factors())
-    
-    res = 1
-    ForEach Factors()
-      res * Factors()    
-    Next
-    
-    str = "Number   = " + Str(Number) + #CRLF$
-    Str + "SqrRoot  = " + Str(Int(Sqr(Number))) + #CRLF$
-    str + "Result P!  = " + Str(res) + #CRLF$ 
-    str + "Iterations = " + Str(cnt) + #CRLF$
-    str + "Time       = " + Str(time) + "ms" + #CRLF$
-    str + #CRLF$
-    str + "Prime Factors " 
-    ForEach Factors()
-      str + #CRLF$ + Str(Factors())
-    Next
-    
-    ClearClipboard()  ; Clear the Clipboard
-    SetClipboardText(str) ; Paste text to the clipboard..
-    
-    MessageRequester("Prime Factors", str, #PB_MessageRequester_Ok)  
-  EndProcedure
+     
   
-  Test_PrimeFactors()
+
 CompilerEndIf
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 649
-; FirstLine = 540
-; Folding = -----
-; Markers = 603
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 88
+; FirstLine = 48
+; Folding = ----
+; Markers = 588
 ; Optimizer
 ; CPU = 5

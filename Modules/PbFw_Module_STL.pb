@@ -17,7 +17,8 @@
 ; COMPILER :  PureBasic 6.0
 ; ===========================================================================
 ;{ ChangeLog: 
-; 
+;   2025/01/20 S.Maag : adapted to changed AnyPointer definiton from TUptr to pAny
+ 
 ;}
 ;{ TODO:
 ;}
@@ -50,7 +51,7 @@
 ;   UINT8[80]         -   80 Bytes : File Header (mostly an ASCII TEXT)
 ;   UINT32            -   4 Bytes  : Number of Facets (Triangles)
 ;   ForEach Facet  -  [50 Bytes]
-;     REAL32[3]       -   12 Bytes : Normalenvektor x,y,z (each 4 Bytes)
+;     REAL32[3]       -   12 Bytes : NormalenVector x,y,z (each 4 Bytes)
 ;     REAL32[3]       -   12 Bytes : Vertex 1
 ;     REAL32[3]       -   12 Bytes : Vertex 2
 ;     REAL32[3]       -   12 Bytes : Vertex 3
@@ -74,7 +75,22 @@ DeclareModule STL
     #STL_ASCII        ; Constant for STL ASCII File Format
     #STL_BINARY       ; Constant for STL BINARY File Format
   EndEnumeration
-    
+  
+  ;- ----------------------------------------------------------------------
+  ;- Constants for Units (values token from Module_IGES) 
+  ; ----------------------------------------------------------------------
+  #STL_Inches = 1
+  #STL_Millimeters = 2
+  #STL_Custom = 3
+  #STL_Feet = 4
+  #STL_Miles = 5
+  #STL_Meters = 6
+  #STL_Kilometers = 7
+  #STL_Mils = 8
+  #STL_Microns = 9
+  #STL_Centimeters = 10
+  #STL_MicroInches = 11
+
   ; Structure for a Facet (Triangle)
   Structure TFacet
     V1.VECf::TVector
@@ -164,11 +180,11 @@ Module STL
       If fld        ; If fld is a valid String otherwise we are at the END
                        
         If IsNum::IsFloat(fld)  ; first numeric value found (it's x-coordinate)
-          x = ValD(fld)
+          x = ValF(fld)
           fld = StringField(Text,I+1," ")   ; Next Field (it's y-coordinate)
-          y = ValD(fld)
+          y = ValF(fld)
           fld = StringField(Text,I+2," ")   ; Next Field (it's z-coordinate)
-          z = ValD(fld)
+          z = ValF(fld)
           
           RET = #True
           Break     ; we got all 3 coordinates
@@ -231,7 +247,7 @@ Module STL
             If \UserPtr          ; in a new Buffer, the UserPtr starts at \ptrMem
               \UserPtr + 80      ; Set User Pointer to NoOfTriangles
               ; read Number of Facets as Quad and Rset Hix32 because Value is a UINT32
-              N = \UserPtr\q[0] & $FFFFFFFF  ; Read UINT32 into a QUAD
+              N = \UserPtr\qq[0] & $FFFFFFFF  ; Read UINT32 into a QUAD
               
               If N
                 *STLobj\NoOfFacets = N
@@ -240,7 +256,7 @@ Module STL
                 ; ********** FOR EACH FACET **********
   
                 ;    (LastByteToAccess with UPtr) <= (DataEnd)
-                While (\UserPtr +#FACET_ByteSize) <= (\ptrMem + \DataSize)
+                While (\UserPtr +#FACET_ByteSize) <= (\_ptrMem + \DataSize)
                   
                   AddElement(*STLobj\Facet())   ; add a New Element to FacetList()
                   
@@ -249,24 +265,24 @@ Module STL
                   ; starting at PointerValue
                   
                   ; normal vector
-                  *STLobj\Facet()\N\X = \UserPtr\f[0] 
-                  *STLobj\Facet()\N\Y = \UserPtr\f[1] 
-                  *STLobj\Facet()\N\Z = \UserPtr\f[2] 
+                  *STLobj\Facet()\N\X = \UserPtr\ff[0] 
+                  *STLobj\Facet()\N\Y = \UserPtr\ff[1] 
+                  *STLobj\Facet()\N\Z = \UserPtr\ff[2] 
                   
                   ; vertex 1
-                  *STLobj\Facet()\V1\X = \UserPtr\f[3] 
-                  *STLobj\Facet()\V1\Y = \UserPtr\f[4] 
-                  *STLobj\Facet()\V1\Z = \UserPtr\f[5] 
+                  *STLobj\Facet()\V1\X = \UserPtr\ff[3] 
+                  *STLobj\Facet()\V1\Y = \UserPtr\ff[4] 
+                  *STLobj\Facet()\V1\Z = \UserPtr\ff[5] 
                    
                   ; vertex 2
-                  *STLobj\Facet()\V2\X = \UserPtr\f[6] 
-                  *STLobj\Facet()\V2\Y = \UserPtr\f[7] 
-                  *STLobj\Facet()\V2\Z = \UserPtr\f[8] 
+                  *STLobj\Facet()\V2\X = \UserPtr\ff[6] 
+                  *STLobj\Facet()\V2\Y = \UserPtr\ff[7] 
+                  *STLobj\Facet()\V2\Z = \UserPtr\ff[8] 
                   
                   ; vertex 3
-                  *STLobj\Facet()\V3\X = \UserPtr\f[9] 
-                  *STLobj\Facet()\V3\Y = \UserPtr\f[10] 
-                  *STLobj\Facet()\V3\Z = \UserPtr\f[11] 
+                  *STLobj\Facet()\V3\X = \UserPtr\ff[9] 
+                  *STLobj\Facet()\V3\Y = \UserPtr\ff[10] 
+                  *STLobj\Facet()\V3\Z = \UserPtr\ff[11] 
                   
                   \UserPtr + #FACET_ByteSize  ; Set the UserPointer to next Facet
                   cnt +1 ; count the Facets read. At the end, this must be same as NoOfFacests specified
@@ -380,8 +396,8 @@ Module STL
         ResetList(*STLobj\Facet())      
         
         With *STLobj
-          VECf::Vector_Set(\Min, 10e99, 10e99, 10e99, 10e99)        ; Clear Min-Coordinates        
-          VECf::Vector_Set(\Max, -10e99, -10e99, -10e99, -10e99)    ; Clear Max-Coordinates
+          VECf::Vector_Set(\Min, Infinity(), Infinity(), Infinity(), Infinity())        ; Clear Min-Coordinates        
+          VECf::Vector_Set(\Max, -Infinity(), -Infinity(), -Infinity(), -Infinity())    ; Clear Max-Coordinates
           ForEach \Facet() 
             VECf::Vector_Min(\Min, \Facet()\V1, \Facet()\V2)
             VECf::Vector_Min(\Min, \Min, \Facet()\V3)
@@ -417,6 +433,7 @@ Module STL
     Protected RET    
     
     If STL_FORMAT = #STL_UNKNOWN
+      ; TODO!
       ; Try to find out which Type it is
     EndIf
     
@@ -588,7 +605,7 @@ CompilerIf #PB_Compiler_IsMainFile
       
       ;CreateWater(0, 0, -150, 0, 150, #PB_World_WaterHighQuality|#PB_World_WaterSun|#PB_World_WaterCaustics                    )
       Sun(-200, 200, -100, RGB(255,128,128))
-      SkyDome("clouds.jpg", 500)
+      ;SkyDome("clouds.jpg", 500)
       CreateLight(1, RGB(128,128,128),  -200, 200, -100)
       DisableLightShadows(1, #False)
       
@@ -625,10 +642,10 @@ CompilerIf #PB_Compiler_IsMainFile
         EndIf
         
         RotateCamera(0, MouseY, MouseX, 0, #PB_Relative)
-        MoveCamera  (0, KeyX, 0, KeyY)
+        MoveCamera  (0, KeyX, KeyY, 2)
         
         RenderWorld()
-        Screen3DStats()      
+        ;Screen3DState()      
         FlipBuffers()
       Until KeyboardPushed(#PB_Key_Escape) Or Quit = 1
     EndIf
@@ -639,8 +656,9 @@ CompilerIf #PB_Compiler_IsMainFile
 
 CompilerEndIf
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 36
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 266
+; FirstLine = 236
 ; Folding = ---
 ; Optimizer
 ; CPU = 5
