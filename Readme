@@ -21,6 +21,12 @@ PbFW_Module_PB		: PureBasic Command extention. Add missing commands:
 PbFw_Module_Prime   : fast 64Bit Prime Number Test and Prime Factorisation
                       using Modulo(30) distance for reducing caclculations
 
+PbFw_Module_Phonetics: Phonetic algorithms which assigns to words a sequence of digits,
+                       the phonetic code. The aim of this function ist that identical sounding
+                       words have the same code assigned to them.
+					   Soundex algorithm: is the most common used and well adapted to english.
+                       Cologne Phonetic algorithm is adapted to match the German language.			   
+					   
 PbFW_Module_Roman   : Converter for Roman Numbers
 
 PbFw_Module_STL       : A STL-File-Format importer (3D Grafics)
