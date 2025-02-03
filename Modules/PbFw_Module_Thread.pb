@@ -47,6 +47,12 @@
 
 ;}
 
+;- ----------------------------------------------------------------------
+;- Include Files
+;  ----------------------------------------------------------------------
+XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
+
+
 CompilerIf Not #PB_Compiler_Thread
   CompilerError "Use Compiler-Option ThreadSafe!"
 CompilerEndIf
@@ -81,6 +87,7 @@ EndDeclareModule
 Module Thread
   
   EnableExplicit
+  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
   
   ;- ==========================================================================
 	;-   Module - Structures
@@ -431,10 +438,13 @@ CompilerIf #PB_Compiler_IsMainFile
   
 CompilerEndIf
   
-; IDE Options = PureBasic 6.00 LTS (Windows - x86)
-; CursorPosition = 157
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 90
+; FirstLine = 78
 ; Folding = ---
 ; Optimizer
 ; EnableThread
 ; EnableXP
 ; DPIAware
+; CPU = 5
+; Compiler = PureBasic 6.04 LTS - C Backend (Windows - x86)

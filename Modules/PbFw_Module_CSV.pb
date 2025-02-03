@@ -22,6 +22,7 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
+XIncludeFile "PbFw_Module_PB.pb"           ; PB::       Purebasic Extentions
 XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 XIncludeFile "PbFw_Module_FileSystem.pb"   ; FS::       File Functions
 XIncludeFile "PbFw_Module_Buffer.pb"       ; BUFFER::   Buffer handling
@@ -37,7 +38,7 @@ DeclareModule CSV
   Structure hCSV    ; CSV Handle Structure
     sFileName.s
     cDelimiter.c    ; Delimiter Character ';' ','
-    xHeaderExist    ; a Header exists
+    xHeaderExist.i  ; a Header exists
     FileNo.i        ; if File is open, the File Number
   EndStructure 
   
@@ -68,8 +69,8 @@ CompilerIf #PB_Compiler_IsMainFile
   
 CompilerEndIf
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 20
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 24
 ; Folding = -
 ; Optimizer
 ; CPU = 5

@@ -14,7 +14,9 @@
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
-; 
+;   2025/01/20 S.Maag : moved the general Any-Pointer definition TUptr from
+;                       Module Buffer:: to PB:: and changend Name to pAny 
+;                       AllocateBuffer() option ClearBuffer=#False was not o.k.
 ;}
 ;{ TODO:
 ;}
@@ -24,7 +26,9 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
- XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
+ XIncludeFile "PbFw_Module_PB.pb"           ; PB::     Purebasic Extention Module
+ XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::   FrameWork control Module
+ XIncludeFile "PbFw_Module_Debug.pb"        ; DBG::    Debug Module
 
 DeclareModule BUFFER
   
@@ -35,60 +39,33 @@ DeclareModule BUFFER
   #PbFw_BUFFER_AlignWord     = 2
   #PbFw_BUFFER_AlignLong     = 4
   #PbFw_BUFFER_AlignQuad     = 8
+  #PbFw_BUFFER_AlignDQuad    = 16
+  #PbFw_BUFFER_AlignInteger  = SizeOf(Integer)
+   
+  #PbFw_BUFFER_AlingSektor   = 512      ; Align Buffer Size to Standard Sektor Size (512 Bytes)
+  #PbFw_BUFFER_AlignMemPage  = 4096     ; Align Buffer Size to 4094 Bytes (It's the Standard Size of a Memory-Page)
+  #PbFw_BUFFER_AlignSektor4K = 4096     ; Aling Buffer Size to 4K Sektor (4096 Bytes)
   
-  CompilerIf #PB_Compiler_32Bit    
-    #PbFw_BUFFER_AlignInteger  = 4
-  CompilerElse
-    #PbFw_BUFFER_AlignInteger  = 8
-  CompilerEndIf
-  
-  #PbFw_BUFFER_AlignMemPage  = 256     ; Align Buffer Size to 256 Bytes (It's the Standard Size of a Memory-Page)
-  #PbFw_BUFFER_AlingSektor   = 512     ; Align Buffer Size to Standard Sektor Size (512 Bytes)
-  #PbFw_BUFFER_AlignSektor4K = 4096    ; Aling Buffer Size to 4K Sektor (4096 Bytes)
-  #PbFw_BUFFER_AlignStandard = #PbFw_BUFFER_AlignInteger
-
-  ; The UniversalPointer Structre is trick to get access to Buffer/Memory
-  ; as differet PureBasic Values
-  ; [4] = define a static Array with 4 valus (0..3). With [0] we get a kind
-  ; of virtual Array and we just have a Pointer to each VAR-Type we want.
-  ; When declaring with an array like this, we still
-  ; can use the single \b, which is perfect for a universal pointer variable
-
-  Structure TUPtr  ; Universal Pointer (see PurePasic IDE Common.pb Structrue PTR)
-    StructureUnion
-      a.a[0]    ; ASCII   : 8 Bit unsigned  [0..255] 
-      b.b[0]    ; BYTE    : 8 Bit signed    [-128..127]
-      c.c[0]    ; CAHR    : 2 Byte unsigned [0..65535]
-      w.w[0]    ; WORD    : 2 Byte signed   [-32768..32767]
-      u.u[0]    ; UNICODE : 2 Byte unsigned [0..65535]
-      l.l[0]    ; LONG    : 4 Byte signed   [-2147483648..2147483647]
-      f.f[0]    ; FLOAT   : 4 Byte
-      q.q[0]    ; QUAD    : 8 Byte signed   [-9223372036854775808..9223372036854775807]
-      d.d[0]    ; DOUBLE  : 8 Byte float    
-      i.i[0]    ; INTEGER : 4 or 8 Byte INT, depending on System
-      *p.TUPtr[0] ; Pointer for TUPtr (it's possible and it's done in PB-IDE Source, but why???
-    EndStructureUnion
-  EndStructure
-
+  ; 2025/01/20 : Now hBuffer use AnyPointer from Modul PB:: instead of it's own TUptr definition
   Structure hBuffer
-    ptrMem.i          ; Pointer to BufferStart in Memory (ATTENTION!! Never change this value! => Programm will chrash!)
-    MemSize.i         ; Allocated MemorySize in [BYTES]
+    *_ptrMem          ; Pointer to BufferStart in Memory (ATTENTION!! Never change this value! => Programm will chrash!)
+    *UserPtr.PB::pAny ; Any Pointer (actual processed BUFFER position)
     AlignMode.i       ; AlignMode (#PbFw_BUFFER_AlignWord, #PbFw_BUFFER_AlignLong, #PbFw_BUFFER_AlignInteger ...)
+    MemSize.i         ; Allocated MemorySize in [BYTES]
     RequestedSize.i   ; the requested Size in [BYTES] (maybe lower than MemSize)
     DataSize.i        ; Size of the Datas in the Buffer [BYTES] (for User pourpose)
-    *UserPtr.TUPtr    ; Univeral Pointer for user operations (actual processed BUFFER position) 
+    Pitch.i           ; BufferPitch (Row length in Byte, for Image or fixed String use)
+    Lines.i           ; BufferLines (No of Columns, for Image or fixed String use)
     Name.s            ; String for what ever we want: FileName of Data ... 
   EndStructure
  
-  Declare.i AllocateBuffer(ReqByteSize, *hBUF.hBuffer, Align = #PbFw_BUFFER_AlignStandard, ClearBuffer=#True)
+  Declare.i AllocateBuffer(ReqByteSize, *hBUF.hBuffer, Align = #PbFw_BUFFER_AlignInteger, ClearBuffer=#True)
   Declare FreeBuffer(*hBUF.hBuffer)
   Declare ClearBufferMemory(*hBUF.hBuffer)
   Declare FillBuffer(*hBUF.hBuffer, Value, PB_Type=#PB_Byte)
   Declare.i CloneBuffer(*hBUF.hBuffer, *hCloneBUF.hBuffer)
   Declare SwapBuffers(*hBUF_1.hBuffer, *hBUF_2.hBuffer)
-  Declare ImageToBuffer(Image.i, *hBUF.hBuffer, ResizeBuffer=#True)     ; BOOL
-  Declare BufferToImage(*hBUF.hBuffer, Image.i)
-  Declare FileToBuffer(FileName.s, *hBUF.hBuffer, Align=#PbFw_BUFFER_AlignStandard)
+  Declare FileToBuffer(FileName.s, *hBUF.hBuffer, Align=#PbFw_BUFFER_AlignInteger)
   Declare BufferToFile(*hBUF.hBuffer, FileName.s)
   
 EndDeclareModule
@@ -97,6 +74,12 @@ EndDeclareModule
 Module BUFFER
  
   EnableExplicit
+  
+  ;- ----------------------------------------------------------------------
+  ;- PbFw Module local configurations
+  ;  ----------------------------------------------------------------------
+  #PbFwCfg_Module_CheckPointerException = #True     ; This constant must have same Name in all Modules. On/Off PoninterExeption for this Module
+
   PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
   
   ;- ----------------------------------------------------------------------
@@ -105,7 +88,7 @@ Module BUFFER
   
   Procedure _ClearBufferHandle(*hBuffer.hBuffer)
     With *hBuffer    ; Clear our BufferHandling Structure 
-      \ptrMem = 0
+      \_ptrMem = 0
       \MemSize = 0
       \AlignMode = 0
       \RequestedSize=0
@@ -119,7 +102,7 @@ Module BUFFER
   ;- Module Public Functions
   ;- ----------------------------------------------------------------------
 
-  Procedure.i AllocateBuffer(ReqByteSize, *hBUF.hBuffer, Align = #PbFw_BUFFER_AlignStandard, ClearBuffer=#True)
+  Procedure.i AllocateBuffer(ReqByteSize, *hBUF.hBuffer, Align = #PbFw_BUFFER_AlignInteger, ClearBuffer=#True)
   ; ============================================================================
   ; NAME: AllocateBuffer
   ; DESC: Allocate the Memory for the Buffer
@@ -132,18 +115,22 @@ Module BUFFER
     
     Protected AlignedByteSize, RET
     
-    AlignedByteSize = (ReqByteSize/Align) * Align
+    AlignedByteSize = (ReqByteSize / Align) * Align
     
     If ReqByteSize % Align   ; Modulo Division
       AlignedByteSize + Align
     EndIf
-     
-    RET=  AllocateMemory(AlignedByteSize)   ; Get the Memory from OS
+    
+    If ClearBuffer
+      RET= AllocateMemory(AlignedByteSize)   ; Get the Memory from OS and fill with 0
+    Else
+      RET= AllocateMemory(AlignedByteSize, #PB_Memory_NoClear)   ; Get the Memory from OS and do not clear
+    EndIf
     
     If RET    ; **** Ok Memory allocated ***** 
       
       With *hBUF        ; Fill our BufferHandling Structure with teh correct values
-        \ptrMem = RET               ; Pointer to Memory
+        \_ptrMem = RET               ; Pointer to Memory
         \RequestedSize=ReqByteSize  ; the originally requested size
         \MemSize = AlignedByteSize  ; the allocated size (with #PbFw_BUFFER_AlignToMemPageToMemPage BlockSize)
         \AlignMode = Align          ; The Byte Align Mode
@@ -168,8 +155,8 @@ Module BUFFER
   ; RET.i: Adress of Memory
   ; ============================================================================
     
-    If *hBUF\ptrMem
-      FreeMemory(*hBUF\ptrMem)
+    If *hBUF\_ptrMem
+      FreeMemory(*hBUF\_ptrMem)
     EndIf
     
     _ClearBufferHandle(*hBUF)
@@ -185,11 +172,11 @@ Module BUFFER
   ; ============================================================================
     
     With *hBUF
-      If \ptrMem
-        \MemSize = MemorySize(*hBUF\ptrMem) ; get again the allocated MemorySize
-        FillMemory(\ptrMem, \MemSize)
+      If \_ptrMem
+        \MemSize = MemorySize(*hBUF\_ptrMem) ; get again the allocated MemorySize
+        FillMemory(\_ptrMem, \MemSize)
         \DataSize = 0
-        \UserPtr = \ptrMem
+        \UserPtr = \_ptrMem
       EndIf
     EndWith
   EndProcedure
@@ -206,11 +193,11 @@ Module BUFFER
   ; ============================================================================
     
     With *hBUF
-      If \ptrMem
-        \MemSize = MemorySize(*hBUF\ptrMem) ; get again the allocated MemorySize
-        FillMemory(\ptrMem, \MemSize, Value, PB_Type)
+      If \_ptrMem
+        \MemSize = MemorySize(*hBUF\_ptrMem) ; get again the allocated MemorySize
+        FillMemory(\_ptrMem, \MemSize, Value, PB_Type)
         \DataSize = 0
-        \UserPtr = \ptrMem
+        \UserPtr = \_ptrMem
       EndIf
     EndWith
   EndProcedure
@@ -224,11 +211,13 @@ Module BUFFER
   ; RET : Pointer to CloneBuffer or 0 if Clone is not created (Error)
   ; ============================================================================
     
+    DBG::mac_CheckPointer2(*hBUF, *hCloneBUF)
+    
     With *hBUF
-      If *hBUF\ptrMem
+      If *hBUF\_ptrMem
         If AllocateBuffer(\MemSize, *hCloneBUF, \AlignMode, #False) ; do not clear Buffer
-          CopyMemory(\ptrMem, *hCloneBUF, \MemSize)                 ; because we fill it with Data
-          ProcedureReturn *hCloneBUF\ptrMem
+          CopyMemory(\_ptrMem, *hCloneBUF, \MemSize)                 ; because we fill it with Data
+          ProcedureReturn *hCloneBUF\_ptrMem
         Else
           ProcedureReturn 0
         EndIf    
@@ -247,37 +236,10 @@ Module BUFFER
     
     ; swap is not in the PB Help: it exists since PB 4.x and xchanges 2 values
     ; in an optimized way
-    Swap *hBUF_1, *hBUF_2   
+    ; Swap *hBUF_1, *hBUF_2  ; DAS IST QUATSCH!   
   EndProcedure  
-  
-  Procedure ImageToBuffer(Image.i, *hBUF.hBuffer, ResizeBuffer=#True)
-  ; ============================================================================
-  ; NAME: ImageToBuffer
-  ; DESC: Copies an Image to a Buffer
-  ; VAR(Image) : PureBasic Image No
-  ; VAR(*hBUF.hBuffer) : Handle for Buffer
-  ; VAR(ResizeBuffer) : #TRUE - Extend Buffer Size if to small or CrateBuffer
-  ;                     #FALSE - Creates an Error if Buffer is to small 
-  ; RET : #True if succseed
-  ; ============================================================================
     
-    Protected RET
-    
-    ProcedureReturn RET
-  EndProcedure
-   
-  Procedure BufferToImage(*hBUF.hBuffer, Image.i)
-  ; ============================================================================
-  ; NAME: BufferToImage
-  ; DESC: Copies a Buffer to an Image
-  ; VAR(*hBUF.hBuffer) : Handle for Buffer
-  ; VAR(Image) : PureBasic Image No
-  ; RET : #True if succseed
-  ; ============================================================================
-  
-  EndProcedure
-  
-  Procedure FileToBuffer(FileName.s, *hBUF.hBuffer, Align=#PbFw_BUFFER_AlignStandard)
+  Procedure FileToBuffer(FileName.s, *hBUF.hBuffer, Align=#PbFw_BUFFER_AlignInteger)
   ; ============================================================================
   ; NAME: FileToBuffer
   ; DESC: Copies a File to a Buffer
@@ -295,18 +257,20 @@ Module BUFFER
       If FileNo
         FileSize = Lof(FileNo)        ; LOF() = LengthOfFile
         
-        With *hBUF
-          
-          If \ptrMem                  ; Buffer Memory already exists
-            FreeBuffer(*hBUF)         ; if BufferSize is to low, FreeMemory()
-          EndIf
-          
-          If  AllocateBuffer(FileSize, *hBuf, Align) ; Allocate the Buffer Memory
-            RET = ReadData(FileNo, \ptrMem, FileSize) ; Read the file data
-            \DataSize = RET                           ; Set the Buffers DataSize = BytesRead
-          EndIf
-        EndWith
-        
+        If FileSize > 0
+          With *hBUF
+            
+            If \_ptrMem                  ; Buffer Memory already exists
+              FreeBuffer(*hBUF)         ; if BufferSize is to low, FreeMemory()
+            EndIf
+            
+            If  AllocateBuffer(FileSize, *hBuf, Align)  ; Allocate the Buffer Memory
+              RET = ReadData(FileNo, \_ptrMem, FileSize) ; Read the file data
+              \DataSize = RET                           ; Set the Buffers DataSize = BytesRead
+            EndIf
+          EndWith
+        EndIf
+      
         CloseFile(FileNo)     ; Close the File
       EndIf    
     EndIf
@@ -326,10 +290,9 @@ Module BUFFER
   
 EndModule
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 68
-; FirstLine = 33
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 186
+; FirstLine = 183
 ; Folding = ---
 ; Optimizer
 ; CPU = 5
-; Compiler = PureBasic 6.00 LTS (Windows - x86)

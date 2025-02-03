@@ -112,9 +112,11 @@ Module Rom
   ; ============================================================================
     Protected I, n, lastval, RetVal
     
+    sRoman = UCase(sRoman)
+    
     For I = Len(sRoman) To 1 Step -1
       
-      Select UCase(Mid(sRoman, I, 1))
+      Select (Mid(sRoman, I, 1))
         Case "M"
           n = 1000
         Case "D"
@@ -230,9 +232,9 @@ CompilerIf #PB_Compiler_IsMainFile
   Debug s
   Debug RemoveNonRomanChars("123 MCm.LXXxX-Iv")
 CompilerEndIf 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 42
-; FirstLine = 162
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 127
+; FirstLine = 89
 ; Folding = --
 ; Optimizer
 ; CPU = 5

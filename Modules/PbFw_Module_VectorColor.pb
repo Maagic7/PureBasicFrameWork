@@ -29,10 +29,11 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
-XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
-XIncludeFile "PbFw_Module_Debug.pb"        ; DBG::      Debug Module
-XIncludeFile "PbFw_Module_COLOR.pb"        ; COLOR::    RGBA-Color Modul
-XIncludeFile "PbFw_Module_VECTORf.pb"      ; VECf::     single precision Vector Modul
+XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
+XIncludeFile "PbFw_Module_PB.pb"          ; PB::      PureBasic extention Module
+XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::     Debug Module
+XIncludeFile "PbFw_Module_COLOR.pb"       ; COLOR::   RGBA-Color Module
+XIncludeFile "PbFw_Module_VECTORf.pb"     ; VECf::    single precision Vector Module
 
 ;- ----------------------------------------------------------------------
 ;- Declare Module
@@ -564,9 +565,9 @@ Module VecCol
   
 EndModule
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 439
-; FirstLine = 389
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 53
+; FirstLine = 15
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

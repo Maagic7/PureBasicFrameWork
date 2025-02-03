@@ -7,7 +7,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/11/15
-; VERSION  :  0.51 Developer Version
+; VERSION  :  0.53 Developer Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -15,6 +15,9 @@
 ; ===========================================================================
 ; ChangeLog: 
 ;{
+; 2024/12/10 S.Maag :  added xTrim Parameter to FileToStringList
+; 2024/11/22 S.Maag :  added OnePathBack()
+; 2024/09/11 S.Maag :  added StringToFile(), StringListToFile(), StringMapToFile()
 ; 2024/01/20 S.Maag :  added ListDirectories:
 ; 2024/01/20 S.Maag :  moved String File-Functions from Module String Str::
 
@@ -114,7 +117,8 @@ DeclareModule FS
     EntryType.i         ; #PB_DirectoryEntry_File, #PB_DirectoryEntry_Directory
   EndStructure
   
-  Prototype.i FileFilterCallback(*TDirectoryEntry.TDirectoryEntry)
+   
+  Declare.s OnePathBack(Path$)
 
   Declare.i ListFilesEx(Directory$, List Files.TDirectoryEntry(), SubDirLevel=#PB_Default, RegExpr$="", Flags=#FS_Files_All, *FileFilterCallback=#Null)
   Declare.i ListFiles(Dir$, List Files.s(), Pattern$="", SearchInSubDirecotries=#False)
@@ -123,35 +127,38 @@ DeclareModule FS
   Declare.i CreatePath(Path.s)
   
   Declare.s FileToString(FileName.s, CharMode.i = #PB_Default, ReadUnsupportedModeAsASCII=#True)
-  Declare.i FileToStringList(FileName.s, List StringList.s(), CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
-  Declare.i FileToStringMap(FileName.s, Map StringMap.s(), CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
+  Declare.i StringToFile(FileName.s, String$, CharMode = #PB_Default)
+  Declare.i FileToStringList(FileName.s, List StringList.s(), xTrim=#False, CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
+  Declare.i StringListToFile(FileName.s, List StringList.s(), CharMode = #PB_Default)
 
-  Macro FileExist(FileName)
+  Declare.i FileToStringMap(FileName.s, Map StringMap.s(), CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
+  Declare StringMapToFile(FileName.s, Map StringMap.s(), CharMode = #PB_Default)
+  
   ; ===========================================================================
   ;  NAME : FileExist
   ;  DESC : Macro FileExist
   ;  VAR(FileName) : Full Filename with full path
   ;  RET : #True if exists
   ; =========================================================================== 
-    Bool(FileSize(sFileName) >= 0)  
+  Macro FileExist(FullFileName)
+    Bool(FileSize(FullFileName) >= 0)  
        
     ; FileSize ReturnValue
     ;  -1: Datei wurde nicht gefunden.
     ;  -2: Datei ist ein Verzeichnis.
   EndMacro
   
-  Macro DirectoryExist(Directory)
   ; ===========================================================================
   ;  NAME : DirectoryExist
   ;  DESC : Macro DirectoryExist
   ;  VAR(Directory) : Full Directory Name
   ;  RET : #True if exists
   ; =========================================================================== 
+  Macro DirectoryExist(Directory)
    Bool(FileSize(Directory) = -2)
   EndMacro
 
 EndDeclareModule
-
   
 Module FS
   
@@ -162,6 +169,8 @@ Module FS
   ;- Module Private Functions
   ;- ----------------------------------------------------------------------
   
+  Prototype.i FileFilterCallback(*TDirectoryEntry.TDirectoryEntry)
+
   Procedure.i _ReadFileBOM(FileNo, ReadUnsupportedModeAsASCII=#True)
   ; ============================================================================
   ; NAME: _ReadFileBOM
@@ -215,7 +224,44 @@ Module FS
   ;- ----------------------------------------------------------------------
   ;- Module Public Functions
   ;- ----------------------------------------------------------------------
-   
+  
+;   Procedure.s OnePathBack(Path$)
+;     ProcedureReturn GetPathPart(RTrim(Path$, #PS$))
+;   EndProcedure
+
+  Procedure.s OnePathBack(Path$)
+  ; ===========================================================================
+  ;  NAME : OnePathBack
+  ;  DESC : Go one path back - removes last subfolder from a Path
+  ;  VAR(Path$) : The actual Path$
+  ;  RET.s : Path$ where last subfolder is removed
+  ; =========================================================================== 
+    
+    Protected *char.Character   ; Pointer to Char-Structure
+    Protected cntChar, N, N_old
+    
+    *char = @Path$              
+    
+    While *char\c               ; until end of String
+      cntChar + 1               ; count chars
+      If *char\c = #PS          ; #PS : PathSeperator (on Windows := 92 = '\')
+        N_old = N               ; remember CharNo of second last path seperator
+        N = cntChar             ; CharNo of last path seperator
+      EndIf
+      *char + SizeOf(Character) ; Pointer to next char
+    Wend
+    
+    If N_old > 0                ; if a second last PathSeparator exits  
+      N = N_old                 ; use CharNo of second last PathSeperator
+    EndIf
+     
+    If N > 0                    
+      ProcedureReturn Left(Path$, N)     
+    Else
+      ProcedureReturn Path$
+    EndIf  
+  EndProcedure
+
   Procedure.s GetAttributesText(Attrib)
   ; ===========================================================================
   ;  NAME : GetAttributesText
@@ -571,10 +617,10 @@ Module FS
     pos = 3 
     While pos
       pos = FindString(Path, #PS$, pos+1) ;#PS$ ="\" OS-specific separator
-      Debug pos
+      ; Debug pos
       If pos 
         Folder$ = Left(Path,pos)
-        Debug Str(pos) + " : " + Folder$
+        ; Debug Str(pos) + " : " + Folder$
         If DirectoryExist(Folder$)  ; it is an existing Driectory
           ; we don't have to crate it
         Else
@@ -632,12 +678,37 @@ Module FS
       EndIf
       
       CloseFile(FileNo)
+    Else
+       MessageRequester("File not found", FileName)
     EndIf
     
     ProcedureReturn Text
   EndProcedure
   
-  Procedure.i FileToStringList(FileName.s, List StringList.s(), CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
+  Procedure.i StringToFile(FileName.s, String$, CharMode = #PB_Default)
+  ; ============================================================================
+  ; NAME: StringToFile
+  ; DESC: Saves a String into a File
+  ; VAR(FileName.s) : Full FileName (with full Path)
+  ; VAR(String$): The String to write 
+  ; VAR(CharMode.i) : Character Mode [#PB_Ascii, #PB_Unicode, #PB_UTF8]
+  ; RET.i : #True if succeed
+  ; ============================================================================
+    Protected FileNo, I, ret
+    
+    FileNo = CreateFile(#PB_Any, FileName)
+    
+    If FileNo
+      WriteStringFormat(FileNo, CharMode)
+      ret = WriteString(FileNo, String$, CharMode)  
+    Else
+      MessageRequester("Can not write to file", FileName)    
+    EndIf
+    
+    ProcedureReturn ret
+  EndProcedure
+  
+  Procedure.i FileToStringList(FileName.s, List StringList.s(), xTrim=#False, CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
   ; ============================================================================
   ; NAME: FileToStringList
   ; DESC: Reads a (Text)-File Line by Line into a StringList()
@@ -674,15 +745,22 @@ Module FS
           
       EndSelect
       
-      While (Not Eof(FileNo))
-        sLine = Trim(ReadString(FileNo,CharMode))     ; removes Spaces left and right
-        
-        If sLine      ; in PureBasic this works like: if sLine <> #Null$
+      If xTrim
+        While (Not Eof(FileNo))
+          sLine = Trim(ReadString(FileNo,CharMode))     ; removes Spaces left and right
+          
+          If sLine      ; in PureBasic this works like: if sLine <> #Null$
+            AddElement(StringList())
+            StringList() = sLine
+          EndIf
+        Wend
+      Else ; Without trimming
+        While (Not Eof(FileNo))          
           AddElement(StringList())
-          StringList() = sLine
-        EndIf
-      Wend
-      
+          StringList() = ReadString(FileNo,CharMode)
+        Wend
+      EndIf
+    
       CloseFile(FileNo)
     Else 
       MessageRequester("File not found", FileName)
@@ -690,7 +768,40 @@ Module FS
   
     ProcedureReturn (ListSize(StringList()))  ; returns the number of Lines
   EndProcedure
-
+  
+  Procedure.i StringListToFile(FileName.s, List StringList.s(), CharMode = #PB_Default)
+  ; ============================================================================
+  ; NAME: StringListToFile
+  ; DESC: Saves a StringList() into a File
+  ; VAR(FileName.s) : Full FileName (with full Path)
+  ; VAR(List StringList.s()): String-List() which receives the data 
+  ; VAR(CharMode.i) : Character Mode [#PB_Ascii, #PB_Unicode, #PB_UTF8]
+  ; RET.i : Returns the number of Lines written
+  ; ============================================================================
+    Protected FileNo, I, lines
+    
+    If StringList()                             ; If Pointer StringList()
+      FileNo = CreateFile(#PB_Any, FileName)
+      
+      If FileNo
+        If ListSize(StringList())
+          WriteStringFormat(FileNo, CharMode)
+          
+          ForEach StringList()
+            If WriteStringN(FileNo, StringList(), CharMode)  
+              Lines + 1
+            EndIf
+          Next
+        EndIf
+        
+      Else
+        MessageRequester("Can not write to file", FileName)    
+      EndIf
+    EndIf
+  
+    ProcedureReturn Lines
+  EndProcedure
+  
   Procedure.i FileToStringMap(FileName.s, Map StringMap.s(), CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
   ; ============================================================================
   ; NAME: FileToStringMap
@@ -749,6 +860,21 @@ Module FS
     
     ProcedureReturn (MapSize(StringMap())) ; returns the number of Lines
   EndProcedure
+  
+  Procedure StringMapToFile(FileName.s, Map StringMap.s(), CharMode = #PB_Default)
+  ; ============================================================================
+  ; NAME: StringMapToFile
+  ; DESC: Saves a StringMap() into a File
+  ; VAR(FileName.s) : Full FileName (with full Path)
+  ; VAR(List StringList.s()): String-List() which receives the data 
+  ; VAR(CharMode.i) : Character Mode [#PB_Ascii, #PB_Unicode, #PB_UTF8]
+  ; RET.i : Returns the number of Lines written
+  ; ============================================================================
+    Protected Lines
+    
+    ; TODO! Implement Code
+    ProcedureReturn Lines
+  EndProcedure
 
 EndModule 
 
@@ -763,9 +889,9 @@ CompilerIf #PB_Compiler_IsMainFile
   ; CreatePath("D:\Temp\PureBasic\Test\CreatePath\MyPath\")
   
 CompilerEndIf
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 463
-; FirstLine = 447
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 230
+; FirstLine = 207
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

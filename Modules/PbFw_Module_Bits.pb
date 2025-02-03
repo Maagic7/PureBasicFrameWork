@@ -9,7 +9,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2021/04/02
-; VERSION  :  0.52  Developer Version
+; VERSION  :  0.53  Developer Version
 ; COMPILER :  PB 6.0 and higher
 ; OS       :  all
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -17,6 +17,7 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2025/01/30  S.Maag: solved Bug in ASMx32 BSWAP_Mem64()! Swap of Lo-Hi DWORD was missing!
 ; 2024/09/06  S.Maag: added INTtoBCD(), BCDtoINT(), IsBCD()
 ; 2024/08/31  S.Maag: changed BitCount Classic Macros from If to faster add version
 ; 2024/08/28  S.Maag: added ByteToBitField, BitFieldToByte
@@ -132,7 +133,7 @@ Module Bits
   ; #PbFwCfg_Module_CheckPointerException = #True     ; On/Off PoninterExeption for this Module
   PbFw::CONST(PbFwCfg_Module_CheckPointerException, #True)
   
-  ;#PbFwCfg_Module_ASM_Enable = #True                ; On/Off Assembler Versions when compling in ASM Backend
+  ; #PbFwCfg_Module_ASM_Enable = #True                ; On/Off Assembler Versions when compling in ASM Backend
   PbFw::CONST(PbFwCfg_Module_ASM_Enable, #True)
  
   ; -----------------------------------------------------------------------
@@ -249,10 +250,20 @@ Module Bits
 ;     x = (x & $3333333333333333) + ((x >> 2) & $3333333333333333)
 ;     x = (x + (x >> 4)) & $0F0F0F0F0F0F0F0F
 ;     x= x * $0101010101010101
-;     x >> 56
+;     x >> 56           ; 64-8
 ;     ProcedureReturn x   
 ;   EndProcedure 
   
+;   Procedure popcount9(Value.l)
+;     Protected J.i
+;     J = (Value >> 1) & $55555555;
+;     Value = Value - J; // (A)
+;     Value = (Value & $33333333) + ((Value >> 2) & $33333333); // (B)
+;     Value = (Value & $0F0F0F0F) + ((Value >> 4) & $0F0F0F0F); // (C)
+;     Value = Value * $01010101; // (D)
+;     ProcedureReturn Value >> 24;      ; 24=32-8
+;   EndProcedure
+ 
 ;   Procedure _PopCount128_Addr(*Int128)
 ;     ; move [*Int128] to registers
 ;     
@@ -678,7 +689,7 @@ Module Bits
       !PEXT RAX, RCX, RDX         ; extract lo Bit from each Byte and compact it to a Byte in RAX
       ProcedureReturn             ; RAX contians shuffeld Bits
       
-      ; DataSection now after the BitShuffle Functions. Because double us in BitShuffle8 and BitShuffle16
+      ; DataSection now after the BitShuffle Functions. Because double use in BitShuffle8 and BitShuffle16
 ;       DataSection
 ;         ; Attention: FASM nees a leading 0 for hex values
 ;         ; 16 Byte Mask to be prepared for 16 Bit Shuffle too
@@ -1219,8 +1230,8 @@ Module Bits
         !mov eax, dword [ecx +4]
         !bswap edx
         !bswap eax
-        !mov dword [ecx + 4], eax
-        !mov dword [ecx], edx
+        !mov dword [ecx + 4], edx
+        !mov dword [ecx], eax
         ; ProcedureReturn ; do not Return
         
       CompilerCase #PbFwCfg_Module_Compile_ASM64
@@ -1366,6 +1377,30 @@ Module Bits
     CompilerEndSelect
   EndProcedure
   
+  ;- ----------------------------------------------------------------------
+;- MSB LSB - not ready  
+  Procedure.i MSB(x.i)
+    ; Number of most significant bit: [0..63]
+    !MOV RAX, [p.v_x]
+    !BSR RAX, RAX
+    ProcedureReturn
+  EndProcedure
+  
+  Procedure.i LSB(x.i)
+    ; Number of least significant bit: [0..63]
+    !MOV RAX, [p.v_x]
+    !BSF RAX, RAX
+    ProcedureReturn
+  EndProcedure
+
+;   Debug MSB(0)
+;   Debug MSB(1)
+;   Debug MSB(2)
+;   Debug MSB(3)
+;   Debug MSB(4)
+;   Debug MSB(8)
+;   Debug MSB(16)
+
 EndModule
 
 CompilerIf #PB_Compiler_IsMainFile    
@@ -1421,7 +1456,7 @@ CompilerIf #PB_Compiler_IsMainFile
    
   EndProcedure
   
-  Procedure Test_BitCoung()
+  Procedure Test_BitCount()
     Protected n, Q.q
 
     n=BitCount16(3)
@@ -1502,11 +1537,10 @@ CompilerIf #PB_Compiler_IsMainFile
   
 CompilerEndIf
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 705
-; FirstLine = 700
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 26
 ; Folding = --------
-; Markers = 284,306
+; Markers = 295,317
 ; Optimizer
 ; EnableXP
 ; CPU = 5

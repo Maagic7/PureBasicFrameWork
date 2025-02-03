@@ -15,6 +15,7 @@
 ; ===========================================================================
 ; ChangeLog: 
 ;{
+; 2024/09/01: S.Maag : added TSafeStruct Structure and Functions
 ; 2024/09/01: S.Maag : now use RTC_GetTimeStamp() for ms based Timestamp instead
 ;                      of Date() what is sec based! 
 ; 2024/07/29: S.Maag : added Macro mac_CheckPointer5! 
@@ -33,8 +34,8 @@
 ;- ----------------------------------------------------------------------
 ;- Include Files
 ;  ----------------------------------------------------------------------
-XIncludeFile "PbFw_Module_PbFw.pb"              ; PbFw::    FrameWork control Module
-XIncludeFile "PbFw_Module_RealTimeCounter.pb"   ; RTC::     CPU's RealTimeCounter
+XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::   FrameWork control Module
+XIncludeFile "PbFw_Module_PB.pb"          ; PB::     PureBasic extention Module
 
 ; All files are already included in ECAD_Main.pb! 
 ; It's just to know which Include Files are necessary
@@ -42,9 +43,7 @@ XIncludeFile "PbFw_Module_RealTimeCounter.pb"   ; RTC::     CPU's RealTimeCounte
 ; XIncludeFile ""
 
 DeclareModule DBG
-  
-  #PbFwCfg_DBG_ListProcedureCalls = #True
-  
+    
   Enumeration EExceptions 0
     #PbFw_DBG_Err_Unknown
     #PbFw_DBG_Err_PointerIsNull              ; 1
@@ -61,10 +60,17 @@ DeclareModule DBG
   
   #PbFw_DBG_ProcedureReturn_Error = #Null
   
+  Structure TSafeStruct
+    *pThis
+    StructID.i
+  EndStructure
+  
   Declare.i ListProcedureCall(ModuleName.s, ProcedureName.s)
  
-  Declare Exception(ModuleName.s, FunctionName.s, ExeptionType, *Text.String=0)
+  Declare.i Exception(ModuleName.s, FunctionName.s, ExeptionType, *Text.String=0)
   Declare ErrorHandler()
+  Declare.i GetNextStructureID()
+  Declare.i IsSafeStruct(*Struct.TSafeStruct, StructID)
   
   ; !! ATTENTION !!! #PbFwCfg_Module_CheckPointerException has to be defined in each Module what is using the Pointer
   ;                  Exception Macros. #PbFwCfg_Module_CheckPointerException is the Module local Switch for On/Off 
@@ -323,7 +329,7 @@ Module DBG
   EndProcedure
      
 
-  Procedure Exception(ModuleName.s, FunctionName.s, ExceptionType, *Text.String=0)
+  Procedure.i Exception(ModuleName.s, FunctionName.s, ExceptionType, *Text.String=0)
   ; ======================================================================
   ; NAME: DBG::Exception
   ; DESC: The calling Procedure can use the Compiler Constants
@@ -331,13 +337,13 @@ Module DBG
   ; DESC; for FunctionName  : #PB_Compiler_Procedure
   ; VAR(ModuleName): Module Name which caused the Exeption  
   ; VAR(FunctionName): Function Name which caused the Exeption
-  ; RET : -
+  ; RET.i : ExceptionType
   ; ======================================================================
     
     Protected INFO.TExceptionInfo
     
     With INFO
-      \Timestamp = RTC::GetTimeStamp()    ; Get millisecond second TimeStamp ; Date()*1000+MilliSeconds
+      \Timestamp =PB::GetTimeStamp()    ; Get millisecond second TimeStamp ; Date()*1000+MilliSeconds
       \ModuleName = ModuleName
       \FunctionName = FunctionName
       \ExceptionCode = ExceptionType
@@ -533,7 +539,25 @@ Module DBG
    
     ProcedureReturn iRetCode
   EndProcedure
+  
+  Global memStructID.i = $FFFF   ; initialize Structure ID with $FFFF
 
+  Procedure.i GetNextStructureID()
+    memStructID +1 
+    ProcedureReturn memStructID  
+  EndProcedure
+  
+  Procedure.i IsSafeStruct(*Struct.TSafeStruct, StructID)
+    If  *Struct
+      If *Struct\pThis = *Struct
+        If  *Struct\StructID = StructID
+          ProcedureReturn #True
+        EndIf
+      EndIf      
+    EndIf
+    ProcedureReturn #False
+  EndProcedure
+  
 EndModule
 
 
@@ -571,8 +595,9 @@ CompilerEndIf
 
 DisableExplicit
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 9
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 48
+; FirstLine = 40
 ; Folding = -----
 ; Optimizer
 ; CPU = 5

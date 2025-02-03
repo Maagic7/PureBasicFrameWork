@@ -47,45 +47,45 @@ XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 
 DeclareModule INT
 
-  ; AbsI() and AbsQ() solve tha PB's ABS() Problem at C-Backend
-  ; because at ASM Backend the 80Bit Float unit is used for ABS() what works perfect for 64Bit INT
-  ; In C-Backend a MMX Version is used for ABS(). This is a problem because MMX use only 64Bit Floats
-  ; with a manitassa of 53 Bits. This will cause bugs if the ABS() is used for values with more bits
-  ; like address calculation!
-  
-  ; This is the optimized Abs Version (translated from Assembler to PB-Code; Soure Math.asm from Linux Asm Project
-  ; X!(X>>63)-(X>>63) ; x64
-  ; X!(X>>31)-(X>>31) ; x32
-  
-  ; Assembler_ShiftArithmeticRight_Bits : This is how to cacluclate the NumberOfBits to shift
-  ; its 63 for x64 und 31 for x32
-  #ABS_SHIFT_BITS = (SizeOf(Integer)*8-1)    
-  
-  ; PB 6.04 on Ryzen 5800 the Macro is nearly same speed as PB's ABS()
-  ; ASM BAckend: For 100Mio calls (50% with -X and 50% with +X) :  PB_ABS() = 53ms  AbsI() = 58ms
-  CompilerIf #PB_Compiler_Backend =#PB_Backend_Asm
-    Macro AbsI(X)
-      Abs(X)
-    EndMacro
-  CompilerElse  ; C-Backend
-    Macro AbsI(X)
-      (X!(X>>#ABS_SHIFT_BITS)-(X>>#ABS_SHIFT_BITS))
-    EndMacro
-  CompilerEndIf
-  
-  ; only for x32 we need an extra Macro for AbsQ() which shifts 63 Bit for Quads
-  CompilerIf #PB_Compiler_Backend =#PB_Backend_Asm
-    Macro AbsQ(X)
-      Abs(X)
-    EndMacro
-  CompilerElse  ; C-Backend
-    Macro AbsQ(X)
-      (X!(X>>63)-(X>>63))
-    EndMacro
-  CompilerEndIf
-  
-  Declare.i SqrI(X.i)
-  Declare.i RootN(Number.i, N.i) 
+;   ; AbsI() and AbsQ() solve tha PB's ABS() Problem at C-Backend
+;   ; because at ASM Backend the 80Bit Float unit is used for ABS() what works perfect for 64Bit INT
+;   ; In C-Backend a MMX Version is used for ABS(). This is a problem because MMX use only 64Bit Floats
+;   ; with a manitassa of 53 Bits. This will cause bugs if the ABS() is used for values with more bits
+;   ; like address calculation!
+;   
+;   ; This is the optimized Abs Version (translated from Assembler to PB-Code; Soure Math.asm from Linux Asm Project
+;   ; X!(X>>63)-(X>>63) ; x64
+;   ; X!(X>>31)-(X>>31) ; x32
+;   
+;   ; Assembler_ShiftArithmeticRight_Bits : This is how to cacluclate the NumberOfBits to shift
+;   ; its 63 for x64 und 31 for x32
+;   #ABS_SHIFT_BITS = (SizeOf(Integer)*8-1)    
+;   
+;   ; PB 6.04 on Ryzen 5800 the Macro is nearly same speed as PB's ABS()
+;   ; ASM BAckend: For 100Mio calls (50% with -X and 50% with +X) :  PB_ABS() = 53ms  AbsI() = 58ms
+;   CompilerIf #PB_Compiler_Backend =#PB_Backend_Asm
+;     Macro AbsI(X)
+;       Abs(X)
+;     EndMacro
+;   CompilerElse  ; C-Backend
+;     Macro AbsI(X)
+;       (X!(X>>#ABS_SHIFT_BITS)-(X>>#ABS_SHIFT_BITS))
+;     EndMacro
+;   CompilerEndIf
+;   
+;   ; only for x32 we need an extra Macro for AbsQ() which shifts 63 Bit for Quads
+;   CompilerIf #PB_Compiler_Backend =#PB_Backend_Asm
+;     Macro AbsQ(X)
+;       Abs(X)
+;     EndMacro
+;   CompilerElse  ; C-Backend
+;     Macro AbsQ(X)
+;       (X!(X>>63)-(X>>63))
+;     EndMacro
+;   CompilerEndIf
+;   
+;   Declare.i SqrI(X.i)
+;   Declare.i RootN(Number.i, N.i) 
 
 EndDeclareModule
 
@@ -94,7 +94,7 @@ Module INT
   Procedure.i SqrI(X.i)
   ; ============================================================================
   ; NAME: SqrI
-  ; DESC: A raw integer Square-Root function using interative calcualtion
+  ; DESC: A raw integer Square-Root function using iterative calcualtion
   ; DESC: Because PB's Sqr() rounds the result to the nearest Integer
   ; DESC: what it isn't always a correct result in native Integer math.
   ; DESC: N.i = Sqr(7) = 3 and 3*3=9  F.f=Sqr(7)=2.64575. It's automaitcally
@@ -226,7 +226,7 @@ Module INT
   Procedure.i PowI(Number, Exponent)
   ; ============================================================================
   ; NAME: PowI
-  ; DESC: A raw integer Power function using interative calcualtion
+  ; DESC: A raw integer Power function using iterative calcualtion
   ; DESC: Attention it is limited to 31 Bit/x32 and 63 Bit/x64
   ; DESC: Use only if you need raw Integer calculation in that ranges
   ; DESC: Otherwise use PB's Pow() function with Floats
@@ -467,10 +467,10 @@ CompilerIf  #PB_Compiler_IsMainFile
   CompilerEndIf
   
 CompilerEndIf
-; IDE Options = PureBasic 6.04 LTS (Windows - x64)
-; CursorPosition = 290
-; FirstLine = 219
-; Folding = ----
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 73
+; FirstLine = 44
+; Folding = ---
 ; Optimizer
 ; Executable = ..\Test\AbsTest_C_x64.exe
 ; CPU = 5

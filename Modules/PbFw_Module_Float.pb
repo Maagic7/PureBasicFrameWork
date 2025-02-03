@@ -31,6 +31,7 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
+XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 
 DeclareModule Float
   EnableExplicit
@@ -74,6 +75,7 @@ EndDeclareModule
 
 Module Float
   EnableExplicit
+  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
   
   ; Format 32 Bit single Float Exponent [-126..127]
   ;      Sign  Exponent[8] Fraction[23] 
@@ -124,7 +126,8 @@ Module Float
   ;- --------------------------------------------------
   ;- Private Functions
   ;- --------------------------------------------------
-
+  
+  ; TODO Thats not the way to get the precision for Epslion
   ; Private
   Procedure.d _CalcSinglePrecision()
   ; ======================================================================
@@ -724,57 +727,63 @@ Module Float
 
 EndModule
 
+CompilerIf #PB_Compiler_IsMainFile    
+  ;- ----------------------------------------------------------------------
+  ;- TEST-CODE
+  ;- ----------------------------------------------------------------------
 
-EnableExplicit
-UseModule Float
+  EnableExplicit
+  UseModule Prime
 
-Define xf.f, xd.d
-
-xf= 0.0001
-
-Debug "Single"
-Debug ToggleSignBitF(xf)
-Debug "Fraction = " + Str(GetFractionF(xf))
-Debug "Exponent = " + GetExponentF(xf)
-Debug SetExponentF(xf, 2)
-xf = SetFractionF(0, $FFFF)
-Debug "NewFloat"
-Debug xf
-
-Debug GetFractionF(xf)
-
-xd = 1.0
-Debug " "
-Debug "Double"
-Debug GetExponentd(xd) ; -128
-Debug SetExponentF(xd, 2)
-
-Debug "Binary notation"
-
-Debug BinStrF(xf)
-
-; Test CompareDouble, by STARGÅTE
-; Debug CompareDouble(1.0, 2.0)
-; Debug CompareDouble(3.0, 2.0)
-; 
-; Debug "---"
-; 
-; Debug CompareDouble(1.000000000000001,  0.999999999999999)  ; Ist in den höchsten 46 Bit gleich.
-; Debug          Bool(1.000000000000001 > 0.999999999999999)
-; 
-; Debug "---"
-; 
-; Debug CompareDouble(1.000000000001, 0.999999999999)  ; Ist in den höchsten 46 Bit größer.
-; Debug CompareDouble(1.000000000001, 0.999999999999, 35) ; Ist in den höchsten 35 Bit gleich.
-; 
-; Debug "---"
-; 
-; Debug CompareDouble(1.001, 1.002, 8)
-; Debug CompareDouble(1001, 1002, 8)
-; Debug CompareDouble(1001, 1003, 8)
-
-; IDE Options = PureBasic 6.04 LTS (Windows - x64)
-; CursorPosition = 42
+  Define xf.f, xd.d
+  
+  xf= 0.0001
+  
+  Debug "Single"
+  Debug ToggleSignBitF(xf)
+  Debug "Fraction = " + Str(GetFractionF(xf))
+  Debug "Exponent = " + GetExponentF(xf)
+  Debug SetExponentF(xf, 2)
+  xf = SetFractionF(0, $FFFF)
+  Debug "NewFloat"
+  Debug xf
+  
+  Debug GetFractionF(xf)
+  
+  xd = 1.0
+  Debug " "
+  Debug "Double"
+  Debug GetExponentd(xd) ; -128
+  Debug SetExponentF(xd, 2)
+  
+  Debug "Binary notation"
+  
+  Debug BinStrF(xf)
+  
+  ; Test CompareDouble, by STARGÅTE
+  ; Debug CompareDouble(1.0, 2.0)
+  ; Debug CompareDouble(3.0, 2.0)
+  ; 
+  ; Debug "---"
+  ; 
+  ; Debug CompareDouble(1.000000000000001,  0.999999999999999)  ; Ist in den höchsten 46 Bit gleich.
+  ; Debug          Bool(1.000000000000001 > 0.999999999999999)
+  ; 
+  ; Debug "---"
+  ; 
+  ; Debug CompareDouble(1.000000000001, 0.999999999999)  ; Ist in den höchsten 46 Bit größer.
+  ; Debug CompareDouble(1.000000000001, 0.999999999999, 35) ; Ist in den höchsten 35 Bit gleich.
+  ; 
+  ; Debug "---"
+  ; 
+  ; Debug CompareDouble(1.001, 1.002, 8)
+  ; Debug CompareDouble(1001, 1002, 8)
+  ; Debug CompareDouble(1001, 1003, 8)
+  
+CompilerEndIf
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 433
+; FirstLine = 419
 ; Folding = ------
 ; Optimizer
 ; CPU = 5

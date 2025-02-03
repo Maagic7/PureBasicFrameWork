@@ -7,14 +7,18 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/11/08
-; VERSION  :  0.11 untested Developer Version
-; COMPILER :  PureBasic 6.0
+; VERSION  :  0.17 untested Developer Version
+; COMPILER :  PureBasic 6.0 and higher
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog: 
 ;{ 
+;  2024/12/30 S.Maag : Added SetMid(); changed pChar Definition
+;  2024/12/25 S.Maag : Added StringArray <-> StringList functions
+;  2024/12/08 S.Maag : Added StringsBetween Functions from PB Forum by mk_soft
+;  2024/12/04 S.Maag : Added simple TextBetween Function to search for Text in brackets
 ;  2024/08/20 S.Maag : Bug in JonList : need ListSize to get elements not Len()
 ;  2024/03/08 S.Maag : moved Assembler Functions to new Module FastString FStr::
 ;                      added Split and Join Functions
@@ -47,8 +51,8 @@ DeclareModule STR
     #PbFw_STR_CharModeName = "ASCII"       ; Application CharacterModeName
   CompilerEndIf
   ;#PbFw_STR_CharSize = SizeOf(Character)   ; Application CharacterSize = 2 Bytes
-     
-  #PbFw_STR_CHAR_TAB         =  9    ; TAB
+  
+  ;#TAB is PB integrated
   #PbFw_STR_CHAR_SPACE       = 32    ; ' '
   #PbFw_STR_CHAR_DoubleQuote = 34    ; "
   #PbFw_STR_CHAR_SingleQuote = 39    ; '
@@ -77,7 +81,7 @@ DeclareModule STR
   ; VAR(ptrBuffer): Pointer to the Ascii Buffer
   ; ============================================================================
   Macro StringToAsciiBuffer(String, ptrBuffer)
-     PokeS(String, ptrBuffer, #PB_Ascii)  
+    PokeS(String, ptrBuffer, #PB_Ascii)  
   EndMacro
 
   ; --------------------------------------------------
@@ -138,13 +142,28 @@ DeclareModule STR
   Prototype.s UnQuote(String$, xDoubleQuotes = #True, xSingleQuotes=#True, xTrim=#True)  ; 
   Global UnQuote.UnQuote                 ; define Prototype-Handler for AddQuotes
   
-  Prototype.i CountWords(*String, cSeparator.c=' ', IngnoreSpaces=#True)
+  Prototype.i CountWords(String$, cSeparator.c=' ', IngnoreSpaces=#True)
   Global CountWords.CountWords               ; define Prototype-Handler for CountWords
   
   Prototype CreateWordIndex(String$, List WordIndex.TWordIndex(), cSeparator.c=' ', UnQuoteMode = 0, xTrim=#True)
   Global CreateWordIndex.CreateWordIndex 
-
   
+  Prototype.i SetMid(String$, StringToSet$, Pos, Length=#PB_Default)
+  Global SetMid.SetMid
+  
+  ; --------------------------------------------------
+  ;  StringsBetween
+  ; -------------------------------------------------- 
+  Declare.s TextBetween(String$, Left$, Right$)
+  Declare.i StringsBetweenList(String$, Left$, Right$, List Result.s())
+  Declare.i StringsBetweenArray(String$, Left$, Right$, Array Result.s(1))
+  
+  ; --------------------------------------------------
+  ;  Array<=>List
+  ; -------------------------------------------------- 
+  Declare.i StringArrayToList(Array aryStr.s(1), List lstStr.s())
+  Declare.i StringListToArray(List lstStr.s(), Array aryStr.s(1))
+
  EndDeclareModule
 
 Module STR      ; Module STRING [STR::]
@@ -153,8 +172,12 @@ Module STR      ; Module STRING [STR::]
   PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
    
   Structure pChar   ; virtual CHAR-ARRAY, used as Pointer to overlay on strings 
-    a.a[0]          ; fixed ARRAY Of CHAR Length 0
-    c.c[0]          
+    StructureUnion
+      a.a
+      c.c
+      aa.a[0]          ; fixed ARRAY Of CHAR Length 0
+      cc.c[0]
+    EndStructureUnion
   EndStructure
   
   #_ArrayRedimStep = 10                   ; Redim-Step if Arraysize is to small
@@ -170,7 +193,7 @@ Module STR      ; Module STRING [STR::]
         ReturnChar = Char + 32  ;  a[97]-A[65]=32
         
       Case 192 To 222   ;'À'..222
-        ReturnChar = Char + 32  ;  224-192 
+        ReturnChar = Char + 32  ;  224-192 = 32
         
       Default
         ReturnChar = Char
@@ -423,13 +446,13 @@ Module STR      ; Module STRING [STR::]
     If xTrim     ; if remove leading Space AND char
       Repeat
         Select *pRead\c
-          Case #PbFw_STR_CHAR_SPACE,  #PbFw_STR_CHAR_TAB  ; Character Is Space or TABr
+          Case #PbFw_STR_CHAR_SPACE,  #TAB  ; Character Is Space or TABr
             *pRead + SizeOf(Character)    ; Set the ReadPositon to next Character
             cnt +1        ; count removed Characters           
           Default
             Break           
         EndSelect
-       ForEver
+      ForEver
     EndIf  
     
     ; ----------------------------------------------------------------------
@@ -521,7 +544,7 @@ Module STR      ; Module STRING [STR::]
 
   Macro mac_RemoveTabsAndDoubleSpace_KeepChar()
   	If *pWrite <> *pRead          ; if  WritePosition <> ReadPosition
-  		*pWrite\c = *pRead\c[0]     ; Copy the Character from ReadPosition to WritePosition => compacting the String
+  		*pWrite\c = *pRead\cc[0]    ; Copy the Character from ReadPosition to WritePosition => compacting the String
   	EndIf
   	*pWrite + SizeOf(Character)   ; set new Write-Position 
   EndMacro
@@ -545,36 +568,36 @@ Module STR      ; Module STRING [STR::]
     Protected *pWrite.Character = @String$
          	      
     ; Trim leading TABs and Spaces
-    While *pRead\c[0]
-      If *pRead\c[0] = #PbFw_STR_CHAR_SPACE      
-      ElseIf *pRead\c[0] = #PbFw_STR_CHAR_TAB       
+    While *pRead\cc[0]
+      If *pRead\cc[0] = #PbFw_STR_CHAR_SPACE      
+      ElseIf *pRead\cc[0] = #TAB       
       Else
          Break
       EndIf    
       *pRead + SizeOf(Character)
     Wend
     
-  	While *pRead\c[0]     ; While Not NullChar
+  	While *pRead\cc[0]     ; While Not NullChar
   	  
-  	  Select *pRead\c[0]
+  	  Select *pRead\cc[0]
   	       	      
         ; If we check for the most probably Chars first, we speed up the operation
         ; because we minimze the number of checks to do!
-        Case #PbFw_STR_CHAR_TAB
+        Case #TAB
           
-          If *pRead\c[1] = #PbFw_STR_CHAR_SPACE        
+          If *pRead\cc[1] = #PbFw_STR_CHAR_SPACE        
             ; if NextChar = SPACE Then remove   
-          ElseIf *pRead\c[1] = #PbFw_STR_CHAR_TAB
+          ElseIf *pRead\cc[1] = #TAB
             ; if NextChar = TAB Then remove   
           Else
             ; if NextChar <> SPACE And NextChar <> TAB   
-            *pRead\c[0] = #PbFw_STR_CHAR_SPACE        ; Change TAB to SPACE
+            *pRead\cc[0] = #PbFw_STR_CHAR_SPACE        ; Change TAB to SPACE
             mac_RemoveTabsAndDoubleSpace_KeepChar()   ; keep the Char
           EndIf
             
         Case #PbFw_STR_CHAR_SPACE
           
-          If *pRead\c[1] = #PbFw_STR_CHAR_SPACE        
+          If *pRead\cc[1] = #PbFw_STR_CHAR_SPACE        
            ; if NextChar = SPACE Then remove   
           Else
             mac_RemoveTabsAndDoubleSpace_KeepChar()   ; keep the Char
@@ -621,36 +644,36 @@ Module STR      ; Module STRING [STR::]
     EndIf
     
     ; Trim leading TABs and Spaces
-    While *pRead\c[0]
-      If *pRead\c[0] = #PbFw_STR_CHAR_SPACE      
-      ElseIf *pRead\c[0] = #PbFw_STR_CHAR_TAB       
+    While *pRead\cc[0]
+      If *pRead\cc[0] = #PbFw_STR_CHAR_SPACE      
+      ElseIf *pRead\cc[0] = #TAB       
       Else
          Break
       EndIf    
       *pRead + SizeOf(Character)
     Wend
     
-  	While *pRead\c[0]     ; While Not NullChar
+  	While *pRead\cc[0]     ; While Not NullChar
   	  
-  	  Select *pRead\c[0]
+  	  Select *pRead\cc[0]
   	       	      
         ; If we check for the most probably Chars first, we speed up the operation
         ; because we minimze the number of checks to do!
-        Case #PbFw_STR_CHAR_TAB
+        Case #TAB
           
-          If *pRead\c[1] = #PbFw_STR_CHAR_SPACE        
+          If *pRead\cc[1] = #PbFw_STR_CHAR_SPACE        
             ; if NextChar = SPACE Then remove   
-          ElseIf *pRead\c[1] = #PbFw_STR_CHAR_TAB
+          ElseIf *pRead\cc[1] = #TAB
             ; if NextChar = TAB Then remove   
           Else
             ; if NextChar <> SPACE And NextChar <> TAB   
-            *pRead\c[0] = #PbFw_STR_CHAR_SPACE    ; Change TAB to SPACE
+            *pRead\cc[0] = #PbFw_STR_CHAR_SPACE    ; Change TAB to SPACE
             mac_RemoveTabsAndDoubleSpace_KeepChar()   ; keep the Char
           EndIf
             
         Case #PbFw_STR_CHAR_SPACE
           
-          If *pRead\c[1] = #PbFw_STR_CHAR_SPACE        
+          If *pRead\cc[1] = #PbFw_STR_CHAR_SPACE        
            ; if NextChar = SPACE Then remove   
           Else
             mac_RemoveTabsAndDoubleSpace_KeepChar()   ; keep the Char
@@ -719,7 +742,8 @@ Module STR      ; Module STRING [STR::]
         ; ------------------------------------------------------------------
           If *ptrString\c
             If *ptrString\c <> *ptrSeperator\c
-              xEqual = #False
+              xEqual = #False     ; Not Equal
+              Break               ; Exit While
             EndIf
           Else 
             xEqual =#False        ; Not Equal
@@ -793,8 +817,9 @@ Module STR      ; Module STRING [STR::]
         ; ------------------------------------------------------------------
           If *ptrString\c 
             If *ptrString\c <> *ptrSeperator\c
-              xEqual = #False
-            EndIf
+              xEqual = #False     ; Not Equal
+              Break               ; Exit While
+           EndIf
           Else 
             xEqual =#False        ; Not Equal
             Break                 ; Exit While
@@ -1133,14 +1158,14 @@ Module STR      ; Module STRING [STR::]
       *src = *Buffer  
        
       For I=0 To (Bytes-1)
-        hiNibble =  (*src\a[I] >> 4)  + '0'  ; Add Ascii-Code of '0'
+        hiNibble =  (*src\aa[I] >> 4)  + '0'  ; Add Ascii-Code of '0'
         If hiNibble > '9' : hiNibble  + 7 : EndIf ; If 'A..F', we must add 7 for the correct Ascii-Code
         
-        loNibble =  (*src\a[I] & $0F) + '0'
+        loNibble =  (*src\aa[I] & $0F) + '0'
         If loNibble > '9' : loNibble  + 7 : EndIf
         
-        *dest\c[I]   = hiNibble         
-        *dest\c[I+1] = loNibble
+        *dest\cc[I]   = hiNibble         
+        *dest\cc[I+1] = loNibble
       Next
     
       ProcedureReturn sRet
@@ -1170,7 +1195,7 @@ Module STR      ; Module STRING [STR::]
       Debug "Bytes : " + Bytes
       
       While Bytes 
-        hiNibble = (*src\c[I * SizeOf(Character)]) ; read HexChar from String
+        hiNibble = (*src\cc[I * SizeOf(Character)]) ; read HexChar from String
          
         If hiNibble           
           If hiNibble >'F'
@@ -1185,7 +1210,7 @@ Module STR      ; Module STRING [STR::]
           Break   ; leave While          
         EndIf
         
-        loNibble = (*src\c[I * SizeOf(Character) +1]) 
+        loNibble = (*src\cc[I * SizeOf(Character) +1]) 
         ;Debug "hi : " + hiNibble + " / lo : " + Chr(loNibble)
         If loNibble          
           If loNibble >'F'
@@ -1200,7 +1225,7 @@ Module STR      ; Module STRING [STR::]
           Break  ; leave While
         EndIf
         
-        *dest\a[I] = (hiNibble << 4) | loNibble         
+        *dest\aa[I] = (hiNibble << 4) | loNibble         
         I + 1       ; Increment Position Counter
         Bytes -1    ; Decrement number of Bytes left
       Wend
@@ -1270,7 +1295,7 @@ Module STR      ; Module STRING [STR::]
         While *pRead\c
           
           Select *pRead\c
-            Case #PbFw_STR_CHAR_SPACE, #PbFw_STR_CHAR_TAB
+            Case #PbFw_STR_CHAR_SPACE, #TAB
              ;  
             Default
               *pStart = *pRead
@@ -1292,7 +1317,7 @@ Module STR      ; Module STRING [STR::]
               Break
             EndIf
             
-          Case  #PbFw_STR_CHAR_SPACE, #PbFw_STR_CHAR_TAB 
+          Case  #PbFw_STR_CHAR_SPACE, #TAB 
             *pEnd = *pRead - SizeOf(Character)
             
           Default
@@ -1313,7 +1338,7 @@ Module STR      ; Module STRING [STR::]
 
   EndProcedure
   UnQuote = @_UnQuote()     ; Bind ProcedureAdress to the PrototypeHandler
-
+  
   Procedure.i _CountWords(*String, cSeparator.c=' ', IngnoreSpaces=#True)
   ; ============================================================================
   ; NAME: _CountWords
@@ -1394,8 +1419,8 @@ Module STR      ; Module STRING [STR::]
       ProcedureReturn 0
     EndIf
     
-    While *char\c[I]         ; until end of String
-      Select *char\c[I]
+    While *char\cc[I]         ; until end of String
+      Select *char\cc[I]
           
         Case cSeparator         
           If xWordStart
@@ -1431,9 +1456,230 @@ Module STR      ; Module STRING [STR::]
     ProcedureReturn ListSize(WordIndex())
   EndProcedure
   CreateWordIndex = @_CreateWordIndex()     ; Bind ProcedureAdress to the PrototypeHandler
+  
+  Procedure.i _SetMid(*String, *StringToSet, Pos, Length)
+  ; ============================================================================
+  ; NAME: _SetMid
+  ; DESC: Because PureBasic do not have a Function to set Middle of String,
+  ; DESC: we need our own solution. PokeS is possible but do not have any
+  ; DESC: plausiblity checks with PokeS
+  ; DESC: !PointerVersion! use it as ProtoType SetMid()
+  ; VAR(*String) : Pointer to the main String$
+  ; VAR(Pos): Startposition for insert
+  ; VAR(Length) : number or characters to insert
+  ; VAR(*StringToSet): Pointer to StringToSet$
+  ; RET.i : Number of copied characters
+  ; ============================================================================
+    Protected *Dest.pChar, *Source.pChar
+    Protected cntChar, I
+    
+    If Pos > 0 
+      
+      If Length < 0
+        Length = 2147483647   ; max Long
+      EndIf
+      
+      *Source = *StringToSet
+      *Dest= *String + (Pos-1) * SizeOf(Character)
+     
+      ; move *Destination-Pointer to Start-Pos and check plausiblity of Start-Pos
+      For I=0 To Pos -1         
+        If *Dest\c = 0
+          ProcedureReturn 0       ; Start-Pos is outside of String
+        Else
+          *Source + SizeOf(Character)
+        EndIf
+      Next    
+      
+       
+      While *Source\c                 ; If Source not at EndOfString
+        If *Dest\c                    ; If Destination not at EndOfString  
+          *Dest\c = *Source\c         ; Destination = Source
+          *Source + SizeOf(Character) ; Set Pointer to next char
+          *Dest + SizeOf(Character)  
+          cntChar + 1                 ; count number of characters
+          If cntChar > = Length
+            Break
+          EndIf
+        Else
+          Break  
+        EndIf         
+      Wend
+        
+    EndIf
+  
+    ProcedureReturn cntChar
+  EndProcedure
+  SetMid = @_SetMid()
+  
+  ;- --------------------------------------------------
+  ;-  StringsBetween
+  ;- -------------------------------------------------- 
 
+  Procedure.s TextBetween(String$, Left$, Right$)
+  ; ============================================================================
+  ; NAME: TextBetween
+  ; DESC: Gets the Text between two String elements Left$ and Right$
+  ; DESC: Attention it is an easy version which do not support cascaded between 
+  ; DESC: like in brackets "((InBrackets))". TextBetwween will deliver "(InBrackets"
+  ; VAR(String$) : The String
+  ; VAR(Left$) : The left side like "("
+  ; VAR(Right$) : The right side like ")"
+  ; RET.s : The Text between Left$ and Right$
+  ; ============================================================================
+    
+    Protected posLeft, posRight
+    
+    posLeft = FindString(String$, Left$)
+    
+    If posLeft
+      posLeft + Len(Left$)
+      posRight = FindString(String$, Right$, posLeft)
+      
+      If posRight
+        ProcedureReturn Mid(String$, posLeft, posRight - posLeft)
+      EndIf
+    EndIf
+      
+    ProcedureReturn #Null$
+  EndProcedure
+  
+  Procedure.i StringsBetweenList(String$, Left$, Right$, List Result.s())
+  ; ============================================================================
+  ; NAME: StringsBetweenList
+  ; DESC: Gets the Strings between two String elements Left$ and Right$
+  ; DESC: as a List. It can be used to get get the text between '<' '>'
+  ; DESC: in html files. And for many other use. 
+  ; DESC: This code is from the PB forum by mk_soft. 
+  ; VAR(String$) : The String
+  ; VAR(Left$) : The left side like "("
+  ; VAR(Right$) : The right side like ")"
+  ; VAR(List Result.s()) : The List with the found Strings
+  ; RET.i : The nuber of found Strings (it is identical with the ListSize)
+  ; ============================================================================
+    Protected pos1, pos2, len1, len2
+    
+    ClearList(Result())
+    len1 = Len(Left$)
+    len2 = Len(Right$)
+    
+    Repeat
+      pos1 = FindString(String$, Left$, pos1)     
+      If pos1
+        pos1 + len1
+        pos2 = FindString(String$, Right$, pos1)
+        If pos2
+          AddElement(Result())
+          Result() = Mid(String$, pos1, pos2 - pos1)
+          pos1 = pos2 + len2
+        Else
+          Break
+        EndIf
+      Else
+        Break
+      EndIf       
+    ForEver
+    
+    ProcedureReturn ListSize(Result())
+  EndProcedure
+  
+  Procedure.i StringsBetweenArray(String$, Left$, Right$, Array Result.s(1))
+  ; ============================================================================
+  ; NAME: StringsBetweenArray
+  ; DESC: Gets the Strings between two String elements Left$ and Right$
+  ; DESC: as an Array of Strings. It can be used to get get the text 
+  ; DESC: between '<' '>' in html files. And for many other use. 
+  ; DESC: This code is from the PB forum by mk_soft. 
+  ; VAR(String$) : The String
+  ; VAR(Left$) : The left side like "("
+  ; VAR(Right$) : The right side like ")"
+  ; VAR(Array Result.s(1)) : The Array with the found Strings
+  ; RET.i : The number of found Strings (it is identical with ArraySize-1)
+  ; ============================================================================
+    Protected pos1, pos2, len1, len2, size, count
+    
+    Dim Result(0)
+    len1 = Len(Left$)
+    len2 = Len(Right$)
+    
+    Repeat
+      pos1 = FindString(String$, Left$, pos1)
+      If pos1
+        pos1 + len1
+        pos2 = FindString(String$, Right$, pos1)
+        If pos2
+          If size < count
+            size + 8
+            ReDim Result(size)
+          EndIf
+          Result(count) = Mid(String$, pos1, pos2 - pos1)
+          count + 1
+          pos1 = pos2 + len2
+        Else
+          Break
+        EndIf
+      Else
+        Break
+      EndIf
+    ForEver
+    If count > 0
+      ReDim Result(count - 1)
+    EndIf  
+    ProcedureReturn count
+  EndProcedure
+  
+  ;- --------------------------------------------------
+  ;-  Array <-> List
+  ;- -------------------------------------------------- 
+  
+  Procedure.i StringArrayToList(Array aryStr.s(1), List lstStr.s())
+  ; ============================================================================
+  ; NAME: StringArrayToList
+  ; DESC: Copies a String-Array to a StringList
+  ; VAR(Array aryStr.s(1)) : The StringArray with 1 dimension
+  ; VAR(List lstStr.s()) : The StringList
+  ; RET.i : The number of found Strings copied
+  ; ============================================================================
+    Protected I, N
+    
+    N = ArraySize(aryStr())
+    
+    If N
+      ClearList(lstStr())
+      
+      For I = 0 To N 
+        AddElement(lstStr())
+        lstStr() = aryStr(I)
+      Next
+    EndIf
+  
+    ProcedureReturn N+1
+  EndProcedure
+  
+  Procedure.i StringListToArray(List lstStr.s(), Array aryStr.s(1))
+  ; ============================================================================
+  ; NAME: StringListToArray
+  ; DESC: Copies a StringList to a String-Array
+  ; VAR(List lstStr.s()) : The StringList
+  ; VAR(Array aryStr.s(1)) : The StringArray with 1 dimension
+  ; RET.i : The number of found Strings copied
+  ; ============================================================================
+    Protected I, N
+    
+    N = ListSize(lstStr())
+    
+    If N
+      Dim aryStr(N-1)
+      ForEach  lstStr()
+        aryStr(I) = lstStr()
+        I + 1 
+      Next
+    EndIf
+    
+    ProcedureReturn N
+  EndProcedure
+  
 EndModule
-
 
 
 CompilerIf #PB_Compiler_IsMainFile
@@ -1527,48 +1773,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 
-Procedure Template()
-  
-  CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PB_Compiler_Unicode
-    
-    CompilerIf #PB_Compiler_64Bit
-    ; ----------------------------------------------------------------------
-    ; x64 Assembler
-    ; ----------------------------------------------------------------------
-      
-    CompilerElse ; #PB_Compiler_32Bit
-    ; ----------------------------------------------------------------------
-    ; x32 Assembler
-    ; ----------------------------------------------------------------------
-      
-    CompilerEndIf 
-     
-  CompilerElseIf #PB_Compiler_Backend = #PB_Backend_C And #PB_Compiler_Unicode
-     
-    CompilerIf #PB_Compiler_64Bit
-    ; ----------------------------------------------------------------------
-    ; x64 C
-    ; ----------------------------------------------------------------------
-      
-    CompilerElse ; #PB_Compiler_32Bit
-    ; ----------------------------------------------------------------------
-    ; x32 C
-    ; ----------------------------------------------------------------------
-      
-    CompilerEndIf
-    
-  CompilerElse ; Ascii
-  ; ----------------------------------------------------------------------
-  ; Ascii Strings < PB 5.5
-  ; ----------------------------------------------------------------------
-     
-  CompilerEndIf 
-    
-EndProcedure
-
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 1552
-; FirstLine = 1485
-; Folding = -------
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 92
+; FirstLine = 55
+; Folding = --------
 ; Optimizer
 ; CPU = 5

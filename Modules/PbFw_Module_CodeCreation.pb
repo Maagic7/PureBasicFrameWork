@@ -55,7 +55,7 @@ DeclareModule CC
   EndEnumeration
   
   Macro DQ
-    "
+  "
   EndMacro
   
   Macro QuoteIt(TextToQuote)
@@ -314,9 +314,9 @@ CompilerEndIf
 ;   EndProcedure
 
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 58
-; FirstLine = 30
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 284
+; FirstLine = 219
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

@@ -1116,7 +1116,7 @@ Module TD         ; ThermoDynamic
   ; DESC: saturation specific humidity
   ; VAR(T.d): Temeprature [°C]
   ; VAR(P.d): Pressure [mbar]
-  ; RET.d: grann of water per kg of moist air [g/kg]
+  ; RET.d: gramms of water per kg of moist air [g/kg]
   ; ======================================================================
    Protected  W.d, Q.d
     ;
@@ -3195,7 +3195,7 @@ Module TD         ; ThermoDynamic
   ;-  E) Miscellaneous  Functions 
   ;- ---------------------------------------------------------------------------
   
-  Procedure Z(PT.d, P.d, T.d, TD.d, N.i)
+  Procedure Z(PT.d, Array P.d(1), Array T.d(1), Array TD.d(1), N.i)
      
     ;   FUNCTION Z(PT,P,T,TD,N)
       ;
@@ -3250,7 +3250,7 @@ Module TD         ; ThermoDynamic
     ;         Return
     ;         End
     
-    Protected.d Z, TK
+    Protected.d Z
     Protected.i I
     Protected Dim TK(N)
     
@@ -6271,9 +6271,8 @@ CompilerIf #False  ; don't bother the compiler with a lot of comments
     ;} END FORTRAN CODE
 
 CompilerEndIf
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 3260
-; FirstLine = 2481
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 1144
 ; Folding = 6-----------
 ; Optimizer
 ; Executable = K:\purebasic\_projects\wallx\wallx98.exe

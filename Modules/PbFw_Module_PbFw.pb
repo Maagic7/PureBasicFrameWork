@@ -29,16 +29,16 @@
 ; XIncludeFile ""
 
 DeclareModule PbFw
-   EnableExplicit
+  EnableExplicit
    
   Macro HashTag
   #
   EndMacro
   
   ; define Constant if Not defined yet
-  Macro CONST(Constant, Value)
-    CompilerIf Not Defined(Constant, #PB_Constant)
-      PbFw::HashTag#Constant = Value
+  Macro CONST(ConstName, Value)
+    CompilerIf Not Defined(ConstName, #PB_Constant)
+      PbFw::HashTag#ConstName = Value
     CompilerEndIf
   EndMacro
    
@@ -84,7 +84,7 @@ DeclareModule PbFw
     CompilerEndIf 
   ; ************************************************************************
   EndMacro
- 
+    
   Structure TPbFw_cfgUseMMX
     Use_MMX.i     ; Configuration FLAG Use MMX 
     Use_SSE.i     ; Configuration FLAG Use SSE  
@@ -97,7 +97,6 @@ DeclareModule PbFw
     
   Declare.s Get_MMX_STATE_TXT()
   Declare.i ListModule(ModuleName.s)
-
   
 EndDeclareModule
 
@@ -138,7 +137,7 @@ Module PbFw
     
      ProcedureReturn ret    
   EndProcedure
-  
+    
   ; Debug Get_MMX_STATE_TXT()
 
 EndModule
@@ -146,8 +145,8 @@ EndModule
 DisableExplicit
 
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 44
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 52
 ; FirstLine = 15
 ; Folding = --
 ; Optimizer

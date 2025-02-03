@@ -9,7 +9,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2023/09/19
-; VERSION  :  0.1 untested Developer Version
+; VERSION  :  0.11 untested Developer Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -17,7 +17,7 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{ 
-;  
+; 2025/01/31 S.Maag :  Module PB:: included. Solved the Color oder Problem!
 ;                       
 ;}
 ;{ TODO:
@@ -29,7 +29,8 @@
 ;- Include Files
 ;- ----------------------------------------------------------------------
 
-XIncludeFile "PbFw_Module_PbFw.pb"   ; PbFw:: FrameWork control Module
+XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw:: FrameWork control Module
+XIncludeFile "PbFw_Module_PB.pb"          ; PB::   PureBasic extention Module
 
 DeclareModule X11Col
   EnableExplicit
@@ -211,9 +212,13 @@ DeclareModule X11Col
   Declare.i SearchColorByHSV(H.l, S.l, V.l) ; Returns the ColorID for GetColorDetails
   Declare.i SearchColorByHSL(H.l, S.l, L.l) ; Returns the ColorID for GetColorDetails
   Declare.s GetColorName(ColorID)           ; Returns the Name of the Color
-  Declare.l GetRGB(ColorID, Alpha=0)        ; Returns the Name of the Color
+  Declare.l GetRGB(ColorID, Alpha=255)      ; Returns the RGB ColorValue and add Alpha
   Declare.i GetColorDetails(*OutTColorTableEntry, ColorID)
   Declare.i GetMaxColorID()                 ; Returns the maximum ColorID [1..145]
+  
+  Macro mac_X11Col(ColorID)
+    X11::ColTable(ColorID)  
+  EndMacro
   
 EndDeclareModule 
 
@@ -236,9 +241,9 @@ Module X11Col
   EndStructure
     
   ; TODO! Change #ColTableEntries if you change NoOfColors in DataSection!
-  #ColTableEntries = 145  ; [0..144]
-  Global Dim ColorTable.TX11ColorEntry(#ColTableEntries-1)
-  Global Dim IndexTable_Name.i(#ColTableEntries-1) ; This Array contains the ID's sorted by the ColorNames
+  #ColTableEntries = 145  ; [1..145]
+  Global Dim ColorTable.TX11ColorEntry(#ColTableEntries)
+  Global Dim IndexTable_Name.i(#ColTableEntries) ; This Array contains the ID's sorted by the ColorNames
   
   Procedure _Init()
   ; ============================================================================
@@ -468,9 +473,7 @@ Module X11Col
     ; because it is a RGB sorted table, we can start in the middle for an
     ; effectiv search
     
-    ; TODO! Maybe select between color oder in Register!
-    RGB & $00FFFFFF   ; Remove Alpha ARGB order in Register
-    ; RGB & $FFFFFF00   ; Remove Alpha if RGBA order in Register
+    RGB = PB::SetAlpha(RGB, 0)     ; Remove Alpha Channel
 
     start = (#ColTableEntries-1) >> 1    ; starting in the middle of the table
     
@@ -578,20 +581,23 @@ Module X11Col
     EndIf
   EndProcedure
   
-  Procedure.l GetRGB(ColorID, Alpha=0)
+  Procedure.l GetRGB(ColorID, Alpha=255)
   ; ============================================================================
   ; NAME: GetRGB
   ; DESC: Get the Color RGB Value by ColorID
   ; VAR(ColorID) : The Color ID [1..145] or #PbFw_X11Col_ID_AliceBlue ...
   ; RET.l : RGB-Color-Value, Alpha = 0 Name like "Alice Blue"
   ; ============================================================================
+    Protected col.l
+    
     If ColorID >0 And ColorID <= #ColTableEntries
+      col = ColorTable(ColorID)\Details\RGB
       If Alpha
-        ProcedureReturn Alpha <<24 & ColorTable(ColorID-1)\Details\RGB
-      Else
-        ProcedureReturn ColorTable(ColorID-1)\Details\RGB       
+        col = PB::SetAlpha(col, Alpha)
       EndIf      
     EndIf
+    
+    ProcedureReturn col
   EndProcedure
 
   Procedure.i GetColorDetails(ColorID, *Out.TX11ColorDetail)
@@ -605,7 +611,7 @@ Module X11Col
     
     If *Out
       If ColorID >0 And ColorID <= #ColTableEntries
-        CopyStructure(ColorTable(ColorID-1), *Out, TX11ColorDetail)
+        CopyStructure(ColorTable(ColorID), *Out, TX11ColorDetail)
         ProcedureReturn *Out
       EndIf
     EndIf
@@ -786,8 +792,8 @@ Module X11Col
     Data.s "White"
     Data.s ""               ; End! Use "" because #Null$ do not work correctly here
     
-    X11_Colors: ; RGB sorted ColorList
-    ;      RGB, Hue[°], HSV_S[%], HSV_V[%], HSL_S[%], HSL_L[%]           
+    X11_Colors: ; RGB sorted ColorList - Attention Unix notation $RGB, for Windows we need $BGR
+     ;     $RGB, Hue[°], HSV_S[%], HSV_V[%], HSL_S[%], HSL_L[%]           
     Data.l $000000,   0,   0,   0,   0,   0 ; Black
     Data.l $000080, 240,  50, 100, 100,  25 ; Navy Blue
     Data.l $00008B, 240,  55, 100, 100,  27 ; Dark Blue
@@ -956,9 +962,8 @@ Next
 ; ID = SearchColorByRGB($FFFFFF)
 ; Debug ID
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 430
-; FirstLine = 392
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 33
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

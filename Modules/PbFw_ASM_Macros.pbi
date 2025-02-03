@@ -117,7 +117,7 @@
 ; dw 	Define Word = 2 bytes
 ; dd 	Define Doubleword = 4 bytes
 ; dq 	Define Quadword = 8 bytes
-; dt 	Define Ten Bytes = 10 bytes
+; dt 	Define ten Bytes = 10 bytes
 ; !label: dq 21, 22, 23
 ; --------------------------------------------------
 
@@ -512,7 +512,7 @@ Macro ASM_Vec4Mul_PDW(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD
   !PMULDQ _XMMA, _XMMB      ; Multiply packed DoubleWord Integers
 EndMacro
 
-; A PDIVDQ to devide packed Doubleword Integers do not exixt because of the CPU cycles are depending on the operands 
+; A PDIVDQ to devide packed Doubleword Integers do not exist because of the CPU cycles are depending on the operands 
 
 Macro ASM_Vec4Min_PDW(ptrVec1, ptrVec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
   !MOV _REGA, [p.p_#ptrVec1]  
@@ -536,9 +536,9 @@ EndMacro
 ; Debug ASM_VecMul_PDW(In1, In2)
 
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 115
-; FirstLine = 45
+; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; CursorPosition = 165
+; FirstLine = 115
 ; Folding = --------
 ; Optimizer
 ; CPU = 5
