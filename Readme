@@ -2,9 +2,7 @@ PureBasic Framework
 It's  mostly in Beta or Brainstorming State
 See comments in Module Code for the actual relase State!
 Do not use any code in your projects until you tested it!
-
-Download it, only if you want to be part of the development!
-
+ 
 Some Module descriptions
 PbFw_ASM_Macros.pbi : Collection of Assembler optimation Macros					  
 PbFw_Module_Bits    : optimized Bit manipulation functions
