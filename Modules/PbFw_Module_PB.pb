@@ -234,7 +234,7 @@ DeclareModule PB
     Bool(FileSize(Directory) = -2)
   EndMacro
   
-  ; Go on path higher in path hirarchy
+  ; Go one path higher in path hirarchy
   ; use it : result$ = OnePathBack("C:\Windows\System32")   ; => "C:\Windows\"
   ;          result$ = OnePathBack("C:\Windows\System32\")  ; => "C:\Windows\"  
   Macro OnePathBack(FullPathName)
@@ -1967,8 +1967,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 122
-; FirstLine = 90
+; CursorPosition = 236
+; FirstLine = 230
 ; Folding = ------------------
 ; Optimizer
 ; CPU = 5
