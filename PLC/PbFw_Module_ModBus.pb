@@ -16,14 +16,15 @@
 ;
 ; AUTHOR   :  Stefan Maag 
 ; DATE     :  2023/04/28
-; VERSION  :  0.12  Brainstorming Version
+; VERSION  :  0.12  untested Brainstorming Version
 ; COMPILER :  all
 ; OS       :  all
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog: 
-;{ 2024/09/04 S.Maag addes RegisterSet Functions for Modbus Client/Slave
+;{ 2025/01/24 S.Maag updated pBuffer Structure and removed \.[0] in the code
+;  2024/09/04 S.Maag added RegisterSet Functions For Modbus Client/Slave
 ;  2024/09/03 S.Maag TCP/RTU GetADU_Header send/receive
 ;}
 ; ===========================================================================
@@ -35,8 +36,7 @@
 ;XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 ;XIncludeFile "PbFw_Module_Debug.pb"        ; DBG::      Debug Module
 
-; XIncludeFile "..\Modules\PbFw_Module_Bits.pb"               ; Bits::    Extended Bit Operation
-XIncludeFile "..\Modules\PbFw_Module_RealTimeCounter.pb"    ; RTC::     RealTimeCounter
+XIncludeFile "..\Modules\PbFw_Module_PB.pb"        ; PB::      Purebasic Extention Module
 
 ;- ----------------------------------------------------------------------
 ;-   Documentation
@@ -478,26 +478,26 @@ XIncludeFile "..\Modules\PbFw_Module_RealTimeCounter.pb"    ; RTC::     RealTime
   ; ============================================================
   ; Example PDU For reading Coils with Request and Response
   ; ============================================================
-  ; Byte |	Request                |Byte | Response
+  ; Byte | Request                    |Byte | Response
   ; ------------------------------------------------------------
-  ; (Hex)|	Fieldname	             |(Hex)| Fieldname
+  ; (Hex)| FieldName	                |(Hex)| FieldName
   ; ------------------------------------------------------------
-  ; 01   | Transactoion ID         | 01  | Transactoion ID
-  ; 02   |                         | 02  |
+  ; 01   | Transactoion ID            | 01  | Transactoion ID
+  ; 02   |                            | 02  |
   ; ------------------------------------------------------------
-  ; 00   | Protocol                | 00  | Protocol
-  ; 00   | (always 00 or User def) | 00  |
+  ; 00   | Protocol                   | 00  | Protocol
+  ; 00   | (always 00 or User def)    | 00  |
   ; ------------------------------------------------------------
-  ; 00   |  Message Length         | 00  | Message Length
-  ; 06   |                         | 04  |
+  ; 00   | Message Length             | 00  | Message Length
+  ; 06   |                            | 04  |
   ; ------------------------------------------------------------
-  ; 01   | DeviceID, Address       | 01  | DeviceID, Address
+  ; 01   | DeviceID, Address          | 01  | DeviceID, Address
   ; ------------------------------------------------------------
-  ; 01   | Function Code           | 01  | Function Code
+  ; 01   | Function Code              | 01  | Function Code
   ; ------------------------------------------------------------
-  ; 00   | Addr Hi                 | 01  | No of Data Bytes follow
+  ; 00   | Addr Hi                    | 01  | No of Data Bytes follow
   ; ------------------------------------------------------------
-  ; 00   | Addr Lo                 | 02  | Values of DO0 und DO1
+  ; 00   | Addr Lo                    | 02  | Values of DO0 und DO1
   ; ------------------------------------------------------------
   ; 00   | No of OutRegisters Hi Byte | 01  |	
   ; 02   | No of OutRegisters Hi Byte | 02  |
@@ -709,11 +709,16 @@ Module ModBus
   #TCP_idx_PDU = #TCP_idx_ADU + 7 ; 7
 
   Structure pBuffer
-    a.a[0]
-    u.u[0]
-    w.w[0]
-    l.l[0]
-    f.f[0]
+    a.a
+    u.u
+    w.w
+    l.l
+    f.f
+    aa.a[0]
+    uu.u[0]
+    ww.w[0]
+    ll.l[0]
+    ff.f[0]
   EndStructure
     
   ;- ----------------------------------------------------------------------
@@ -721,7 +726,7 @@ Module ModBus
   ;- ----------------------------------------------------------------------
   
   Macro _SwapBytes(val)
-     ((val & $FF)<< 8) + (val >>8)&FF)  
+     ((val & $FF)<< 8) + (val >>8)& $FF)  
   EndMacro
   
   Macro _HighByte(val)
@@ -1018,7 +1023,7 @@ Module ModBus
     With *RS
       *Buf=\HRegs(StartRegister)  
      EndWith    
-     ProcedureReturn *Buf\f[0]  ; return the actual vlaue  
+     ProcedureReturn *Buf\f  ; return the actual vlaue  
   EndProcedure
   
   Procedure.f SetFloat(*RS.TModbusRegisterSet, StartRegister, Value.f)
@@ -1034,8 +1039,8 @@ Module ModBus
  
     With *RS
       *Buf=\HRegs(StartRegister)  
-      ret = *Buf\f[0]
-      *Buf\f[0] = Value
+      ret = *Buf\f
+      *Buf\f = Value
     EndWith   
     ProcedureReturn ret ; return the former vlaue
   EndProcedure
@@ -1054,7 +1059,7 @@ Module ModBus
     With *RS
       *Buf=\HRegs(StartRegister)  
     EndWith 
-    ProcedureReturn *Buf\l[0] ; return the actual vlaue  
+    ProcedureReturn *Buf\l ; return the actual vlaue  
   EndProcedure
   
   Procedure.l SetInt32(*RS.TModbusRegisterSet, StartRegister, Value.l)
@@ -1070,8 +1075,8 @@ Module ModBus
     
     With *RS
       *Buf=\HRegs(StartRegister) 
-      ret = *Buf\l[0]
-      *Buf\l[0] = Value
+      ret = *Buf\l
+      *Buf\l = Value
     EndWith 
     
     ProcedureReturn ret ; return the former vlaue
@@ -1091,7 +1096,7 @@ Module ModBus
     
      With *RS
       *Buf=\HRegs(StartRegister) 
-      ProcedureReturn (*Buf\l[0] & $FFFFFFFF)   ; With (& $FFFFFFFF) PB ignore the sign Bit
+      ProcedureReturn (*Buf\l & $FFFFFFFF)   ; With (& $FFFFFFFF) PB ignore the sign Bit
     EndWith 
   EndProcedure
   
@@ -1108,8 +1113,8 @@ Module ModBus
     
      With *RS
       *Buf=\HRegs(StartRegister) 
-      ret = *Buf\l[0] & $FFFFFFFF               ; With (& $FFFFFFFF) PB ignore the sign Bit
-      *Buf\l[0] = Value & $FFFFFFFF    
+      ret = *Buf\l & $FFFFFFFF               ; With (& $FFFFFFFF) PB ignore the sign Bit
+      *Buf\l= Value & $FFFFFFFF    
     EndWith 
       
     ProcedureReturn ret ; return the former vlaue
@@ -1122,6 +1127,9 @@ Module ModBus
   
   ; List COM Ports 
   ; https://www.purebasic.fr/german/viewtopic.php?p=366387&sid=6bbd84f0834c8cd81d0a0140999a8401#p366387
+  
+  ; use COM-Port in a Thread
+  ;https://www.purebasic.fr/english/viewtopic.php?p=455736#p455736
   
   Procedure.i _RTU_Send(*Modbus.TModbusRTU)
     Protected ret
@@ -1466,10 +1474,10 @@ Module ModBus
         
         cnt=0 
         For I = 0 To nb-1   ; Step trough all received Bytes
-          bval = \ReceiveBuffer(#TCP_idx_PDU+2 +I) 
+          bval = \ReceiveBuffer(#TCP_idx_PDU +2 +I) 
           
           For J = 0 To 7    ; Step trough the 8 Bits. Convert Byte to OutBools
-            OutBools(cnt) = Bool(bval&1)
+            OutBools(cnt) = Bool(bval &1)
             bval >> 1
             cnt + 1
             If cnt >= NoOfElements    ; End of valid Received Bits reached
@@ -1598,7 +1606,7 @@ Module ModBus
       ret = SendNetworkData(\ConnectionID, \SendBuffer(), \Status\BytesToSend)
       If ret = \Status\BytesToSend
         
-        *Modbus\Status\timSend = RTC::GetTimeStamp()     ; Save the TimeStamp send in Modbus Structrue
+        *Modbus\Status\timSend = PB::GetTimeStamp()     ; Save the TimeStamp send in Modbus Structrue
         
         If \TimeOut <= 0 : \TimeOut = #MODBUS_STANDARD_TIMEOUT : EndIf ; 1000ms
         TimeOut = \TimeOut 
@@ -1610,7 +1618,7 @@ Module ModBus
           If NetworkClientEvent(*Modbus\ConnectionID) = #PB_NetworkEvent_Data
      
             BytesReceived = ReceiveNetworkData(\ConnectionID, \ReceiveBuffer(), #_BufferSizeByte)
-            *Modbus\Status\timReceive = RTC::GetTimeStamp()     ; Save the TimeStamp receive in Modbus Structrue
+            *Modbus\Status\timReceive = PB::GetTimeStamp()     ; Save the TimeStamp receive in Modbus Structrue
  
             If BytesReceived > 6
               \Status\BytesReceived = BytesReceived
@@ -1677,8 +1685,8 @@ Module ModBus
       _WordToBuffer(TrID, *Modbus\SendBuffer(), #TCP_idx_ADU)     ; TransactionID
       _WordToBuffer(0, *Modbus\SendBuffer(), #TCP_idx_ADU +2)     ; Protocol
       _WordToBuffer(MessageLength, *Modbus\SendBuffer(), #TCP_idx_ADU +4)       ; MessageLenght in Bytes
-      *pBuf\a[#TCP_idx_ADU+ 6] = \DeviceID & $FF
-      *pBuf\a[#TCP_idx_PDU] = ModbusFunctionID & $FF
+      *pBuf\aa[#TCP_idx_ADU+ 6] = \DeviceID & $FF
+      *pBuf\aa[#TCP_idx_PDU] = ModbusFunctionID & $FF
       _WordToBuffer(StartAddress, *Modbus\SendBuffer(), #TCP_idx_PDU+1)  ; Register, Coil .. Address
       ; NoOfElements is the first Byte of Data
       _WordToBuffer(NoOfElements, *Modbus\SendBuffer(), #TCP_idx_PDU+3)  ; Number of elements to read
@@ -2047,9 +2055,9 @@ Module ModBus
 EndModule
 
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 1205
-; FirstLine = 1179
+; IDE Options = PureBasic 6.04 LTS (Windows - x86)
+; CursorPosition = 18
 ; Folding = -----------
 ; Optimizer
 ; CPU = 5
+; Warnings = Display
