@@ -116,7 +116,7 @@ DeclareModule PB
     ; ----------------------------------------------------------------------
     ; This is the exception Alpha first : Motorola PowerPC
     ; ----------------------------------------------------------------------
-    Structure TSystemRGBA   ;  BGRA in Memory, might be ABGR too TODO! Check it!
+    Structure TSystemRGBA   ;  BGRA in Memory, might be ABGR! TODO! Check it!
       ;A.a
       B.a
       G.a
@@ -1967,8 +1967,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 236
-; FirstLine = 230
+; CursorPosition = 118
+; FirstLine = 98
 ; Folding = ------------------
 ; Optimizer
 ; CPU = 5
