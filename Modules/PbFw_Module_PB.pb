@@ -116,11 +116,12 @@ DeclareModule PB
     ; ----------------------------------------------------------------------
     ; This is the exception Alpha first : Motorola PowerPC
     ; ----------------------------------------------------------------------
-    Structure TSystemRGBA   ; here it's ABGR in Memory
-      A.a
+    Structure TSystemRGBA   ;  BGRA in Memory, might be ABGR too TODO! Check it!
+      ;A.a
       B.a
       G.a
       R.a
+      A.a
     EndStructure
   CompilerElse    ; x86, x64; ARM32; ARM64
     ; ----------------------------------------------------------------------
@@ -663,7 +664,11 @@ DeclareModule PB
   ;- Macros for COLOR operations
   ;- ----------------------------------------------------------------------
   
-  ; The Get/Set and Make Macros are up to 30% fastern than PB's Color Functions.
+  ; Purebasic don't have function so set only one channel of a Color to a new
+  ; value. The usual PB Code to set RedChannel to NewValue is:
+  ;   Color = RGB(NewRed, Green(Color), Blue(Color))
+  
+  ; The Get/Set and MakeRGB Macros are up to 30% fastern than PB's Color Functions.
   ; Because PB use Subroutine Calls for Red(), Green(), ... , RGBA(), RGB(),
   ; the PB buildin functions are slower!
   ; To get direct and correct access to the Color Channels according to the 
@@ -1962,8 +1967,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 326
-; FirstLine = 284
+; CursorPosition = 122
+; FirstLine = 90
 ; Folding = ------------------
 ; Optimizer
 ; CPU = 5
