@@ -14,7 +14,8 @@
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
-;   2025/01/20 S.Maag : moved the general Any-Pointer definition TUptr from
+;   2025/02/06 S.Maag : Added Functions for Bit-Buffers
+;   2025/01/20 S.Maag : Moved the general Any-Pointer definition TUptr from
 ;                       Module Buffer:: to PB:: and changend Name to pAny 
 ;                       AllocateBuffer() option ClearBuffer=#False was not o.k.
 ;}
@@ -29,6 +30,7 @@
  XIncludeFile "PbFw_Module_PB.pb"           ; PB::     Purebasic Extention Module
  XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::   FrameWork control Module
  XIncludeFile "PbFw_Module_Debug.pb"        ; DBG::    Debug Module
+ XIncludeFile "PbFw_Module_Bits.pb"         ; Bits::   Bit Operation Module
 
 DeclareModule BUFFER
   
@@ -48,7 +50,7 @@ DeclareModule BUFFER
   
   ; 2025/01/20 : Now hBuffer use AnyPointer from Modul PB:: instead of it's own TUptr definition
   Structure hBuffer
-    *_ptrMem          ; Pointer to BufferStart in Memory (ATTENTION!! Never change this value! => Programm will chrash!)
+    *_ptrMem.PB::pAny ; Pointer to BufferStart in Memory (ATTENTION!! Never change this value! => Programm will chrash!)
     *UserPtr.PB::pAny ; Any Pointer (actual processed BUFFER position)
     AlignMode.i       ; AlignMode (#PbFw_BUFFER_AlignWord, #PbFw_BUFFER_AlignLong, #PbFw_BUFFER_AlignInteger ...)
     MemSize.i         ; Allocated MemorySize in [BYTES]
@@ -64,10 +66,11 @@ DeclareModule BUFFER
   Declare ClearBufferMemory(*hBUF.hBuffer)
   Declare FillBuffer(*hBUF.hBuffer, Value, PB_Type=#PB_Byte)
   Declare.i CloneBuffer(*hBUF.hBuffer, *hCloneBUF.hBuffer)
-  Declare SwapBuffers(*hBUF_1.hBuffer, *hBUF_2.hBuffer)
   Declare FileToBuffer(FileName.s, *hBUF.hBuffer, Align=#PbFw_BUFFER_AlignInteger)
   Declare BufferToFile(*hBUF.hBuffer, FileName.s)
-  
+  Declare.i ReadBit(*hBUF.hBuffer, BitNo)
+  Declare.i WriteBit(*hBUF.hBuffer, BitNo, NewBitValue=#True)
+
 EndDeclareModule
 
 
@@ -224,21 +227,7 @@ Module BUFFER
       EndIf
     EndWith  
   EndProcedure
-  
-  Procedure SwapBuffers(*hBUF_1.hBuffer, *hBUF_2.hBuffer)
-  ; ============================================================================
-  ; NAME: SwapBuffers
-  ; DESC: Xchanges two Buffers (by xchanging the Handels)
-  ; VAR(*hBUF_1.hBuffer) : Handle for Buffer 1
-  ; VAR(*hBUF_2.hBuffer) : Handle for Buffer 2
-  ; RET : - 
-  ; ============================================================================
-    
-    ; swap is not in the PB Help: it exists since PB 4.x and xchanges 2 values
-    ; in an optimized way
-    ; Swap *hBUF_1, *hBUF_2  ; DAS IST QUATSCH!   
-  EndProcedure  
-    
+      
   Procedure FileToBuffer(FileName.s, *hBUF.hBuffer, Align=#PbFw_BUFFER_AlignInteger)
   ; ============================================================================
   ; NAME: FileToBuffer
@@ -260,13 +249,13 @@ Module BUFFER
         If FileSize > 0
           With *hBUF
             
-            If \_ptrMem                  ; Buffer Memory already exists
+            If \_ptrMem                 ; Buffer Memory already exists
               FreeBuffer(*hBUF)         ; if BufferSize is to low, FreeMemory()
             EndIf
             
-            If  AllocateBuffer(FileSize, *hBuf, Align)  ; Allocate the Buffer Memory
-              RET = ReadData(FileNo, \_ptrMem, FileSize) ; Read the file data
-              \DataSize = RET                           ; Set the Buffers DataSize = BytesRead
+            If  AllocateBuffer(FileSize, *hBuf, Align)    ; Allocate the Buffer Memory
+              RET = ReadData(FileNo, \_ptrMem, FileSize)  ; Read the file data
+              \DataSize = RET                             ; Set the Buffers DataSize = BytesRead
             EndIf
           EndWith
         EndIf
@@ -288,11 +277,95 @@ Module BUFFER
     
   EndProcedure 
   
+  ;- ----------------------------------------------------------------------
+  ;- Functions for Bit-Buffers
+  ;- ----------------------------------------------------------------------
+
+  Procedure.i ReadBit(*hBUF.hBuffer, BitNo)
+  ; ============================================================================
+  ; NAME: ReadBit
+  ; DESC: Read the Value from a Bit in the Buffer
+  ; VAR(*hBUF.hBuffer) : Handle for Buffer
+  ; VAR(BitNo) : The No of the Bit [0..n] 
+  ; RET : The value of the Bit [#False, #True]
+  ; ============================================================================
+    Protected BitValue, ByteNo, BitNoByte
+    
+    ByteNo = BitNo >> 8
+    BitNoByte = BitNo - ByteNo
+    
+    If ByteNo < *hBUF\MemSize
+      BitValue = (*hBUF\_ptrMem + ByteNo) & (1 << BitNoByte)
+    EndIf
+    
+    ProcedureReturn BitValue
+  EndProcedure
+  
+  Procedure.i WriteBit(*hBUF.hBuffer, BitNo, NewBitValue=#True)
+  ; ============================================================================
+  ; NAME: ReadBit
+  ; DESC: WriteBit a Bit in the Buffer
+  ; VAR(*hBUF.hBuffer) : Handle for Buffer
+  ; VAR(BitNo) : The No of the Bit [0..n] 
+  ; RET : #True if succeed
+  ; ============================================================================
+   Protected ByteNo, BitNoByte, NewByteValue
+   
+    BitNo = BitNo & $FF
+     
+    ByteNo = BitNo >> 8
+    BitNoByte = BitNo - ByteNo
+    If ByteNo < *hBuf\MemSize
+      If NewBitValue
+        *hBUF\_ptrMem\aa[ByteNo] = *hBUF\_ptrMem\aa[ByteNo] | 1<<BitNoByte
+      Else
+        *hBUF\_ptrMem\aa[ByteNo] = *hBUF\_ptrMem\aa[ByteNo] & ~(1<<BitNoByte)
+      EndIf
+      ProcedureReturn #True
+    Else
+      ProcedureReturn #False
+    EndIf
+    
+  EndProcedure
+  
+  Procedure.i CountBits(*hBUF.hBuffer, ByteNoStart=0, NoOfBytes=0)
+  ; ============================================================================
+  ; NAME: CountBits
+  ; DESC: Count the number of Hi Bits in the Buffer
+  ; VAR(*hBUF.hBuffer) : Handle for Buffer
+  ; VAR(BitNo) : The No of the StartByte [0 .. \Memsize-1]
+  ; VAR(NoOfBytes) : NoOfBytes to count [1 .. \Memsize]; <=0; count all Bytes
+  ; RET : No of Hi Bits 
+  ; ============================================================================
+    Protected cnt, *pBuf.PB::pAny, *pEnd
+       
+    If NoOfBytes <= 0 Or NoOfBytes > *hBUF\MemSize
+      NoOfBytes = *hBUF\MemSize     
+    EndIf
+    
+    *pBuf = *hBUF\_ptrMem
+    *pEnd = *pBuf + NoOfBytes -1   
+    
+    ; 1st process INT as long as possible
+    While *pBuf + (SizeOf(Integer)-1) <= *pEnd
+      cnt = cnt + Bits::BitCountINT(*pBuf\i)     
+      *pBuf + SizeOf(Integer)  
+    Wend
+    
+    ; 2nd process remaining bytes
+    While *pBuf <= *pEnd
+      cnt = cnt + Bits::BitCount16(*pBuf\a)
+      *pBuf + 1  
+    Wend      
+   
+    ProcedureReturn cnt
+  EndProcedure
+  
 EndModule
 
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 186
-; FirstLine = 183
+; CursorPosition = 267
+; FirstLine = 218
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

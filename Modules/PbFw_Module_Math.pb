@@ -43,72 +43,7 @@ DeclareModule Math
 ;       Number % div
 ;     EndMacro
 ;   CompilerEndIf
-  
-  ;{ 2025/01/30} Now this functions are part of Module PB::
-  ; ============================================================================
-  ; NAME: Hypothenuse
-  ; DESC: Calculates the Hypothenuse of a Triangle with Pythagoras c²=a²+b²
-  ; VAR(A): Legnth Triangel leg A
-  ; VAR(B): Legnth Triangel leg B 
-  ; RET : Legnth of Hypothenuse c=Sqr(a²+b²)
-  ; ============================================================================
-  Macro mac_Hypothenuse(A, B)
-    Sqr(A*A + B*B)  
-  EndMacro
-  Declare.d Hypothenuse(A.d, B.d)   ; Procedure Version of Hypothenuse()
-  
-  ; ============================================================================
-  ; NAME: Lerp
-  ; DESC: Blending between A..B from 0..100% with T={0..1}
-  ; DESC: 
-  ; VAR(A): Startvalue A 
-  ; VAR(B): Endvalue   B 
-  ; VAR(T) : Time Value {0..1} = {0..100%}
-  ; RET : Lerped Value in the Range {ValStart..ValEnd}
-  ; ============================================================================
-  Macro mac_Lerp(A, B, T)    
-    A + (B-A) * T   ; A*(1-T) + B*T
-  EndMacro
-  ; InverseLerp Get the T={0..1} for the blended Value V in the Range {A..B}
-  Declare.d Lerp(A.d, B.d, T.d)  ; Procedure Version of Lerp()
     
-  ; ============================================================================
-  ; NAME: InverseLerp
-  ; DESC: Get the BlendingTime T{0..1} of the Value V in the Range 
-  ; DESC: A..B 
-  ; DESC: 
-  ; VAR(A): Startvalue A 
-  ; VAR(B): Endvalue   B 
-  ; VAR(T): Time Value {0..1} = {0..100%}
-  ; RET : Blendig Time of the Value V {0..1} = {0..100%}
-  ; ============================================================================  
-  Macro mac_InverseLerp(A, B, V)
-    (V-A)/(B-A)
-  EndMacro
-  
-  Declare.d InverseLerp(A.d, B.d, V.d) ; Procedure Version of InverseLerp()
-    
-  ; ============================================================================
-  ; NAME: Remap
-  ; DESC: Scales a value what is in the 
-  ; DESC: Range {inMin..inMax} to a new Range {outMin..outMax}
-  ; DESC: 
-  ; DESC:                       (outMax - outMinOut)
-  ; DESC: ret = (val - inMin) ------------------------  + outMin
-  ; DESC:                         (inMax - inMin) 
-  ; DESC: 
-  ; VAR(val) : The Value to scale
-  ; VAR(inMin) : Input Range Minimum
-  ; VAR(inMax) : Input Range Maximum
-  ; VAR(outMin): Output Range Minimum
-  ; VAR(outMax): Output Range Maximum
-  ; RET : the Value val scaled to the Output Range
-  ; ============================================================================     
-  Macro mac_Remap(val, inMin, inMax, outMin, outMax)
-    (outMax - outMin)/(inMax - inMin) * (val - inMin) + outMin
-  EndMacro
-  ;}
-  
   Declare.d BinomialCoefficient(N.i, K.i)
   Declare.i GreatestCommonDivisor(A.i, B.i)
   
@@ -124,47 +59,8 @@ Module Math
     
   ;- ----------------------------------------------------------------------
   ;- Module Public Functions
-  ;- ----------------------------------------------------------------------
-
-  Procedure.d Hypothenuse(A.d, B.d)
-  ; ============================================================================
-  ; NAME: Hypothenuse
-  ; DESC: Calculates the Hypothenuse of a Triangle with Pythagoras c²=a²+b²
-  ; VAR(A): Legnth Triangel leg A
-  ; VAR(B): Legnth Triangel leg B 
-  ; RET : Legnth of Hypothenuse c=Sqr(a²+b²)
-  ; ============================================================================
-   ProcedureReturn Sqr(A*A + B*B) 
-  EndProcedure 
-  
-  Procedure.d Lerp(A.d, B.d, T.d)  ; Return the blended Value  
-  ; ============================================================================
-  ; NAME: Lerp
-  ; DESC: Blending between A..B from 0..100% with T={0..1}
-  ; DESC: 
-  ; VAR(A): Startvalue A 
-  ; VAR(B): Endvalue   B 
-  ; VAR(T) : Time Value {0..1} = {0..100%}
-  ; RET : Lerped Value in the Range {ValStart..ValEnd}
-  ; ============================================================================
-    ProcedureReturn A + (B-A) * T  ; A*(1-T) + B*T
-  EndProcedure 
-  
-  ; InverseLerp Get the T={0..1} for the blended Value V in the Range {A..B}
-  Procedure.d InverseLerp(A.d, B.d, V.d) ; Return the Time of the blended Value T {0<= T <=1} 
-  ; ============================================================================
-  ; NAME: InverseLerp
-  ; DESC: Get the BlendingTime T{0..1} of the Value V in the Range 
-  ; DESC: A..B 
-  ; DESC: 
-  ; VAR(A): Startvalue A 
-  ; VAR(B): Endvalue   B 
-  ; VAR(T) : Time Value {0..1} = {0..100%}
-  ; RET : Blendig Time of the Value V {0..1} = {0..100%}
-  ; ============================================================================
-    ProcedureReturn (V-A)/(B-A)
-  EndProcedure
-    
+  ;- ----------------------------------------------------------------------  
+     
   Procedure.d Remap(val.d, inMin.d, inMax.d, outMin.d, outMax.d) ; Scale Range(inMin..inMay) -> (outMin..outMax)
   ; ============================================================================
   ; NAME: Remap
@@ -198,10 +94,7 @@ Module Math
     ; ret = Max - Val + Min
     Max - Val + Min
   EndMacro
-  Procedure.d InvertRange(val.d, Min.d, Max.d)
-    ProcedureReturn Max - Val + Min
-  EndProcedure
-  
+    
   Procedure.d BinomialCoefficient(N.i, K.i)
   ; ======================================================================
   ; NAME: BinomialCoefficient
@@ -619,9 +512,9 @@ CompilerIf #PB_Compiler_IsMainFile
 
 CompilerEndIf
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 88
+; CursorPosition = 63
 ; FirstLine = 48
-; Folding = ----
-; Markers = 588
+; Folding = --
+; Markers = 481
 ; Optimizer
 ; CPU = 5

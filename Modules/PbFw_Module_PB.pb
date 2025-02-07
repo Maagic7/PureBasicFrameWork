@@ -50,6 +50,53 @@ DeclareModule PB
   
   #PbFw_PB_MaxBitNo = (SizeOf(Integer)*8-1)    ; 63 for x64 and 31 for x32
   
+  ; Any or Universal Pointer (see PurePasic IDE Common.pb Structrue PTR)
+  ; I modified it a little to have both single var access and var array access 
+  ; The orignal PTR-Struct only has var array access (a.a[0] ... ).
+  ; \a \b \c ... is the single var access and \aa[0] \bb[0] ... ist the multiple
+  ; access like an Array
+  Structure pAny         ; ATTENTION! Only use as Pointer Strukture! Do not define as a normal Var!
+    StructureUnion
+      ; single access
+      a.a       ; ASCII   : 8 Bit unsigned  [0..255] 
+      b.b       ; BYTE    : 8 Bit signed    [-128..127]
+      c.c       ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
+      w.w       ; WORD    : 2 Byte signed   [-32768..32767]
+      u.u       ; UNICODE : 2 Byte unsigned [0..65535]
+      l.l       ; LONG    : 4 Byte signed   [-2147483648..2147483647]
+      f.f       ; FLOAT   : 4 Byte
+      q.q       ; QUAD    : 8 Byte signed   [-9223372036854775808..9223372036854775807]
+      d.d       ; DOUBLE  : 8 Byte float    
+      i.i       ; INTEGER : 4 or 8 Byte INT, depending on System
+      ;*p.pAny   ; Pointer to Any (for C-like **, PointerPointer use) !VERY DANGEROUS!
+      
+      ; multiple access like an Array
+      aa.a[0]   ; ASCII   : 8 Bit unsigned  [0..255] 
+      bb.b[0]   ; BYTE    : 8 Bit signed    [-128..127]
+      cc.c[0]   ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
+      ww.w[0]   ; WORD    : 2 Byte signed   [-32768..32767]
+      uu.u[0]   ; UNICODE : 2 Byte unsigned [0..65535]
+      ll.l[0]   ; LONG    : 4 Byte signed   [-2147483648..2147483647]
+      ff.f[0]   ; FLOAT   : 4 Byte
+      qq.q[0]   ; QUAD    : 8 Byte signed   [-9223372036854775808..9223372036854775807]
+      dd.d[0]   ; DOUBLE  : 8 Byte float    
+      ii.i[0]   ; INTEGER : 4 or 8 Byte INT, depending on System
+      ; *pp.pAny[0]; Pointer to Any (for C-like **, PointerPointer use) !VERY VERY DANGEROUS!
+    EndStructureUnion
+  EndStructure
+  
+  ; An adapted version of pAny especally for character use
+  Structure pChar
+    StructureUnion
+      a.a         ; ASCII   : 8 Bit unsigned  [0..255] 
+      c.c         ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
+      u.u         ; UNICODE : 2 Byte unsigned [0..65535]
+      aa.a[0]     ; ASCII   : 8 Bit unsigned  [0..255] 
+      cc.c[0]     ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
+      uu.u[0]     ; UNICODE : 2 Byte unsigned [0..65535]
+    EndStructureUnion
+  EndStructure 
+  
   ; ----------------------------------------------------------------------
   ;  Pixel and color formats
   ; ----------------------------------------------------------------------
@@ -100,54 +147,6 @@ DeclareModule PB
     EndStructureUnion
   EndStructure
 
-  ; Any or Universal Pointer (see PurePasic IDE Common.pb Structrue PTR)
-  ; I modified it a little to have both single var access and var array access 
-  ; The orignal PTR-Struct only has var array access (a.a[0] ... ).
-  ; \a \b \c ... is the single var access and \aa[0] \bb[0] ... ist the multiple
-  ; access like an Array
-  Structure pAny         ; ATTENTION! Only use as Pointer Strukture! Do not define as a normal Var!
-    StructureUnion
-      ; single access
-      a.a       ; ASCII   : 8 Bit unsigned  [0..255] 
-      b.b       ; BYTE    : 8 Bit signed    [-128..127]
-      c.c       ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
-      w.w       ; WORD    : 2 Byte signed   [-32768..32767]
-      u.u       ; UNICODE : 2 Byte unsigned [0..65535]
-      l.l       ; LONG    : 4 Byte signed   [-2147483648..2147483647]
-      f.f       ; FLOAT   : 4 Byte
-      q.q       ; QUAD    : 8 Byte signed   [-9223372036854775808..9223372036854775807]
-      d.d       ; DOUBLE  : 8 Byte float    
-      i.i       ; INTEGER : 4 or 8 Byte INT, depending on System
-      ;*p.pAny   ; Pointer to Any (for C-like **, PointerPointer use) !VERY DANGEROUS!
-      *pCol.TSystemColor  ; Pointer to a System Color for Pixel use!
-      
-      ; multiple access like an Array
-      aa.a[0]   ; ASCII   : 8 Bit unsigned  [0..255] 
-      bb.b[0]   ; BYTE    : 8 Bit signed    [-128..127]
-      cc.c[0]   ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
-      ww.w[0]   ; WORD    : 2 Byte signed   [-32768..32767]
-      uu.u[0]   ; UNICODE : 2 Byte unsigned [0..65535]
-      ll.l[0]   ; LONG    : 4 Byte signed   [-2147483648..2147483647]
-      ff.f[0]   ; FLOAT   : 4 Byte
-      qq.q[0]   ; QUAD    : 8 Byte signed   [-9223372036854775808..9223372036854775807]
-      dd.d[0]   ; DOUBLE  : 8 Byte float    
-      ii.i[0]   ; INTEGER : 4 or 8 Byte INT, depending on System
-      ; *pp.pAny[0]; Pointer to Any (for C-like **, PointerPointer use) !VERY VERY DANGEROUS!
-    EndStructureUnion
-  EndStructure
-  
-  ; An adapted version of pAny especally for character use
-  Structure pChar
-    StructureUnion
-      a.a         ; ASCII   : 8 Bit unsigned  [0..255] 
-      c.c         ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
-      u.u         ; UNICODE : 2 Byte unsigned [0..65535]
-      aa.a[0]     ; ASCII   : 8 Bit unsigned  [0..255] 
-      cc.c[0]     ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
-      uu.u[0]     ; UNICODE : 2 Byte unsigned [0..65535]
-    EndStructureUnion
-  EndStructure 
-    
   ; System Color Mask Structure to hold management data for the systems color order RGBA, ABGR or BGRA
   ; use the Function InitSytemColorMask() to intialize the Datas of a TSystemColorMask Structrue
   Structure TSystemColorMask
@@ -156,10 +155,10 @@ DeclareModule PB
     idxBlue.i       ; 0 based ByteIndex for Blue Channel 
     idxAlpha.i      ; 0 based ByteIndex for Alpha Channel 
     
-    shlRed.i        ; No of Bits to Shift for Red Channel 
-    shlGreen.i      ; No of Bits to Shift for Green Channel 
-    shlBlue.i       ; No of Bits to Shift for Blue Channel 
-    shlAlpha.i      ; No of Bits to Shift for Alpha Channel 
+    shRed.i         ; No of Bits to Shift for Red Channel 
+    shGreen.i       ; No of Bits to Shift for Green Channel 
+    shBlue.i        ; No of Bits to Shift for Blue Channel 
+    shAlpha.i       ; No of Bits to Shift for Alpha Channel 
     
     maskRed.i       ; BitMask to select Red value
     maskGreen.i     ; BitMask to select Green value
@@ -323,6 +322,12 @@ DeclareModule PB
     (value ! 1<<PB::#PbFw_PB_MaxBitNo)  
   EndMacro
   
+  ; Count the no of HiBits in a Byte value
+  ; use it : result = BitCountByte(value)
+  Macro BitCountByte(val)
+    (Bool(val&$1)+Bool(val&$2)+Bool(val&$4)+Bool(val&$8)+Bool(val&$10)+Bool(val&$20)+Bool(val&$40)+Bool(val&$80))
+  EndMacro
+
   ;- ----------------------------------------------------------------------
   ;- Macros for Min, Max, Limit, Compare
   ;- ----------------------------------------------------------------------
@@ -391,14 +396,12 @@ DeclareModule PB
   	EndIf
   EndMacro
   
-  ; Limit var to minimum 0
-  ; use it: LimitToNull(var)
-  Macro LimitToNull(var)
-    If var < 0 : var = 0 : EndIf  
+  ; Return the value limited to min 0 or Limit a var to min 0
+  ; use it with var  : MinNull(MyVar)
+  ;        with value: result = MinNull(-5)
+  Macro MinNull(VarOrValue)
+    (VarOrValue * Bool(VarOrValue >0))  
   EndMacro
-  
-  ; Limit var to MinValue
-  ;   (if you want to have a LimitMin function with return, use: result = Max(var, MyMin)
   
   ; use it: LimitToMin(var, MinValue)
   ;         LimitToMin(var, a+b)            ; use with MinValue as Expression
@@ -451,7 +454,17 @@ DeclareModule PB
       varMin = value  
     EndIf
   EndMacro  
- 
+  
+  ; similat to the VB IIf Function
+  ; use it : IIf(varReturn, A>1000, "large", "small")
+  Macro IIf(varReturn, expression, valTrue, valFalse)
+    If Bool(expression)
+      varReturn = valTrue
+    Else
+      varReturn = valFalse  
+    EndIf
+  EndMacro
+
   ;- ----------------------------------------------------------------------
   ;- Macros for Math
   ;- ----------------------------------------------------------------------
@@ -471,7 +484,7 @@ DeclareModule PB
     ((value)*(value)*(value))
   EndMacro
   
-  ; Calculate hypothenuse with Pytagoras
+  ; Calculate hypothenuse with Pythagoras
   ; use it: C = Hypothenuse(A, B)
   Macro Hypothenuse(_A_, _B_)
     Sqr(_A_*_A_ + _B_*_B_)
@@ -516,6 +529,16 @@ DeclareModule PB
   ; use it: result = Scale(value, -255, 255, 0, 100)  ; to rescale a Range [-255..255] to [0..100]% 
   Macro Scale(value, inMin, inMax, outMin, outMax)
     ((value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin)
+  EndMacro
+  
+  ;   MIN=-100 MAX=100 VALUE=20 : ret= -20
+  ;   MIN=  20 MAX=100 VALUE=20 : ret= 100
+  ;                    VALUE=50 : ret=  70 
+  
+  ; use it: result = InvertRange(value, 0, 100) to change from [0..100] to [100..0]
+  Macro InvertRange(value, RangeMin, RangeMax)
+    ; ret = Max - Val + Min
+    (RangeMin + RangeMax - value)
   EndMacro
 
   ;- ----------------------------------------------------------------------
@@ -659,49 +682,49 @@ DeclareModule PB
   ; Get Red Channel of ColorValue
   ; use it : result = GetRed(ColorValue) 
   Macro GetRed(ColorValue)
-    (ColorValue & PB::_SCM\maskRed)
+    (ColorValue >> PB::_SCM\shRed & $FF) 
   EndMacro
   
   ; Set Red Channel with new value
   ; use it : result = SetRed(ColorValue, NewRedValue) 
   Macro SetRed(ColorValue, NewRed=0)
-    (ColorValue & PB::_SCM\maskRedOff) | ((NewRed) << PB::_SCM\shlRed)
+    (ColorValue & PB::_SCM\maskRedOff) | ((NewRed) << PB::_SCM\shRed)
   EndMacro
   
   ; Get Green Channel of ColorValue
   ; use it : result = GetGreen(ColorValue) 
   Macro GetGreen(ColorValue)
-    (ColorValue & PB::_SCM\maskGreen)
+    (ColorValue >> PB::_SCM\shGreen & $FF) 
   EndMacro
   
   ; Set Green Channel with new value
   ; use it : result = SetGreen(ColorValue, NewGreenValue) 
   Macro SetGreen(ColorValue, NewGreen=0)
-    (ColorValue & PB::_SCM\maskGreenOff) | ((NewGreen) << PB::_SCM\shlGreen)
+    (ColorValue & PB::_SCM\maskGreenOff) | ((NewGreen) << PB::_SCM\shGreen)
   EndMacro
   
   ; Get Blue Channel of ColorValue
   ; use it : result = GetBlue(ColorValue) 
   Macro GetBlue(ColorValue)
-    (ColorValue & PB::_SCM\maskBlue)
+    (ColorValue >> PB::_SCM\shBlue & $FF) 
   EndMacro
   
   ; Set Blue Channel with new value
   ; use it : result = SetBlue(ColorValue, NewBlueValue) 
   Macro SetBlue(ColorValue, NewBlue=0)
-    (ColorValue & PB::_SCM\maskBlueOff) | ((NewBlue) << PB::_SCM\shlBlue)
+    (ColorValue & PB::_SCM\maskBlueOff) | ((NewBlue) << PB::_SCM\shBlue)
   EndMacro
  
   ; Get Alpha Channel of ColorValue
   ; use it : result = GetBlue(ColorValue) 
   Macro GetAlpha(ColorValue)
-    (ColorValue & PB::_SCM\maskAlpha)
+    (ColorValue >> PB::_SCM\shAlpha & $FF) 
   EndMacro
   
   ; Set Alpha Channel with new value
   ; use it : result = SetAlpha(ColorValue, NewAlphaValue) 
   Macro SetAlpha(ColorValue, NewAlpha=255)
-    (ColorValue & PB::_SCM\maskAlphaOff) | ((NewAlpha) << PB::_SCM\shlAlpha)   
+    (ColorValue & PB::_SCM\maskAlphaOff) | ((NewAlpha) << PB::_SCM\shAlpha)   
   EndMacro
   
   ; Remember: If you use PB's Image drawing functions which use Alpha Channel you
@@ -720,18 +743,27 @@ DeclareModule PB
   ; make a RGBA color value from Red, Green, Blue, Alpha
   ; use it : result = MakeRGBA(R,G,B,A)
   Macro MakeRGBA(RedValue, GreenValue, BlueValue, AlphaValue = 255)
-    (RedValue << PB::_SCM\shlRed) | (GreenValue << PB::_SCM\shlGreen) | (BlueValue << PB::_SCM\shlBlue) | (AlphaValue << PB::_SCM\shlAlpha)
+    (RedValue << PB::_SCM\shRed) | (GreenValue << PB::_SCM\shGreen) | (BlueValue << PB::_SCM\shBlue) | (AlphaValue << PB::_SCM\shAlpha)
   EndMacro
   
   ; make a RGB color value from Red, Green, Blue
   ; use it : result = MakeRGB(R,G,B)
   Macro MakeRGB(RedValue, GreenValue, BlueValue)
-    (RedValue << PB::_SCM\shlRed) | (GreenValue << PB::_SCM\shlGreen) | (BlueValue << PB::_SCM\shlBlue)
+    (RedValue << PB::_SCM\shRed) | (GreenValue << PB::_SCM\shGreen) | (BlueValue << PB::_SCM\shBlue)
   EndMacro
   
-  ; Limit the Color value to 255
   ; use it : SaturateColor(MyColorVar)
   Macro SaturateColor(varColor)
+    If varColor > 255 
+      varColor = 255 
+    ElseIf varColor < 0
+      varColor = 0 
+    EndIf
+  EndMacro
+
+  ; Limit the Color value to 255
+  ; use it : SaturateColorMax(MyColorVar)
+  Macro SaturateColorMax(varColor)
     If varColor > 255 : varColor = 255 : EndIf
   EndMacro
   
@@ -739,27 +771,27 @@ DeclareModule PB
   ; use it : BlendRed(ColorVar, RedVal, Alpha)
   ;     or : BlendRed(ColorVar, Red(MyColor), Alpha)
   Macro BlendRed(ColorVar, RedVal, Alpha=127)
-    ColorVar = (ColorVar & PB::_SCM\maskRedOff) | (((Red(ColorVar)* Alpha + RedVal *(255-Alpha))>>8) << PB::_SCM\shlRed)
+    ColorVar = (ColorVar & PB::_SCM\maskRedOff) | (((Red(ColorVar)* Alpha + RedVal *(255-Alpha))>>8) << PB::_SCM\shRed)
   EndMacro
   
   ; Blend  GreenVal into ColorVar : Alpha [0..255] is the Blending for Green(ColorVar)
   ; use it : BlendGreen(ColorVar, GreenVal, Alpha)
   ;     or : BlendGreen(ColorVar, Green(MyColor), Alpha)
   Macro BlendGreen(ColorVar, GreenVal, Alpha=127)
-    ColorVar = (ColorVar & PB::_SCM\maskGreenOff) | (((Green(ColorVar)* Alpha + GreenVal *(255-Alpha))>>8) << PB::_SCM\shlGreen)
+    ColorVar = (ColorVar & PB::_SCM\maskGreenOff) | (((Green(ColorVar)* Alpha + GreenVal *(255-Alpha))>>8) << PB::_SCM\shGreen)
   EndMacro
   
   ; Blend  BlueVal into ColorVar : Alpha [0..255] is the Blending for Blue(ColorVar)
   ; use it : BlendBlue(ColorVar, BlueVal, Alpha)
   ;     or : BlendBlue(ColorVar, Blue(MyColor), Alpha)
   Macro BlendBlue(ColorVar, BlueVal, Alpha=127)
-    ColorVar = (ColorVar & PB::_SCM\maskBlueOff) | (((Blue(ColorVar)* Alpha + BlueVal *(255-Alpha))>>8) << PB::_SCM\shlBlue)
+    ColorVar = (ColorVar & PB::_SCM\maskBlueOff) | (((Blue(ColorVar)* Alpha + BlueVal *(255-Alpha))>>8) << PB::_SCM\shBlue)
   EndMacro
   
   ; Blend 2 Colors and Return blended value
   ; use it : result = BlendColors(Color1, Color2, Alpha) : Alpha is the factor for COL1
   Macro BlendColors(COL1, COL2, Alpha=127)   
-    ((((Red(COL1)*Alpha + Red(COL2)*(255-Alpha))>>8)<< PB::_SCM\shlRed) | (((Green(COL1)*Alpha + Green(COL2)*(255-Alpha))>>8)<< PB::_SCM\shlGreen) | (((Blue(COL1)*Alpha + Blue(COL2)*(255-Alpha))>>8)<< PB::_SCM\shlBlue))
+    ((((Red(COL1)*Alpha + Red(COL2)*(255-Alpha))>>8)<< PB::_SCM\shRed) | (((Green(COL1)*Alpha + Green(COL2)*(255-Alpha))>>8)<< PB::_SCM\shGreen) | (((Blue(COL1)*Alpha + Blue(COL2)*(255-Alpha))>>8)<< PB::_SCM\shBlue))
   EndMacro
   
   ; Methode                 | Weight Base %              | Weight Base 1024 for >>10 use
@@ -895,6 +927,19 @@ DeclareModule PB
   Declare.q HPT(TimerNo=0, cmd=#RTC_START, TimeBase=#RTC_MicroSeconds)
   Declare.q HPTcal()                    ; calibarte Timer (calculate Timer Start/Stop Time for clibartion)
   Declare.i HPTget(*HPTstruct.THPT)     ; Get a copy of the internal TimerStrucure with actual values
+  
+  ; --------------------------------------------------
+  ; Split and Join
+  ; -------------------------------------------------- 
+
+  Prototype SplitStringArray(Array Out.s(1), String$, Separator$, ArrayRedimStep=10)
+  Global SplitStringArray.SplitStringArray
+  
+  Prototype SplitStringList(List Out.s(), String$, Separator$, clrList= #True)
+  Global SplitStringList.SplitStringList
+    
+  Declare.s JoinArray(Array ary.s(1), Separator$, EndIndex=-1, StartIndex=0, *IOutLen.Integer=0)
+  Declare.s JoinList(List lst.s(), Separator$, *IOutLen.Integer=0)  
 
 EndDeclareModule
 
@@ -1488,16 +1533,16 @@ Module PB
         Next
         
         ; Step 2 : Caluclate the Bits to Shift for each Channel       
-        \shlRed   = \idxRed *8
-        \shlGreen = \idxGreen *8
-        \shlBlue  = \idxBlue *8
-        \shlAlpha = \idxAlpha *8
+        \shRed   = \idxRed *8
+        \shGreen = \idxGreen *8
+        \shBlue  = \idxBlue *8
+        \shAlpha = \idxAlpha *8
         
         ; Step 3 : Calculate BitMask to filter each Channel  
-        \maskRed   = ($FF << \shlRed)
-        \maskGreen = ($FF << \shlGreen)
-        \maskBlue  = ($FF << \shlBlue)
-        \maskAlpha = ($FF << \shlAlpha)
+        \maskRed   = ($FF << \shRed)
+        \maskGreen = ($FF << \shGreen)
+        \maskBlue  = ($FF << \shBlue)
+        \maskAlpha = ($FF << \shAlpha)
         
         ; Step 4 : Calculate BitMask to Reset Channel to 0  
         \maskRedOff   = ~\maskRed   & $FFFFFFFF   ; limit to 32Bit
@@ -1541,9 +1586,293 @@ Module PB
     
     ProcedureReturn *SCM
   EndProcedure
+  
+  ;- --------------------------------------------------
+  ;-  Split and Join
+  ;- -------------------------------------------------- 
+  
+  Procedure.i _SplitStringArray(Array Out.s(1), *String, *Separator, ArrayRedimStep=10)
+   ; ============================================================================
+    ; NAME: _SplitStringArray
+    ; DESC: Split a String into multiple Strings
+    ; DESC: 
+    ; VAR(Out.s()) : Array to return the Substrings 
+    ; VAR(*String) : Pointer to String 
+    ; VAR(*Separator) : Pointer to mulit Char Separator 
+    ; RET.i : No of Substrings
+    ; ============================================================================
+    
+    Protected *ptrString.Character = *String          ; Pointer to String
+    Protected *ptrSeperator.Character = *Separator    ; Pointer to Separator
+    Protected *Start.Character = *String              ; Pointer to Start of SubString    
+    Protected xEqual, lenSep, N, ASize, L
+     
+    lenSep = MemoryStringLength(*Separator)           ; Length of Separator
+     
+    ASize = ArraySize(Out())
+     
+    While *ptrString\c
+    ; ----------------------------------------------------------------------
+    ;  Outer Loop: Stepping trough *String
+    ; ----------------------------------------------------------------------
+      
+      If  *ptrString\c = *ptrSeperator\c ; 1st Character of Seperator in String   
+        ; Debug "Equal : " +  Chr(*ptrString\c)
+        
+        xEqual =#True
+        
+        While *ptrSeperator\c
+        ; ------------------------------------------------------------------
+        ;  Inner Loop: Char by Char compare Separator with String
+        ; ------------------------------------------------------------------
+          If *ptrString\c
+            If *ptrString\c <> *ptrSeperator\c
+              xEqual = #False     ; Not Equal
+              Break               ; Exit While
+            EndIf
+          Else 
+            xEqual =#False        ; Not Equal
+            Break                 ; Exit While
+          EndIf
+          *ptrSeperator + SizeOf(Character)  ; NextChar Separator
+          *ptrString + SizeOf(Character)     ; NextChar String  
+        Wend
+        
+        ; If we found the complete Separator in String
+        If xEqual
+          ; Length of the String from Start up to Separator
+          L =  (*ptrString - *Start)/SizeOf(Character) - lenSep 
+          Out(N) = PeekS(*Start, L)
+          *Start = *ptrString             ; the New Startposition
+          ; Debug "Start\c= " + Str(*Start\c) + " : " + Chr(*Start\c)
+          *ptrString - SizeOf(Character)  ; bo back 1 char to detected double single separators like ,,
+           N + 1   
+           If ASize < N
+             ASize + ArrayRedimStep
+             ReDim Out(ASize)
+           EndIf      
+        EndIf
+        
+      EndIf   
+      *ptrSeperator = *Separator            ; Reset Pointer of Seperator to 1st Char
+      *ptrString + SizeOf(Character)        ; NextChar in String
+    Wend
+   
+    Out(N) = PeekS(*Start)  ; Part after the last Separator
+    ProcedureReturn N+1     ; Number of Substrings
+        
+  EndProcedure
+  SplitStringArray = @_SplitStringArray()   ; Bind ProcedureAddress to Prototype
+  
+  Procedure.i _SplitStringList(List Out.s(), *String, *Separator, clrList= #True)
+   ; ============================================================================
+    ; NAME: _SplitStringList
+    ; DESC: Split a String into multiple Strings
+    ; DESC: 
+    ; VAR(Out.s())   : List to return the Substrings 
+    ; VAR(*String)   : Pointer to String 
+    ; VAR(*Separator): Pointer to Separator String 
+    ; VAR(clrList)   : #False: Append Splits to List; #True: Clear List first
+    ; RET.i          : No of Substrings
+    ; ============================================================================
+    
+    Protected *ptrString.Character = *String          ; Pointer to String
+    Protected *ptrSeperator.Character = *Separator    ; Pointer to Separator
+    Protected *Start.Character = *String              ; Pointer to Start of SubString   
+    Protected xEqual, lenSep, N, L
+      
+    lenSep = MemoryStringLength(*Separator)           ; Length of Separator
+    
+    If clrList
+      ClearList(Out())  
+    EndIf
+    
+    While *ptrString\c
+    ; ----------------------------------------------------------------------
+    ;  Outer Loop: Stepping trough *String
+    ; ----------------------------------------------------------------------
+      
+      If  *ptrString\c = *ptrSeperator\c ; 1st Character of Seperator in String   
+        ; Debug "Equal : " +  Chr(*ptrString\c)
+        xEqual =#True
+       
+        While *ptrSeperator\c
+        ; ------------------------------------------------------------------
+        ;  Inner Loop: Char by Char compare Separator with String
+        ; ------------------------------------------------------------------
+          If *ptrString\c 
+            If *ptrString\c <> *ptrSeperator\c
+              xEqual = #False     ; Not Equal
+              Break               ; Exit While
+           EndIf
+          Else 
+            xEqual =#False        ; Not Equal
+            Break                 ; Exit While
+          EndIf
+          *ptrSeperator + SizeOf(Character)  ; NextChar Separator
+          *ptrString + SizeOf(Character)     ; NextChar String  
+        Wend
+        
+        ; If we found the complete Separator in String
+        If xEqual
+          ; Length of the String from Start up to Separator
+          L =  (*ptrString - *Start)/SizeOf(Character) - lenSep 
+          AddElement(Out())
+          Out() = PeekS(*Start, L)
+          *Start = *ptrString             ; the New Startposition
+          ; Debug "Start\c= " + Str(*Start\c) + " : " + Chr(*Start\c)
+          *ptrString - SizeOf(Character)  ; bo back 1 char to detected double single separators like ,,
+           N + 1   
+         EndIf
+        
+      EndIf   
+      *ptrSeperator = *Separator            ; Reset Pointer of Seperator to 1st Char
+      *ptrString + SizeOf(Character)        ; NextChar in String
+    Wend
+   
+    AddElement(Out())
+    Out() = PeekS(*Start)  ; Part after the last Separator
+    ProcedureReturn N+1     ; Number of Substrings
+        
+  EndProcedure 
+  SplitStringList = @_SplitStringList()   ; Bind ProcedureAddress to Prototype
+  
+  Procedure.s JoinArray(Array ary.s(1), Separator$, EndIndex=-1, StartIndex=0, *IOutLen.Integer=0)
+  ; ============================================================================
+  ; NAME: JoinArray
+  ; DESC: Join all ArrayElements to a single String
+  ; VAR(ary.s(1)) : The String Array
+  ; VAR(Separator$) : A separator String
+  ; VAR(StartIndex) : The Index of the 1st Entry to start with
+  ; VAR(StartIndex) : The Index of the last Entry
+  ; VAR(*IOutLen)   : Pointer to a IntVar for optional return of Stringlenght 
+  ; RET.s: the String
+  ; ============================================================================
+    Protected ret$
+    Protected I, L, N, lenSep, ASize
+    Protected *ptr
+    
+    lenSep = Len(Separator$)
+    
+    ASize = ArraySize(ary())
+    If EndIndex > ASize Or EndIndex < 0
+      EndIndex = ASize
+    EndIf
+    
+    If StartIndex > EndIndex
+      StartIndex = EndIndex
+    EndIf
+    
+    N = EndIndex- StartIndex + 1
+    
+    If ASize
+      For I = StartIndex To EndIndex
+        ;L = L + LenStrFast(ary(I))    
+        L = L + Len(ary(I))    
+     Next    
+      L = L + (N-1) * lenSep
+      ret$ = Space(L)
+      
+      *ptr = @ret$
+      
+;       Debug "ptr= " + Str(*ptr)
+;       Debug "-"
+      
+      If lenSep > 0
+        For I = StartIndex To EndIndex
+          If ary(I)<>#Null$
+            CopyMemoryString(ary(I), @*ptr)
+          EndIf
+          
+          If I < EndIndex
+            CopyMemoryString(Separator$,@*ptr)
+          EndIf
+        Next
+      Else
+        
+        For I = StartIndex To EndIndex
+           If ary(I)<>#Null$
+            CopyMemoryString(ary(I), @*ptr)
+          EndIf
+        Next
+    
+      EndIf
+      
+    EndIf
+    
+    If *IOutLen
+      *IOutLen\i = L
+    EndIf
+    
+    ProcedureReturn ret$
+  EndProcedure
+  
+  Procedure.s JoinList(List lst.s(), Separator$, *IOutLen.Integer=0)
+  ; ============================================================================
+  ; NAME: JoinList
+  ; DESC: Join all ListElements to a single String
+  ; VAR(lst.s()) : The String List
+  ; VAR(Separator$) : A separator String
+  ; VAR(*IOutLen)   : Pointer to a IntVar for optional return of Stringlenght 
+  ; RET.s: the String
+  ; ============================================================================
+    Protected ret$
+    Protected I, L, N, lenSep
+    Protected *ptr
+    
+    ;lenSep = MemoryStringLength(@Separator$)
+    lenSep = Len(Separator$)
+    
+    N = ListSize(lst())
+    Debug "ListLength = " + N
+    
+    If N
+      ; ----------------------------------------
+      ;  With Separator
+      ; ----------------------------------------
+      ForEach lst()
+        L = L + Len(lst()) 
+      Next
+      L = L + (N-1) * lenSep
+      ret$ = Space(L)
+      *ptr = @ret$
+            
+      If lenSep > 0 
+        
+        ForEach lst()
+           If lst()<>#Null$
+            CopyMemoryString(lst(), @*ptr)
+          EndIf
+          
+          I + 1
+          If I < N
+            CopyMemoryString(Separator$, @*ptr)
+          EndIf
+        Next
+        
+      Else          
+      ; ----------------------------------------
+      ;  Without Separator
+      ; ----------------------------------------
+        
+        ForEach lst()
+           If lst()<>#Null$
+            CopyMemoryString(lst(), @*ptr)
+          EndIf
+        Next
+    
+      EndIf
+      
+    EndIf
+    
+    If *IOutLen
+      *IOutLen\i = L
+    EndIf
+    
+    ProcedureReturn ret$
+  EndProcedure
 
 EndModule
-
 
 CompilerIf #PB_Compiler_IsMainFile
  ; ----------------------------------------------------------------------
@@ -1633,8 +1962,9 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 743
-; FirstLine = 716
-; Folding = -----------------
+; CursorPosition = 326
+; FirstLine = 284
+; Folding = ------------------
 ; Optimizer
 ; CPU = 5
+; Compiler = PureBasic 6.20 Beta 4 - C Backend (Windows - x64)

@@ -9,7 +9,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2021/04/02
-; VERSION  :  0.53  Developer Version
+; VERSION  :  0.54  Developer Version
 ; COMPILER :  PB 6.0 and higher
 ; OS       :  all
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -17,6 +17,7 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2025/02/06  S.Maag: added BitCountINT
 ; 2025/01/30  S.Maag: solved Bug in ASMx32 BSWAP_Mem64()! Swap of Lo-Hi DWORD was missing!
 ; 2024/09/06  S.Maag: added INTtoBCD(), BCDtoINT(), IsBCD()
 ; 2024/08/31  S.Maag: changed BitCount Classic Macros from If to faster add version
@@ -103,7 +104,8 @@ DeclareModule Bits
   Declare.i BitCount16 (value.u)  
   Declare.i BitCount32 (value.l)
   Declare.i BitCount64 (value.q)
-  
+  Declare.i BitCountINT (value.i)
+ 
   Declare.u BSWAP16(Value.u)
   Declare.l BSWAP32(Value.l)
   Declare.q BSWAP64(Value.q)
@@ -194,7 +196,13 @@ Module Bits
   ; unrolling Loops is much faster, because of
   ; better code forecast!
   
- 
+  Macro mac_BitCount8(val)
+    Protected cnt.i            
+    cnt= Bool(val& $1)  + Bool(val&   $2)+ Bool(val&   $4)+ Bool(val&   $8)+
+         Bool(val&$10)  + Bool(val&  $20)+ Bool(val&  $40)+ Bool(val&  $80)+
+    ProcedureReturn cnt
+  EndMacro
+
   Macro mac_BitCount16(val)
     Protected cnt.i            
     cnt= Bool(val& $1)  + Bool(val&   $2)+ Bool(val&   $4)+ Bool(val&   $8)+
@@ -834,20 +842,20 @@ Module Bits
   
   ;- DataSection for BitShuffle8 and BitShuffle16
   CompilerIf #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_ASM64
-  DataSection
+    DataSection
     ; Attention: FASM nees a leading 0 for hex values
     ; 16 Byte Mask to be prepared for 16 Bit Shuffle too
     !mask:  dq 08040201008040201h   ; mask to filter in each byte 1 Bit higher
     !filt:  dq 00101010101010101h   ; Filter to creat BOOLs with value 1
     !lim:   dq 00707070707070707h   ; Limit Mask for ShuffleMask 
-  EndDataSection
+    EndDataSection
   
   CompilerEndIf
   
-  Procedure.i BitCount16 (Value.u)
+  Procedure.i BitCount16 (value.u)
   ; ======================================================================
   ;  NAME: BitCount16
-  ;  DESC: Counts the number of Hi bits in a 16 Bit Value
+  ;  DESC: Counts the number of Hi bits in a 16 Bit value
   ;  RET.i:  Number of Hi Bits
   ; ====================================================================== 
     
@@ -855,68 +863,68 @@ Module Bits
        ; popcnt was introduced with the Intel MMX Extention, at AMD from K10 on! 
       CompilerCase #PbFwCfg_Module_Compile_ASM32
         !xor    eax, eax
-        !mov    ax, word [p.v_Value]
+        !mov    ax, word [p.v_value]
         !popcnt ax, ax
         ProcedureReturn
      
       CompilerCase #PbFwCfg_Module_Compile_ASM64
         !xor    rax, rax
-        !mov    ax, word [p.v_Value]
+        !mov    ax, word [p.v_value]
         !popcnt ax, ax
         ProcedureReturn       
         
       CompilerCase #PbFwCfg_Module_Compile_C
         ; mac_BitCount16(value)
         ; __builtin_popcountl(long number);
-        !return __builtin_popcountl(v_Value & $FFFF);
+        !return __builtin_popcountl(v_value & $FFFF);
         
       CompilerDefault     ; Classic Code without ASM or C optimations       
-        mac_BitCount16(Value)
+        mac_BitCount16(value)
         
     CompilerEndSelect   
   EndProcedure
   
-  Procedure.i BitCount32 (Value.l)
+  Procedure.i BitCount32 (value.l)
   ; ======================================================================
   ;  NAME: BitCount32
-  ;  DESC: Counts the number of Hi bits in a 32 Bit Value
+  ;  DESC: Counts the number of Hi bits in a 32 Bit value
   ;  RET.i: Number of Hi Bits 
   ; ====================================================================== 
          
     CompilerSelect #PbFwCfg_Module_Compile
       ; popcnt was introduced with the Intel MMX Extention, at AMD from K10 on!         
       CompilerCase #PbFwCfg_Module_Compile_ASM32
-        !mov    eax, dword [p.v_Value]
+        !mov    eax, dword [p.v_value]
         !popcnt eax, eax
        ProcedureReturn
        
       CompilerCase #PbFwCfg_Module_Compile_ASM64
         !xor    rax, rax
-        !mov    eax, dword [p.v_Value]
+        !mov    eax, dword [p.v_value]
         !popcnt eax, eax
        ProcedureReturn
            
       CompilerCase #PbFwCfg_Module_Compile_C
         ; mac_BitCount32(value)
         ; __builtin_popcountl(long number);
-        !return __builtin_popcountl(v_Value);
+        !return __builtin_popcountl(v_value);
       CompilerDefault     ; Classic Code without ASM or C optimations       
-        mac_BitCount32(Value)
+        mac_BitCount32(value)
         
     CompilerEndSelect
   EndProcedure
   
-  Procedure.i BitCount64 (Value.q)
+  Procedure.i BitCount64 (value.q)
   ; ======================================================================
   ;  NAME: BitCount64
-  ;  DESC: Counts the number of Hi bits in a 64 Bit Value
+  ;  DESC: Counts the number of Hi bits in a 64 Bit value
   ;  RET.i: Number of Hi Bits
   ; ======================================================================     
     
     CompilerSelect #PbFwCfg_Module_Compile
        ; popcnt was introduced with the Intel MMX Extention, at AMD from K10 on!   
       CompilerCase #PbFwCfg_Module_Compile_ASM32  ; at x32 programms we must do 2x32Bit POPCNT and ADD
-        !lea ecx, [p.v_Value]
+        !lea ecx, [p.v_value]
         !mov edx, dword [ecx]         ; load hi 32 Bits to EDX-Register
         !mov eax, dword [ecx +4]      ; load lo 32 Bits to EAX-Register
         !popcnt edx, edx              ; count Hi-Bits in EDX
@@ -925,27 +933,61 @@ Module Bits
         ProcedureReturn
         
       CompilerCase #PbFwCfg_Module_Compile_ASM64
-        !mov rax, qword [p.v_Value]
+        !mov rax, qword [p.v_value]
         !popcnt rax, rax
         ProcedureReturn
                
       CompilerCase #PbFwCfg_Module_Compile_C
         ; mac_BitCount64(value)
         ;__builtin_popcountll(long long number)
-        !retrun __builtin_popcountll(v_Value)  
+        !retrun __builtin_popcountll(v_value)  
         
       CompilerDefault     ; Classic Code without ASM or C optimations       
-        mac_BitCount64(Value)
+        mac_BitCount64(value)
         
     CompilerEndSelect
   EndProcedure
+  
+  Procedure.i BitCountINT (value.i)
+  ; ======================================================================
+  ;  NAME: BitCountINT
+  ;  DESC: Counts the number of Hi bits in an INT 32/64 Bit 
+  ;  RET.i: Number of Hi Bits
+  ; ======================================================================     
+    
+    CompilerSelect #PbFwCfg_Module_Compile
+       ; popcnt was introduced with the Intel MMX Extention, at AMD from K10 on!   
+      CompilerCase #PbFwCfg_Module_Compile_ASM32  ; at x32 programms we must do 2x32Bit POPCNT and ADD
+        !mov    eax, dword [p.v_value]
+        !popcnt eax, eax
+        ProcedureReturn
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM64
+        !mov rax, qword [p.v_value]
+        !popcnt rax, rax
+        ProcedureReturn
+               
+      CompilerCase #PbFwCfg_Module_Compile_C
+        ; mac_BitCount64(value)
+        ;__builtin_popcountll(long long number)
+        !retrun __builtin_popcountll(v_value)  
+        
+      CompilerDefault     ; Classic Code without ASM or C optimations       
+         CompilerIf SizeOf(Integer) = 8
+          mac_BitCount64(value)
+        CompilerElse
+          mac_BitCount32(value)
+        CompilerEndIf
+       
+    CompilerEndSelect
+  EndProcedure
 
-  Procedure.u BSWAP16(Value.u)
+  Procedure.u BSWAP16(value.u)
   ; ======================================================================
   ;  NAME: BSWAP16
   ;  DESC: LittleEndian<=>BigEndian conversion for 16Bit values
   ;  DESC: Swaps the Bytes of a 16 Bit value
-  ;  VAR(Value.u): 16-Bit-Word Value
+  ;  VAR(value.u): 16-Bit-Word value
   ;  RET.u: Byte swapped 16-Bit value
   ; ====================================================================== 
     
@@ -953,77 +995,77 @@ Module Bits
        
     CompilerCase #PbFwCfg_Module_Compile_ASM32
       !xor eax, eax
-      !mov ax, word [p.v_Value]
+      !mov ax, word [p.v_value]
       !xchg al, ah  ; for 16 Bit ByteSwap it's the Exchange command 
       ProcedureReturn
       
     CompilerCase #PbFwCfg_Module_Compile_ASM64
       !xor rax, rax
-      !mov ax, word [p.v_Value]
+      !mov ax, word [p.v_value]
       !xchg al, ah  ; for 16 Bit ByteSwap it's the Exchange command 
       ProcedureReturn
      
     CompilerCase #PbFwCfg_Module_Compile_C
-      !return __builtin_bswap16(v_Value);
+      !return __builtin_bswap16(v_value);
       ProcedureReturn
       
     CompilerDefault     ; Classic Code without ASM or C optimations       
       Protected *Swap.pSwap
-      *Swap = @Value
+      *Swap = @value
       Swap *Swap\a[0], *Swap\a[1]
-      ProcedureReturn Value
+      ProcedureReturn value
      
     CompilerEndSelect      
   EndProcedure
   
-  Procedure.l BSWAP32(Value.l)
+  Procedure.l BSWAP32(value.l)
   ; ======================================================================
   ;  NAME: BSWAP32
   ;  DESC: LittleEndian<=>BigEndian conversion for 32Bit values
   ;  DESC: Swaps the Bytes of a 32 Bit value
-  ;  VAR(Value.l): 32-Bit-Long Value
+  ;  VAR(value.l): 32-Bit-Long value
   ;  RET.l:  Byte swapped 32-Bit value
   ; ====================================================================== 
   
     CompilerSelect #PbFwCfg_Module_Compile
          
       CompilerCase #PbFwCfg_Module_Compile_ASM32
-        !mov eax, dword [p.v_Value]
+        !mov eax, dword [p.v_value]
         !bswap eax
         ProcedureReturn   
         
       CompilerCase #PbFwCfg_Module_Compile_ASM64
         !xor rax, rax
-        !mov eax, dword [p.v_Value]
+        !mov eax, dword [p.v_value]
         !bswap eax
         ProcedureReturn    
         
       CompilerCase #PbFwCfg_Module_Compile_C
-        !return __builtin_bswap32(v_Value);
+        !return __builtin_bswap32(v_value);
         
       CompilerDefault     ; Classic Code without ASM or C optimations       
         Protected *Swap.pSwap
-        *Swap = @Value
+        *Swap = @value
         Swap *Swap\a[0], *Swap\a[3]
         Swap *Swap\a[1], *Swap\a[2]
         
     CompilerEndSelect     
   EndProcedure
   
-  Procedure.q BSWAP64(Value.q)
+  Procedure.q BSWAP64(value.q)
   ; ======================================================================
   ;  NAME: BSWAP64
   ;  DESC: LittleEndian<=>BigEndian conversion for 64Bit values
-  ;  DESC: Swaps the Bytes of a 64 Bit Value
+  ;  DESC: Swaps the Bytes of a 64 Bit value
   ;  DESC: direct in memory.
-  ;  VAR(*Mem): Pointer to the Value
+  ;  VAR(*Mem): Pointer to the value
   ;  RET:  -
   ; ======================================================================   
     
     CompilerSelect #PbFwCfg_Module_Compile
        
       CompilerCase #PbFwCfg_Module_Compile_ASM32
-        !lea ecx, [p.v_Value]   ; load effective address of Value (:= @Value)
+        !lea ecx, [p.v_value]   ; load effective address of value (:= @value)
         !mov edx, dword [ecx]
         !mov eax, dword [ecx +4]
         !bswap edx
@@ -1031,21 +1073,21 @@ Module Bits
         ProcedureReturn         ; 64Bit Return use EAX and EDX Register
         
       CompilerCase #PbFwCfg_Module_Compile_ASM64
-        !mov rax, qword [p.v_Value]
+        !mov rax, qword [p.v_value]
         !bswap rax
         ProcedureReturn
         
       CompilerCase #PbFwCfg_Module_Compile_C
-        !return __builtin_bswap64(v_Value);
+        !return __builtin_bswap64(v_value);
        
       CompilerDefault     ; Classic Code without ASM or C optimations       
         Protected *Swap.pSwap
-        *Swap = @Value
+        *Swap = @value
         Swap *Swap\a[0], *Swap\a[7]
         Swap *Swap\a[1], *Swap\a[6]
         Swap *Swap\a[2], *Swap\a[5]
         Swap *Swap\a[3], *Swap\a[4]
-        ProcedureReturn Value
+        ProcedureReturn value
         
     CompilerEndSelect  
    EndProcedure
@@ -1537,10 +1579,11 @@ CompilerIf #PB_Compiler_IsMainFile
   
 CompilerEndIf
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 26
-; Folding = --------
-; Markers = 295,317
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 11
+; FirstLine = 12
+; Folding = ---------
+; Markers = 303,325
 ; Optimizer
 ; EnableXP
 ; CPU = 5

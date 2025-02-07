@@ -7,7 +7,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/11/15
-; VERSION  :  0.53 Developer Version
+; VERSION  :  0.54 Developer Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -15,6 +15,8 @@
 ; ===========================================================================
 ; ChangeLog: 
 ;{
+; 2025/02/07 S.Maag :  solved listDirectory for searching in Subdirectories
+;                      added ListEmptyDirectories
 ; 2024/12/10 S.Maag :  added xTrim Parameter to FileToStringList
 ; 2024/11/22 S.Maag :  added OnePathBack()
 ; 2024/09/11 S.Maag :  added StringToFile(), StringListToFile(), StringMapToFile()
@@ -123,6 +125,8 @@ DeclareModule FS
   Declare.i ListFilesEx(Directory$, List Files.TDirectoryEntry(), SubDirLevel=#PB_Default, RegExpr$="", Flags=#FS_Files_All, *FileFilterCallback=#Null)
   Declare.i ListFiles(Dir$, List Files.s(), Pattern$="", SearchInSubDirecotries=#False)
   Declare.i ListDirectories(Dir$, List lstDir.s(), Pattern$="", SearchInSubDirecotries=#False)
+  Declare.i ListEmptyDirectories(Dir$, List lstDirs.s())
+
   Declare.s GetAttributesText(Attrib)
   Declare.i CreatePath(Path.s)
   
@@ -493,110 +497,164 @@ Module FS
     EndIf
   EndProcedure
   
-  Procedure.i ListFiles(Dir$, List Files.s(), Pattern$="", SearchInSubDirecotries=#False)
+  Procedure.i ListFiles(Dir$, List lstFiles.s(), Pattern$="", SearchInSubDirecotries=#False)
   ; ===========================================================================
   ; NAME : ListFiles
   ; DESC : This is the Standard function to list the Files
   ; DESC : This Version to list files is a Code from the PureBasic Forum
   ; VAR(Dir$) : Start Directory
-  ; VAR(List Files()) : List() to hold the FileNames
+  ; VAR(List lstFiles()) : List() to hold the FileNames
   ; VAR(Pattern$) : List only Files which matches with the Pattern$
   ; RET.i : Number of Files found
   ; =========================================================================== 
-    Protected NewList DirList.s(), hDir
-    AddElement(DirList())
-    DirList()=Dir$
+    Protected NewList tmp_lstDir.s()  ; internal temporary DirectoryList
+    Protected hDir
     
-    ClearList(Files())
+    AddElement(tmp_lstDir())
+    tmp_lstDir()=Dir$
+      
+    ClearList(lstFiles())
     
-    While ListSize(DirList())
-      FirstElement(DirList())
-      Dir$=DirList()
+    While ListSize(tmp_lstDir())
+      FirstElement(tmp_lstDir())
+      Dir$=tmp_lstDir()
       
       hDir=ExamineDirectory(#PB_Any,Dir$, Pattern$)
       If hDir
         While NextDirectoryEntry(hDir)          
           If DirectoryEntryType(hDir)=#PB_DirectoryEntry_File
-            AddElement(Files())
-            Files()=Dir$ + #PS$ + DirectoryEntryName(hDir)
+            AddElement(lstFiles())
+            lstFiles()=Dir$ + #PS$ + DirectoryEntryName(hDir)
           Else
             If SearchInSubDirecotries
               Select DirectoryEntryName(hDir)
                 Case ".", ".."
                   ; ignore
                 Default
-                 AddElement(DirList())
-                 DirList()=Dir$ + #PS$ + DirectoryEntryName(hDir)
+                 AddElement(tmp_lstDir())
+                 tmp_lstDir()=Dir$ + #PS$ + DirectoryEntryName(hDir)
               EndSelect 
             EndIf  
           EndIf
         Wend
         FinishDirectory(hDir)
       EndIf
-      FirstElement(DirList())
-      DeleteElement(DirList())
+      FirstElement(tmp_lstDir())
+      DeleteElement(tmp_lstDir())
     Wend
     
-    ProcedureReturn ListSize(Files())
-
+    ProcedureReturn ListSize(lstFiles())
   EndProcedure
   
-  Procedure.i ListDirectories(Dir$, List lstDir.s(), Pattern$="", SearchInSubDirecotries=#False)
+  Procedure.i ListDirectories(Dir$, List lstDirs.s(), Pattern$="", SearchInSubDirecotries=#False)
   ; ===========================================================================
   ; NAME : ListDirectories
-  ; DESC : This all Directories in a Driectory
+  ; DESC : This is the Standard function to list the Directories
+  ; DESC : This Version to list Directories is a forke of ListFiles  
+  ; DESC : from PureBasic Forum
   ; VAR(Dir$) : Start Directory
-  ; VAR(List lstDir()) : List() to hold the Directory Entries
+  ; VAR(List lstDirs()) : List() to hold the FileNames
   ; VAR(Pattern$) : List only Files which matches with the Pattern$
-  ; RET.i : Number of Directories found
+  ; RET.i : Number of Files found
   ; =========================================================================== 
-    Protected NewList DirList.s(), hDir
-    AddElement(DirList())
-    DirList()=Dir$
+    Protected NewList tmp_lstDir.s() ; internal temporary DirectoryList
+    Protected hDir
     
-    ClearList(lstDir())
+    AddElement(tmp_lstDir())
+    tmp_lstDir()=Dir$
     
-    While ListSize(DirList())
-      FirstElement(DirList())
-      Dir$=DirList()
+    ClearList(lstDirs())
+    
+    While ListSize(tmp_lstDir())
+      FirstElement(tmp_lstDir())
+      Dir$=tmp_lstDir()
       
       hDir=ExamineDirectory(#PB_Any,Dir$, Pattern$)
       If hDir
-        While NextDirectoryEntry(hDir)          
-          If DirectoryEntryType(hDir)=#PB_DirectoryEntry_File
-            
-          Else
-            If SearchInSubDirecotries
-              Select DirectoryEntryName(hDir)
-                Case ".", ".."
-                  ; ignore
-                Default
-                 AddElement(DirList())
-                 DirList()=Dir$ + #PS$ + DirectoryEntryName(hDir)
-              EndSelect 
-            Else 
-              Select DirectoryEntryName(hDir)
-                Case ".", ".."
-                 ; ignore
-                Default                 
-                  AddElement(lstDir())
-                  lstDir() = DirectoryEntryName(hDir)
-              EndSelect
-              
-             EndIf  
-          EndIf
+        While NextDirectoryEntry(hDir)            
+          If DirectoryEntryType(hDir)=#PB_DirectoryEntry_Directory
+            Select DirectoryEntryName(hDir)
+              Case ".", ".."
+                ; ignore
+              Default
+                If SearchInSubDirecotries
+                  ; add Directory to temporary Searchlist
+                  AddElement(tmp_lstDir())
+                  tmp_lstDir()=Dir$ + #PS$ + DirectoryEntryName(hDir)
+                EndIf
+                ; add Directory to the list of found directories
+                AddElement(lstDirs())
+                lstDirs()=Dir$ + #PS$ + DirectoryEntryName(hDir)
+             EndSelect              
+          EndIf        
         Wend
         FinishDirectory(hDir)
       EndIf
-      FirstElement(DirList())      
-      DeleteElement(DirList())
+      FirstElement(tmp_lstDir())
+      DeleteElement(tmp_lstDir())
     Wend
     
-    FirstElement(lstDir())
-    DeleteElement(lstDir())
+    ProcedureReturn ListSize(lstDirs())
+  EndProcedure
+  
+  Procedure.i ListEmptyDirectories(Dir$, List lstDirs.s())
+  ; ===========================================================================
+  ; NAME : ListEmptyDirectories
+  ; DESC : List Empty Directories starting at Basedirectory = Dir$
+  ; DESC : 
+  ; VAR(Dir$) : Start Directory
+  ; VAR(List lstDirs()) : List() to hold the DirectoryNames
+  ; RET.i : Number of found empty Directories
+  ; =========================================================================== 
+    Protected NewList tmp_lstDir.s()  ; internal temporary DirectoryList
+    Protected hDir, xEmpty
     
-    ProcedureReturn ListSize(lstDir())
-
+    AddElement(tmp_lstDir())
+    tmp_lstDir()=Dir$
+      
+    ClearList(lstDirs())
+    
+    While ListSize(tmp_lstDir())
+      FirstElement(tmp_lstDir())
+      Dir$=tmp_lstDir()
+      
+      hDir=ExamineDirectory(#PB_Any,Dir$, "")
+      If hDir
+        ;Debug Dir$
+        xEmpty = #True
+        While NextDirectoryEntry(hDir)          
+          
+          If DirectoryEntryType(hDir)=#PB_DirectoryEntry_File
+            ; not Empty
+            xEmpty = #False
+            ;Debug Dir$
+          Else  ; Directory
+            Select DirectoryEntryName(hDir)
+              Case ".", ".."
+                ; ignore
+              Default
+                AddElement(tmp_lstDir())
+                tmp_lstDir()=Dir$ + #PS$ + DirectoryEntryName(hDir)
+                xEmpty = #False
+               ; Break
+            EndSelect 
+          EndIf
+        Wend
+        FinishDirectory(hDir)
+        
+        If xEmpty
+          AddElement(lstDirs())
+          lstDirs() = Dir$ ; tmp_lstDir()
+          Debug Dir$
+        EndIf
+        
+      EndIf
+     
+      FirstElement(tmp_lstDir())
+      DeleteElement(tmp_lstDir())
+    Wend
+    
+    ProcedureReturn ListSize(lstDirs())
   EndProcedure
 
   Procedure.i CreatePath(Path.s)
@@ -889,9 +947,8 @@ CompilerIf #PB_Compiler_IsMainFile
   ; CreatePath("D:\Temp\PureBasic\Test\CreatePath\MyPath\")
   
 CompilerEndIf
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 230
-; FirstLine = 207
+; IDE Options = PureBasic 6.04 LTS (Windows - x86)
+; CursorPosition = 18
 ; Folding = ----
 ; Optimizer
 ; CPU = 5
