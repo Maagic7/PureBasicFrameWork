@@ -22,10 +22,10 @@
 
 
 ; Module for Bit Operations  
-XIncludeFile "Modules\PbFw_Module_Bits.pb"            ; Bits::
+XIncludeFile "Modules\PbFw_Module_Bit.pb"             ; BIT::
 
 ; Module for Buffer handling  
-XIncludeFile "Modules\PbFw_Module_BUFFER.pb"          ; Buffer::
+XIncludeFile "Modules\PbFw_Module_Buffer.pb"          ; BUF::
 
 
 ; ; Module for Clima and Thermo Dynamic calculations   
@@ -134,7 +134,7 @@ XIncludeFile "Modules\PbFw_Module_MyToolBarStandard.pb"
 
 
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 47
-; FirstLine = 59
+; CursorPosition = 37
+; FirstLine = 20
 ; Optimizer
 ; CPU = 5
