@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.12 LTS (Windows - x64)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.20 Beta 4 (Windows - x64)">
   <section name="config">
     <options closefiles="1" openmode="0" name="String"/>
   </section>
   <section name="data">
     <explorer view="D:\PureBasic\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2024-12-30 16:58" user="user1" host="AMD5800X"/>
+    <lastopen date="2025-02-08 13:54" user="user1" host="AMD5800X"/>
   </section>
   <section name="files">
-    <file name="..\..\PbFw_Module_String.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="++"/>
-      <fingerprint md5="a79d9be3febbb8d20286c1902bfb9fb3"/>
-    </file>
     <file name="String_Main.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="+"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
       <fingerprint md5="06029c579f990d002c466877ed2a66c9"/>
+    </file>
+    <file name="..\..\PbFw_Module_String.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="7796d528d07097784d3c4608443d5d4c"/>
     </file>
   </section>
   <section name="targets">

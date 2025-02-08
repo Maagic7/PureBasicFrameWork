@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.12 LTS (Windows - x64)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.20 Beta 4 (Windows - x64)">
   <section name="config">
     <options closefiles="1" openmode="0" name="Sort"/>
   </section>
   <section name="data">
     <explorer view="D:\PureBasic\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2025-01-24 17:58" user="user1" host="AMD5800X"/>
+    <lastopen date="2025-02-08 13:54" user="user1" host="AMD5800X"/>
   </section>
   <section name="files">
     <file name="..\..\PbFw_Module_PB.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="++"/>
-      <fingerprint md5="0a8e7b4e7f6860031865583124095b8a"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="57908973ee9513c14b6ba315143f716a"/>
     </file>
     <file name="..\..\PbFw_Module_PbFw.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
@@ -20,12 +20,12 @@
     </file>
     <file name="..\..\PbFw_Module_Sort.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="29f1bec4a8429e288791ddc75f4bd1c0"/>
+      <fingerprint md5="7c03e36526b7711d602c278d47e946d1"/>
     </file>
   </section>
   <section name="targets">
     <target name="Default Target" enabled="1" default="1">
-      <inputfile value="..\..\PbFw_Module_IsNumeric.pb"/>
+      <inputfile value="SortMain.pb"/>
       <outputfile value=""/>
       <options debug="1" optimizer="1"/>
       <format exe="default" cpu="5"/>

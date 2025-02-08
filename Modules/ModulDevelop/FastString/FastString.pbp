@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.11 LTS (Windows - x64)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.20 Beta 4 (Windows - x64)">
   <section name="config">
     <options closefiles="1" openmode="0" name="FastString"/>
   </section>
   <section name="data">
     <explorer view="D:\PureBasic\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2024-07-19 16:52" user="user1" host="AMD5800X"/>
+    <lastopen date="2025-02-08 13:47" user="user1" host="AMD5800X"/>
   </section>
   <section name="files">
     <file name="FastString_Main.pb">
@@ -16,11 +16,11 @@
     </file>
     <file name="..\..\PbFw_Module_FastString.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="b3a2a6a22c031bffd610158c6426f5ca"/>
+      <fingerprint md5="d29ca8447211714909acc149733804ee"/>
     </file>
     <file name="..\..\PbFw_ASM_Macros.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="0bf20e8ccac99178a8824116bee36d9b"/>
+      <fingerprint md5="69e07f4b5a0f6b6591ec50404be4c087"/>
     </file>
   </section>
   <section name="targets">
