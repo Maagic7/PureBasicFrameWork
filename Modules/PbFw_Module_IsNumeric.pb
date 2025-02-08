@@ -55,27 +55,27 @@ DeclareModule IsNum
   
   ; For binary Enumerations we use 'x' as Prefix to see it's a binary
   EnumerationBinary
-    #PbfW_IsNum_xBIN        ; binary
-    #PbfW_IsNum_xHEX        ; Hex
-    #PbfW_IsNum_xINT        ; Integer
-    #PbfW_IsNum_xFLOAT      ; Float
-    #PbfW_IsNum_xCUR        ; Currency
-    #PbfW_IsNum_xDATE       ; Date
+    #IsNum_xBIN        ; binary
+    #IsNum_xHEX        ; Hex
+    #IsNum_xINT        ; Integer
+    #IsNum_xFLOAT      ; Float
+    #IsNum_xCUR        ; Currency
+    #IsNum_xDATE       ; Date
   EndEnumeration
   
   Enumeration 1
-    #PbfW_IsNum_AllowPrefix    ; allow a Prefix (for Binary [%] or HEX [$])
-    #PbfW_IsNum_ForcePrefix    ; a Prefix must be used for Binary or HEX otherwise it is an Error
+    #IsNum_AllowPrefix    ; allow a Prefix (for Binary [%] or HEX [$])
+    #IsNum_ForcePrefix    ; a Prefix must be used for Binary or HEX otherwise it is an Error
   EndEnumeration
   
   ; over the Prototype Calls the String$ is automatically convertet to *String
   ; with this Methode we generate a ByRef Call of Strings what is faster than 
   ; a ByVal Call what copies the String to Stack. The PB internal String
   ; Functions like ReplaceString() or FindStrin() use simlar system.
-  Prototype.i IsBinary(String$, BinPrefix.c='%', UsePrefix=#PbfW_IsNum_AllowPrefix)
+  Prototype.i IsBinary(String$, BinPrefix.c='%', UsePrefix=#IsNum_AllowPrefix)
   Global IsBinary.IsBinary    ; define Prototype-Handler for IsBinary
   
-  Prototype.i IsHex (String$, HexPrefix.c='$', UsePrefix=#PbfW_IsNum_AllowPrefix)
+  Prototype.i IsHex (String$, HexPrefix.c='$', UsePrefix=#IsNum_AllowPrefix)
   Global IsHex.IsHex          ; define Prototype-Handler for IsHex
   
   Prototype.i IsInteger (String$) 
@@ -87,7 +87,7 @@ DeclareModule IsNum
   Prototype.i IsDate (String$) 
   Global IsDate.IsDate        ; define Prototype-Handler for IsDate
   
-  Prototype.i IsCurrency (String$, DecimalChar.c=',', TsdChar.c='.', UseTsdChar=#PbfW_IsNum_AllowPrefix)
+  Prototype.i IsCurrency (String$, DecimalChar.c=',', TsdChar.c='.', UseTsdChar=#IsNum_AllowPrefix)
   Global IsCurrency.IsCurrency  ; define Prototype-Handler for IsCurrency
   
   Prototype.i IsPercent (String$, DecimalChar.c='.')    
@@ -111,15 +111,15 @@ Module IsNum
   ;- Module Public Functions as Protytypes
   ;- ---------------------------------------------------------------------- 
 
-  Procedure.i _IsBinary(*String, BinPrefix.c='%', UsePrefix=#PbfW_IsNum_AllowPrefix)
+  Procedure.i _IsBinary(*String, BinPrefix.c='%', UsePrefix=#IsNum_AllowPrefix)
   ; ============================================================================
   ; NAME: _IsBinary
   ; DESC: checks whether binary interpretation of the String is possible
   ; DESC: [%] [0,1]
   ; VAR(String$): String to test
   ; VAR(BinPrefix.c): Prefix to identify binary numerals; mostly '%' or 'x'
-  ; VAR(UsePrefix): #PbfW_IsNum_AllowPrefix = Prefix can be there 
-  ;                 #PbfW_IsNum_ForcePrefix = Prefix must be there otherwise it is 
+  ; VAR(UsePrefix): #IsNum_AllowPrefix = Prefix can be there 
+  ;                 #IsNum_ForcePrefix = Prefix must be there otherwise it is 
   ;                 not a valid Binary
   ;  RET.i: If it is a binary: Number of Digits, otherwise 0
   ; ============================================================================
@@ -143,11 +143,11 @@ Module IsNum
     ;  Check for BinPrefix [%]
     ; ----------------------------------------------------------------------    
      
-    If UsePrefix = #PbfW_IsNum_AllowPrefix
+    If UsePrefix = #IsNum_AllowPrefix
       If *pC\c = BinPrefix
         xPrefix =#True
       EndIf
-    ElseIf UsePrefix = #PbfW_IsNum_ForcePrefix
+    ElseIf UsePrefix = #IsNum_ForcePrefix
       If *pC\c = BinPrefix
         xPrefix = #True
       Else
@@ -166,7 +166,7 @@ Module IsNum
     
       While *pC\c     
         Select *pC\c
-          Case #TAB, PB::#PbFw_PB_SPACE
+          Case #TAB, PB::#PB_SPACE
             xSpaceAtEnd=#True   ; Space dedected : if it is not in the middle it is ok!
             Break
             
@@ -201,15 +201,15 @@ Module IsNum
   EndProcedure
   IsBinary = @_IsBinary()     ; Bind ProcedureAdress to the PrototypeHandler
   
-  Procedure.i _IsHex(*String, HexPrefix.c='$', UsePrefix=#PbfW_IsNum_AllowPrefix)
+  Procedure.i _IsHex(*String, HexPrefix.c='$', UsePrefix=#IsNum_AllowPrefix)
   ; ============================================================================
   ; NAME: _IsHex
   ; DESC:
   ; DESC: [$] [0..9, A..F]
   ; VAR(String$): String to test
   ; VAR(HexPrefix.c): Prefix to identify HEX numerals; mostly '$' 
-  ; VAR(UsePrefix): #PbfW_IsNum_AllowPrefix = Prefix can be there 
-  ;                 #PbfW_IsNum_ForcePrefix = Prefix must be there otherwise it is 
+  ; VAR(UsePrefix): #IsNum_AllowPrefix = Prefix can be there 
+  ;                 #IsNum_ForcePrefix = Prefix must be there otherwise it is 
   ;                 not a valid Binary
   ; RET.i: If it is a HEX: Number of Digits, otherwise 0
   ; ============================================================================
@@ -233,11 +233,11 @@ Module IsNum
     ;  Check for HexPrefix [$]
     ; ----------------------------------------------------------------------    
     
-    If UsePrefix = #PbfW_IsNum_AllowPrefix
+    If UsePrefix = #IsNum_AllowPrefix
       If *pC\c = HexPrefix
         xPrefix =#True
       EndIf
-    ElseIf UsePrefix = #PbfW_IsNum_ForcePrefix
+    ElseIf UsePrefix = #IsNum_ForcePrefix
       If *pC\c = HexPrefix
         xPrefix = #True
       Else
@@ -256,7 +256,7 @@ Module IsNum
     
       While *pC\c
         Select *pC\c
-          Case #TAB, PB::#PbFw_PB_SPACE
+          Case #TAB, PB::#PB_SPACE
             xSpaceAtEnd=#True   ; TAB, Space dedected : if it is not in the middle it is ok!
             Break
             
@@ -334,7 +334,7 @@ Module IsNum
     While *pC\c    
       Select *pC\c
           
-        Case #TAB, PB::#PbFw_PB_SPACE
+        Case #TAB, PB::#PB_SPACE
           xSpaceAtEnd=#True   ; Space dedected : if it is not in the middle it is ok!
           Break
           
@@ -414,7 +414,7 @@ Module IsNum
     While *pC\c      
       Select *pC\c
           
-        Case #TAB, PB::#PbFw_PB_SPACE              ; Tab or Space
+        Case #TAB, PB::#PB_SPACE              ; Tab or Space
           xSpaceAtEnd=#True     ; Space dedected : if it is not in the middle it is ok!
           Break
           
@@ -455,7 +455,7 @@ Module IsNum
     If xExp And xIsFloat
       While *pC\c
         Select *pC\c
-          Case #TAB, PB::#PbFw_PB_SPACE
+          Case #TAB, PB::#PB_SPACE
             xSpaceAtEnd=#True     ; Space dedected : if it is not in the middle it is ok!
             Break        
           Case '0' To '9'
@@ -563,7 +563,7 @@ Module IsNum
   EndProcedure
   IsDate = @_IsDate()     ; Bind ProcedureAdress to the PrototypeHandler
   
-  Procedure.i _IsCurrency(*String, DecimalChar.c=',', TsdChar.c='.', UseTsdChar=#PbfW_IsNum_AllowPrefix)
+  Procedure.i _IsCurrency(*String, DecimalChar.c=',', TsdChar.c='.', UseTsdChar=#IsNum_AllowPrefix)
   ; ============================================================================
   ; NAME: _IsCurrency
   ; DESC:
@@ -609,7 +609,7 @@ Module IsNum
     While *pC\c  
       Select *pC\c         
           
-        Case #TAB, PB::#PbFw_PB_SPACE
+        Case #TAB, PB::#PB_SPACE
           xSpaceAtEnd=#True     ; Space dedected : if it is not in the middle it is ok!
           Break
           
@@ -697,7 +697,7 @@ Module IsNum
     While *pC\c    
       Select *pC\c
           
-        Case #TAB, PB::#PbFw_PB_SPACE              ; TAB, Space
+        Case #TAB, PB::#PB_SPACE              ; TAB, Space
           xSpaceAtEnd=#True     ; Space dedected : if it is not in the middle it is ok!
           Break
           
@@ -768,8 +768,8 @@ Module IsNum
     IntDigits = _IsInteger(*String)
     FloatDigits = _IsFloat(*String, cDecimalChar)
     
-    If IntDigits : RET | #PbfW_IsNum_xINT : EndIf
-    If FloatDigits : RET | #PbfW_IsNum_xFLOAT : EndIf
+    If IntDigits : RET | #IsNum_xINT : EndIf
+    If FloatDigits : RET | #IsNum_xFLOAT : EndIf
 
     ProcedureReturn RET
   EndProcedure
@@ -799,19 +799,19 @@ EndModule
     sText = sText + Space(20-Len(sText)) + #TAB$ 
     
     If NumType
-      If NumType & #PbfW_IsNum_xINT
+      If NumType & #IsNum_xINT
         Ret = "IsINT : "
       EndIf
       
-      If NumType & #PbfW_IsNum_xBIN
+      If NumType & #IsNum_xBIN
         RET = RET + "IsBin : "
       EndIf
       
-      If NumType & #PbfW_IsNum_xHEX
+      If NumType & #IsNum_xHEX
         Ret = RET + "IsHEX : "
       EndIf
       
-      If NumType & #PbfW_IsNum_xFLOAT
+      If NumType & #IsNum_xFLOAT
         Ret = RET + "IsFloat : "
       EndIf
   
@@ -837,16 +837,16 @@ EndModule
     
       
     Select NumType
-      Case #PbfW_IsNum_xBIN
+      Case #IsNum_xBIN
         txt = "IsBin"
         
-      Case #PbfW_IsNum_xHEX
+      Case #IsNum_xHEX
         txt = "IsHex"
        
-      Case #PbfW_IsNum_xINT
+      Case #IsNum_xINT
        txt = "IsInt"
         
-      Case #PbfW_IsNum_xFLOAT
+      Case #IsNum_xFLOAT
         txt = "IsHex"
         
       Default
@@ -866,9 +866,9 @@ EndModule
   Debug check("-234.0")
     
 CompilerEndIf 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 740
-; FirstLine = 755
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 741
+; FirstLine = 684
 ; Folding = ---
 ; Markers = 99
 ; Optimizer

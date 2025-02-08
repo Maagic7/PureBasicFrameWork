@@ -31,10 +31,10 @@ DeclareModule Menu
   EnableExplicit 
   
   Enumeration  ; EMenuEntryType
-    #PbFw_MenuEntryType_Menu
-    #PbFw_MenuEntryType_MenuBar
-    #PbFw_MenuEntryType_OpenSubMenu
-    #PbFw_MenuEntryType_CloseSubMenu
+    #Menu_EntryType_Menu
+    #Menu_EntryType_MenuBar
+    #Menu_EntryType_OpenSubMenu
+    #Menu_EntryType_CloseSubMenu
   EndEnumeration
   
   Structure TMenuEntry
@@ -154,7 +154,7 @@ Module Menu
   ; DESC: corresponding Menu in FrmDropDown.TfrmDropDownMenu
   ; DESC: AddElement(FrmDropDown\Project\lstMnu())
   ; DESC: The correct Menu is referenced by mnuName
-  ; VAR(Type) : EntryType [#PbFw_MenuEntryType_[Menu, MenuBar, OpenSubMenu, CloseSubMenu] 
+  ; VAR(Type) : EntryType [#Menu_EntryType_[Menu, MenuBar, OpenSubMenu, CloseSubMenu] 
   ; ============================================================================
  
     Static oldName.s ; We use Static VARs To check wheater Menu changed
@@ -189,7 +189,7 @@ Module Menu
         \xDisabled = Disabled
         \ImageID = Image   
         \ShortCut = Left(sShortCut,32)
-        If Type = #PbFw_MenuEntryType_Menu
+        If Type = #Menu_EntryType_Menu
           \ItemID =GetNewMenuID()   ; Get a new MenuID
         Else
           \ItemID =0
@@ -274,9 +274,9 @@ CompilerEndIf
 
   
  
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 45
-; FirstLine = 25
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 191
+; FirstLine = 188
 ; Folding = --
 ; Optimizer
 ; CPU = 5

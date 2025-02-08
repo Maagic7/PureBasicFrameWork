@@ -46,7 +46,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/12/04
-; VERSION  :  0.513 Developper Version
+; VERSION  :  0.513 Developer Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -89,7 +89,6 @@ DeclareModule VECf
   ;- STRUCTURES and CONSTANTS
   ;- ----------------------------------------------------------------------
     
-  
   ; Vector ist immer aus 4 Elementen, sonst macht das keinen Sinn
   ; die Unterscheidung Vector3, Vector4 bringt nur Nachteile statt Vorteile
   ; Man braucht neben den x,y,z,w Kooridnaten noch die Möglichkeit des
@@ -99,10 +98,10 @@ DeclareModule VECf
     Y.f          
   EndStructure
   
-  #PbFw_VectorCoordinate_X = 0
-  #PbFw_VectorCoordinate_Y = 1
-  #PbFw_VectorCoordinate_Z = 2
-  #PbFw_VectorCoordinate_W = 3
+  #VEC_X = 0
+  #VEC_Y = 1
+  #VEC_Z = 2
+  #VEC_W = 3
  
   Structure TVector Align 4 ; Single precicion Vector [16 Bytes / 128 Bit]
     StructureUnion
@@ -141,8 +140,8 @@ DeclareModule VECf
   ; Single precicion Matrix
   Structure TMatrix Align 4    ; to be sure it will be 4Byte Aligned at x64 
     StructureUnion
-      v.TVector[0]   ; Vector interpretation of the Matrix Structure
-      Pt2D.TPoint2D[0]
+      v.TVector[0]        ; Vector interpretation of the Matrix Structure
+      Pt2D.TPoint2D[0]    ; Point interpretation of the Matrix Structure
     EndStructureUnion
     m11.f : m12.f : m13.f : m14.f    
     m21.f : m22.f : m23.f : m24.f
@@ -192,7 +191,7 @@ DeclareModule VECf
   Declare.i Vector_Scale(*OUT.TVector, *IN.TVector, Factor.f)
   Declare.i Vector_CrossProduct(*OUT.TVector, *IN1.TVector, *IN2.TVector)
   Declare.i Vector_Lerp(*OUT.TVector, *A.TVector, *B.TVector, T.f)
-  Declare.f Vector_InverseLerp(*A.TVector, *B.TVector, *V.TVector, XYZW.i=#PbFw_VectorCoordinate_X)
+  Declare.f Vector_InverseLerp(*A.TVector, *B.TVector, *V.TVector, XYZW.i=#VEC_X)
   Declare.i Vector_Remap(*OUT.TVector, *IN.TVector, *inMin.TVector, *inMax.TVector, *outMin.TVector, *outMax.TVector, xRemapW=#False)
   
   ; Declare Matrix Functions
@@ -1394,7 +1393,7 @@ Module VECf
   
   EndProcedure
   
-  Procedure.f Vector_InverseLerp(*A.TVector, *B.TVector, *V.TVector, XYZW.i=#PbFw_VectorCoordinate_X)
+  Procedure.f Vector_InverseLerp(*A.TVector, *B.TVector, *V.TVector, XYZW.i=#VEC_X)
   ; ============================================================================
   ; NAME: Vector_InverseLerp
   ; DESC: Get the BlendingTime T{0..1} of the Value V in the Range 
@@ -1404,7 +1403,7 @@ Module VECf
   ; VAR(*B.TVector): End Vector    (to)
   ; VAR(*V.TVector): Vector to calculate Time for
   ; VAR(XYZW.i): Index fo Vector Coordinate to use for the calculation. 
-  ;              use {X,Y,Z,W}={0,1,2,3} Default=#PbFw_VectorCoordinate_X
+  ;              use {X,Y,Z,W}={0,1,2,3} Default=#VEC_X
   ; RET.d : Time Value {0..1} = {0..100%}
   ; ============================================================================
     
@@ -1412,16 +1411,16 @@ Module VECf
     Protected ret.f
     
     Select XYZW
-      Case #PbFw_VectorCoordinate_Y
+      Case #VEC_Y
         ret= (*V\x - *A\x) / (*B\x - *A\x)
         
-      Case #PbFw_VectorCoordinate_Y
+      Case #VEC_Y
         ret= (*V\y - *A\y) / (*B\y - *A\y)
         
-      Case #PbFw_VectorCoordinate_Z
+      Case #VEC_Z
         ret= (*V\z - *A\z) / (*B\z - *A\z)
         
-      Case #PbFw_VectorCoordinate_W
+      Case #VEC_W
         ret= (*V\w- *A\w) / (*B\w - *A\w)
         
       Default   ; any Other Value -> use X-Coordinate
@@ -1682,7 +1681,7 @@ Module VECf
     ; | cX     0     sY      0 |  cYcZ          -cYsZ           sY      0
     ; | sXsY  cX   -sXcY     0 |  sXsYcZ+cXsZ   -sXsYsZ-cXsZ   -sXcY    0
     ; |-cXsY  sX    cXcY     0 | -cXsYcZ+sXsZ    cXsYsZ-sXcZ    cXcY    0
-    ; | 0      0     0       1 |  0              0              0       0
+    ; | 0      0     0       1 |  0              0              0       1
     
     DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
 
@@ -1720,7 +1719,7 @@ Module VECf
     ; | cX     0     sY      0 |  cYcZ          -cYsZ           sY      0
     ; | sXsY  cX   -sXcY     0 |  sXsYcZ+cXsZ   -sXsYsZ-cXsZ   -sXcY    0
     ; |-cXsY  sX    cXcY     0 | -cXsYcZ+sXsZ    cXsYsZ-sXcZ    cXcY    0
-    ; | 0      0     0       1 |  0              0              0       0
+    ; | 0      0     0       1 |  0              0              0       1
     
     DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
  
@@ -2073,9 +2072,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 271
-; FirstLine = 194
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 1422
+; FirstLine = 1419
 ; Folding = --------------
 ; Optimizer
 ; CPU = 5

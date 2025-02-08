@@ -29,6 +29,9 @@
 ;}
 ; ===========================================================================
 
+; See this Project from Berkely University for CSG Mesh basic operations
+; https://github.com/robonrrd/csg/tree/master
+
 ;- ----------------------------------------------------------------------
 ;- Include Files
 ;  ----------------------------------------------------------------------
@@ -48,100 +51,100 @@ DeclareModule VObj
     
   Enumeration EVObjType
     
-    #PbFw_VObj_unknown     
+    #VObj_unknown     
     ; ------------------------------------------------------------
     ;- Flat Objects in 2D/3D Space
     ; ------------------------------------------------------------
-    #PbFw_VObj_Text
-    #PbFw_VObj_Line     
-    #PbFw_VObj_Polygon    
-    #PbFw_VObj_Ellipse      
-    #PbFw_VObj_Plane            ; Plane ;[Ebene]      
-    #PbFw_VObj_Arc
-    #PbFw_VObj_Spline                    
+    #VObj_Text
+    #VObj_Line     
+    #VObj_Polygon    
+    #VObj_Ellipse      
+    #VObj_Plane            ; Plane ;[Ebene]      
+    #VObj_Arc
+    #VObj_Spline                    
    
     ; ------------------------------------------------------------
     ;- Volume Objects in 3D Space
     ; ------------------------------------------------------------    
-    #PbFw_VObj_3DText          ; Volume Text   
-    #PbFw_VObj_3DPoly          ; Volume Polygon    
-    #PbFw_VObj_3DCone
+    #VObj_3DText          ; Volume Text   
+    #VObj_3DPoly          ; Volume Polygon    
+    #VObj_3DCone
           
   EndEnumeration
   
-  Enumeration EVObjSubType 1000       ; start with 1000, so ObjType and ObjSubType are at a different Numspace 
-    ;#PbFw_VObj_Text
-    #PbFw_VObj_Text_TextSingle          ; Single Line Text    
-    #PbFw_VObj_Text_TextMulti           ; Single Line Text    
+  Enumeration EVObjSubType 1000         ; start with 1000, so ObjType and ObjSubType are at a different Numspace 
+    ;#VObj_Text
+    #VObj_Text_TextSingle          ; Single Line Text    
+    #VObj_Text_TextMulti           ; Single Line Text    
     
-    ;#PbFw_VObj_Line     
-    #PbFw_VObj_Line_Line                ; Line     
-    #PbFw_VObj_Line_PolyLine            ; PolyLine 
+    ;#VObj_Line     
+    #VObj_Line_Line                ; Line     
+    #VObj_Line_PolyLine            ; PolyLine 
     
-    ;#PbFw_VObj_Polygon    
-    #PbFw_VObj_Polygon_Triangle         ; 3 Edges 
-    #PbFw_VObj_Polygon_Rectangle        ; 4 Edges, regualr Rectangel
-    #PbFw_VObj_Polygon_Pentagon         ; 5 Edges, regular Pentagon
-    #PbFw_VObj_Polygon_Hexagon          ; 6 Edges, regular Hexagon
-    #PbFw_VObj_Polygon_Octagon          ; 8 Edges, regular Octagon
-    #PbFw_VObj_Polygon_Star             ; n Spikes, regular Star   
-    #PbFw_VObj_Polygon_Polygon          ; any other Polygon
+    ;#VObj_Polygon    
+    #VObj_Polygon_Triangle         ; 3 Edges 
+    #VObj_Polygon_Rectangle        ; 4 Edges, regualr Rectangel
+    #VObj_Polygon_Pentagon         ; 5 Edges, regular Pentagon
+    #VObj_Polygon_Hexagon          ; 6 Edges, regular Hexagon
+    #VObj_Polygon_Octagon          ; 8 Edges, regular Octagon
+    #VObj_Polygon_Star             ; n Spikes, regular Star   
+    #VObj_Polygon_Polygon          ; any other Polygon
           
-    ;#PbFw_VObj_Ellipse      
-    #PbFw_VObj_Ellipse_Circle           ; Circle 
-    #PbFw_VObj_Ellipse_Ellipse          ; Ellipse)   
+    ;#VObj_Ellipse      
+    #VObj_Ellipse_Circle           ; Circle 
+    #VObj_Ellipse_Ellipse          ; Ellipse)   
     
-    ;#PbFw_VObj_Plane            ; Plane ;[Ebene]      
+    ;#VObj_Plane            ; Plane ;[Ebene]      
     
 
-    ;#PbFw_VObj_Arc
-    #PbFw_VObj_Arc_Circular             ; Circular Arc
-    #PbFw_VObj_Arc_Conic                ; Circular Arc
+    ;#VObj_Arc
+    #VObj_Arc_Circular             ; Circular Arc
+    #VObj_Arc_Conic                ; Circular Arc
     
-    ;#PbFw_VObj_Spline                    
-    #PbFw_VObj_Spline_CatMullRom        ; Catmull Rom Spline
-    #PbFw_VObj_Spline_CSpline           ; Cubic Spline
-    #PbFw_VObj_Spline_BSpline           ; Bezier Spline
-    #PbFw_VObj_Spline_TSpline           ; T-Spline
+    ;#VObj_Spline                    
+    #VObj_Spline_CatMullRom        ; Catmull Rom Spline
+    #VObj_Spline_CSpline           ; Cubic Spline
+    #VObj_Spline_BSpline           ; Bezier Spline
+    #VObj_Spline_TSpline           ; T-Spline
 
     ; ---------------------------------------------------------------------------------
-    ;#PbFw_VObj_3DPoly                  ; Volume Polygon    
-    #PbFw_VObj_3DPoly_Triangle          ; 3 Edges 
-    #PbFw_VObj_3DPoly_Rectangle         ; 4 Edges, regualr Rectangel
-    #PbFw_VObj_3DPoly_Pentagon          ; 5 Edges, regular Pentagon
-    #PbFw_VObj_3DPoly_Hexagon           ; 6 Edges, regular Hexagon
-    #PbFw_VObj_3DPoly_Octagon           ; 8 Edges, regular Octagon
-    #PbFw_VObj_3DPoly_Star              ; n Spikes, regular Star   
-    #PbFw_VObj_3DPoly_Polygon           ; any other Polygon
+    ;#VObj_3DPoly                  ; Volume Polygon    
+    #VObj_3DPoly_Triangle          ; 3 Edges 
+    #VObj_3DPoly_Rectangle         ; 4 Edges, regualr Rectangel
+    #VObj_3DPoly_Pentagon          ; 5 Edges, regular Pentagon
+    #VObj_3DPoly_Hexagon           ; 6 Edges, regular Hexagon
+    #VObj_3DPoly_Octagon           ; 8 Edges, regular Octagon
+    #VObj_3DPoly_Star              ; n Spikes, regular Star   
+    #VObj_3DPoly_Polygon           ; any other Polygon
     
-    ;#PbFw_VObj_3DCone
-    #PbFw_VObj_3DCone_Cylinder          ; 3D Cylinder
-    #PbFw_VObj_3DCone_EllipticCylinder  ; 3D elliptical Cylinder
-    #PbFw_VObj_3DCone_Cone              ; 3D Cone  {Kegel}
-    #PbFw_VObj_3DCone_EllipticCone      ; 3D elliptical Cone {elliptischer Kegel} 
+    ;#VObj_3DCone
+    #VObj_3DCone_Cylinder          ; 3D Cylinder
+    #VObj_3DCone_EllipticCylinder  ; 3D elliptical Cylinder
+    #VObj_3DCone_Cone              ; 3D Cone  {Kegel}
+    #VObj_3DCone_EllipticCone      ; 3D elliptical Cone {elliptischer Kegel} 
     
  
   EndEnumeration
   
   EnumerationBinary EVObjFlags
-    #PbFw_VObj_Flag_Hidden
-    #PbFw_VObj_Flag_Locked 
-    #PbFw_VObj_Flag_Flat 
+    #VObj_Flag_Hidden
+    #VObj_Flag_Locked 
+    #VObj_Flag_Flat 
   EndEnumeration
   
   Enumeration EVObj_FillStyle
-    #PbFw_VObj_FillStyle_Transparent    ; Transparent = without filling
-    #PbFw_VObj_FillStyle_Solid          ; with solid filling
-    #PbFw_VObj_FillStyle_Pattern        ; Musterfüllung (z.B. gestreift)
-    #PbFw_VObj_FillStyle_Image          ; Filled with an Image (.bmp, .png, .jpg)
+    #VObj_FillStyle_Transparent    ; Transparent = without filling
+    #VObj_FillStyle_Solid          ; with solid filling
+    #VObj_FillStyle_Pattern        ; Musterfüllung (z.B. gestreift)
+    #VObj_FillStyle_Image          ; Filled with an Image (.bmp, .png, .jpg)
   EndEnumeration
 
   Enumeration EVObj_LineStyle
-    #PbFw_VObj_LineStyle_Solid          ; Solid Line   : StrokePath()
-    #PbFw_VObj_LineStyle_Dash           ; ------ Line  : DashPath()
-    #PbFw_VObj_LineStyle_Dot            ; ..... Line   : DotPath()
-    #PbFw_VObj_LineStyle_DashDot        ; -.-.- Line   : CustomDashPath()
-    #PbFw_VObj_LineStyle_DashDotDot     ; -..-..- Line : CustomDashPath()
+    #VObj_LineStyle_Solid          ; Solid Line   : StrokePath()
+    #VObj_LineStyle_Dash           ; ------ Line  : DashPath()
+    #VObj_LineStyle_Dot            ; ..... Line   : DotPath()
+    #VObj_LineStyle_DashDot        ; -.-.- Line   : CustomDashPath()
+    #VObj_LineStyle_DashDotDot     ; -..-..- Line : CustomDashPath()
   EndEnumeration
     
   ; ----------------------------------------------------------------------
@@ -149,18 +152,18 @@ DeclareModule VObj
   ; ----------------------------------------------------------------------
 
   Enumeration ETextAlign
-    #PbFw_VObj_TextAlign_UpLeft
-    #PbFw_VObj_TextAlign_UpMiddle
-    #PbFw_VObj_TextAlign_UpRight
-    #PbFw_VObj_TextAlign_DownLeft
-    #PbFw_VObj_TextAlign_DownMiddle
-    #PbFw_VObj_TextAlign_DownRight 
+    #VObj_TextAlign_UpLeft
+    #VObj_TextAlign_UpMiddle
+    #VObj_TextAlign_UpRight
+    #VObj_TextAlign_DownLeft
+    #VObj_TextAlign_DownMiddle
+    #VObj_TextAlign_DownRight 
   EndEnumeration
 
-  #PbFw_VObj_Font_BOLD = #PB_Font_Bold
-  #PbFw_VObj_Font_Italic = #PB_Font_Italic
-  #PbFw_VObj_Font_StrikeOut = #PB_Font_StrikeOut
-  #PbFw_VObj_Font_Underline = #PB_Font_Underline
+  #VObj_Font_BOLD = #PB_Font_Bold
+  #VObj_Font_Italic = #PB_Font_Italic
+  #VObj_Font_StrikeOut = #PB_Font_StrikeOut
+  #VObj_Font_Underline = #PB_Font_Underline
     
   ;- ----------------------------------------------------------------------
   ;- STRUCTURES
@@ -189,9 +192,9 @@ DeclareModule VObj
   
   Structure TVObjBase
     *This                     ; Pointer to itself; for plausiblity checks
-    ObjType.l                 ; Object-Type     = #PbFw_VObj_Polygon
-    ObjSubType.l              ; Object-SubType  = #PbFw_VObj_SubType_Triangle
-    ObjFlags.l                ; Flags like #PbFw_VObj_Flag_Hidden
+    ObjType.l                 ; Object-Type     = #VObj_Polygon
+    ObjSubType.l              ; Object-SubType  = #VObj_SubType_Triangle
+    ObjFlags.l                ; Flags like #VObj_Flag_Hidden
     GroupID.l                 ; if the Object is grouped with others, the Group-ID
     LayerID.l                 ; Drawing layer ID
   EndStructure
@@ -260,7 +263,7 @@ DeclareModule VObj
   ;- ----------------------------------------------------------------------
   ;- Declare Module
   ;- ----------------------------------------------------------------------
-  Declare.i New(ObjType = #PbFw_VObj_Line)
+  Declare.i New(ObjType = #VObj_Line)
   Declare.i Kill(*VObj.TVObjBase)
   Declare.i Clone(*VObj)
   Declare.i MoveFlatObj(*VObj.TVObjBase, X.d, Y.d, Z.d=0, MoveType= #PB_Absolute) 
@@ -290,6 +293,16 @@ EndDeclareModule
 Module VObj
   
   EnableExplicit
+  ;- ----------------------------------------------------------------------
+  ;- PbFw Module local configurations
+  ;  ----------------------------------------------------------------------
+  ; This constants must have same Name in all Modules
+  
+  ; ATTENTION: with the PbFw::CONST Macro the PB-IDE Intellisense do not registrate the ConstantName
+  
+  ; #PbFwCfg_Module_CheckPointerException = #True     ; On/Off PoninterExeption for this Module
+  PbFw::CONST(PbFwCfg_Module_CheckPointerException, #True)
+
   PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
  
   UseModule VECd
@@ -298,7 +311,7 @@ Module VObj
   ;-  Handling Functions 
   ;- ----------------------------------------------------------------------
   
-  Procedure.i New(ObjType = #PbFw_VObj_Line)
+  Procedure.i New(ObjType = #VObj_Line)
   ; ============================================================================
   ; NAME: New
   ; DESC: Allocate Memory for a New Object, set the ObjectType and the
@@ -315,36 +328,36 @@ Module VObj
       ; ------------------------------------------------------------
       ; Flat Objects in 2D/3D Space
       ; ------------------------------------------------------------
-      Case #PbFw_VObj_Text
+      Case #VObj_Text
         *This = AllocateStructure(TText)
         xFlat = #True
         
-      Case #PbFw_VObj_Line
+      Case #VObj_Line
         *This = AllocateStructure(TLine)
        xFlat = #True
         
-      Case #PbFw_VObj_Polygon
+      Case #VObj_Polygon
         *This = AllocateStructure(TPolygon)
         xFlat = #True
        
-      Case #PbFw_VObj_Spline
+      Case #VObj_Spline
         *This = AllocateStructure(TSpline)
         xFlat = #True
        
-      Case #PbFw_VObj_Ellipse
+      Case #VObj_Ellipse
         *This = AllocateStructure(TEllipse)
         xFlat = #True
         
       ; ------------------------------------------------------------
       ; Volume Objects in 3D Space
       ; ------------------------------------------------------------      
-      Case  #PbFw_VObj_3DText   
+      Case  #VObj_3DText   
         *This = AllocateStructure(T3DText)
         
-      Case #PbFw_VObj_3DPoly
+      Case #VObj_3DPoly
         *This = AllocateStructure(T3DPoly)
 
-      Case #PbFw_VObj_3DCone
+      Case #VObj_3DCone
         *This = AllocateStructure(T3DCone)
 
     EndSelect
@@ -353,7 +366,7 @@ Module VObj
       *This\This = *This        ; Set the Pointer on itself (it's for interity check)
       *This\ObjType = ObjType   ; Set the ObjectType
       If xFlat
-        *This\ObjFlags = #PbFw_VObj_Flag_Flat  
+        *This\ObjFlags = #VObj_Flag_Flat  
       EndIf      
     EndIf
     
@@ -401,31 +414,31 @@ Module VObj
           ; ------------------------------------------------------------
           ; Flat Objects in 2D/3D Space
           ; ------------------------------------------------------------
-          Case #PbFw_VObj_Text
+          Case #VObj_Text
             CopyStructure(*VObj, *ThisNew, TText)
             
-          Case #PbFw_VObj_Line
+          Case #VObj_Line
             CopyStructure(*VObj, *ThisNew, TText)
             
-          Case #PbFw_VObj_Polygon
+          Case #VObj_Polygon
             CopyStructure(*VObj, *ThisNew, TPolygon)
             
-          Case #PbFw_VObj_Spline
+          Case #VObj_Spline
             CopyStructure(*VObj, *ThisNew, TSpline)
            
-          Case #PbFw_VObj_Ellipse
+          Case #VObj_Ellipse
              CopyStructure(*VObj, *ThisNew, TEllipse)
             
           ; ------------------------------------------------------------
           ; Volume Objects in 3D Space
           ; ------------------------------------------------------------      
-          Case  #PbFw_VObj_3DText   
+          Case  #VObj_3DText   
             CopyStructure(*VObj, *ThisNew, T3DText)
             
-          Case #PbFw_VObj_3DPoly
+          Case #VObj_3DPoly
             CopyStructure(*VObj, *ThisNew, T3DPoly)
     
-          Case #PbFw_VObj_3DCone
+          Case #VObj_3DCone
             CopyStructure(*VObj, *ThisNew, T3DCone)
             
         EndSelect
@@ -455,7 +468,7 @@ Module VObj
     Protected.i I, N
     Protected Vmove.TVector
     
-    If *VObj\ObjFlags & #PbFw_VObj_Flag_Flat
+    If *VObj\ObjFlags & #VObj_Flag_Flat
       
       N = ArraySize(*VObj\PT())
       mac_SetVector(Vmove, X, Y, Z) ; from VECd::
@@ -506,8 +519,8 @@ Module VObj
         ReDim \PT(\NoOfPts)
       EndIf     
       \NoOfPts    = 2
-      \ObjType    = #PbFw_VObj_Line 
-      \ObjSubType = #PbFw_VObj_Line_Line
+      \ObjType    = #VObj_Line 
+      \ObjSubType = #VObj_Line_Line
     EndWith
     
     With *VObj\PT(1)
@@ -545,8 +558,8 @@ Module VObj
         ReDim \PT(\NoOfPts)
       EndIf     
       \NoOfPts    = 2
-      \ObjType    = #PbFw_VObj_Line 
-      \ObjSubType = #PbFw_VObj_Line_PolyLine
+      \ObjType    = #VObj_Line 
+      \ObjSubType = #VObj_Line_PolyLine
     EndWith
     
     With *VObj\PT(1)
@@ -585,8 +598,8 @@ Module VObj
       If ArraySize(\PT()) <> \NoOfPts
         ReDim \PT(\NoOfPts)
       EndIf      
-      \ObjType    = #PbFw_VObj_Polygon  
-      \ObjSubType = #PbFw_VObj_Polygon_Triangle
+      \ObjType    = #VObj_Polygon  
+      \ObjSubType = #VObj_Polygon_Triangle
     EndWith
    
     With *VObj\PT(1)
@@ -635,8 +648,8 @@ Module VObj
       If ArraySize(\PT()) <> \NoOfPts
         ReDim \PT(\NoOfPts)
       EndIf      
-      \ObjType    = #PbFw_VObj_Polygon  
-      \ObjSubType = #PbFw_VObj_Polygon_Rectangle
+      \ObjType    = #VObj_Polygon  
+      \ObjSubType = #VObj_Polygon_Rectangle
     EndWith
     
     With *VObj\PT(1)
@@ -685,8 +698,8 @@ Module VObj
       If ArraySize(\PT()) <> \NoOfPts
         ReDim \PT(\NoOfPts)
       EndIf      
-      \ObjType    = #PbFw_VObj_Polygon  
-      \ObjSubType = #PbFw_VObj_Polygon_Pentagon
+      \ObjType    = #VObj_Polygon  
+      \ObjSubType = #VObj_Polygon_Pentagon
     EndWith
     
     With *VObj\PT(1)
@@ -746,8 +759,8 @@ Module VObj
       If ArraySize(\PT()) <> \NoOfPts
         ReDim \PT(\NoOfPts)
       EndIf      
-      \ObjType    = #PbFw_VObj_Polygon  
-      \ObjSubType = #PbFw_VObj_Polygon_Hexagon
+      \ObjType    = #VObj_Polygon  
+      \ObjSubType = #VObj_Polygon_Hexagon
     EndWith
     
     With *VObj\PT(1)
@@ -813,8 +826,8 @@ Module VObj
       If ArraySize(\PT()) <> \NoOfPts
         ReDim \PT(\NoOfPts)
       EndIf      
-      \ObjType    = #PbFw_VObj_Polygon  
-      \ObjSubType = #PbFw_VObj_Polygon_Octagon
+      \ObjType    = #VObj_Polygon  
+      \ObjSubType = #VObj_Polygon_Octagon
     EndWith
     
     With *VObj\PT(1)
@@ -896,8 +909,8 @@ Module VObj
         If ArraySize(\PT()) <> \NoOfPts
           ReDim \PT(\NoOfPts)
         EndIf      
-        \ObjType    = #PbFw_VObj_Polygon  
-        \ObjSubType = #PbFw_VObj_Polygon_Star
+        \ObjType    = #VObj_Polygon  
+        \ObjSubType = #VObj_Polygon_Star
            
         Protected I.i            
         Protected Phi.d = Radian(StartAngle) ; on a X/Y Screen the Angle 0 is down because +Y goes down
@@ -941,8 +954,8 @@ Module VObj
         If ArraySize(\PT()) <> \NoOfPts
           ReDim \PT(\NoOfPts)
         EndIf      
-        \ObjType    = #PbFw_VObj_Polygon  
-        \ObjSubType = #PbFw_VObj_Polygon_Polygon
+        \ObjType    = #VObj_Polygon  
+        \ObjSubType = #VObj_Polygon_Polygon
       EndWith
             
       Protected dAngle.d = (#PI * 2) / NoOfPoints
@@ -995,8 +1008,8 @@ Module VObj
         If ArraySize(\PT()) <> \NoOfPts
           ReDim \PT(\NoOfPts)
         EndIf      
-        \ObjType    = #PbFw_VObj_Polygon  
-        \ObjSubType = #PbFw_VObj_Polygon_Polygon
+        \ObjType    = #VObj_Polygon  
+        \ObjSubType = #VObj_Polygon_Polygon
       EndWith
             
       Protected I      
@@ -1036,8 +1049,8 @@ Module VObj
       If ArraySize(\PT()) <> \NoOfPts
         ReDim \PT(\NoOfPts)
       EndIf      
-      \ObjType    = #PbFw_VObj_Ellipse  
-      \ObjSubType = #PbFw_VObj_Ellipse_Circle
+      \ObjType    = #VObj_Ellipse  
+      \ObjSubType = #VObj_Ellipse_Circle
     EndWith
 
     With *VObj\PT(1)
@@ -1080,8 +1093,8 @@ Module VObj
       If ArraySize(\PT()) <> \NoOfPts
         ReDim \PT(\NoOfPts)
       EndIf      
-      \ObjType    = #PbFw_VObj_Ellipse  
-      \ObjSubType = #PbFw_VObj_Ellipse_Ellipse
+      \ObjType    = #VObj_Ellipse  
+      \ObjSubType = #VObj_Ellipse_Ellipse
     EndWith
     
     With *VObj\PT(1)
@@ -1137,8 +1150,8 @@ Module VObj
     DBG::mac_CheckPointer(*VObj)    ; Check Pointer Exception
  
     With *VObj
-      \ObjType    = #PbFw_VObj_3DPoly 
-      \ObjSubType = #PbFw_VObj_3DPoly_Triangle
+      \ObjType    = #VObj_3DPoly 
+      \ObjSubType = #VObj_3DPoly_Triangle
 
       Create_Triangle(\POL[0], X2.d,Y2.d, X3.d,Y3.d) 
       \POL[1] = \POL[0]   ; Polygon(1) = Polygon(0)
@@ -1176,8 +1189,8 @@ Module VObj
     DBG::mac_CheckPointer(*VObj)    ; Check Pointer Exception
  
     With *VObj
-      \ObjType    = #PbFw_VObj_3DPoly 
-      \ObjSubType = #PbFw_VObj_3DPoly_Rectangle
+      \ObjType    = #VObj_3DPoly 
+      \ObjSubType = #VObj_3DPoly_Rectangle
 
       Create_Rectangle(\POL[0], W, H) 
       \POL[1] = \POL[0]
@@ -1207,8 +1220,8 @@ Module VObj
     DBG::mac_CheckPointer(*VObj)    ; Check Pointer Exception
     
     With *VObj
-      \ObjType    = #PbFw_VObj_3DCone 
-      \ObjSubType = #PbFw_VObj_3DCone_Cylinder
+      \ObjType    = #VObj_3DCone 
+      \ObjSubType = #VObj_3DCone_Cylinder
       
       Create_Circle(*VObj\EL[0], r)
       \EL[1] = \EL[0]
@@ -1548,8 +1561,9 @@ Module VObj
   
     
 EndModule
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 37
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 53
+; FirstLine = 50
 ; Folding = ------
 ; Optimizer
 ; CPU = 5

@@ -54,135 +54,135 @@ DeclareModule PBS
   ;   it is faster to refer to keywords by index than by name
   Enumeration KeyWords 1
   ;{  
-    #PbFw_PB_KW_Align
-    #PbFw_PB_KW_And
-  	#PbFw_PB_KW_Array
-  	#PbFw_PB_KW_As
+    #PBS_KW_Align
+    #PBS_KW_And
+  	#PBS_KW_Array
+  	#PBS_KW_As
   
-  	#PbFw_PB_KW_Break
+  	#PBS_KW_Break
   
-  	#PbFw_PB_KW_CallDebugger
-  	#PbFw_PB_KW_Case
-  	#PbFw_PB_KW_CompilerCase
-  	#PbFw_PB_KW_CompilerDefault
-  	#PbFw_PB_KW_CompilerElse
-  	#PbFw_PB_KW_CompilerElseIf
-  	#PbFw_PB_KW_CompilerEndIf
-  	#PbFw_PB_KW_CompilerEndSelect
-  	#PbFw_PB_KW_CompilerError
-  	#PbFw_PB_KW_CompilerIf
-  	#PbFw_PB_KW_CompilerSelect
-  	#PbFw_PB_KW_CompilerWarning
-  	#PbFw_PB_KW_Continue
+  	#PBS_KW_CallDebugger
+  	#PBS_KW_Case
+  	#PBS_KW_CompilerCase
+  	#PBS_KW_CompilerDefault
+  	#PBS_KW_CompilerElse
+  	#PBS_KW_CompilerElseIf
+  	#PBS_KW_CompilerEndIf
+  	#PBS_KW_CompilerEndSelect
+  	#PBS_KW_CompilerError
+  	#PBS_KW_CompilerIf
+  	#PBS_KW_CompilerSelect
+  	#PBS_KW_CompilerWarning
+  	#PBS_KW_Continue
   
-  	#PbFw_PB_KW_Data
-  	#PbFw_PB_KW_DataSection
-  	#PbFw_PB_KW_Debug
-  	#PbFw_PB_KW_DebugLevel
-  	#PbFw_PB_KW_Declare
-  	#PbFw_PB_KW_DeclareC
-  	#PbFw_PB_KW_DeclareCDLL
-  	#PbFw_PB_KW_DeclareDLL
-  	#PbFw_PB_KW_DeclareModule
-  	#PbFw_PB_KW_Default
-  	#PbFw_PB_KW_Define
-  	#PbFw_PB_KW_Dim
-  	#PbFw_PB_KW_DisableASM
-  	#PbFw_PB_KW_DisableDebugger
-  	#PbFw_PB_KW_DisableExplicit
+  	#PBS_KW_Data
+  	#PBS_KW_DataSection
+  	#PBS_KW_Debug
+  	#PBS_KW_DebugLevel
+  	#PBS_KW_Declare
+  	#PBS_KW_DeclareC
+  	#PBS_KW_DeclareCDLL
+  	#PBS_KW_DeclareDLL
+  	#PBS_KW_DeclareModule
+  	#PBS_KW_Default
+  	#PBS_KW_Define
+  	#PBS_KW_Dim
+  	#PBS_KW_DisableASM
+  	#PBS_KW_DisableDebugger
+  	#PBS_KW_DisableExplicit
   
-  	#PbFw_PB_KW_Else
-  	#PbFw_PB_KW_ElseIf
-  	#PbFw_PB_KW_EnableASM
-  	#PbFw_PB_KW_EnableDebugger
-  	#PbFw_PB_KW_EnableExplicit
-  	#PbFw_PB_KW_End
-  	#PbFw_PB_KW_EndDataSection
-  	#PbFw_PB_KW_EndDeclareModule
-  	#PbFw_PB_KW_EndEnumeration
-  	#PbFw_PB_KW_EndIf
-  	#PbFw_PB_KW_EndImport
-  	#PbFw_PB_KW_EndInterface
-  	#PbFw_PB_KW_EndMacro
-  	#PbFw_PB_KW_EndModule
-  	#PbFw_PB_KW_EndProcedure
-  	#PbFw_PB_KW_EndSelect
-  	#PbFw_PB_KW_EndStructure
-  	#PbFw_PB_KW_EndStructureUnion
-  	#PbFw_PB_KW_EndWith
-  	#PbFw_PB_KW_Enumeration
-  	#PbFw_PB_KW_EnumerationBinary
-  	#PbFw_PB_KW_Extends
+  	#PBS_KW_Else
+  	#PBS_KW_ElseIf
+  	#PBS_KW_EnableASM
+  	#PBS_KW_EnableDebugger
+  	#PBS_KW_EnableExplicit
+  	#PBS_KW_End
+  	#PBS_KW_EndDataSection
+  	#PBS_KW_EndDeclareModule
+  	#PBS_KW_EndEnumeration
+  	#PBS_KW_EndIf
+  	#PBS_KW_EndImport
+  	#PBS_KW_EndInterface
+  	#PBS_KW_EndMacro
+  	#PBS_KW_EndModule
+  	#PBS_KW_EndProcedure
+  	#PBS_KW_EndSelect
+  	#PBS_KW_EndStructure
+  	#PBS_KW_EndStructureUnion
+  	#PBS_KW_EndWith
+  	#PBS_KW_Enumeration
+  	#PBS_KW_EnumerationBinary
+  	#PBS_KW_Extends
   
-  	#PbFw_PB_KW_FakeReturn
-  	#PbFw_PB_KW_For
-  	#PbFw_PB_KW_ForEach
-  	#PbFw_PB_KW_ForEver
+  	#PBS_KW_FakeReturn
+  	#PBS_KW_For
+  	#PBS_KW_ForEach
+  	#PBS_KW_ForEver
   
-  	#PbFw_PB_KW_Global
-  	#PbFw_PB_KW_Gosub
-  	#PbFw_PB_KW_Goto
+  	#PBS_KW_Global
+  	#PBS_KW_Gosub
+  	#PBS_KW_Goto
   
-  	#PbFw_PB_KW_If
-  	#PbFw_PB_KW_Import
-  	#PbFw_PB_KW_ImportC
-  	#PbFw_PB_KW_IncludeBinary
-  	#PbFw_PB_KW_IncludeFile
-  	#PbFw_PB_KW_IncludePath
-  	#PbFw_PB_KW_Interface
+  	#PBS_KW_If
+  	#PBS_KW_Import
+  	#PBS_KW_ImportC
+  	#PBS_KW_IncludeBinary
+  	#PBS_KW_IncludeFile
+  	#PBS_KW_IncludePath
+  	#PBS_KW_Interface
   
-  	#PbFw_PB_KW_List
+  	#PBS_KW_List
   
-  	#PbFw_PB_KW_Macro
-  	#PbFw_PB_KW_MacroExpandedCount
-  	#PbFw_PB_KW_Map
-  	#PbFw_PB_KW_Module
+  	#PBS_KW_Macro
+  	#PBS_KW_MacroExpandedCount
+  	#PBS_KW_Map
+  	#PBS_KW_Module
   
-  	#PbFw_PB_KW_NewList
-  	#PbFw_PB_KW_NewMap
-  	#PbFw_PB_KW_Next
-  	#PbFw_PB_KW_Not
+  	#PBS_KW_NewList
+  	#PBS_KW_NewMap
+  	#PBS_KW_Next
+  	#PBS_KW_Not
   
-  	#PbFw_PB_KW_Or
+  	#PBS_KW_Or
   
-  	#PbFw_PB_KW_Procedure
-  	#PbFw_PB_KW_ProcedureC
-  	#PbFw_PB_KW_ProcedureCDLL
-  	#PbFw_PB_KW_ProcedureDLL
-  	#PbFw_PB_KW_ProcedureReturn
-  	#PbFw_PB_KW_Protected
-  	#PbFw_PB_KW_Prototype
-  	#PbFw_PB_KW_PrototypeC
+  	#PBS_KW_Procedure
+  	#PBS_KW_ProcedureC
+  	#PBS_KW_ProcedureCDLL
+  	#PBS_KW_ProcedureDLL
+  	#PBS_KW_ProcedureReturn
+  	#PBS_KW_Protected
+  	#PBS_KW_Prototype
+  	#PBS_KW_PrototypeC
   
-  	#PbFw_PB_KW_ReDim
-  	#PbFw_PB_KW_Read
-  	#PbFw_PB_KW_Repeat
-  	#PbFw_PB_KW_Restore
-  	#PbFw_PB_KW_Return
-  	#PbFw_PB_KW_Runtime
+  	#PBS_KW_ReDim
+  	#PBS_KW_Read
+  	#PBS_KW_Repeat
+  	#PBS_KW_Restore
+  	#PBS_KW_Return
+  	#PBS_KW_Runtime
   
-  	#PbFw_PB_KW_Select
-  	#PbFw_PB_KW_Shared
-  	#PbFw_PB_KW_Static
-  	#PbFw_PB_KW_Step
-  	#PbFw_PB_KW_Structure
-  	#PbFw_PB_KW_StructureUnion
-  	#PbFw_PB_KW_Swap
+  	#PBS_KW_Select
+  	#PBS_KW_Shared
+  	#PBS_KW_Static
+  	#PBS_KW_Step
+  	#PBS_KW_Structure
+  	#PBS_KW_StructureUnion
+  	#PBS_KW_Swap
   
-  	#PbFw_PB_KW_Threaded
-  	#PbFw_PB_KW_To
+  	#PBS_KW_Threaded
+  	#PBS_KW_To
   
-  	#PbFw_PB_KW_UndefineMacro
-  	#PbFw_PB_KW_Until
-  	#PbFw_PB_KW_UnuseModule
-  	#PbFw_PB_KW_UseModule
+  	#PBS_KW_UndefineMacro
+  	#PBS_KW_Until
+  	#PBS_KW_UnuseModule
+  	#PBS_KW_UseModule
   
-  	#PbFw_PB_KW_Wend
-  	#PbFw_PB_KW_While
-  	#PbFw_PB_KW_With
+  	#PBS_KW_Wend
+  	#PBS_KW_While
+  	#PBS_KW_With
   
-  	#PbFw_PB_KW_XIncludeFile
-  	#PbFw_PB_KW_XOr
+  	#PBS_KW_XIncludeFile
+  	#PBS_KW_XOr
   EndEnumeration
   ;}
   
@@ -276,7 +276,7 @@ Module PBS
   ; DESC: Tests a Word whether it is a Keyword or not
   ; VAR(Word$) : KeyWord
   ; VAR(NextChar) : Next Char after the Keyword
-  ; RET : Returns the ID of the KeyWord #PbFw_PB_KW_xyz
+  ; RET : Returns the ID of the KeyWord #PBS_KW_xyz
   ; ============================================================================
     Protected ret
     Protected *pKeyWord.TKeyWord 
@@ -293,14 +293,14 @@ Module PBS
   Procedure.s GetKeyWordFromID(KeyWordID)
   ; ============================================================================
   ; NAME: GetKeyWordFromID
-  ; DESC: Returns the KeyWord Text for a #PbFw_PB_KW_xyz Constant 
+  ; DESC: Returns the KeyWord Text for a #PBS_KW_xyz Constant 
   ; DESC: (to get ID for a KeyWord use IsKeyWord() function)
-  ; VAR(KeyWordID): the KeyWord Constant like #PbFw_PB_KW_If
+  ; VAR(KeyWordID): the KeyWord Constant like #PBS_KW_If
   ; RET : The Text of the Keword like 'If'
   ; ============================================================================
   
     Protected ret.s
-    If KeyWordID >0 And KeywordID <= #PbFw_PB_KW_Xor
+    If KeyWordID >0 And KeywordID <= #PBS_KW_Xor
       SelectElement(lstKeyWord(), KeywordID-1)
       ret = lstKeyWord()\Text
     EndIf
@@ -570,14 +570,14 @@ CompilerIf #PB_Compiler_IsMainFile
     
     Protected mem.s
     Protected I
-    Protected NewList lstKW.PB::TKeyWord()
+    Protected NewList lstKW.PBS::TKeyWord()
     Protected.c firstChar = 'A' ; Remember the first Char of the Last Keyword  
     
-    PB::GetKeyWortList(lstKW())   ; Get All Keywords as List
+    PBS::GetKeyWortList(lstKW())   ; Get All Keywords as List
     
     UseModule CC    ; CodeCreation Module
     ClearCode()     ; Clear All Code first
-    Add("Enumeration EKeyWords 1", #PbFw_CC_SHR_AFTER)
+    Add("Enumeration EKeyWords 1", #CC_SHR_AFTER)
     
     ForEach lstKW()
       mem = lstKW()\Text
@@ -585,9 +585,9 @@ CompilerIf #PB_Compiler_IsMainFile
         Add("")
         firstChar = Asc(mem)
       EndIf
-      Add("#PbFw_PB_KW_"+mem)       ; Add a Linie for Each KeyWord Konstant
+      Add("#PBS_KW_"+mem)       ; Add a Linie for Each KeyWord Konstant
     Next
-    ADE(#PbFw_CC_CMD_EndEnumeration)  ; Add EndEnumeration with ShiftLeft
+    ADE(#CC_CMD_EndEnumeration)  ; Add EndEnumeration with ShiftLeft
     CopyToClipBoard()
     UnuseModule CC
   EndProcedure
@@ -644,7 +644,7 @@ CompilerIf #PB_Compiler_IsMainFile
   EndProcedure
   
 
-  PB::Init()     ; First Init the PB-Module
+  PBS::Init()     ; First Init the PB-Module
   
   ; CreateCode_Enumeration_KeyWords() ; Create the Keywords Enumeration section 
   
@@ -652,8 +652,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 27
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 641
+; FirstLine = 577
 ; Folding = ---
 ; Optimizer
 ; EnableXP

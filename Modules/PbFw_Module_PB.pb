@@ -14,10 +14,12 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2025/02/01 S.Maag changed to the new Framework wide Constant name scheme
+;             #'Module'_ConstantName
 ; 2025/02/01 S.Maag : Moved TSystemColor and the basic Color Macros
 ;             form Modul Color To Modul PB!
 ; 2025/01/30 S.Maag integrated the most common Bit functions as Macros!
-; 2025/01/29 S.Maag added the RealTimecounter and HighPerformanceTimer
+; 2025/01/29 S.Maag added the RealTimecounter and RealTimeCounter/HighPerformanceTimer
 ;             functions from Module RTC. RTC will be obsolet in the future.
 ;
 ; 2025/01/28 S.Maag : I realized: It's better for the programming workflow
@@ -42,13 +44,13 @@ DeclareModule PB
   ;- STRUCTURES and CONSTANTS
   ;  ----------------------------------------------------------------------
     
-  #PbFw_PB_CharSize = SizeOf(Character)
-  #PbFw_PB_IntSize = SizeOf(Integer)
+  #PB_CharSize = SizeOf(Character)
+  #PB_IntSize = SizeOf(Integer)
   ; #TAB    ; exists in PB. But to have same way of access, define it here too
-  #PbFw_PB_TAB = #TAB   ; #TAB = 9
-  #PbFw_PB_SPACE = 32
+  #PB_TAB = #TAB   ; #TAB = 9
+  #PB_SPACE = 32
   
-  #PbFw_PB_MaxBitNo = (SizeOf(Integer)*8-1)    ; 63 for x64 and 31 for x32
+  #PB_MaxBitNo = (SizeOf(Integer)*8-1)    ; 63 for x64 and 31 for x32
   
   ; Any or Universal Pointer (see PurePasic IDE Common.pb Structrue PTR)
   ; I modified it a little to have both single var access and var array access 
@@ -302,25 +304,25 @@ DeclareModule PB
   ; Get the Sign Bit (highest BitNo) from value
   ; use it : result = GetSignBit(value)
   Macro GetSignBit(value)
-    Bool(value >> PB::#PbFw_PB_MaxBitNo)  
+    Bool(value >> PB::#PB_MaxBitNo)  
   EndMacro
   
   ; Set the Sign Bit (highest BitNo) in value
   ; use it : result = SetSignBit(value)
   Macro SetSignBit(value)
-    (value | 1<<PB::#PbFw_PB_MaxBitNo)
+    (value | 1<<PB::#PB_MaxBitNo)
   EndMacro
   
   ; Reset the Sign Bit (highest BitNo) in value
   ; use it : result = ResetSignBit(value)
   Macro ResetSignBit(value)
-    (value & ~(1<<PB::#PbFw_PB_MaxBitNo))  
+    (value & ~(1<<PB::#PB_MaxBitNo))  
   EndMacro
   
  ; Toggle the Sign Bit (highest BitNo) in value
  ; use it : result = ToggleSingBit(value)
   Macro ToggleSingBit(value)
-    (value ! 1<<PB::#PbFw_PB_MaxBitNo)  
+    (value ! 1<<PB::#PB_MaxBitNo)  
   EndMacro
   
   ; Count the no of HiBits in a Byte value
@@ -400,8 +402,10 @@ DeclareModule PB
   ; Return the value limited to min 0 or Limit a var to min 0
   ; use it with var  : MinNull(MyVar)
   ;        with value: result = MinNull(-5)
+  
+  ; Attention do not change to ( VarOrValue * Bool(VarOrValue >0) ) MinNull(MyVar) will not work
   Macro MinNull(VarOrValue)
-    (VarOrValue * Bool(VarOrValue >0))  
+    VarOrValue * Bool(VarOrValue >0)  
   EndMacro
   
   ; use it: LimitToMin(var, MinValue)
@@ -571,14 +575,14 @@ DeclareModule PB
   ; use it: DECC(MyCharPointer, [1..n])
   ;     or  MyNewCharPointer = DECC(MyOldCharPointer, [1..n])
   Macro DECC(ptrChar)
-    ptrChar - PB::#PbFw_PB_CharSize ; (NoOfChars * PB::#PbFw_PB_CharSize)
+    ptrChar - PB::#PB_CharSize ; (NoOfChars * PB::#PB_CharSize)
   EndMacro
 
   ; Increment CharPointer
   ; use it: INCC(MyCharPointer, [1..n])
   ;     or  MyNewCharPointer = INCC(MyOldCharPointer, [1..n])
   Macro INCC(ptrChar)
-    ptrChar + PB::#PbFw_PB_CharSize ; (NoOfChars * PB::#PbFw_PB_CharSize)
+    ptrChar + PB::#PB_CharSize ; (NoOfChars * PB::#PB_CharSize)
   EndMacro
   
   ; LowerCase a single Char in ASCii Character space
@@ -833,7 +837,7 @@ DeclareModule PB
   ; AbsI() and AbsQ() solve tha PB's ABS() Problem at C-Backend with 53-Bit only!
   ; In ASM Backend the 80Bit Float unit is used for ABS() what works perfect for 64Bit INT.
   ; In C-Backend a MMX Version is used for ABS(). This is a problem because MMX use only 64Bit Floats
-  ; with a manitassa of 53 Bits. This will cause bugs if the ABS() when using for values >53 Bits!
+  ; with a manitassa of 53 Bits. This will cause bugs using ABs() for values >53 Bits!
   
   ; This is the optimized Abs Version (translated from Assembler to PB-Code; Soure: Math.asm from Linux Asm Project
   ; X!(X>>63)-(X>>63) ; x64
@@ -848,7 +852,7 @@ DeclareModule PB
     EndMacro
   CompilerElse  ; C-Backend
     Macro AbsI(IntValue)
-      (IntValue ! (IntValue >> PB::#PbFw_PB_MaxBitNo) - (IntValue >> PB::#PbFw_PB_MaxBitNo))
+      (IntValue ! (IntValue >> PB::#PB_MaxBitNo) - (IntValue >> PB::#PB_MaxBitNo))
     EndMacro
   CompilerEndIf
   
@@ -893,15 +897,15 @@ DeclareModule PB
   ; MaxOS x64, PBx64     |            |
   ; --------------------------------------------------
  
-  ; Constans for the HPT 16x HighPerformanceTimer
-  #RTC_STOP = 0       ; STOP Timer and return the time difference since start
-  #RTC_START = 1      ; START Timer and return the StartValue in MicroSeconds or NanoSeconds
-  #RTC_READ = 2       ; Read the time value [µs] (if Timer is stopped, it's the differntial time. If timer is started it is the START-Time)
+  ; Constans for the RTC 16x RealTimeCounter/HighPerformanceTimer
+  #PB_RTC_STOP = 0       ; STOP Timer and return the time difference since start
+  #PB_RTC_START = 1      ; START Timer and return the StartValue in MicroSeconds or NanoSeconds
+  #PB_RTC_READ = 2       ; Read the time value [µs] (if Timer is stopped, it's the differntial time. If timer is started it is the START-Time)
   
-  #RTC_MicroSeconds = 0
-  #RTC_NanoSeconds = 1
+  #PB_RTC_MicroSeconds = 0
+  #PB_RTC_NanoSeconds = 1
   
-  #RTC_MaxTimerNo = 15          ; Timers [0..#RTC_MaxTimerNo]  = [0..15]! Change this value if you need more Timers
+  #PB_RTC_MaxTimerNo = 15          ; Timers [0..#PB_RTC_MaxTimerNo]  = [0..15]! Change this value if you need more Timers
   
   Structure TDateAndTime        ; DateAndTime Structure to convert a TimeStamp
     wYear.w
@@ -913,9 +917,9 @@ DeclareModule PB
     wMilliseconds.w
   EndStructure
   
-  Structure THPT                ; Structure to hold the Timer datas
-    T.q[#RTC_MaxTimerNo+1]      ; Timer Value
-    xRun.i[#RTC_MaxTimerNo+1]   ; Timer Run-State : #False = Stop, #True = Run
+  Structure TRTC                ; Structure to hold the Timer datas
+    T.q[#PB_RTC_MaxTimerNo+1]      ; Timer Value
+    xRun.i[#PB_RTC_MaxTimerNo+1]   ; Timer Run-State : #False = Stop, #True = Run
   EndStructure
   
   ; Basic Functions
@@ -929,9 +933,9 @@ DeclareModule PB
   Declare.s TimeStampToString(TimeStamp.q, Format$="%yyyy/%mm/%dd-%hh:%mm:%ss")
   
   ; High Performance Timer
-  Declare.q HPT(TimerNo=0, cmd=#RTC_START, TimeBase=#RTC_MicroSeconds)
-  Declare.q HPTcal()                    ; calibarte Timer (calculate Timer Start/Stop Time for clibartion)
-  Declare.i HPTget(*HPTstruct.THPT)     ; Get a copy of the internal TimerStrucure with actual values
+  Declare.q RTC(TimerNo=0, cmd=#PB_RTC_START, TimeBase=#PB_RTC_MicroSeconds)
+  Declare.q RTCcal()                    ; calibarte Timer (calculate Timer Start/Stop Time for clibartion)
+  Declare.i RTCget(*RTCstruct.TRTC)     ; Get a copy of the internal TimerStrucure with actual values
   
   ; --------------------------------------------------
   ; Split and Join
@@ -1385,118 +1389,118 @@ Module PB
   EndProcedure
      
   ; private vars
-  Global _HPT.THPT  ; TimerValues Structure for Timers [0..#RTC_MaxTimerNo]
-  Global _HPT_Calibration.q  ; calibration ticks : Time for calling HPT() in NanoSeconds
+  Global _RTC.TRTC  ; TimerValues Structure for Timers [0..#PB_RTC_MaxTimerNo]
+  Global _RTC_Calibration.q  ; calibration ticks : Time for calling RTC() in NanoSeconds
   
-  Procedure.q HPT(TimerNo=0, cmd=#RTC_START, TimeBase=#RTC_MicroSeconds)
+  Procedure.q RTC(TimerNo=0, cmd=#PB_RTC_START, TimeBase=#PB_RTC_MicroSeconds)
   ; ============================================================================
-  ; NAME: HPT
-  ; DESC: HighPerformanceTimer, MultiTimer
+  ; NAME: RTC
+  ; DESC: RealTimeCounter/HighPerformanceTimer, MultiTimer
   ; DESC: Provides a set of easy to use timers for software speed tests!
-  ; VAR(TimerNo) : No of the Timer [0..#RTC_MaxTimerNo]
-  ; VAR(cmd) : #RTC_START, #RTC_STOP, #RTC_READ
-  ; VAR(TimeBase) : #RTC_NanoSeconds, #RTC_MicroSeconds
+  ; VAR(TimerNo) : No of the Timer [0..#PB_RTC_MaxTimerNo]
+  ; VAR(cmd) : #PB_RTC_START, #PB_RTC_STOP, #PB_RTC_READ
+  ; VAR(TimeBase) : #PB_RTC_NanoSeconds, #PB_RTC_MicroSeconds
   ; RET.q : Elapsed Time according to TimerNo
   ; ============================================================================
          
-    If TimerNo <0 Or TimerNo > #RTC_MaxTimerNo
+    If TimerNo <0 Or TimerNo > #PB_RTC_MaxTimerNo
       ProcedureReturn -1
     EndIf
     
     Select cmd
         
-      Case #RTC_START       ; START Timer --> save actual value of QueryPerformanceCounter in DataSection
+      Case #PB_RTC_START       ; START Timer --> save actual value of QueryPerformanceCounter in DataSection
       ; ----------------------------------------------------------------------
       ;  Start the Timer
       ; ----------------------------------------------------------------------
         
-        _HPT\T[TimerNo] = ElapsedNanoseconds()        
-        _HPT\xRun[TimerNo] = #True         ; Set Run State = #True
+        _RTC\T[TimerNo] = ElapsedNanoseconds()        
+        _RTC\xRun[TimerNo] = #True         ; Set Run State = #True
         
-        If TimeBase = #RTC_MicroSeconds
-          ProcedureReturn _HPT\T[TimerNo] / 1000
-        Else        ; #RTC_NanoSeconds
-          ProcedureReturn _HPT\T[TimerNo]
+        If TimeBase = #PB_RTC_MicroSeconds
+          ProcedureReturn _RTC\T[TimerNo] / 1000
+        Else        ; #PB_RTC_NanoSeconds
+          ProcedureReturn _RTC\T[TimerNo]
         EndIf
          
-      Case #RTC_STOP        ; STOP Timer
+      Case #PB_RTC_STOP        ; STOP Timer
       ; ----------------------------------------------------------------------
       ;  Stop the Timer
       ; ----------------------------------------------------------------------
         
-        _HPT\T[TimerNo] = ElapsedNanoseconds() - _HPT\T[TimerNo] - _HPT_Calibration
+        _RTC\T[TimerNo] = ElapsedNanoseconds() - _RTC\T[TimerNo] - _RTC_Calibration
   
-        If _HPT\T[TimerNo] < 0           ; Abs() because PB's Abs() is for floats only
-          _HPT\T[TimerNo] = - _HPT\T[TimerNo] 
+        If _RTC\T[TimerNo] < 0           ; Abs() because PB's Abs() is for floats only
+          _RTC\T[TimerNo] = - _RTC\T[TimerNo] 
         EndIf
         
-        _HPT\xRun[TimerNo] = #False      ; Set Run State = #False 
-        If TimeBase = #RTC_MicroSeconds
-          ProcedureReturn _HPT\T[TimerNo] / 1000
-        Else        ; #RTC_NanoSeconds
-          ProcedureReturn _HPT\T[TimerNo]
+        _RTC\xRun[TimerNo] = #False      ; Set Run State = #False 
+        If TimeBase = #PB_RTC_MicroSeconds
+          ProcedureReturn _RTC\T[TimerNo] / 1000
+        Else        ; #PB_RTC_NanoSeconds
+          ProcedureReturn _RTC\T[TimerNo]
         EndIf
         
-      Case #RTC_READ
+      Case #PB_RTC_READ
       ; ----------------------------------------------------------------------
       ;  Read the Timer
       ; ----------------------------------------------------------------------
         Protected ret.q
         
-        If _HPT\xRun[TimerNo]
-          ret = ElapsedNanoseconds() - _HPT\T[TimerNo] - _HPT_Calibration
+        If _RTC\xRun[TimerNo]
+          ret = ElapsedNanoseconds() - _RTC\T[TimerNo] - _RTC_Calibration
           If ret < 0 : ret = -ret : EndIf      
         Else
-          ret= _HPT\T[TimerNo]
+          ret= _RTC\T[TimerNo]
         EndIf
         
-        If TimeBase = #RTC_MicroSeconds
-          ProcedureReturn _HPT\T[TimerNo] / 1000
-        Else        ; #RTC_NanoSeconds
-          ProcedureReturn _HPT\T[TimerNo]
+        If TimeBase = #PB_RTC_MicroSeconds
+          ProcedureReturn _RTC\T[TimerNo] / 1000
+        Else        ; #PB_RTC_NanoSeconds
+          ProcedureReturn _RTC\T[TimerNo]
         EndIf
                
     EndSelect
          
   EndProcedure
   
-  Procedure.q HPTcal()
+  Procedure.q RTCcal()
   ; ============================================================================
-  ; NAME: HPTcal
-  ; DESC: HPT calibration routine to test the offset for a Timer START/STOP call 
-  ; DESC: After a call of HPTcal() the Calibration offset will be automatically
+  ; NAME: RTCcal
+  ; DESC: RTC calibration routine to test the offset for a Timer START/STOP call 
+  ; DESC: After a call of RTCcal() the Calibration offset will be automatically
   ; DESC: subtracted from the Time when reading a Timer.
-  ; DESC: If you do not call HPTcal() the calibration value is 0ns and
+  ; DESC: If you do not call RTCcal() the calibration value is 0ns and
   ; DESC: you get the uncalibrated TimeValue when reading a Timer.
-  ; DESC: For calibration Timer(#RTC_MaxTimerNo) is used.
-  ; DESC: So don't cal HPTcal() if this Timer is in operation!
+  ; DESC: For calibration Timer(#PB_RTC_MaxTimerNo) is used.
+  ; DESC: So don't cal RTCcal() if this Timer is in operation!
   ; RET.q : Calibration offset for a Timer START/STOP call
   ; ============================================================================
     Protected tim.q
     
     ; detecet the Time for a Timer Start/STOP Call
     tim = ElapsedNanoseconds()
-    HPT(#RTC_START, #RTC_MaxTimerNo, #RTC_NanoSeconds)   
-    HPT(#RTC_STOP, #RTC_MaxTimerNo, #RTC_NanoSeconds)
+    RTC(#PB_RTC_START, #PB_RTC_MaxTimerNo, #PB_RTC_NanoSeconds)   
+    RTC(#PB_RTC_STOP, #PB_RTC_MaxTimerNo, #PB_RTC_NanoSeconds)
     tim = ElapsedNanoseconds() - tim
     If tim <0 : tim = -tim : EndIf 
     
-    _HPT_Calibration = tim
+    _RTC_Calibration = tim
     ProcedureReturn tim     ; No of Ticks at QueryPerformanceFrequency
   EndProcedure
   
-  Procedure.i HPTget(*HPTstruct.THPT)
+  Procedure.i RTCget(*RTCstruct.TRTC)
   ; ============================================================================
-  ; NAME: HPTget
-  ; DESC: Get all the internal Timer values in a THPT Structure
-  ; VAR(*HPTstruct.THP) : Pointer to Return Structure
-  ; RET.i : *HPTstruct
+  ; NAME: RTCget
+  ; DESC: Get all the internal Timer values in a TRTC Structure
+  ; VAR(*RTCstruct.THP) : Pointer to Return Structure
+  ; RET.i : *RTCstruct
   ; ============================================================================
-    If *HPTstruct
-      *HPTstruct = _HPT  
+    If *RTCstruct
+      *RTCstruct = _RTC  
     EndIf
     
-    ProcedureReturn *HPTstruct  
+    ProcedureReturn *RTCstruct  
   EndProcedure
   
   ;- ----------------------------------------------------------------------
@@ -1967,9 +1971,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 118
-; FirstLine = 98
+; CursorPosition = 405
+; FirstLine = 398
 ; Folding = ------------------
 ; Optimizer
 ; CPU = 5
-; Compiler = PureBasic 6.20 Beta 4 - C Backend (Windows - x64)

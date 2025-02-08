@@ -24,34 +24,34 @@
 ;- ----------------------------------------------------------------------
 ;- Include Files
 ;- ----------------------------------------------------------------------
-XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
-XIncludeFile "PbFw_Module_String.pb"       ; STR::      String Module
+XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
+XIncludeFile "PbFw_Module_PB.pb"          ; PB::      Purebasic Extention Module
 
 DeclareModule CC
   
   EnableExplicit
   
   EnumerationBinary 0
-    #PbFw_CC_NoShift         
-    #PbFw_CC_SHL_BEFORE     ; Shift the Code 1 Tab$ left, before adding line
-    #PbFw_CC_SHR_BEFORE     ; Shift the Code 1 Tab$ right, before adding line
-    #PbFw_CC_SHL_AFTER      ; Shift the Code 1 Tab$ left, after adding line
-    #PbFw_CC_SHR_AFTER      ; Shift the Code 1 Tab$ right, after adding line
+    #CC_NoShift         
+    #CC_SHL_BEFORE     ; Shift the Code 1 Tab$ left, before adding line
+    #CC_SHR_BEFORE     ; Shift the Code 1 Tab$ right, before adding line
+    #CC_SHL_AFTER      ; Shift the Code 1 Tab$ left, after adding line
+    #CC_SHR_AFTER      ; Shift the Code 1 Tab$ right, after adding line
   EndEnumeration
   
   ; Test to make 'End-Commands easier! Use automatic shift
   Enumeration EEndCommand
-    #PbFw_CC_CMD_Else  
-    #PbFw_CC_CMD_EndEnumeration  
-    #PbFw_CC_CMD_EndIf   
-    #PbFw_CC_CMD_EndMacro   
-    #PbFw_CC_CMD_EndProcedure     
-    #PbFw_CC_CMD_EndSelect        
-    #PbFw_CC_CMD_EndStructure 
-    #PbFw_CC_CMD_EndStructureUnion
-    #PbFw_CC_CMD_EndWith          
-    #PbFw_CC_CMD_ForEver          
-    #PbFw_CC_CMD_Wend             
+    #CC_CMD_Else  
+    #CC_CMD_EndEnumeration  
+    #CC_CMD_EndIf   
+    #CC_CMD_EndMacro   
+    #CC_CMD_EndProcedure     
+    #CC_CMD_EndSelect        
+    #CC_CMD_EndStructure 
+    #CC_CMD_EndStructureUnion
+    #CC_CMD_EndWith          
+    #CC_CMD_ForEver          
+    #CC_CMD_Wend             
   EndEnumeration
   
   Macro DQ
@@ -65,9 +65,9 @@ DeclareModule CC
   Declare ClrShift()          ; Clear the ShiftLevel
   Declare SHR(Levels=1)       ; Set the CodeShiftLevel No of Levels right
   Declare SHL(Levels=1)       ; Set the CodeShiftLevel No of Levels left
-  Declare ADD(sCodeLine.s="", Shift = #PbFw_CC_NoShift) ; Add a line To the CodeList
+  Declare ADD(sCodeLine.s="", Shift = #CC_NoShift) ; Add a line To the CodeList
   Declare PRC(ProcName$, Paramters$, ReturnAs$=".i")   ; Add a Procedure definition to the CodeList
-  Declare ADE(EnumCmd = #PbFw_CC_CMD_EndIf)            ; Easy way to add an 'End'-Command with automatic shifting
+  Declare ADE(EnumCmd = #CC_CMD_EndIf)            ; Easy way to add an 'End'-Command with automatic shifting
 
   Declare ClearCode()         ; Clear all the code in lstCodeList()
   Declare CopyToClipBoard()   ; Copy the Code stored in the List lstCodeLine To the ClipBoard
@@ -140,12 +140,12 @@ Module CC
     ProcedureReturn mem_ShiftLevel
   EndProcedure
   
-  Procedure ADD(sCodeLine.s="", Shift = #PbFw_CC_NoShift)
+  Procedure ADD(sCodeLine.s="", Shift = #CC_NoShift)
   ; ============================================================================
   ; NAME: ADD
   ; DESC: Add a line to the CodeList
   ; VAR(sCodeLine.s): The CodeLine Text
-  ; VAR(Shift): Shift the Code  #PbFw_CC_SHL, #PbFw_CC_NoShift, #PbFw_CC_SHR 
+  ; VAR(Shift): Shift the Code  #CC_SHL, #CC_NoShift, #CC_SHR 
   ; RET : -
   ; ============================================================================
     Protected I
@@ -153,9 +153,9 @@ Module CC
     If sCodeLine
       
       ; Test SHIFT_BEFOR adding line
-      If Shift & #PbFw_CC_SHL_BEFORE
+      If Shift & #CC_SHL_BEFORE
         SHL()  
-      ElseIf Shift  & #PbFw_CC_SHR_BEFORE
+      ElseIf Shift  & #CC_SHR_BEFORE
         SHR()  
       EndIf
              
@@ -167,9 +167,9 @@ Module CC
       EndIf
       
       ; Test SHIFT_AFTER adding line
-      If Shift & #PbFw_CC_SHL_AFTER
+      If Shift & #CC_SHL_AFTER
         SHL()  
-      ElseIf Shift  & #PbFw_CC_SHR_AFTER
+      ElseIf Shift  & #CC_SHR_AFTER
         SHR()  
       EndIf
 
@@ -192,49 +192,49 @@ Module CC
     ADD(code$)
   EndProcedure
   
-  Procedure ADE(EnumCmd = #PbFw_CC_CMD_EndIf)
+  Procedure ADE(EnumCmd = #CC_CMD_EndIf)
   ; ============================================================================
   ; NAME: ADE
   ; DESC: Add a 'End'-Command with automatic shifting
   ; RET : -
   ; ============================================================================
     Protected sText.s
-    Protected ShiftMode.i = #PbFw_CC_SHL_BEFORE
+    Protected ShiftMode.i = #CC_SHL_BEFORE
     
     Select EnumCmd
-      Case #PbFw_CC_CMD_Else             
+      Case #CC_CMD_Else             
         sText = "Else"
         ; at 'Else' we have to shift left before and shift right after
-        ShiftMode + #PbFw_CC_SHR_AFTER
+        ShiftMode + #CC_SHR_AFTER
         
-      Case #PbFw_CC_CMD_EndEnumeration           
+      Case #CC_CMD_EndEnumeration           
          sText = "EndIf"
        
-      Case #PbFw_CC_CMD_EndIf            
+      Case #CC_CMD_EndIf            
          sText = "EndEnumeration"
          
-       Case #PbFw_CC_CMD_EndMacro            
+       Case #CC_CMD_EndMacro            
          sText = "EndIf"
       
-      Case #PbFw_CC_CMD_EndProcedure     
+      Case #CC_CMD_EndProcedure     
         sText = "EndProcedure"
         
-      Case #PbFw_CC_CMD_EndSelect        
+      Case #CC_CMD_EndSelect        
         sText = "EndSelect"
         
-      Case #PbFw_CC_CMD_EndStructure 
+      Case #CC_CMD_EndStructure 
         sText = "EndStructure"
         
-      Case #PbFw_CC_CMD_EndStructureUnion
+      Case #CC_CMD_EndStructureUnion
         sText = "EndStructureUnion"
         
-      Case #PbFw_CC_CMD_EndWith          
+      Case #CC_CMD_EndWith          
         sText = "EndWith"
         
-      Case #PbFw_CC_CMD_ForEver          
+      Case #CC_CMD_ForEver          
         sText = "ForEver"
         
-      Case #PbFw_CC_CMD_Wend             
+      Case #CC_CMD_Wend             
         sText = "Wend"
         
       Default
@@ -265,7 +265,7 @@ Module CC
  
     ; use the JoinList Function from String Module to produce a singel String 
     ; from all Code-Lines
-    SetClipboardText(STR::JoinList(lstCodeLine(), #CRLF$))
+    SetClipboardText(PB::JoinList(lstCodeLine(), #CRLF$))
     
     ; Protected txt.s  
     ; ForEach lstCodeLine()
@@ -294,7 +294,7 @@ CompilerEndIf
 ;     #SEP = ", "         ; Separator [,]
 ;     #DQS = #DQ + #SEP   ; DoubleQuotes + Separator [",]
 ;     
-;     ADD("DataSection", #PbFw_CC_SHR_AFTER)
+;     ADD("DataSection", #CC_SHR_AFTER)
 ;     ADD("MyData:")  
 ;     ADD(" ; Column1, Column2, Column3") ; Column Comments 
 ;     
@@ -308,15 +308,15 @@ CompilerEndIf
 ;       EndWith      
 ;     Next
 ;     
-;     Add("EndDatasection", #PbFw_CC_SHL_BEFORE)
+;     Add("EndDatasection", #CC_SHL_BEFORE)
 ;     
 ;     CopyToClipBoard()
 ;   EndProcedure
 
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 284
-; FirstLine = 219
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 310
+; FirstLine = 238
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

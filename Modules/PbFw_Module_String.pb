@@ -31,7 +31,8 @@
 ;- Include Files
 ;  --------------------------------------------------
 
-XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
+XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
+XIncludeFile "PbFw_Module_PB.pb"          ; PB::      Purebasic Extention Module
 ; XIncludeFile ""
 
 DeclareModule STR
@@ -44,18 +45,18 @@ DeclareModule STR
   ; PB 5.5 and higher use Unicode as Standard Mode
   ; older Versions use ASCII-Mode as standard for the EXE
   CompilerIf #PB_Compiler_Unicode
-    #PbFw_STR_CharMode = #PB_Unicode       ; Application CharacterMode = Unicode
-    #PbFw_STR_CharModeName = "Unicode"     ; Application CharacterModeName
+    #STR_CharMode = #PB_Unicode       ; Application CharacterMode = Unicode
+    #STR_CharModeName = "Unicode"     ; Application CharacterModeName
   CompilerElse
-    #PbFw_STR_CharMode = #PB_Ascii         ; Application CharacterMode = ASCII 
-    #PbFw_STR_CharModeName = "ASCII"       ; Application CharacterModeName
+    #STR_CharMode = #PB_Ascii         ; Application CharacterMode = ASCII 
+    #STR_CharModeName = "ASCII"       ; Application CharacterModeName
   CompilerEndIf
-  ;#PbFw_STR_CharSize = SizeOf(Character)   ; Application CharacterSize = 2 Bytes
+  ;#STR_CharSize = SizeOf(Character)   ; Application CharacterSize = 2 Bytes
   
   ;#TAB is PB integrated
-  #PbFw_STR_CHAR_SPACE       = 32    ; ' '
-  #PbFw_STR_CHAR_DoubleQuote = 34    ; "
-  #PbFw_STR_CHAR_SingleQuote = 39    ; '
+  #STR_CHAR_SPACE       = 32    ; ' '
+  #STR_CHAR_DoubleQuote = 34    ; "
+  #STR_CHAR_SingleQuote = 39    ; '
   
   ; Structure for indexing Words in Strings
   Structure TWordIndex
@@ -108,11 +109,11 @@ DeclareModule STR
  ; Split and Join
  ; -------------------------------------------------- 
 
-  Prototype SplitToArray(Array Out.s(1), String$, Separator$)
-  Global SplitToArray.SplitToArray
-  
-  Prototype SplitToList(List Out.s(), String$, Separator$, clrList= #True)
-  Global SplitToList.SplitToList
+;   Prototype SplitToArray(Array Out.s(1), String$, Separator$)
+;   Global SplitToArray.SplitToArray
+;   
+;   Prototype SplitToList(List Out.s(), String$, Separator$, clrList= #True)
+;   Global SplitToList.SplitToList
   
   Prototype SplitCsvToArray(Array Out.s(1), String$, Separator.c=';', cQuotes.c='"')
   Global SplitCsvToArray.SplitCsvToArray
@@ -120,8 +121,8 @@ DeclareModule STR
   Prototype SplitCsvToList(List Out.s(), String$, Separator.c=';', cQuotes.c='"')
   Global SplitCsvToList.SplitCsvToList
   
-  Declare.s JoinArray(Array ary.s(1), Separator$, EndIndex=-1, StartIndex=0, *OutLen=0)
-  Declare.s JoinList(List lst.s(), Separator$, *OutLen=0)  
+;   Declare.s JoinArray(Array ary.s(1), Separator$, EndIndex=-1, StartIndex=0, *OutLen=0)
+;   Declare.s JoinList(List lst.s(), Separator$, *OutLen=0)  
     
   ; ----------------------------------------------------------------------
   ; HEX String Functions
@@ -136,7 +137,7 @@ DeclareModule STR
   ;  Miscellaneous
   ; -------------------------------------------------- 
   
-  Prototype.s AddQuotes(String$, cQuotes.c=#PbFw_STR_CHAR_DoubleQuote)
+  Prototype.s AddQuotes(String$, cQuotes.c=#STR_CHAR_DoubleQuote)
   Global AddQuotes.AddQuotes                 ; define Prototype-Handler for AddQuotes
   
   Prototype.s UnQuote(String$, xDoubleQuotes = #True, xSingleQuotes=#True, xTrim=#True)  ; 
@@ -186,27 +187,27 @@ Module STR      ; Module STRING [STR::]
   ;- Module Private Functions
   ;- --------------------------------------------------
   
-  Macro LCaseChar(Char, ReturnChar)
-    
-    Select char
-      Case 'A' To ' Z'
-        ReturnChar = Char + 32  ;  a[97]-A[65]=32
-        
-      Case 192 To 222   ;'À'..222
-        ReturnChar = Char + 32  ;  224-192 = 32
-        
-      Default
-        ReturnChar = Char
-    EndSelect
-
-  EndMacro
+;   Macro LCaseChar(Char, ReturnChar)
+;     
+;     Select char
+;       Case 'A' To ' Z'
+;         ReturnChar = Char + 32  ;  a[97]-A[65]=32
+;         
+;       Case 192 To 222   ;'À'..222
+;         ReturnChar = Char + 32  ;  224-192 = 32
+;         
+;       Default
+;         ReturnChar = Char
+;     EndSelect
+; 
+;   EndMacro
   
   Procedure.s _GetCharModeName(CharMode.i = #PB_Default)
     
     Protected RET.s
     If CharMode = #PB_Default
-      ; #PbFw_STR_CharMode is [#PB_Unicode or #PB_Ascii]
-      CharMode = #PbFw_STR_CharMode    
+      ; #STR_CharMode is [#PB_Unicode or #PB_Ascii]
+      CharMode = #STR_CharMode    
     EndIf
     
     Select CharMode
@@ -446,7 +447,7 @@ Module STR      ; Module STRING [STR::]
     If xTrim     ; if remove leading Space AND char
       Repeat
         Select *pRead\c
-          Case #PbFw_STR_CHAR_SPACE,  #TAB  ; Character Is Space or TABr
+          Case #STR_CHAR_SPACE,  #TAB  ; Character Is Space or TABr
             *pRead + SizeOf(Character)    ; Set the ReadPositon to next Character
             cnt +1        ; count removed Characters           
           Default
@@ -473,7 +474,7 @@ Module STR      ; Module STRING [STR::]
     ; If xTrim Then !remove characters of {Space, TAB} at right
     ; ----------------------------------------------------------------------  
     *pRead - SizeOf(Character)
-    While *pRead\c = #PbFw_STR_CHAR_SPACE Or *pRead\c = #PbFw_STR_CHAR_SPACE
+    While *pRead\c = #STR_CHAR_SPACE Or *pRead\c = #STR_CHAR_SPACE
       *pRead\c = 0               ; Write EndOfString
       *pRead - SizeOf(Character)
       cnt +1            ; count removed Characters 
@@ -569,7 +570,7 @@ Module STR      ; Module STRING [STR::]
          	      
     ; Trim leading TABs and Spaces
     While *pRead\cc[0]
-      If *pRead\cc[0] = #PbFw_STR_CHAR_SPACE      
+      If *pRead\cc[0] = #STR_CHAR_SPACE      
       ElseIf *pRead\cc[0] = #TAB       
       Else
          Break
@@ -585,19 +586,19 @@ Module STR      ; Module STRING [STR::]
         ; because we minimze the number of checks to do!
         Case #TAB
           
-          If *pRead\cc[1] = #PbFw_STR_CHAR_SPACE        
+          If *pRead\cc[1] = #STR_CHAR_SPACE        
             ; if NextChar = SPACE Then remove   
           ElseIf *pRead\cc[1] = #TAB
             ; if NextChar = TAB Then remove   
           Else
             ; if NextChar <> SPACE And NextChar <> TAB   
-            *pRead\cc[0] = #PbFw_STR_CHAR_SPACE        ; Change TAB to SPACE
+            *pRead\cc[0] = #STR_CHAR_SPACE        ; Change TAB to SPACE
             mac_RemoveTabsAndDoubleSpace_KeepChar()   ; keep the Char
           EndIf
             
-        Case #PbFw_STR_CHAR_SPACE
+        Case #STR_CHAR_SPACE
           
-          If *pRead\cc[1] = #PbFw_STR_CHAR_SPACE        
+          If *pRead\cc[1] = #STR_CHAR_SPACE        
            ; if NextChar = SPACE Then remove   
           Else
             mac_RemoveTabsAndDoubleSpace_KeepChar()   ; keep the Char
@@ -619,7 +620,7 @@ Module STR      ; Module STRING [STR::]
   	
   	; Remove last Char if it is a SPACE => RightTrim
   	*pWrite - SizeOf(Character)
-  	If *pWrite\c = #PbFw_STR_CHAR_SPACE
+  	If *pWrite\c = #STR_CHAR_SPACE
   		*pWrite\c = 0
  	  EndIf
  	  ProcedureReturn PeekS(@String$)
@@ -645,7 +646,7 @@ Module STR      ; Module STRING [STR::]
     
     ; Trim leading TABs and Spaces
     While *pRead\cc[0]
-      If *pRead\cc[0] = #PbFw_STR_CHAR_SPACE      
+      If *pRead\cc[0] = #STR_CHAR_SPACE      
       ElseIf *pRead\cc[0] = #TAB       
       Else
          Break
@@ -661,19 +662,19 @@ Module STR      ; Module STRING [STR::]
         ; because we minimze the number of checks to do!
         Case #TAB
           
-          If *pRead\cc[1] = #PbFw_STR_CHAR_SPACE        
+          If *pRead\cc[1] = #STR_CHAR_SPACE        
             ; if NextChar = SPACE Then remove   
           ElseIf *pRead\cc[1] = #TAB
             ; if NextChar = TAB Then remove   
           Else
             ; if NextChar <> SPACE And NextChar <> TAB   
-            *pRead\cc[0] = #PbFw_STR_CHAR_SPACE    ; Change TAB to SPACE
+            *pRead\cc[0] = #STR_CHAR_SPACE    ; Change TAB to SPACE
             mac_RemoveTabsAndDoubleSpace_KeepChar()   ; keep the Char
           EndIf
             
-        Case #PbFw_STR_CHAR_SPACE
+        Case #STR_CHAR_SPACE
           
-          If *pRead\cc[1] = #PbFw_STR_CHAR_SPACE        
+          If *pRead\cc[1] = #STR_CHAR_SPACE        
            ; if NextChar = SPACE Then remove   
           Else
             mac_RemoveTabsAndDoubleSpace_KeepChar()   ; keep the Char
@@ -696,7 +697,7 @@ Module STR      ; Module STRING [STR::]
   	
   	; Remove last Char if it is a SPACE => RightTrim
   	*pWrite - SizeOf(Character)
-  	If *pWrite\c = #PbFw_STR_CHAR_SPACE
+  	If *pWrite\c = #STR_CHAR_SPACE
   		*pWrite\c = 0
  	  EndIf
  	  ProcedureReturn *String
@@ -705,152 +706,154 @@ Module STR      ; Module STRING [STR::]
  ;- --------------------------------------------------
  ;-  Split and Join
  ;- -------------------------------------------------- 
-
-  Procedure.i _SplitToArray(Array Out.s(1), *String, *Separator)
-   ; ============================================================================
-    ; NAME: SplitToArray
-    ; DESC: Split a String into multiple Strings
-    ; DESC: 
-    ; VAR(Out.s()) : Array to return the Substrings 
-    ; VAR(*String) : Pointer to String 
-    ; VAR(*Separator) : Pointer to mulit Char Separator 
-    ; RET.i : No of Substrings
-    ; ============================================================================
-    
-    Protected *ptrString.Character = *String          ; Pointer to String
-    Protected *ptrSeperator.Character = *Separator    ; Pointer to Separator
-    Protected *Start.Character = *String              ; Pointer to Start of SubString    
-    Protected xEqual, lenSep, N, ASize, L
-      
-    lenSep = MemoryStringLength(*Separator)           ; Length of Separator
-     
-    ASize = ArraySize(Out())
-     
-    While *ptrString\c
-    ; ----------------------------------------------------------------------
-    ;  Outer Loop: Stepping trough *String
-    ; ----------------------------------------------------------------------
-      
-      If  *ptrString\c = *ptrSeperator\c ; 1st Character of Seperator in String   
-        ; Debug "Equal : " +  Chr(*ptrString\c)
-        
-        xEqual =#True
-        
-        While *ptrSeperator\c
-        ; ------------------------------------------------------------------
-        ;  Inner Loop: Char by Char compare Separator with String
-        ; ------------------------------------------------------------------
-          If *ptrString\c
-            If *ptrString\c <> *ptrSeperator\c
-              xEqual = #False     ; Not Equal
-              Break               ; Exit While
-            EndIf
-          Else 
-            xEqual =#False        ; Not Equal
-            Break                 ; Exit While
-          EndIf
-          *ptrSeperator + SizeOf(Character)  ; NextChar Separator
-          *ptrString + SizeOf(Character)     ; NextChar String  
-        Wend
-        
-        ; If we found the complete Separator in String
-        If xEqual
-          ; Length of the String from Start up to Separator
-          L =  (*ptrString - *Start)/SizeOf(Character) - lenSep 
-          Out(N) = PeekS(*Start, L)
-          *Start = *ptrString             ; the New Startposition
-          ; Debug "Start\c= " + Str(*Start\c) + " : " + Chr(*Start\c)
-          *ptrString - SizeOf(Character)  ; bo back 1 char to detected double single separators like ,,
-           N + 1   
-           If ASize < N
-             ASize + #_ArrayRedimStep
-             ReDim Out(ASize)
-           EndIf      
-        EndIf
-        
-      EndIf   
-      *ptrSeperator = *Separator            ; Reset Pointer of Seperator to 1st Char
-      *ptrString + SizeOf(Character)        ; NextChar in String
-    Wend
-   
-    Out(N) = PeekS(*Start)  ; Part after the last Separator
-    ProcedureReturn N+1     ; Number of Substrings
-        
-  EndProcedure
-  SplitToArray = @_SplitToArray()   ; Bind ProcedureAddress to Prototype
   
-  Procedure.i _SplitToList(List Out.s(), *String, *Separator, clrList= #True)
-   ; ============================================================================
-    ; NAME: SplitToList
-    ; DESC: Split a String into multiple Strings
-    ; DESC: 
-    ; VAR(Out.s())   : List to return the Substrings 
-    ; VAR(*String)   : Pointer to String 
-    ; VAR(*Separator): Pointer to Separator String 
-    ; VAR(clrList)   : #False: Append Splits to List; #True: Clear List first
-    ; RET.i          : No of Substrings
-    ; ============================================================================
-    
-    Protected *ptrString.Character = *String          ; Pointer to String
-    Protected *ptrSeperator.Character = *Separator    ; Pointer to Separator
-    Protected *Start.Character = *String              ; Pointer to Start of SubString   
-    Protected xEqual, lenSep, N, L
-      
-    lenSep = MemoryStringLength(*Separator)           ; Length of Separator
-    
-    If clrList
-      ClearList(Out())  
-    EndIf
-    
-    While *ptrString\c
-    ; ----------------------------------------------------------------------
-    ;  Outer Loop: Stepping trough *String
-    ; ----------------------------------------------------------------------
-      
-      If  *ptrString\c = *ptrSeperator\c ; 1st Character of Seperator in String   
-        ; Debug "Equal : " +  Chr(*ptrString\c)
-        xEqual =#True
-       
-        While *ptrSeperator\c
-        ; ------------------------------------------------------------------
-        ;  Inner Loop: Char by Char compare Separator with String
-        ; ------------------------------------------------------------------
-          If *ptrString\c 
-            If *ptrString\c <> *ptrSeperator\c
-              xEqual = #False     ; Not Equal
-              Break               ; Exit While
-           EndIf
-          Else 
-            xEqual =#False        ; Not Equal
-            Break                 ; Exit While
-          EndIf
-          *ptrSeperator + SizeOf(Character)  ; NextChar Separator
-          *ptrString + SizeOf(Character)     ; NextChar String  
-        Wend
-        
-        ; If we found the complete Separator in String
-        If xEqual
-          ; Length of the String from Start up to Separator
-          L =  (*ptrString - *Start)/SizeOf(Character) - lenSep 
-          AddElement(Out())
-          Out() = PeekS(*Start, L)
-          *Start = *ptrString             ; the New Startposition
-          ; Debug "Start\c= " + Str(*Start\c) + " : " + Chr(*Start\c)
-          *ptrString - SizeOf(Character)  ; bo back 1 char to detected double single separators like ,,
-           N + 1   
-         EndIf
-        
-      EndIf   
-      *ptrSeperator = *Separator            ; Reset Pointer of Seperator to 1st Char
-      *ptrString + SizeOf(Character)        ; NextChar in String
-    Wend
-   
-    AddElement(Out())
-    Out() = PeekS(*Start)  ; Part after the last Separator
-    ProcedureReturn N+1     ; Number of Substrings
-        
-  EndProcedure
-  SplitToList = @_SplitToList()   ; Bind ProcedureAddress to Prototype
+  ; moved to Module PB::
+  
+;   Procedure.i _SplitToArray(Array Out.s(1), *String, *Separator)
+;    ; ============================================================================
+;     ; NAME: SplitToArray
+;     ; DESC: Split a String into multiple Strings
+;     ; DESC: 
+;     ; VAR(Out.s()) : Array to return the Substrings 
+;     ; VAR(*String) : Pointer to String 
+;     ; VAR(*Separator) : Pointer to mulit Char Separator 
+;     ; RET.i : No of Substrings
+;     ; ============================================================================
+;     
+;     Protected *ptrString.Character = *String          ; Pointer to String
+;     Protected *ptrSeperator.Character = *Separator    ; Pointer to Separator
+;     Protected *Start.Character = *String              ; Pointer to Start of SubString    
+;     Protected xEqual, lenSep, N, ASize, L
+;       
+;     lenSep = MemoryStringLength(*Separator)           ; Length of Separator
+;      
+;     ASize = ArraySize(Out())
+;      
+;     While *ptrString\c
+;     ; ----------------------------------------------------------------------
+;     ;  Outer Loop: Stepping trough *String
+;     ; ----------------------------------------------------------------------
+;       
+;       If  *ptrString\c = *ptrSeperator\c ; 1st Character of Seperator in String   
+;         ; Debug "Equal : " +  Chr(*ptrString\c)
+;         
+;         xEqual =#True
+;         
+;         While *ptrSeperator\c
+;         ; ------------------------------------------------------------------
+;         ;  Inner Loop: Char by Char compare Separator with String
+;         ; ------------------------------------------------------------------
+;           If *ptrString\c
+;             If *ptrString\c <> *ptrSeperator\c
+;               xEqual = #False     ; Not Equal
+;               Break               ; Exit While
+;             EndIf
+;           Else 
+;             xEqual =#False        ; Not Equal
+;             Break                 ; Exit While
+;           EndIf
+;           *ptrSeperator + SizeOf(Character)  ; NextChar Separator
+;           *ptrString + SizeOf(Character)     ; NextChar String  
+;         Wend
+;         
+;         ; If we found the complete Separator in String
+;         If xEqual
+;           ; Length of the String from Start up to Separator
+;           L =  (*ptrString - *Start)/SizeOf(Character) - lenSep 
+;           Out(N) = PeekS(*Start, L)
+;           *Start = *ptrString             ; the New Startposition
+;           ; Debug "Start\c= " + Str(*Start\c) + " : " + Chr(*Start\c)
+;           *ptrString - SizeOf(Character)  ; bo back 1 char to detected double single separators like ,,
+;            N + 1   
+;            If ASize < N
+;              ASize + #_ArrayRedimStep
+;              ReDim Out(ASize)
+;            EndIf      
+;         EndIf
+;         
+;       EndIf   
+;       *ptrSeperator = *Separator            ; Reset Pointer of Seperator to 1st Char
+;       *ptrString + SizeOf(Character)        ; NextChar in String
+;     Wend
+;    
+;     Out(N) = PeekS(*Start)  ; Part after the last Separator
+;     ProcedureReturn N+1     ; Number of Substrings
+;         
+;   EndProcedure
+;   SplitToArray = @_SplitToArray()   ; Bind ProcedureAddress to Prototype
+  
+;   Procedure.i _SplitToList(List Out.s(), *String, *Separator, clrList= #True)
+;    ; ============================================================================
+;     ; NAME: SplitToList
+;     ; DESC: Split a String into multiple Strings
+;     ; DESC: 
+;     ; VAR(Out.s())   : List to return the Substrings 
+;     ; VAR(*String)   : Pointer to String 
+;     ; VAR(*Separator): Pointer to Separator String 
+;     ; VAR(clrList)   : #False: Append Splits to List; #True: Clear List first
+;     ; RET.i          : No of Substrings
+;     ; ============================================================================
+;     
+;     Protected *ptrString.Character = *String          ; Pointer to String
+;     Protected *ptrSeperator.Character = *Separator    ; Pointer to Separator
+;     Protected *Start.Character = *String              ; Pointer to Start of SubString   
+;     Protected xEqual, lenSep, N, L
+;       
+;     lenSep = MemoryStringLength(*Separator)           ; Length of Separator
+;     
+;     If clrList
+;       ClearList(Out())  
+;     EndIf
+;     
+;     While *ptrString\c
+;     ; ----------------------------------------------------------------------
+;     ;  Outer Loop: Stepping trough *String
+;     ; ----------------------------------------------------------------------
+;       
+;       If  *ptrString\c = *ptrSeperator\c ; 1st Character of Seperator in String   
+;         ; Debug "Equal : " +  Chr(*ptrString\c)
+;         xEqual =#True
+;        
+;         While *ptrSeperator\c
+;         ; ------------------------------------------------------------------
+;         ;  Inner Loop: Char by Char compare Separator with String
+;         ; ------------------------------------------------------------------
+;           If *ptrString\c 
+;             If *ptrString\c <> *ptrSeperator\c
+;               xEqual = #False     ; Not Equal
+;               Break               ; Exit While
+;            EndIf
+;           Else 
+;             xEqual =#False        ; Not Equal
+;             Break                 ; Exit While
+;           EndIf
+;           *ptrSeperator + SizeOf(Character)  ; NextChar Separator
+;           *ptrString + SizeOf(Character)     ; NextChar String  
+;         Wend
+;         
+;         ; If we found the complete Separator in String
+;         If xEqual
+;           ; Length of the String from Start up to Separator
+;           L =  (*ptrString - *Start)/SizeOf(Character) - lenSep 
+;           AddElement(Out())
+;           Out() = PeekS(*Start, L)
+;           *Start = *ptrString             ; the New Startposition
+;           ; Debug "Start\c= " + Str(*Start\c) + " : " + Chr(*Start\c)
+;           *ptrString - SizeOf(Character)  ; bo back 1 char to detected double single separators like ,,
+;            N + 1   
+;          EndIf
+;         
+;       EndIf   
+;       *ptrSeperator = *Separator            ; Reset Pointer of Seperator to 1st Char
+;       *ptrString + SizeOf(Character)        ; NextChar in String
+;     Wend
+;    
+;     AddElement(Out())
+;     Out() = PeekS(*Start)  ; Part after the last Separator
+;     ProcedureReturn N+1     ; Number of Substrings
+;         
+;   EndProcedure
+;   SplitToList = @_SplitToList()   ; Bind ProcedureAddress to Prototype
 
 
  ; The Macro for SplitCsvToArray to LeftTrim TAB, SPACE and Quotes by adjusting the Pointer
@@ -1010,131 +1013,131 @@ Module STR      ; Module STRING [STR::]
   EndProcedure
   SplitCsvToList = @_SplitCsvToList()     ; Bind ProcedureAddress to Prototype  
     
-  Procedure.s JoinArray(Array ary.s(1), Separator$, EndIndex=-1, StartIndex=0, *OutLen=0)
-  ; ============================================================================
-  ; NAME: JoinArray
-  ; DESC: Join all ArrayElements to a single String
-  ; VAR(ary.s(1)) : The String Array
-  ; VAR(Separator$) : A separator String
-  ; VAR(StartIndex) : The Index of the 1st Entry to start with
-  ; VAR(StartIndex) : The Index of the last Entry
-  ; RET.s: the String
-  ; ============================================================================
-    Protected ret$
-    Protected I, L, N, lenSep, ASize
-    Protected *ptr
-    
-    lenSep = Len(Separator$)
-    
-    ASize = ArraySize(ary())
-    If EndIndex > ASize Or EndIndex < 0
-      EndIndex = ASize
-    EndIf
-    
-    If StartIndex > EndIndex
-      StartIndex = EndIndex
-    EndIf
-    
-    N = EndIndex- StartIndex + 1
-    
-    If ASize
-      For I = StartIndex To EndIndex
-        ;L = L + LenStrFast(ary(I))    
-        L = L + Len(ary(I))    
-     Next    
-      L = L + (N-1) * lenSep
-      ret$ = Space(L)
-      
-      *ptr = @ret$
-      
-;       Debug "ptr= " + Str(*ptr)
-;       Debug "-"
-      
-      If lenSep > 0
-        For I = StartIndex To EndIndex
-          If ary(I)<>#Null$
-            CopyMemoryString(ary(I), @*ptr)
-          EndIf
-          
-          If I < EndIndex
-            CopyMemoryString(Separator$,@*ptr)
-          EndIf
-        Next
-      Else
-        
-        For I = StartIndex To EndIndex
-           If ary(I)<>#Null$
-            CopyMemoryString(ary(I), @*ptr)
-          EndIf
-        Next
-    
-      EndIf
-      
-    EndIf
-    
-    ProcedureReturn ret$
-  EndProcedure
-  
-  Procedure.s JoinList(List lst.s(), Separator$, *OutLen=0)
-  ; ============================================================================
-  ; NAME: JoinList
-  ; DESC: Join all ListElements to a single String
-  ; VAR(lst.s()) : The String List
-  ; VAR(Separator$) : A separator String
-  ; RET.s: the String
-  ; ============================================================================
-    Protected ret$
-    Protected I, L, N, lenSep
-    Protected *ptr
-    
-    ;lenSep = MemoryStringLength(@Separator$)
-    lenSep = Len(Separator$)
-    
-    N = ListSize(lst())
-    Debug "ListLength = " + N
-    
-    If N
-      ; ----------------------------------------
-      ;  With Separator
-      ; ----------------------------------------
-      ForEach lst()
-        L = L + Len(lst()) 
-      Next
-      L = L + (N-1) * lenSep
-      ret$ = Space(L)
-      *ptr = @ret$
-            
-      If lenSep > 0 
-        
-        ForEach lst()
-           If lst()<>#Null$
-            CopyMemoryString(lst(), @*ptr)
-          EndIf
-          
-          I + 1
-          If I < N
-            CopyMemoryString(Separator$, @*ptr)
-          EndIf
-        Next
-        
-      Else          
-      ; ----------------------------------------
-      ;  Without Separator
-      ; ----------------------------------------
-        
-        ForEach lst()
-           If lst()<>#Null$
-            CopyMemoryString(lst(), @*ptr)
-          EndIf
-        Next
-    
-      EndIf
-      
-    EndIf
-    
-    ProcedureReturn ret$
-  EndProcedure
-  
+;   Procedure.s JoinArray(Array ary.s(1), Separator$, EndIndex=-1, StartIndex=0, *OutLen=0)
+;   ; ============================================================================
+;   ; NAME: JoinArray
+;   ; DESC: Join all ArrayElements to a single String
+;   ; VAR(ary.s(1)) : The String Array
+;   ; VAR(Separator$) : A separator String
+;   ; VAR(StartIndex) : The Index of the 1st Entry to start with
+;   ; VAR(StartIndex) : The Index of the last Entry
+;   ; RET.s: the String
+;   ; ============================================================================
+;     Protected ret$
+;     Protected I, L, N, lenSep, ASize
+;     Protected *ptr
+;     
+;     lenSep = Len(Separator$)
+;     
+;     ASize = ArraySize(ary())
+;     If EndIndex > ASize Or EndIndex < 0
+;       EndIndex = ASize
+;     EndIf
+;     
+;     If StartIndex > EndIndex
+;       StartIndex = EndIndex
+;     EndIf
+;     
+;     N = EndIndex- StartIndex + 1
+;     
+;     If ASize
+;       For I = StartIndex To EndIndex
+;         ;L = L + LenStrFast(ary(I))    
+;         L = L + Len(ary(I))    
+;      Next    
+;       L = L + (N-1) * lenSep
+;       ret$ = Space(L)
+;       
+;       *ptr = @ret$
+;       
+; ;       Debug "ptr= " + Str(*ptr)
+; ;       Debug "-"
+;       
+;       If lenSep > 0
+;         For I = StartIndex To EndIndex
+;           If ary(I)<>#Null$
+;             CopyMemoryString(ary(I), @*ptr)
+;           EndIf
+;           
+;           If I < EndIndex
+;             CopyMemoryString(Separator$,@*ptr)
+;           EndIf
+;         Next
+;       Else
+;         
+;         For I = StartIndex To EndIndex
+;            If ary(I)<>#Null$
+;             CopyMemoryString(ary(I), @*ptr)
+;           EndIf
+;         Next
+;     
+;       EndIf
+;       
+;     EndIf
+;     
+;     ProcedureReturn ret$
+;   EndProcedure
+;   
+;   Procedure.s JoinList(List lst.s(), Separator$, *OutLen=0)
+;   ; ============================================================================
+;   ; NAME: JoinList
+;   ; DESC: Join all ListElements to a single String
+;   ; VAR(lst.s()) : The String List
+;   ; VAR(Separator$) : A separator String
+;   ; RET.s: the String
+;   ; ============================================================================
+;     Protected ret$
+;     Protected I, L, N, lenSep
+;     Protected *ptr
+;     
+;     ;lenSep = MemoryStringLength(@Separator$)
+;     lenSep = Len(Separator$)
+;     
+;     N = ListSize(lst())
+;     Debug "ListLength = " + N
+;     
+;     If N
+;       ; ----------------------------------------
+;       ;  With Separator
+;       ; ----------------------------------------
+;       ForEach lst()
+;         L = L + Len(lst()) 
+;       Next
+;       L = L + (N-1) * lenSep
+;       ret$ = Space(L)
+;       *ptr = @ret$
+;             
+;       If lenSep > 0 
+;         
+;         ForEach lst()
+;            If lst()<>#Null$
+;             CopyMemoryString(lst(), @*ptr)
+;           EndIf
+;           
+;           I + 1
+;           If I < N
+;             CopyMemoryString(Separator$, @*ptr)
+;           EndIf
+;         Next
+;         
+;       Else          
+;       ; ----------------------------------------
+;       ;  Without Separator
+;       ; ----------------------------------------
+;         
+;         ForEach lst()
+;            If lst()<>#Null$
+;             CopyMemoryString(lst(), @*ptr)
+;           EndIf
+;         Next
+;     
+;       EndIf
+;       
+;     EndIf
+;     
+;     ProcedureReturn ret$
+;   EndProcedure
+;   
   ;- ----------------------------------------------------------------------
   ;- HEX String Functions
   ;- ---------------------------------------------------------------------- 
@@ -1238,13 +1241,13 @@ Module STR      ; Module STRING [STR::]
   ;-  Miscellaneous
   ;- -------------------------------------------------- 
   
-  Procedure.s _AddQuotes(*String, cQuotes.c=#PbFw_STR_CHAR_DoubleQuote)  ; 
+  Procedure.s _AddQuotes(*String, cQuotes.c=#STR_CHAR_DoubleQuote)  ; 
   ; ============================================================================
   ; NAME: _AddQuotes
   ; DESC: !PointerVersion! use it as ProtoType AddQuotes()
   ; DESC: Add Quotes to a String on left and right side
   ; VAR(String$): The String
-  ; VAR(QuoteType): #PbFw_STR_xDoubleQuotes, #PbFw_STR_xSingleQuotes
+  ; VAR(QuoteType): #STR_xDoubleQuotes, #STR_xSingleQuotes
   ; RET.s : String without Quotes
   ; ============================================================================
     ; ASCII-34 = ", ASCII-39 = '
@@ -1273,15 +1276,15 @@ Module STR      ; Module STRING [STR::]
     ; search for Quotes until found or TextChar found
     While *pRead\c
       
-      If *pRead\c = #PbFw_STR_CHAR_DoubleQuote And xDoubleQuotes
+      If *pRead\c = #STR_CHAR_DoubleQuote And xDoubleQuotes
         *pStart = *pRead + SizeOf(Character)
-        cQuotes = #PbFw_STR_CHAR_DoubleQuote
+        cQuotes = #STR_CHAR_DoubleQuote
         Break
-      ElseIf *pRead\c = #PbFw_STR_CHAR_SingleQuote And xSingleQuotes
+      ElseIf *pRead\c = #STR_CHAR_SingleQuote And xSingleQuotes
         *pStart = *pRead + SizeOf(Character)
-        cQuotes = #PbFw_STR_CHAR_SingleQuote
+        cQuotes = #STR_CHAR_SingleQuote
         Break
-      ElseIf *pRead\c >= #PbFw_STR_CHAR_SPACE  ; TextChar found
+      ElseIf *pRead\c >= #STR_CHAR_SPACE  ; TextChar found
         *pStart = *String
         Break
       EndIf          
@@ -1295,7 +1298,7 @@ Module STR      ; Module STRING [STR::]
         While *pRead\c
           
           Select *pRead\c
-            Case #PbFw_STR_CHAR_SPACE, #TAB
+            Case #STR_CHAR_SPACE, #TAB
              ;  
             Default
               *pStart = *pRead
@@ -1317,7 +1320,7 @@ Module STR      ; Module STRING [STR::]
               Break
             EndIf
             
-          Case  #PbFw_STR_CHAR_SPACE, #TAB 
+          Case  #STR_CHAR_SPACE, #TAB 
             *pEnd = *pRead - SizeOf(Character)
             
           Default
@@ -1373,7 +1376,7 @@ Module STR      ; Module STRING [STR::]
             xWordStart = #False  
           EndIf
           
-        Case #PbFw_STR_CHAR_SPACE    ; if the Separator is not ' ' we must handle Spaces seperatly
+        Case #STR_CHAR_SPACE    ; if the Separator is not ' ' we must handle Spaces seperatly
           ; Attention this CASE will only be processed if the Seperator it'n not a SPACE
           If Not IngnoreSpaces
              xWordStart = #True  ; if we do not ignore Spaces it is a WordStart
@@ -1402,7 +1405,7 @@ Module STR      ; Module STRING [STR::]
   ; VAR(List WordIndex.TWordIndex()): Your List() which should hold the WordIndex  
   ; VAR(cSeparator.c) : Character which seperatres the Words
   ;                     Double characters are igored
-  ; VAR(UnQuoteMode): #PbFw_STR_xDoubleQuotes, #PbFw_STR_xSingleQuotes or cmbination of both
+  ; VAR(UnQuoteMode): #STR_xDoubleQuotes, #STR_xSingleQuotes or cmbination of both
   ; VAR(xTrim): #True: Remove SPACEs inside the Quotes / #FalseÖ keep SPACEs
   ;             Spaces outside the Quotes are removed always
   ; RET.i : Number of Words found; ListSize(WordIndex())
@@ -1429,7 +1432,7 @@ Module STR      ; Module STRING [STR::]
             PosEnd = I-1
          EndIf
           
-        Case #PbFw_STR_CHAR_SPACE    ; if the Separator is not ' ' we must handle Spaces seperatly
+        Case #STR_CHAR_SPACE    ; if the Separator is not ' ' we must handle Spaces seperatly
           ; Attention this CASE will only be processed if the Seperator it'n not a SPACE
           If Not xTrim
             xWordStart = #True  ; if we do not ignore Spaces it is a WordStart
@@ -1690,7 +1693,7 @@ CompilerIf #PB_Compiler_IsMainFile
   EnableExplicit
   UseModule STR
   
-  ;#AllQuotes = #PbFw_STR_xDoubleQuotes | #PbFw_STR_xSingleQuotes
+  ;#AllQuotes = #STR_xDoubleQuotes | #STR_xSingleQuotes
   Define s.s, ret.s
   Define I
   Define T1, T2, T3
@@ -1699,7 +1702,7 @@ CompilerIf #PB_Compiler_IsMainFile
 ;   Debug "The String : " + s
 ;   Debug ""
 ;   Debug "Without Trim"
-;   ret = AddQuotes(s,#PbFw_STR_xDoubleQuotes)
+;   ret = AddQuotes(s,#STR_xDoubleQuotes)
 ;   Debug "Add double Quotes : " + ret
 ;   ret = RemoveQuotes(ret, #AllQuotes, #False)  
 ;   Debug "Remove double Quotes : " + ret
@@ -1733,23 +1736,23 @@ CompilerIf #PB_Compiler_IsMainFile
 ;   ret = RemoveQuotes(ret, #AllQuotes, #False)  
 ;   Debug "Remove all Quotes : " + ret
 ;   Debug ""
-;   ret = AddQuotes(s,#PbFw_STR_xDoubleQuotes)
+;   ret = AddQuotes(s,#STR_xDoubleQuotes)
 ;   Debug "Add double Quotes : " + ret
 ;   ret = RemoveQuotes(ret,#AllQuotes, #False)
 ;   Debug "Remove all Quotes : " + ret
 ;   Debug ""
 ;   Debug "With Trim"
-;     ret = AddQuotes(s,#PbFw_STR_xSingleQuotes)
+;     ret = AddQuotes(s,#STR_xSingleQuotes)
 ;   Debug "Add single Quotes : " + ret
 ;   ret = RemoveQuotes(ret, #AllQuotes)  
 ;   Debug "Remove all Quotes : " + ret
 ;   Debug ""
-;   ret = AddQuotes(s,#PbFw_STR_xDoubleQuotes)
+;   ret = AddQuotes(s,#STR_xDoubleQuotes)
 ;   Debug "Add double Quotes : " + ret
 ;   ret = RemoveQuotes(ret,#AllQuotes)
 ;   Debug "Remove all Quotes : " + ret
 ;   Debug ""
-;   ret = AddQuotes(s,#PbFw_STR_xDoubleQuotes)
+;   ret = AddQuotes(s,#STR_xDoubleQuotes)
 ;   Debug "Add double Quotes : " + ret
 ;   Debug "Try what happens without QuoteType"
 ;   ret = RemoveQuotes(ret,0)
@@ -1773,9 +1776,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 92
-; FirstLine = 55
-; Folding = --------
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 1719
+; FirstLine = 20
+; Folding = -------
 ; Optimizer
 ; CPU = 5

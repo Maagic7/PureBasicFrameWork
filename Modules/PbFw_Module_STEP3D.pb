@@ -31,10 +31,16 @@
 ;    STEP Format basics
 ; ----------------------------------------------------------------------
 
+; STEPCODE
+; https://github.com/stepcode/stepcode
+
 ; OGRE Physik Engine STEP-FILE Importer
 
 ; https://assimp.sourceforge.net/main_downloads.html
 ; https://www.purebasic.fr/english/viewtopic.php?p=401729#p401729
+
+; Basic Step-File Parser
+; https://github.com/AlexFemec/Step-file-parser/blob/main/StepFile.cs
 ;}
 
 ;- ----------------------------------------------------------------------
@@ -42,7 +48,7 @@
 ;- ----------------------------------------------------------------------
 
 XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
-XIncludeFile "PbFw_Module_BUFFER.pb"      ; BUFFER::  Module for Buffer handling
+XIncludeFile "PbFw_Module_Buffer.pb"      ; BUF::     Module for Buffer handling
 XIncludeFile "PbFw_Module_STRING.pb"      ; STR::     Module for extended String handling
 
   DeclareModule STEP3D
@@ -184,7 +190,7 @@ Module STEP3D
   ; RET.i : FileFormat 
   ; ============================================================================
     
-   ; Protected hBUF.BUFFER::TBuffer    ; Buffer Handle Structure (Module BUFFER)
+   ; Protected hBUF.BUF::TBuffer    ; Buffer Handle Structure (Module BUFFER)
     
     ProcedureReturn #True
   EndProcedure
@@ -199,7 +205,7 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 24
+; CursorPosition = 38
 ; Folding = --
 ; Optimizer
 ; CPU = 5

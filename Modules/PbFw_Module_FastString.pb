@@ -51,8 +51,8 @@ DeclareModule FStr
   ;- STRUCTURES and CONSTANTS
   ;  --------------------------------------------------
   Enumeration ReturnMode
-    #PbFw_STR_ReturnCharNo
-    #PbFw_STR_ReturnPointer
+    #FStr_ReturnCharNo
+    #FStr_ReturnPointer
   EndEnumeration
 
   Declare.i LenStr_x64(*String)
@@ -65,7 +65,7 @@ DeclareModule FStr
   
   Declare.i CountUnicodeChars(*StringW, *outLength.Integer=0)
   
-  Prototype.i FindCharReverse(*String.Character, cSearch.c, cfgReturnValue = #PbFw_STR_ReturnCharNo)
+  Prototype.i FindCharReverse(*String.Character, cSearch.c, cfgReturnValue = #FStr_ReturnCharNo)
   Global FindCharReverse.FindCharReverse                  ; define Prototype-Handler for CountChar
   
   Declare.i ToggleStringEndianess(*String, *outLength.Integer=0)
@@ -419,9 +419,10 @@ Module FStr
    Macro ASMx32_CountChar()     
   
     ; At x32 optimized classic ASM ist a good choice! On modern CPU like Ryzen
-    ; it is nearly same speed as MMX-Code. XMM-Code is on all CPU's much slower
-    ; On older CPU's back to 2010 AMD and Intel MMX is faster.
-    ; @f = Jump forward to next @@;  @b = Jump backward to next @@  
+    ; it is nearly same speed as MMX-Code. XMM-Code is on all CPU's in x32 much 
+    ; slower! On older CPU's back to 2010 AMD and Intel MMX is faster.
+     
+     ; @f = Jump forward to next @@;  @b = Jump backward to next @@  
     
     ; used Registers
     ;   EAX : *String
@@ -507,7 +508,7 @@ Module FStr
   ; **************************************************
   Macro PB_CountChar_PB()
     ; especally on Intel CPU's PB's CountString() and Len()
-    ; performs better than a individual PB PointerCode
+    ; performs better than the individual PB PointerCode
     Protected N
     Protected sStr.String           ; String Struct
     Protected *ptr.Integer = @sStr  ; Pointer to String Struct
@@ -1395,7 +1396,7 @@ Module FStr
     CompilerEndIf
   EndProcedure 
  
-  Procedure.i _FindCharReverse(*String.Character, cSearch.c, cfgReturnValue = #PbFw_STR_ReturnCharNo, *outEndOfString.Integer=0)
+  Procedure.i _FindCharReverse(*String.Character, cSearch.c, cfgReturnValue = #FStr_ReturnCharNo, *outEndOfString.Integer=0)
   ; ============================================================================
   ; NAME: FindCharReverse
   ; DESC: !PointerVersion! use it as ProtoType FindCharReverse()
@@ -1403,8 +1404,8 @@ Module FStr
   ; DESC: 
   ; VAR(*String.Character) : Pointer to the String
   ; VAR(cSearch) : Character to find
-  ; VAR(cfgReturnValue) : #PbFw_STR_ReturnCharNo=0 => Returns Charposition 1..n or 0
-  ;                       #PbFw_STR_ReturnPointer=1 => Returns address of Char or 0
+  ; VAR(cfgReturnValue) : #FStr_ReturnCharNo=0 => Returns Charposition 1..n or 0
+  ;                       #FStr_ReturnPointer=1 => Returns address of Char or 0
   ; VAR(*outEndOfString=0) : Optional Pointer to return the address of EndOfString/NullChar
   ; RET.i : Character Position 1..n of cSearch or Pointer to cSearch  
   ; ============================================================================
@@ -1491,7 +1492,7 @@ Module FStr
       !MOV [RDX], R9                   ; *LastChar = R9
       !EMMS             ; Empty MMX Technology State, enables FPU Register use
       
-      If cfgReturnValue =  #PbFw_STR_ReturnPointer Or *LastChar = 0
+      If cfgReturnValue =  #FStr_ReturnPointer Or *LastChar = 0
         ProcedureReturn *LastChar
       Else
         ProcedureReturn (*LastChar - *String) / SizeOf(Character) + 1
@@ -1514,7 +1515,7 @@ Module FStr
         *outEndOfString\i = *String
       EndIf
       
-      If cfgReturnValue =  #PbFw_STR_ReturnPointer Or *LastChar = 0
+      If cfgReturnValue =  #FStr_ReturnPointer Or *LastChar = 0
         ProcedureReturn *LastChar
       Else
         ProcedureReturn (*LastChar - *String) / SizeOf(Character) + 1
@@ -2240,10 +2241,10 @@ CompilerIf #False
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 684
-; FirstLine = 617
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 1517
+; FirstLine = 1514
 ; Folding = ---------
-; Markers = 678
+; Markers = 679
 ; Optimizer
 ; CPU = 5

@@ -47,12 +47,12 @@ DeclareModule VecCol
   ;- STRUCTURES and CONSTANTS
   ;- ----------------------------------------------------------------------
   
-  #PbFw_VectorColor_Factor = 255
+  #VecCol_Factor = 255
   
-  #PbFw_VectorColor_R = 0
-  #PbFw_VectorColor_G = 1
-  #PbFw_VectorColor_B = 2
-  #PbFw_VectorColor_A = 3
+  #VecCol_R = 0
+  #VecCol_G = 1
+  #VecCol_B = 2
+  #VecCol_A = 3
   
   ; it is same Structure as TVector, so it is possible to pass it to functions of the VECTORf Module
   Structure TVectorColor  ; Single precicion Vector [16 Bytes / 128 Bit]
@@ -273,7 +273,7 @@ Module VecCol
     
     If *VecCol
   	  With *VecCol
-      		ProcedureReturn RGBA(\R * #PbFw_VectorColor_Factor, \G * #PbFw_VectorColor_Factor, \B * #PbFw_VectorColor_Factor, \A * #PbFw_VectorColor_Factor)
+      		ProcedureReturn RGBA(\R * #VecCol_Factor, \G * #VecCol_Factor, \B * #VecCol_Factor, \A * #VecCol_Factor)
   		EndWith
   	Else
   		ProcedureReturn 0
@@ -295,10 +295,10 @@ Module VecCol
     DBG::mac_CheckPointer(*OUT)    ; Check Pointer Exception
 
   	With *OUT
-    	\A = Alpha(InColor) / #PbFw_VectorColor_Factor
-    	\R = Red(InColor) / #PbFw_VectorColor_Factor
-    	\G = Green(InColor) / #PbFw_VectorColor_Factor
-    	\B = Blue(InColor) / #PbFw_VectorColor_Factor
+    	\A = Alpha(InColor) / #VecCol_Factor
+    	\R = Red(InColor) / #VecCol_Factor
+    	\G = Green(InColor) / #VecCol_Factor
+    	\B = Blue(InColor) / #VecCol_Factor
     EndWith
   
   	ProcedureReturn *OUT  	
@@ -565,9 +565,9 @@ Module VecCol
   
 EndModule
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 53
-; FirstLine = 15
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 300
+; FirstLine = 297
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

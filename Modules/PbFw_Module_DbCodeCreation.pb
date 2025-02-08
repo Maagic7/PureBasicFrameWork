@@ -299,7 +299,7 @@ Module DBCC
       
       ADD()
       ADD(";- " + sTxt)      ; Index in the IDE's Procedure
-      ADD("Structure TRec_" + sTxt, #PbFw_CC_SHR_AFTER)
+      ADD("Structure TRec_" + sTxt, #CC_SHR_AFTER)
       With *hDB\lstTables()
         ResetList(\Fields())
         ForEach \Fields()           ; add each Field from the Table to the Structure
@@ -307,8 +307,9 @@ Module DBCC
           ADD(sTxt)
         Next
       EndWith
-      ADE(#PbFw_CC_CMD_EndStructure)
+      ADE(#CC_CMD_EndStructure)
     Next
+    
     UnuseModule CC
   EndProcedure
   
@@ -343,7 +344,7 @@ Module DBCC
       
       ADD()
       PRC("ReadRec_"+ sTxt, "PbDbNo, sField.s, sVal.s, *Rec.TRec_" + sTxt, "")
-      ADD(  "Protected ret = #True ", #PbFw_CC_SHR_BEFORE)
+      ADD(  "Protected ret = #True ", #CC_SHR_BEFORE)
       ADD(  "Protected SQL.s ")
       ADD()
       
@@ -353,10 +354,10 @@ Module DBCC
       ADD(  "SQL = " + sStr)
       ADD()
      
-      ADD(  "If DatabaseQuery(hdb,SQL)", #PbFw_CC_SHR_AFTER)
+      ADD(  "If DatabaseQuery(hdb,SQL)", #CC_SHR_AFTER)
         
-      ADD(    "If NextDatabaseRow(PbDbNo) ", #PbFw_CC_SHR_AFTER)
-      ADD(      "With *Rec ", #PbFw_CC_SHR_AFTER)
+      ADD(    "If NextDatabaseRow(PbDbNo) ", #CC_SHR_AFTER)
+      ADD(      "With *Rec ", #CC_SHR_AFTER)
       
       ForEach *hDB\lstTables()\Fields()
         With *hDB\lstTables()\Fields()
@@ -375,17 +376,17 @@ Module DBCC
         EndWith
       Next
   
-      ADE(      #PbFw_CC_CMD_EndWith)     ; ADE = AddEasy with automatic shift
-      ADE(    #PbFw_CC_CMD_Else)
+      ADE(      #CC_CMD_EndWith)     ; ADE = AddEasy with automatic shift
+      ADE(    #CC_CMD_Else)
       ADD(      "ret = #False ") 
-      ADE(    #PbFw_CC_CMD_EndIf)
+      ADE(    #CC_CMD_EndIf)
       ADD(    "FinishDatabaseQuery(PbDbNo)")
-      ADE(  #PbFw_CC_CMD_Else)
+      ADE(  #CC_CMD_Else)
       ADD(    "ret = #False ")
-      ADE(  #PbFw_CC_CMD_EndIf)
+      ADE(  #CC_CMD_EndIf)
       ADD()  
       ADD(  "ProcedureReturn ret ")
-      ADE(#PbFw_CC_CMD_EndProcedure)
+      ADE(#CC_CMD_EndProcedure)
 
     Next
     UnuseModule CC
@@ -422,7 +423,7 @@ Module DBCC
       
       ADD("")
       PRC("WriteRec_"+ sTxt, "PbDbNo, sField.s, sVal.s, *Rec.TRec_" + sTxt)
-      ADD(  "Protected ret = #True ", #PbFw_CC_SHR_BEFORE)
+      ADD(  "Protected ret = #True ", #CC_SHR_BEFORE)
       ADD(  "Protected SQL.s ")
       ADD()
       
@@ -432,10 +433,10 @@ Module DBCC
       ADD(  "SQL = " + sStr)
       ADD()
      
-      ADD(  "If DatabaseQuery(hdb,SQL)", #PbFw_CC_SHR_AFTER)
+      ADD(  "If DatabaseQuery(hdb,SQL)", #CC_SHR_AFTER)
         
-      ADD(    "If NextDatabaseRow(PbDbNo)", #PbFw_CC_SHR_AFTER)
-      ADD(      "With *Rec ", #PbFw_CC_SHR_AFTER)
+      ADD(    "If NextDatabaseRow(PbDbNo)", #CC_SHR_AFTER)
+      ADD(      "With *Rec ", #CC_SHR_AFTER)
       
       ForEach *hDB\lstTables()\Fields()
         With *hDB\lstTables()\Fields()
@@ -458,18 +459,18 @@ Module DBCC
         EndWith
       Next
   
-      ADE(      #PbFw_CC_CMD_EndWith)     ; ADE = AddEasy with automatic shift
-      ADE(    #PbFw_CC_CMD_Else)
+      ADE(      #CC_CMD_EndWith)     ; ADE = AddEasy with automatic shift
+      ADE(    #CC_CMD_Else)
       ADD(      "ret = #False ") 
-      ADE(    #PbFw_CC_CMD_EndIf)
+      ADE(    #CC_CMD_EndIf)
         
       ADD(    "FinishDatabaseQuery(PbDbNo) ")
-      ADE(  #PbFw_CC_CMD_Else)
+      ADE(  #CC_CMD_Else)
       ADD(    "ret = #False ")
-      ADE(  #PbFw_CC_CMD_EndIf)
+      ADE(  #CC_CMD_EndIf)
       ADD()  
       ADD(  "ProcedureReturn ret ")
-      ADE(#PbFw_CC_CMD_EndProcedure)
+      ADE(#CC_CMD_EndProcedure)
     Next
     UnuseModule CC
   EndProcedure
@@ -530,15 +531,15 @@ Module DBCC
     ; WriteRec Protoype Procedure
     ADD("")
     PRC("ReadRec", "TabName.s, PbDbNo, sField.s, sVal.s, *Rec")
-    ADD(  "Protected DBReadRec.TProcDBReadRec ", #PbFw_CC_SHR_BEFORE)
+    ADD(  "Protected DBReadRec.TProcDBReadRec ", #CC_SHR_BEFORE)
     ADD()
-    ADD(  "If FindMapElement(pReadRec(), TabName)", #PbFw_CC_SHR_AFTER)
+    ADD(  "If FindMapElement(pReadRec(), TabName)", #CC_SHR_AFTER)
     ADD(    "DBReadRec = pReadRec()              ; Get the Pointer to the correct ReadRec_[TableName]")
     ADD(    "DBReadRec(hdb, sField, sVal, *Rec)  ; Call the correct Function ReadRec_[TableName]")
-    ADE(  #PbFw_CC_CMD_EndIf)
+    ADE(  #CC_CMD_EndIf)
     ADD()  
     ADD(  "ProcedureReturn ret ")
-    ADE(#PbFw_CC_CMD_EndProcedure)
+    ADE(#CC_CMD_EndProcedure)
     
     UnuseModule CC
   EndProcedure
@@ -577,14 +578,14 @@ Module DBCC
     ResetList(*hDB\lstTables()\Fields())
     
     ADD("Procedure Create_Gadgets_" + sTxt + "() ")
-    ADD(  "Protected x, y, w, h, dx, dy ", #PbFw_CC_SHR_BEFORE)
+    ADD(  "Protected x, y, w, h, dx, dy ", #CC_SHR_BEFORE)
     ADD()  
     ADD(  "x= 10: y=10: w=150: h=26 ")
     ADD()   
     ADD(  "dx=w+20 ")
     ADD(  "dy=h+10 ")
     ADD()  
-    ADD(  "With Gadgets_" + sTxt, #PbFw_CC_SHR_AFTER)
+    ADD(  "With Gadgets_" + sTxt, #CC_SHR_AFTER)
     ForEach *hDB\lstTables()\Fields()
       With *hDB\lstTables()\Fields()
         sStr = "\lbl_"+\Name + " = TextGadget(#PB_Any, x, y, w, h, %" + \Name +"%) ; Label"
@@ -600,8 +601,8 @@ Module DBCC
       EndWith
     Next
     
-    ADE(  #PbFw_CC_CMD_EndWith)
-    ADE(#PbFw_CC_CMD_EndProcedure)
+    ADE(  #CC_CMD_EndWith)
+    ADE(#CC_CMD_EndProcedure)
     
     UnuseModule CC
   EndProcedure
@@ -639,7 +640,7 @@ Module DBCC
     ResetList(*hDB\lstTables()\Fields())
     
   ;  ADD()  
-    ADD("Structure TGadgets_" + sTxt +" ; Structure for Recordset Gadgets", #PbFw_CC_SHR_AFTER)    
+    ADD("Structure TGadgets_" + sTxt +" ; Structure for Recordset Gadgets", #CC_SHR_AFTER)    
     
     ForEach *hDB\lstTables()\Fields()
       With *hDB\lstTables()\Fields()
@@ -647,13 +648,13 @@ Module DBCC
         ADD("txt_" + \Name + ".i")   ; the String Gadget
       EndWith
     Next
-    ADE(#PbFw_CC_CMD_EndStructure)
+    ADE(#CC_CMD_EndStructure)
     ADD("Global Gadgets_" + sTxt + ".TGadgets_" +sTxt)
     
     ; ADD("")  
-    ; ADD("Structure TMe ; This", #PbFw_CC_SHR_AFTER)    
+    ; ADD("Structure TMe ; This", #CC_SHR_AFTER)    
     ; ADD(  "RecGadgets.TGadgets_" +sTxt )
-    ; ADD("EndStructure", , #PbFw_CC_SHL_BEFORE)
+    ; ADD("EndStructure", , #CC_SHL_BEFORE)
     ; ADD("Global Me.TMe")
     
     UnuseModule CC
@@ -725,7 +726,7 @@ Module DBCC
     
     PRC("RecToGadgets_" +sTxt, "*Rec.TRec_" + sTxt)
    ; ADD()
-    ADD("With Gadgets_" + sTxt, #PbFw_CC_SHR_BEFORE )
+    ADD("With Gadgets_" + sTxt, #CC_SHR_BEFORE )
     
     ForEach *hDB\lstTables()\Fields()
       With *hDB\lstTables()\Fields()
@@ -744,8 +745,8 @@ Module DBCC
       EndWith
     Next
     
-    ADE(  #PbFw_CC_CMD_EndWith)
-    ADE(#PbFw_CC_CMD_EndProcedure)
+    ADE(  #CC_CMD_EndWith)
+    ADE(#CC_CMD_EndProcedure)
    
   EndProcedure
   
@@ -809,14 +810,14 @@ CompilerIf  #PB_Compiler_IsMainFile
   
   EnableExplicit
   
-  UseModule DBEx
+  UseModule DBCC
   
   
 CompilerEndIf
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 64
-; FirstLine = 14
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 782
+; FirstLine = 176
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

@@ -158,10 +158,10 @@ Module Rom
   ; RET.s: Roman numeral
   ; ============================================================================
     
-    #NoOfSymbols = 12 ;0 based count
+    #_NoOfSymbols = 12 ;0 based count
 
     Static init
-    Static Dim refRomanNum.TRomanNumeral(#NoOfSymbols)
+    Static Dim refRomanNum.TRomanNumeral(#_NoOfSymbols)
     Protected roman$, I
  
     ; ----------------------------------------------------------------------
@@ -169,11 +169,11 @@ Module Rom
     ; ---------------------------------------------------------------------- 
     If Not init
       Restore denominations
-      For I = 0 To #NoOfSymbols
+      For I = 0 To #_NoOfSymbols
         Read.s refRomanNum(I)\Symbol
       Next
       Restore denomValues
-      For I = 0 To #NoOfSymbols
+      For I = 0 To #_NoOfSymbols
         Read refRomanNum(i)\Value
       Next       
       init = #True
@@ -182,7 +182,7 @@ Module Rom
     ; ----------------------------------------------------------------------
     ;  Conversion
     ; ---------------------------------------------------------------------- 
-    For I = 0 To #NoOfSymbols
+    For I = 0 To #_NoOfSymbols
       While iValue >= refRomanNum(i)\value
         roman$ + refRomanNum(i)\symbol
         iValue - refRomanNum(i)\value
@@ -232,9 +232,9 @@ CompilerIf #PB_Compiler_IsMainFile
   Debug s
   Debug RemoveNonRomanChars("123 MCm.LXXxX-Iv")
 CompilerEndIf 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 127
-; FirstLine = 89
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 184
+; FirstLine = 156
 ; Folding = --
 ; Optimizer
 ; CPU = 5

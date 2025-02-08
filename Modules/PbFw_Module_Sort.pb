@@ -41,12 +41,6 @@ DeclareModule Sort
   ;- ----------------------------------------------------------------------
   ;- STRUCTURES and CONSTANTS
   ;  ----------------------------------------------------------------------
-  Structure pChar   ; virtual CHAR-ARRAY, used as Pointer to overlay on strings 
-    a.a
-    c.c
-    aa.a[0]          ; fixed ARRAY Of CHAR Length 0
-    cc.c[0]          
-  EndStructure
   
   Prototype NaturalCompareString (StringA$, StringB$, Mode=#PB_String_CaseSensitive)
   Global NaturalCompareString.NaturalCompareString
@@ -383,7 +377,7 @@ Module Sort
         IndexEnd = Size
       EndIf
       
-      PB::LimitToNull(IndexStart)
+      PB::MinNull(IndexStart)
             
       If PbSort & #PB_Sort_Ascending
         _QuickSortStringArray_Asc(StrArray(),IndexStart,IndexEnd)     
@@ -408,9 +402,8 @@ CompilerIf #PB_Compiler_IsMainFile
   UseModule Sort
   
 CompilerEndIf
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 322
-; FirstLine = 278
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 43
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

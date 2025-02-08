@@ -45,20 +45,20 @@ XIncludeFile "PbFw_Module_PB.pb"          ; PB::     PureBasic extention Module
 DeclareModule DBG
     
   Enumeration EExceptions 0
-    #PbFw_DBG_Err_Unknown
-    #PbFw_DBG_Err_PointerIsNull              ; 1
-    #PbFw_DBG_Err_IdenticalPointers          ; if 2 identical pointers are not allowd
-    #PbFw_DBG_Err_ObjectNotExist
-    #PbFw_DBG_Err_DrawingNotStarted
-    #PbFw_DBG_Err_VectorDrawingNotStarted
-    #PbFw_DBG_Err_IsNotImage
-    #PbFw_DBG_Err_IsNotGadget
+    #DBG_Err_Unknown
+    #DBG_Err_PointerIsNull              ; 1
+    #DBG_Err_IdenticalPointers          ; if 2 identical pointers are not allowd
+    #DBG_Err_ObjectNotExist
+    #DBG_Err_DrawingNotStarted
+    #DBG_Err_VectorDrawingNotStarted
+    #DBG_Err_IsNotImage
+    #DBG_Err_IsNotGadget
     
     ; ------------------------------------------------------------------------------
-    #PbFw_DBG_Err_ModulSpecific        ;  !Last one! From here starts the ModulSpecificError
+    #DBG_Err_ModulSpecific        ;  !Last one! From here starts the ModulSpecificError
   EndEnumeration
   
-  #PbFw_DBG_ProcedureReturn_Error = #Null
+  #DBG_ProcedureReturn_Error = #Null
   
   Structure TSafeStruct
     *pThis
@@ -79,7 +79,7 @@ DeclareModule DBG
   Macro mac_CheckPointer(ptr, ret=0)
     CompilerIf #PbFwCfg_Module_CheckPointerException And PbFw::#PbFwCfg_Global_CheckPointerException
       If Not ptr
-        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
+        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#DBG_Err_PointerIsNull) 
         ProcedureReturn ret
       EndIf 
     CompilerEndIf
@@ -88,7 +88,7 @@ DeclareModule DBG
   Macro mac_CheckPointer2(ptr1, ptr2, ProcRet=0)
     CompilerIf #PbFwCfg_Module_CheckPointerException And PbFw::#PbFwCfg_Global_CheckPointerException
       If (Not ptr1) Or (Not ptr2)
-        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
+        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#DBG_Err_PointerIsNull) 
         ProcedureReturn ProcRet
       EndIf 
     CompilerEndIf
@@ -97,7 +97,7 @@ DeclareModule DBG
   Macro mac_CheckPointer3(ptr1, ptr2, ptr3, ProcRet=0)
     CompilerIf #PbFwCfg_Module_CheckPointerException And PbFw::#PbFwCfg_Global_CheckPointerException
       If (Not ptr1) Or (Not ptr2) Or (Not ptr3)
-        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
+        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#DBG_Err_PointerIsNull) 
         ProcedureReturn ProcRet
       EndIf 
     CompilerEndIf
@@ -106,7 +106,7 @@ DeclareModule DBG
   Macro mac_CheckPointer4(ptr1, ptr2, ptr3, ptr4, ProcRet=0)
     CompilerIf #PbFwCfg_Module_CheckPointerException And PbFw::#PbFwCfg_Global_CheckPointerException
       If (Not ptr1) Or (Not ptr2) Or (Not ptr3) Or (Not ptr4)
-        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
+        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#DBG_Err_PointerIsNull) 
         ProcedureReturn ProcRet
       EndIf 
      CompilerEndIf
@@ -115,7 +115,7 @@ DeclareModule DBG
   Macro mac_CheckPointer5(ptr1, ptr2, ptr3, ptr4, ptr5, ProcRet=0)
     CompilerIf #PbFwCfg_Module_CheckPointerException And PbFw::#PbFwCfg_Global_CheckPointerException
       If (Not ptr1) Or (Not ptr2) Or (Not ptr3) Or (Not ptr4) Or (Not ptr5)
-        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_PointerIsNull) 
+        DBG::Exception(#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#DBG_Err_PointerIsNull) 
         ProcedureReturn ProcRet
       EndIf 
     CompilerEndIf
@@ -124,7 +124,7 @@ DeclareModule DBG
   Macro mac_Check_2PointerIdenticalException(ptr1, ptr2, ProcRet=0)
     CompilerIf #PbFwCfg_Module_CheckPointerException And PbFw::#PbFwCfg_Global_CheckPointerException
       If ptr1 = ptr2
-        DBG::Exception((#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#PbFw_DBG_IdenticalPointers)       
+        DBG::Exception((#PB_Compiler_Module, #PB_Compiler_Procedure, DBG::#DBG_IdenticalPointers)       
         ProcedureReturn ProcRet
       EndIf 
      CompilerEndIf
@@ -215,14 +215,14 @@ DeclareModule DBG
   
   ; if #ASSERT_ENABLED is not defined in your main program, automagically defaults to #ASSERT_ENABLED = 0
   CompilerIf Not Defined(ASSERT_ENABLED, #PB_Constant) ; = 0
-     #PbFw_DBG_ASSERT_ENABLED = 0
+     #DBG_ASSERT_ENABLED = 0
   CompilerEndIf
 
-  #PbFw_DBG_ASSERT_TITLE$ = "ASSERT"
+  #DBG_ASSERT_TITLE$ = "ASSERT"
   
   Global NewMap AssertFlags.i()
     
-  CompilerIf #PbFw_DBG_ASSERT_ENABLED
+  CompilerIf #DBG_ASSERT_ENABLED
 
     Declare.i _AssertProc(Exp$, File$, Proc$, iLine, Msg$)
     
@@ -290,29 +290,29 @@ Module DBG
     
     Select Code
        
-      Case #PbFw_DBG_Err_Unknown
-        txt="#PbFw_DBG_Err_Unknown"
+      Case #DBG_Err_Unknown
+        txt="#DBG_Err_Unknown"
        
-      Case  #PbFw_DBG_Err_PointerIsNull              ; 1
-        txt="#PbFw_DBG_Err_Unknown"
+      Case  #DBG_Err_PointerIsNull              ; 1
+        txt="#DBG_Err_Unknown"
         
-      Case #PbFw_DBG_Err_IdenticalPointers          ; if 2 identical pointers are not allowd
-        txt="#PbFw_DBG_Err_IdenticalPointers"
+      Case #DBG_Err_IdenticalPointers          ; if 2 identical pointers are not allowd
+        txt="#DBG_Err_IdenticalPointers"
         
-      Case #PbFw_DBG_Err_ObjectNotExist
-        txt = "#PbFw_DBG_Err_PointerIsNull"
+      Case #DBG_Err_ObjectNotExist
+        txt = "#DBG_Err_PointerIsNull"
         
-      Case #PbFw_DBG_Err_DrawingNotStarted
-        txt = "#PbFw_DBG_Err_DrawingNotStarted"
+      Case #DBG_Err_DrawingNotStarted
+        txt = "#DBG_Err_DrawingNotStarted"
        
-      Case #PbFw_DBG_Err_VectorDrawingNotStarted
-         txt = "#PbFw_DBG_Err_VectorDrawingNotStarted"
+      Case #DBG_Err_VectorDrawingNotStarted
+         txt = "#DBG_Err_VectorDrawingNotStarted"
          
-      Case #PbFw_DBG_Err_IsNotImage
-         txt = "#PbFw_DBG_Err_IsNotImage"
+      Case #DBG_Err_IsNotImage
+         txt = "#DBG_Err_IsNotImage"
       
-      Case #PbFw_DBG_Err_IsNotGadget
-         txt = "#PbFw_DBG_Err_IsNotGadget"
+      Case #DBG_Err_IsNotGadget
+         txt = "#DBG_Err_IsNotGadget"
    
     EndSelect
     
@@ -454,7 +454,7 @@ Module DBG
       ; If AssertFlags(File$ + "_" + Str(iLine)) = 0
       ; because it does not allocate data if an ASSERT has not been disabled.
       
-      Title$ = #PbFw_DBG_ASSERT_TITLE$
+      Title$ = #DBG_ASSERT_TITLE$
       
       CompilerIf #PB_Compiler_Debugger = 1
          StopText$ = " Call Debugger "
@@ -595,9 +595,9 @@ CompilerEndIf
 
 DisableExplicit
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 48
-; FirstLine = 40
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 456
+; FirstLine = 380
 ; Folding = -----
 ; Optimizer
 ; CPU = 5

@@ -64,7 +64,7 @@
 ;- ----------------------------------------------------------------------
 
 XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
-XIncludeFile "PbFw_Module_BUFFER.pb"      ; BUFFER::  Module for Buffer handling
+XIncludeFile "PbFw_Module_Buffer.pb"      ; BUF::     Module for Buffer handling
 XIncludeFile "PbFw_Module_IsNumeric.pb"   ; STR::     Module for String Functions
 XIncludeFile "PbFw_Module_VECTORf.pb"     ; VECf::    single precision Vector Module
     
@@ -219,7 +219,7 @@ Module STL
   ; RET.i : NumberOfTriangles of #Null
   ; ============================================================================
     
-    Protected hBUF.BUFFER::hBuffer    ; Buffer Handle Structure (Module BUFFER)
+    Protected hBUF.BUF::hBuffer    ; Buffer Handle Structure (Module BUFFER)
     Protected N.q, cnt.q
     
     ;   Values are coded as 32Bit-Float in Little-Endian
@@ -236,7 +236,7 @@ Module STL
     #FACET_ByteSize = 50
     
     If *STLobj  
-      If BUFFER::FileToBuffer(FileName, hBuf)  ; Read the complete File into a Buffer
+      If BUF::FileToBuffer(FileName, hBuf)  ; Read the complete File into a Buffer
         
         If hBuf\DataSize >=134    ; if it is not to short for a STL File with at least 1 FACET
                                   ; must be [80] Header + [4] NoOfFacets + n*[50] FacetData = [134]
@@ -462,7 +462,7 @@ Module STL
   ; RET.i : FileFormat saved #STL_ASCII, #STL_BINARY, if Error: #STL_UNKNOWN=0
   ; ============================================================================
     
-    Protected hBUF.BUFFER::hBuffer    ; BufferHandle Structure (Module BUFFER)
+    Protected hBUF.BUF::hBuffer    ; BufferHandle Structure (Module BUFFER)
     Protected STL_TYPE
 
     If STL_FORMAT = #STL_ASCII        ; Save as STL-ASCII-Format
@@ -657,8 +657,8 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 266
-; FirstLine = 236
+; CursorPosition = 66
+; FirstLine = 63
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

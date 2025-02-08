@@ -58,151 +58,151 @@ DeclareModule X11Col
 
   Enumeration EX11ColorID 1   ; Attention! has to be same order as in DataSection; Colors are orderd by RGB-Value
    ;{ Color IDs [1..145]
-    #PbFw_X11Col_ID_Black
-    #PbFw_X11Col_ID_NavyBlue
-    #PbFw_X11Col_ID_DarkBlue
-    #PbFw_X11Col_ID_MediumBlue
-    #PbFw_X11Col_ID_Blue
-    #PbFw_X11Col_ID_DarkGreen
-    #PbFw_X11Col_ID_WebGreen
-    #PbFw_X11Col_ID_Teal
-    #PbFw_X11Col_ID_DarkCyan
-    #PbFw_X11Col_ID_DeepSkyBlue
-    #PbFw_X11Col_ID_DarkTurquoise
-    #PbFw_X11Col_ID_MediumSpringGreen
-    #PbFw_X11Col_ID_Green
-    #PbFw_X11Col_ID_Lime
-    #PbFw_X11Col_ID_SpringGreen
-    #PbFw_X11Col_ID_Aqua
-    #PbFw_X11Col_ID_Cyan
-    #PbFw_X11Col_ID_MidnightBlue
-    #PbFw_X11Col_ID_DodgerBlue
-    #PbFw_X11Col_ID_LightSeaGreen
-    #PbFw_X11Col_ID_ForestGreen
-    #PbFw_X11Col_ID_SeaGreen
-    #PbFw_X11Col_ID_DarkSlateGray
-    #PbFw_X11Col_ID_LimeGreen
-    #PbFw_X11Col_ID_MediumSeaGreen
-    #PbFw_X11Col_ID_Turquoise
-    #PbFw_X11Col_ID_RoyalBlue
-    #PbFw_X11Col_ID_SteelBlue
-    #PbFw_X11Col_ID_DarkSlateBlue
-    #PbFw_X11Col_ID_MediumTurquoise
-    #PbFw_X11Col_ID_Indigo
-    #PbFw_X11Col_ID_DarkOliveGreen
-    #PbFw_X11Col_ID_CadetBlue
-    #PbFw_X11Col_ID_CornflowerBlue
-    #PbFw_X11Col_ID_RebeccaPurple
-    #PbFw_X11Col_ID_MediumAquamarine
-    #PbFw_X11Col_ID_DimGray
-    #PbFw_X11Col_ID_SlateBlue
-    #PbFw_X11Col_ID_OliveDrab
-    #PbFw_X11Col_ID_SlateGray
-    #PbFw_X11Col_ID_LightSlateGray
-    #PbFw_X11Col_ID_MediumSlateBlue
-    #PbFw_X11Col_ID_LawnGreen
-    #PbFw_X11Col_ID_Chartreuse
-    #PbFw_X11Col_ID_Aquamarine
-    #PbFw_X11Col_ID_WebMaroon
-    #PbFw_X11Col_ID_WebPurple
-    #PbFw_X11Col_ID_Olive
-    #PbFw_X11Col_ID_WebGray
-    #PbFw_X11Col_ID_SkyBlue
-    #PbFw_X11Col_ID_LightSkyBlue
-    #PbFw_X11Col_ID_BlueViolet
-    #PbFw_X11Col_ID_DarkRed
-    #PbFw_X11Col_ID_DarkMagenta
-    #PbFw_X11Col_ID_SaddleBrown
-    #PbFw_X11Col_ID_DarkSeaGreen
-    #PbFw_X11Col_ID_LightGreen
-    #PbFw_X11Col_ID_MediumPurple
-    #PbFw_X11Col_ID_DarkViolet
-    #PbFw_X11Col_ID_PaleGreen
-    #PbFw_X11Col_ID_DarkOrchid
-    #PbFw_X11Col_ID_YellowGreen
-    #PbFw_X11Col_ID_Purple
-    #PbFw_X11Col_ID_Sienna
-    #PbFw_X11Col_ID_Brown
-    #PbFw_X11Col_ID_DarkGray
-    #PbFw_X11Col_ID_LightBlue
-    #PbFw_X11Col_ID_GreenYellow
-    #PbFw_X11Col_ID_PaleTurquoise
-    #PbFw_X11Col_ID_Maroon
-    #PbFw_X11Col_ID_LightSteelBlue
-    #PbFw_X11Col_ID_PowderBlue
-    #PbFw_X11Col_ID_Firebrick
-    #PbFw_X11Col_ID_DarkGoldenrod
-    #PbFw_X11Col_ID_MediumOrchid
-    #PbFw_X11Col_ID_RosyBrown
-    #PbFw_X11Col_ID_DarkKhaki
-    #PbFw_X11Col_ID_Gray
-    #PbFw_X11Col_ID_Silver
-    #PbFw_X11Col_ID_MediumVioletRed
-    #PbFw_X11Col_ID_IndianRed
-    #PbFw_X11Col_ID_Peru
-    #PbFw_X11Col_ID_Chocolate
-    #PbFw_X11Col_ID_Tan
-    #PbFw_X11Col_ID_LightGray
-    #PbFw_X11Col_ID_Thistle
-    #PbFw_X11Col_ID_Orchid
-    #PbFw_X11Col_ID_Goldenrod
-    #PbFw_X11Col_ID_PaleVioletRed
-    #PbFw_X11Col_ID_Crimson
-    #PbFw_X11Col_ID_Gainsboro
-    #PbFw_X11Col_ID_Plum
-    #PbFw_X11Col_ID_Burlywood
-    #PbFw_X11Col_ID_LightCyan
-    #PbFw_X11Col_ID_Lavender
-    #PbFw_X11Col_ID_DarkSalmon
-    #PbFw_X11Col_ID_Violet
-    #PbFw_X11Col_ID_PaleGoldenrod
-    #PbFw_X11Col_ID_LightCoral
-    #PbFw_X11Col_ID_Khaki
-    #PbFw_X11Col_ID_AliceBlue
-    #PbFw_X11Col_ID_Honeydew
-    #PbFw_X11Col_ID_Azure
-    #PbFw_X11Col_ID_SandyBrown
-    #PbFw_X11Col_ID_Wheat
-    #PbFw_X11Col_ID_Beige
-    #PbFw_X11Col_ID_WhiteSmoke
-    #PbFw_X11Col_ID_MintCream
-    #PbFw_X11Col_ID_GhostWhite
-    #PbFw_X11Col_ID_Salmon
-    #PbFw_X11Col_ID_AntiqueWhite
-    #PbFw_X11Col_ID_Linen
-    #PbFw_X11Col_ID_LightGoldenrod
-    #PbFw_X11Col_ID_OldLace
-    #PbFw_X11Col_ID_Red
-    #PbFw_X11Col_ID_Fuchsia
-    #PbFw_X11Col_ID_Magenta
-    #PbFw_X11Col_ID_DeepPink
-    #PbFw_X11Col_ID_OrangeRed
-    #PbFw_X11Col_ID_Tomato
-    #PbFw_X11Col_ID_HotPink
-    #PbFw_X11Col_ID_Coral
-    #PbFw_X11Col_ID_DarkOrange
-    #PbFw_X11Col_ID_LightSalmon
-    #PbFw_X11Col_ID_Orange
-    #PbFw_X11Col_ID_LightPink
-    #PbFw_X11Col_ID_Pink
-    #PbFw_X11Col_ID_Gold
-    #PbFw_X11Col_ID_PeachPuff
-    #PbFw_X11Col_ID_NavajoWhite
-    #PbFw_X11Col_ID_Moccasin
-    #PbFw_X11Col_ID_Bisque
-    #PbFw_X11Col_ID_MistyRose
-    #PbFw_X11Col_ID_BlanchedAlmond
-    #PbFw_X11Col_ID_PapayaWhip
-    #PbFw_X11Col_ID_LavenderBlush
-    #PbFw_X11Col_ID_Seashell
-    #PbFw_X11Col_ID_Cornsilk
-    #PbFw_X11Col_ID_LemonChiffon
-    #PbFw_X11Col_ID_FloralWhite
-    #PbFw_X11Col_ID_Snow
-    #PbFw_X11Col_ID_Yellow
-    #PbFw_X11Col_ID_LightYellow
-    #PbFw_X11Col_ID_Ivory
-    #PbFw_X11Col_ID_White
+    #X11Col_ID_Black
+    #X11Col_ID_NavyBlue
+    #X11Col_ID_DarkBlue
+    #X11Col_ID_MediumBlue
+    #X11Col_ID_Blue
+    #X11Col_ID_DarkGreen
+    #X11Col_ID_WebGreen
+    #X11Col_ID_Teal
+    #X11Col_ID_DarkCyan
+    #X11Col_ID_DeepSkyBlue
+    #X11Col_ID_DarkTurquoise
+    #X11Col_ID_MediumSpringGreen
+    #X11Col_ID_Green
+    #X11Col_ID_Lime
+    #X11Col_ID_SpringGreen
+    #X11Col_ID_Aqua
+    #X11Col_ID_Cyan
+    #X11Col_ID_MidnightBlue
+    #X11Col_ID_DodgerBlue
+    #X11Col_ID_LightSeaGreen
+    #X11Col_ID_ForestGreen
+    #X11Col_ID_SeaGreen
+    #X11Col_ID_DarkSlateGray
+    #X11Col_ID_LimeGreen
+    #X11Col_ID_MediumSeaGreen
+    #X11Col_ID_Turquoise
+    #X11Col_ID_RoyalBlue
+    #X11Col_ID_SteelBlue
+    #X11Col_ID_DarkSlateBlue
+    #X11Col_ID_MediumTurquoise
+    #X11Col_ID_Indigo
+    #X11Col_ID_DarkOliveGreen
+    #X11Col_ID_CadetBlue
+    #X11Col_ID_CornflowerBlue
+    #X11Col_ID_RebeccaPurple
+    #X11Col_ID_MediumAquamarine
+    #X11Col_ID_DimGray
+    #X11Col_ID_SlateBlue
+    #X11Col_ID_OliveDrab
+    #X11Col_ID_SlateGray
+    #X11Col_ID_LightSlateGray
+    #X11Col_ID_MediumSlateBlue
+    #X11Col_ID_LawnGreen
+    #X11Col_ID_Chartreuse
+    #X11Col_ID_Aquamarine
+    #X11Col_ID_WebMaroon
+    #X11Col_ID_WebPurple
+    #X11Col_ID_Olive
+    #X11Col_ID_WebGray
+    #X11Col_ID_SkyBlue
+    #X11Col_ID_LightSkyBlue
+    #X11Col_ID_BlueViolet
+    #X11Col_ID_DarkRed
+    #X11Col_ID_DarkMagenta
+    #X11Col_ID_SaddleBrown
+    #X11Col_ID_DarkSeaGreen
+    #X11Col_ID_LightGreen
+    #X11Col_ID_MediumPurple
+    #X11Col_ID_DarkViolet
+    #X11Col_ID_PaleGreen
+    #X11Col_ID_DarkOrchid
+    #X11Col_ID_YellowGreen
+    #X11Col_ID_Purple
+    #X11Col_ID_Sienna
+    #X11Col_ID_Brown
+    #X11Col_ID_DarkGray
+    #X11Col_ID_LightBlue
+    #X11Col_ID_GreenYellow
+    #X11Col_ID_PaleTurquoise
+    #X11Col_ID_Maroon
+    #X11Col_ID_LightSteelBlue
+    #X11Col_ID_PowderBlue
+    #X11Col_ID_Firebrick
+    #X11Col_ID_DarkGoldenrod
+    #X11Col_ID_MediumOrchid
+    #X11Col_ID_RosyBrown
+    #X11Col_ID_DarkKhaki
+    #X11Col_ID_Gray
+    #X11Col_ID_Silver
+    #X11Col_ID_MediumVioletRed
+    #X11Col_ID_IndianRed
+    #X11Col_ID_Peru
+    #X11Col_ID_Chocolate
+    #X11Col_ID_Tan
+    #X11Col_ID_LightGray
+    #X11Col_ID_Thistle
+    #X11Col_ID_Orchid
+    #X11Col_ID_Goldenrod
+    #X11Col_ID_PaleVioletRed
+    #X11Col_ID_Crimson
+    #X11Col_ID_Gainsboro
+    #X11Col_ID_Plum
+    #X11Col_ID_Burlywood
+    #X11Col_ID_LightCyan
+    #X11Col_ID_Lavender
+    #X11Col_ID_DarkSalmon
+    #X11Col_ID_Violet
+    #X11Col_ID_PaleGoldenrod
+    #X11Col_ID_LightCoral
+    #X11Col_ID_Khaki
+    #X11Col_ID_AliceBlue
+    #X11Col_ID_Honeydew
+    #X11Col_ID_Azure
+    #X11Col_ID_SandyBrown
+    #X11Col_ID_Wheat
+    #X11Col_ID_Beige
+    #X11Col_ID_WhiteSmoke
+    #X11Col_ID_MintCream
+    #X11Col_ID_GhostWhite
+    #X11Col_ID_Salmon
+    #X11Col_ID_AntiqueWhite
+    #X11Col_ID_Linen
+    #X11Col_ID_LightGoldenrod
+    #X11Col_ID_OldLace
+    #X11Col_ID_Red
+    #X11Col_ID_Fuchsia
+    #X11Col_ID_Magenta
+    #X11Col_ID_DeepPink
+    #X11Col_ID_OrangeRed
+    #X11Col_ID_Tomato
+    #X11Col_ID_HotPink
+    #X11Col_ID_Coral
+    #X11Col_ID_DarkOrange
+    #X11Col_ID_LightSalmon
+    #X11Col_ID_Orange
+    #X11Col_ID_LightPink
+    #X11Col_ID_Pink
+    #X11Col_ID_Gold
+    #X11Col_ID_PeachPuff
+    #X11Col_ID_NavajoWhite
+    #X11Col_ID_Moccasin
+    #X11Col_ID_Bisque
+    #X11Col_ID_MistyRose
+    #X11Col_ID_BlanchedAlmond
+    #X11Col_ID_PapayaWhip
+    #X11Col_ID_LavenderBlush
+    #X11Col_ID_Seashell
+    #X11Col_ID_Cornsilk
+    #X11Col_ID_LemonChiffon
+    #X11Col_ID_FloralWhite
+    #X11Col_ID_Snow
+    #X11Col_ID_Yellow
+    #X11Col_ID_LightYellow
+    #X11Col_ID_Ivory
+    #X11Col_ID_White
   ;}
   EndEnumeration  
   
@@ -367,7 +367,7 @@ Module X11Col
       With lst()
         Debug Hex(\RGB,#PB_Long) + " : " + \Name   
         
-        ; row = "#PbFw_X11Col_ID_" + ReplaceString(\Name," ", "")
+        ; row = "#X11Col_ID_" + ReplaceString(\Name," ", "")
         ; row = "Data.s " + Chr('"') + \Name + Chr('"')
         row = "Data.l " + FormatHex(\RGB) + ", " + Format(\Hue) + ", " + Format(\HSV_V) + ", " + Format(\HSV_S) + ", " + Format(\HSL_S) + ", "  + Format(\HSL_L)
         row + " ; " + \Name
@@ -573,7 +573,7 @@ Module X11Col
   ; ============================================================================
   ; NAME: GetColorName
   ; DESC: Get the ColorName by ColorID
-  ; VAR(ColorID) : The Color ID [1..145] or #PbFw_X11Col_ID_AliceBlue ...
+  ; VAR(ColorID) : The Color ID [1..145] or #X11Col_ID_AliceBlue ...
   ; RET.s : X11 Color Name like "Alice Blue"
   ; ============================================================================
     If ColorID >0 And ColorID <= #ColTableEntries
@@ -585,7 +585,7 @@ Module X11Col
   ; ============================================================================
   ; NAME: GetRGB
   ; DESC: Get the Color RGB Value by ColorID
-  ; VAR(ColorID) : The Color ID [1..145] or #PbFw_X11Col_ID_AliceBlue ...
+  ; VAR(ColorID) : The Color ID [1..145] or #X11Col_ID_AliceBlue ...
   ; RET.l : RGB-Color-Value, Alpha = 0 Name like "Alice Blue"
   ; ============================================================================
     Protected col.l
@@ -604,7 +604,7 @@ Module X11Col
   ; ============================================================================
   ; NAME: GetColorDetails
   ; DESC: Get the Color Details as Structure 
-  ; VAR(ColorID) : The Color ID [1..145] or #PbFw_X11Col_ID_AliceBlue ...
+  ; VAR(ColorID) : The Color ID [1..145] or #X11Col_ID_AliceBlue ...
   ; VAR(*Out.TX11ColorDetail) : Pointer to the Return Variable
   ; RET.i : *Out
   ; ============================================================================
@@ -963,7 +963,8 @@ Next
 ; Debug ID
 
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 33
+; CursorPosition = 606
+; FirstLine = 529
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

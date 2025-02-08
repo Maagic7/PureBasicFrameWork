@@ -158,30 +158,30 @@ XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::      Debug Module
 DeclareModule VDraw
     
   EnumerationBinary EVDrawFlags
-    #PbFw_VD_FLAG_Text_Default  = #PB_VectorText_Default 
-    #PbFw_VD_FLAG_Text_Visible  = #PB_VectorText_Visible
-    #PbFw_VD_FLAG_Text_Offset   = #PB_VectorText_Offset
-    #PbFw_VD_FLAG_Text_Baseline = #PB_VectorText_Baseline
-    #PbFw_VD_FLAG_Vertical
-    #PbFw_VD_FLAG_Horizontal
-    #PbFw_VD_FLAG_Diagonal
-    #PbFw_VD_FLAG_Window
-    #PbFw_VD_FLAG_Image
-    #PbFw_VD_FLAG_Printer
-    #PbFw_VD_FLAG_Canvas
+    #VDraw_FLAG_Text_Default  = #PB_VectorText_Default 
+    #VDraw_FLAG_Text_Visible  = #PB_VectorText_Visible
+    #VDraw_FLAG_Text_Offset   = #PB_VectorText_Offset
+    #VDraw_FLAG_Text_Baseline = #PB_VectorText_Baseline
+    #VDraw_FLAG_Vertical
+    #VDraw_FLAG_Horizontal
+    #VDraw_FLAG_Diagonal
+    #VDraw_FLAG_Window
+    #VDraw_FLAG_Image
+    #VDraw_FLAG_Printer
+    #VDraw_FLAG_Canvas
   EndEnumeration
   
-  #PbFw_VD_RoundEnd       = #PB_Path_RoundEnd
-  #PbFw_VD_SquareEnd      = #PB_Path_SquareEnd
-  #PbFw_VD_RoundCorner    = #PB_Path_RoundCorner
-  #PbFw_VD_FLAG_DiagonalCorner = #PB_Path_DiagonalCorner
+  #VDraw_RoundEnd       = #PB_Path_RoundEnd
+  #VDraw_SquareEnd      = #PB_Path_SquareEnd
+  #VDraw_RoundCorner    = #PB_Path_RoundCorner
+  #VDraw_FLAG_DiagonalCorner = #PB_Path_DiagonalCorner
   
   ;- ----------------------------------------------------------------------
   ;-   Declare Module
   ;  ----------------------------------------------------------------------  
   
   ; To avoid confilcts with PureBasic 2D Drawing commands, we use "V_" as Prefix
-  Declare.i  V_StartDraw(PBNo.i, OutPutType.i=#PbFw_VD_FLAG_Canvas, Unit.i=#PB_Unit_Pixel, Zoom.d=1.0, DPIscaling=#False)
+  Declare.i  V_StartDraw(PBNo.i, OutPutType.i=#VDraw_FLAG_Canvas, Unit.i=#PB_Unit_Pixel, Zoom.d=1.0, DPIscaling=#False)
   Declare.i  V_StopDraw() 
 
   Declare.i  V_Box(X.d, Y.d, Width.d, Height.d, Color.l, FillColor.l=#PB_Default, GradientColor.l=#PB_Default, Rotate.d=0, Flags.i=#False)
@@ -220,7 +220,7 @@ Module VDraw
   ;- Module Private Functions
   ;- ----------------------------------------------------------------------
   
-  #VectorDrawingNotStarted = DBG::#PbFw_DBG_Err_VectorDrawingNotStarted
+  #VectorDrawingNotStarted = DBG::#DBG_Err_VectorDrawingNotStarted
   Global memScaleX.d = 1.0  ; total Zoom factor X [DPIscalingX * Zoom]
   Global memScaleY.d = 1.0  ; total Zoom factor Y [DPIscalingY * Zoom]
   Global memDPIscaling = #False
@@ -430,7 +430,7 @@ Module VDraw
   ;- Module Public Functions
   ;- ----------------------------------------------------------------------
     
-  Procedure.i V_StartDraw(PBNo.i, OutPutType.i=#PbFw_VD_FLAG_Canvas, Unit.i=#PB_Unit_Pixel, Zoom.d=1.0, DPIscaling=#False) 
+  Procedure.i V_StartDraw(PBNo.i, OutPutType.i=#VDraw_FLAG_Canvas, Unit.i=#PB_Unit_Pixel, Zoom.d=1.0, DPIscaling=#False) 
   ; ======================================================================
   ; NAME: V_StartDraw
   ; DESC: Start Vector Drawing
@@ -456,7 +456,7 @@ Module VDraw
   
     Select OutPutType
         
-      Case #PbFw_VD_FLAG_Canvas
+      Case #VDraw_FLAG_Canvas
         If IsGadget(PbNo)
           If GadgetType(PbNo) = #PB_GadgetType_Canvas
             If StartVectorDrawing(CanvasVectorOutput(PBNo, Unit))
@@ -465,21 +465,21 @@ Module VDraw
           EndIf
         EndIf  
         
-      Case #PbFw_VD_FLAG_Image
+      Case #VDraw_FLAG_Image
         If IsImage(PbNo)
           If StartVectorDrawing(ImageVectorOutput(PBNo, Unit))
             *This\VStart = #True
           EndIf
         EndIf
         
-      Case #PbFw_VD_FLAG_Window
+      Case #VDraw_FLAG_Window
         If IsWindow(PbNo)
           If StartVectorDrawing(WindowVectorOutput(PBNo, Unit))
             *This\VStart = #True   
           EndIf
         EndIf
         
-      Case #PbFw_VD_FLAG_Printer    
+      Case #VDraw_FLAG_Printer    
         If StartVectorDrawing(PrinterVectorOutput(Unit))
           *This\VStart = #True
         EndIf
@@ -547,9 +547,9 @@ Module VDraw
           
           PB::SetAlphaIfNull(GradientColor) ; set Alpha Channel to 255 if it is 0
 
-          If Flags & #PbFw_VD_FLAG_Horizontal
+          If Flags & #VDraw_FLAG_Horizontal
             VectorSourceLinearGradient(X, Y, X + Width, Y)
-          ElseIf Flags & #PbFw_VD_FLAG_Diagonal
+          ElseIf Flags & #VDraw_FLAG_Diagonal
             VectorSourceLinearGradient(X, Y, X + Width, Y + Height)
           Else
             VectorSourceLinearGradient(X, Y, X, Y + Height)
@@ -1280,7 +1280,7 @@ CompilerIf #PB_Compiler_IsMainFile
   
   EnableExplicit
  
-  #PbFw_VD_FLAG_Window = 0
+  #VDraw_FLAG_Window = 0
   #Gadget = 1
   #Font   = 2
   
@@ -1293,11 +1293,11 @@ CompilerIf #PB_Compiler_IsMainFile
   Pattern(2) = 6
   Pattern(3) = 5
   
-  If OpenWindow(#PbFw_VD_FLAG_Window, 0, 0, 200, 200, "VectorDrawing Example", #PB_Window_SystemMenu|#PB_Window_Tool|#PB_Window_ScreenCentered)
+  If OpenWindow(#VDraw_FLAG_Window, 0, 0, 200, 200, "VectorDrawing Example", #PB_Window_SystemMenu|#PB_Window_Tool|#PB_Window_ScreenCentered)
     
     CanvasGadget(#Gadget, 10, 10, 180, 180)
 
-    If VDraw::V_StartDraw(#Gadget, VDraw::#PbFw_VD_FLAG_Canvas)
+    If VDraw::V_StartDraw(#Gadget, VDraw::#VDraw_FLAG_Canvas)
       
       VDraw::V_SetFont(FontID(#Font))
       
@@ -1334,8 +1334,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 271
-; FirstLine = 258
+; CursorPosition = 237
+; FirstLine = 203
 ; Folding = -------
 ; Optimizer
 ; CPU = 5

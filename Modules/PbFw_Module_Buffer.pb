@@ -1,6 +1,6 @@
 ﻿; ===========================================================================
 ;  FILE : PbFw_Module_Buffer.pb
-;  NAME : Module BUFFER [Buffer::]
+;  NAME : Module BUFFER [BUF::]
 ;  DESC : Wrapper for Buffer handling 
 ;  DESC : 
 ; ===========================================================================
@@ -14,6 +14,7 @@
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
+;   2025/02/08 S.Maag : BUFFER:: ist to long for the workflow. Changed to BUF::
 ;   2025/02/06 S.Maag : Added Functions for Bit-Buffers
 ;   2025/01/20 S.Maag : Moved the general Any-Pointer definition TUptr from
 ;                       Module Buffer:: to PB:: and changend Name to pAny 
@@ -30,29 +31,29 @@
  XIncludeFile "PbFw_Module_PB.pb"           ; PB::     Purebasic Extention Module
  XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::   FrameWork control Module
  XIncludeFile "PbFw_Module_Debug.pb"        ; DBG::    Debug Module
- XIncludeFile "PbFw_Module_Bits.pb"         ; Bits::   Bit Operation Module
+ XIncludeFile "PbFw_Module_Bit.pb"          ; BIT::    Bit Operation Module
 
-DeclareModule BUFFER
+DeclareModule BUF
   
   ;- ----------------------------------------------------------------------
   ;- STRUCTURES and CONSTANTS
   ;  ----------------------------------------------------------------------
   
-  #PbFw_BUFFER_AlignWord     = 2
-  #PbFw_BUFFER_AlignLong     = 4
-  #PbFw_BUFFER_AlignQuad     = 8
-  #PbFw_BUFFER_AlignDQuad    = 16
-  #PbFw_BUFFER_AlignInteger  = SizeOf(Integer)
+  #BUF_AlignWord     = 2
+  #BUF_AlignLong     = 4
+  #BUF_AlignQuad     = 8
+  #BUF_AlignDQuad    = 16
+  #BUF_AlignInteger  = SizeOf(Integer)
    
-  #PbFw_BUFFER_AlingSektor   = 512      ; Align Buffer Size to Standard Sektor Size (512 Bytes)
-  #PbFw_BUFFER_AlignMemPage  = 4096     ; Align Buffer Size to 4094 Bytes (It's the Standard Size of a Memory-Page)
-  #PbFw_BUFFER_AlignSektor4K = 4096     ; Aling Buffer Size to 4K Sektor (4096 Bytes)
+  #BUF_AlingSektor   = 512      ; Align Buffer Size to Standard Sektor Size (512 Bytes)
+  #BUF_AlignMemPage  = 4096     ; Align Buffer Size to 4094 Bytes (It's the Standard Size of a Memory-Page)
+  #BUF_AlignSektor4K = 4096     ; Aling Buffer Size to 4K Sektor (4096 Bytes)
   
   ; 2025/01/20 : Now hBuffer use AnyPointer from Modul PB:: instead of it's own TUptr definition
   Structure hBuffer
     *_ptrMem.PB::pAny ; Pointer to BufferStart in Memory (ATTENTION!! Never change this value! => Programm will chrash!)
     *UserPtr.PB::pAny ; Any Pointer (actual processed BUFFER position)
-    AlignMode.i       ; AlignMode (#PbFw_BUFFER_AlignWord, #PbFw_BUFFER_AlignLong, #PbFw_BUFFER_AlignInteger ...)
+    AlignMode.i       ; AlignMode (#BUF_AlignWord, #BUF_AlignLong, #BUF_AlignInteger ...)
     MemSize.i         ; Allocated MemorySize in [BYTES]
     RequestedSize.i   ; the requested Size in [BYTES] (maybe lower than MemSize)
     DataSize.i        ; Size of the Datas in the Buffer [BYTES] (for User pourpose)
@@ -61,12 +62,12 @@ DeclareModule BUFFER
     Name.s            ; String for what ever we want: FileName of Data ... 
   EndStructure
  
-  Declare.i AllocateBuffer(ReqByteSize, *hBUF.hBuffer, Align = #PbFw_BUFFER_AlignInteger, ClearBuffer=#True)
+  Declare.i AllocateBuffer(ReqByteSize, *hBUF.hBuffer, Align = #BUF_AlignInteger, ClearBuffer=#True)
   Declare FreeBuffer(*hBUF.hBuffer)
   Declare ClearBufferMemory(*hBUF.hBuffer)
   Declare FillBuffer(*hBUF.hBuffer, Value, PB_Type=#PB_Byte)
   Declare.i CloneBuffer(*hBUF.hBuffer, *hCloneBUF.hBuffer)
-  Declare FileToBuffer(FileName.s, *hBUF.hBuffer, Align=#PbFw_BUFFER_AlignInteger)
+  Declare FileToBuffer(FileName.s, *hBUF.hBuffer, Align=#BUF_AlignInteger)
   Declare BufferToFile(*hBUF.hBuffer, FileName.s)
   Declare.i ReadBit(*hBUF.hBuffer, BitNo)
   Declare.i WriteBit(*hBUF.hBuffer, BitNo, NewBitValue=#True)
@@ -74,7 +75,7 @@ DeclareModule BUFFER
 EndDeclareModule
 
 
-Module BUFFER
+Module BUF
  
   EnableExplicit
   
@@ -105,7 +106,7 @@ Module BUFFER
   ;- Module Public Functions
   ;- ----------------------------------------------------------------------
 
-  Procedure.i AllocateBuffer(ReqByteSize, *hBUF.hBuffer, Align = #PbFw_BUFFER_AlignInteger, ClearBuffer=#True)
+  Procedure.i AllocateBuffer(ReqByteSize, *hBUF.hBuffer, Align = #BUF_AlignInteger, ClearBuffer=#True)
   ; ============================================================================
   ; NAME: AllocateBuffer
   ; DESC: Allocate the Memory for the Buffer
@@ -135,7 +136,7 @@ Module BUFFER
       With *hBUF        ; Fill our BufferHandling Structure with teh correct values
         \_ptrMem = RET               ; Pointer to Memory
         \RequestedSize=ReqByteSize  ; the originally requested size
-        \MemSize = AlignedByteSize  ; the allocated size (with #PbFw_BUFFER_AlignToMemPageToMemPage BlockSize)
+        \MemSize = AlignedByteSize  ; the allocated size (with #BUF_AlignToMemPageToMemPage BlockSize)
         \AlignMode = Align          ; The Byte Align Mode
         \DataSize = 0               ; the Size of our Data in the Buffer (for User purepose)
         \UserPtr = RET              ; Universal Pointer for user purpose (is set to BufferStart)
@@ -228,7 +229,7 @@ Module BUFFER
     EndWith  
   EndProcedure
       
-  Procedure FileToBuffer(FileName.s, *hBUF.hBuffer, Align=#PbFw_BUFFER_AlignInteger)
+  Procedure FileToBuffer(FileName.s, *hBUF.hBuffer, Align=#BUF_AlignInteger)
   ; ============================================================================
   ; NAME: FileToBuffer
   ; DESC: Copies a File to a Buffer
@@ -348,13 +349,13 @@ Module BUFFER
     
     ; 1st process INT as long as possible
     While *pBuf + (SizeOf(Integer)-1) <= *pEnd
-      cnt = cnt + Bits::BitCountINT(*pBuf\i)     
+      cnt = cnt + BIT::BitCountINT(*pBuf\i)     
       *pBuf + SizeOf(Integer)  
     Wend
     
     ; 2nd process remaining bytes
     While *pBuf <= *pEnd
-      cnt = cnt + Bits::BitCount16(*pBuf\a)
+      cnt = cnt + BIT::BitCount16(*pBuf\a)
       *pBuf + 1  
     Wend      
    
@@ -364,8 +365,7 @@ Module BUFFER
 EndModule
 
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 267
-; FirstLine = 218
+; CursorPosition = 16
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

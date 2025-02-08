@@ -25,7 +25,7 @@
 XIncludeFile "PbFw_Module_PB.pb"           ; PB::       Purebasic Extentions
 XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 XIncludeFile "PbFw_Module_FileSystem.pb"   ; FS::       File Functions
-XIncludeFile "PbFw_Module_Buffer.pb"       ; BUFFER::   Buffer handling
+XIncludeFile "PbFw_Module_Buffer.pb"       ; BUF::      Buffer handling
 XIncludeFile "PbFw_Module_String.pb"       ; STR::      String Functions
 XIncludeFile "PbFw_Module_IsNumeric.pb"    ; IsNum::    IsNumeric String functions
 

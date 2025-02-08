@@ -43,7 +43,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/12/04
-; VERSION  :  0.15 untested Developper Version
+; VERSION  :  0.15 untested Developer Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -104,7 +104,7 @@ DeclareModule VECd
   ; ----------------------------------------------------------------------
   ;- STRUCTURES and CONSTANTS
   ;- ----------------------------------------------------------------------
-      
+        
   ; Vector ist immer aus 4 Elementen, sonst macht das keinen Sinn
   ; die Unterscheidung Vector3, Vector4 bringt nur Nachteile statt Vorteile
   ; Man braucht neben den x,y,z,w Kooridnaten noch die Möglichkeit des
@@ -115,10 +115,10 @@ DeclareModule VECd
     Y.d          
   EndStructure
   
-  #PbFw_VectorCoordinate_X = 0
-  #PbFw_VectorCoordinate_Y = 1
-  #PbFw_VectorCoordinate_Z = 2
-  #PbFw_VectorCoordinate_W = 3
+  #VEC_X = 0
+  #VEC_Y = 1
+  #VEC_Z = 2
+  #VEC_W = 3
    
   Structure TVector  ; Double precicion Vector [32 Bytes / 256 Bit]
     StructureUnion
@@ -153,10 +153,10 @@ DeclareModule VECd
   ;             float m32;
   ;             float m33;
      
-  Structure TMatrix  ; Double precicion Matrix
+  Structure TMatrix     ; Double precicion Matrix
     StructureUnion
-      v.TVector[0]   ; Vector interpretation of the Matrix Structure
-      Pt2D.TPoint2D[0]
+      v.TVector[0]      ; Vector interpretation of the Matrix Structure
+      Pt2D.TPoint2D[0]  ; Point interpretation of the Matrix Structure
    EndStructureUnion
     m11.d : m12.d : m13.d : m14.d    
     m21.d : m22.d : m23.d : m24.d
@@ -206,7 +206,7 @@ DeclareModule VECd
   Declare.i Vector_Scale(*OUT.TVector, *IN.TVector, Factor.d)
   Declare.i Vector_CrossProduct(*OUT.TVector, *IN1.TVector, *IN2.TVector)
   Declare.i Vector_Lerp(*OUT.TVector, *IN1.TVector, *IN2.TVector, T.d)
-  Declare.d Vector_InverseLerp(*A.TVector, *B.TVector, *V.TVector, XYZW.i=#PbFw_VectorCoordinate_X)
+  Declare.d Vector_InverseLerp(*A.TVector, *B.TVector, *V.TVector, XYZW.i=#VEC_X)
   Declare.i Vector_Remap(*OUT.TVector, *IN.TVector, *inMin.TVector, *inMax.TVector, *outMin.TVector, *outMax.TVector, xRemapW=#False)
 
    ; Declare Matrix Functions
@@ -1295,7 +1295,7 @@ Module VECd
   
   EndProcedure
   
-  Procedure.d Vector_InverseLerp(*A.TVector, *B.TVector, *V.TVector, XYZW.i=#PbFw_VectorCoordinate_X)
+  Procedure.d Vector_InverseLerp(*A.TVector, *B.TVector, *V.TVector, XYZW.i=#VEC_X)
   ; ============================================================================
   ; NAME: Vector_InverseLerp
   ; DESC: Get the BlendingTime T{0..1} of the Value V in the Range 
@@ -1305,7 +1305,7 @@ Module VECd
   ; VAR(*B.TVector): End Vector    (to)
   ; VAR(*V.TVector): Vector to calculate Time for
   ; VAR(XYZW.i): Index fo Vector Coordinate to use for the calculation. 
-  ;              use {X,Y,Z,W}={0,1,2,3} Default=#PbFw_VectorCoordinate_X
+  ;              use {X,Y,Z,W}={0,1,2,3} Default=#VEC_X
   ; RET.d : Time Value {0..1} = {0..100%}
   ; ============================================================================
     
@@ -1313,16 +1313,16 @@ Module VECd
     Protected ret.d
     
     Select XYZW
-      Case #PbFw_VectorCoordinate_Y
+      Case #VEC_Y
         ret= (*V\X - *A\X) / (*B\X - *A\X)
         
-      Case #PbFw_VectorCoordinate_Y
+      Case #VEC_Y
         ret= (*V\Y - *A\Y) / (*B\Y - *A\Y)
         
-      Case #PbFw_VectorCoordinate_Z
+      Case #VEC_Z
         ret= (*V\Z - *A\Z) / (*B\Z - *A\Z)
         
-      Case #PbFw_VectorCoordinate_W
+      Case #VEC_W
         ret= (*V\W- *A\W) / (*B\W - *A\W)
         
       Default   ; any Other Value -> use X-Coordinate
@@ -1930,9 +1930,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 1038
-; FirstLine = 1020
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 1324
+; FirstLine = 1321
 ; Folding = -------------
 ; Optimizer
 ; CPU = 5

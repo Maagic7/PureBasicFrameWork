@@ -55,104 +55,104 @@ DeclareModule CPU
   ; Writing it to memory in this order the result is a 12-character string which can be tested against known Vendor ID strings
   
   ;Vendor strings from CPUs.
-  #PbFw_CPU_VENDOR_AMD           = "AuthenticAMD"
-  #PbFw_CPU_VENDOR_AMD_OLD       = "AMDisbetter!" ; Early engineering samples of AMD K5 processor
-  #PbFw_CPU_VENDOR_INTEL         = "GenuineIntel"
-  #PbFw_CPU_VENDOR_VIA           = "VIA VIA VIA "
-  #PbFw_CPU_VENDOR_TRANSMETA     = "GenuineTMx86"
-  #PbFw_CPU_VENDOR_TRANSMETA_OLD = "TransmetaCPU"
-  #PbFw_CPU_VENDOR_CYRIX         = "CyrixInstead"
-  #PbFw_CPU_VENDOR_CENTAUR       = "CentaurHauls"
-  #PbFw_CPU_VENDOR_NEXGEN        = "NexGenDriven"
-  #PbFw_CPU_VENDOR_UMC           = "UMC UMC UMC "
-  #PbFw_CPU_VENDOR_SIS           = "SiS SiS SiS "
-  #PbFw_CPU_VENDOR_NSC           = "Geode by NSC"
-  #PbFw_CPU_VENDOR_RISE          = "RiseRiseRise"
-  #PbFw_CPU_VENDOR_VORTEX        = "Vortex86 SoC"
-  #PbFw_CPU_VENDOR_AO486         = "MiSTer AO486"
-  #PbFw_CPU_VENDOR_AO486_OLD     = "GenuineAO486"
-  #PbFw_CPU_VENDOR_ZHAOXIN       = "  Shanghai  "
-  #PbFw_CPU_VENDOR_HYGON         = "HygonGenuine"
-  #PbFw_CPU_VENDOR_ELBRUS        = "E2K MACHINE "  
+  #CPU_VENDOR_AMD           = "AuthenticAMD"
+  #CPU_VENDOR_AMD_OLD       = "AMDisbetter!" ; Early engineering samples of AMD K5 processor
+  #CPU_VENDOR_INTEL         = "GenuineIntel"
+  #CPU_VENDOR_VIA           = "VIA VIA VIA "
+  #CPU_VENDOR_TRANSMETA     = "GenuineTMx86"
+  #CPU_VENDOR_TRANSMETA_OLD = "TransmetaCPU"
+  #CPU_VENDOR_CYRIX         = "CyrixInstead"
+  #CPU_VENDOR_CENTAUR       = "CentaurHauls"
+  #CPU_VENDOR_NEXGEN        = "NexGenDriven"
+  #CPU_VENDOR_UMC           = "UMC UMC UMC "
+  #CPU_VENDOR_SIS           = "SiS SiS SiS "
+  #CPU_VENDOR_NSC           = "Geode by NSC"
+  #CPU_VENDOR_RISE          = "RiseRiseRise"
+  #CPU_VENDOR_VORTEX        = "Vortex86 SoC"
+  #CPU_VENDOR_AO486         = "MiSTer AO486"
+  #CPU_VENDOR_AO486_OLD     = "GenuineAO486"
+  #CPU_VENDOR_ZHAOXIN       = "  Shanghai  "
+  #CPU_VENDOR_HYGON         = "HygonGenuine"
+  #CPU_VENDOR_ELBRUS        = "E2K MACHINE "  
   ; Vendor strings from hypervisors.
-  #PbFw_CPU_VENDOR_QEMU          = "TCGTCGTCGTCG"
-  #PbFw_CPU_VENDOR_KVM           = " KVMKVMKVM  "
-  #PbFw_CPU_VENDOR_VMWARE        = "VMwareVMware"
-  #PbFw_CPU_VENDOR_VIRTUALBOX    = "VBoxVBoxVBox"
-  #PbFw_CPU_VENDOR_XEN           = "XenVMMXenVMM"
-  #PbFw_CPU_VENDOR_HYPERV        = "Microsoft Hv"
-  #PbFw_CPU_VENDOR_PARALLELS     = " prl hyperv "
-  #PbFw_CPU_VENDOR_PARALLELS_ALT = " lrpepyh vr "  ; Sometimes Parallels incorrectly encodes "prl hyperv" As "lrpepyh vr" due To an endianness mismatch.
-  #PbFw_CPU_VENDOR_BHYVE         = "bhyve bhyve "
-  #PbFw_CPU_VENDOR_QNX           = " QNXQVMBSQG "  
+  #CPU_VENDOR_QEMU          = "TCGTCGTCGTCG"
+  #CPU_VENDOR_KVM           = " KVMKVMKVM  "
+  #CPU_VENDOR_VMWARE        = "VMwareVMware"
+  #CPU_VENDOR_VIRTUALBOX    = "VBoxVBoxVBox"
+  #CPU_VENDOR_XEN           = "XenVMMXenVMM"
+  #CPU_VENDOR_HYPERV        = "Microsoft Hv"
+  #CPU_VENDOR_PARALLELS     = " prl hyperv "
+  #CPU_VENDOR_PARALLELS_ALT = " lrpepyh vr "  ; Sometimes Parallels incorrectly encodes "prl hyperv" As "lrpepyh vr" due To an endianness mismatch.
+  #CPU_VENDOR_BHYVE         = "bhyve bhyve "
+  #CPU_VENDOR_QNX           = " QNXQVMBSQG "  
    
   Enumeration eCPU_FEATURES
     
     ; INPUT EAX = 01H: Returns Feature Information in ECX And EDX
-    #PbFw_CPU_FEAT_ECX_SSE3        = 1 << 0    ; SSE3 instructions
-    #PbFw_CPU_FEAT_ECX_PCLMUL      = 1 << 1    ; support PCLMULQDQ instruction
-    #PbFw_CPU_FEAT_ECX_DTES64      = 1 << 2    ; supports DS area using 64-bit layout.
-    #PbFw_CPU_FEAT_ECX_MONITOR     = 1 << 3    ; support Mointor Wait instruction
-    #PbFw_CPU_FEAT_ECX_DS_CPL      = 1 << 4    ; Extended Debug-Memory Feature
-    #PbFw_CPU_FEAT_ECX_VMX         = 1 << 5    ; VMX, Virtual Machine Extention
-    #PbFw_CPU_FEAT_ECX_SMX         = 1 << 6    ; Saver Mode Extention
-    #PbFw_CPU_FEAT_ECX_EST         = 1 << 7    ; Enhanced Speed Step
-    #PbFw_CPU_FEAT_ECX_TM2         = 1 << 8    ; Thermal Monitoring 2
-    #PbFw_CPU_FEAT_ECX_SSSE3       = 1 << 9    ; SSS3 support, Supplement Streaming Extention
-    #PbFw_CPU_FEAT_ECX_CID         = 1 << 10   ; L1-Cache-Mode adaptive or shared
-    #PbFw_CPU_FEAT_ECX_SDBG        = 1 << 11   ; IA32 Debug
-    #PbFw_CPU_FEAT_ECX_FMA         = 1 << 12   ; supports FMA3 instructions
-    #PbFw_CPU_FEAT_ECX_CX16        = 1 << 13   ; supports CMPXCHG16B instruction
-    #PbFw_CPU_FEAT_ECX_XTPR        = 1 << 14   ; xTPR Update Control
-    #PbFw_CPU_FEAT_ECX_PDCM        = 1 << 15   ; Perfmon and Debug Capability.
+    #CPU_FEAT_ECX_SSE3        = 1 << 0    ; SSE3 instructions
+    #CPU_FEAT_ECX_PCLMUL      = 1 << 1    ; support PCLMULQDQ instruction
+    #CPU_FEAT_ECX_DTES64      = 1 << 2    ; supports DS area using 64-bit layout.
+    #CPU_FEAT_ECX_MONITOR     = 1 << 3    ; support Mointor Wait instruction
+    #CPU_FEAT_ECX_DS_CPL      = 1 << 4    ; Extended Debug-Memory Feature
+    #CPU_FEAT_ECX_VMX         = 1 << 5    ; VMX, Virtual Machine Extention
+    #CPU_FEAT_ECX_SMX         = 1 << 6    ; Saver Mode Extention
+    #CPU_FEAT_ECX_EST         = 1 << 7    ; Enhanced Speed Step
+    #CPU_FEAT_ECX_TM2         = 1 << 8    ; Thermal Monitoring 2
+    #CPU_FEAT_ECX_SSSE3       = 1 << 9    ; SSS3 support, Supplement Streaming Extention
+    #CPU_FEAT_ECX_CID         = 1 << 10   ; L1-Cache-Mode adaptive or shared
+    #CPU_FEAT_ECX_SDBG        = 1 << 11   ; IA32 Debug
+    #CPU_FEAT_ECX_FMA         = 1 << 12   ; supports FMA3 instructions
+    #CPU_FEAT_ECX_CX16        = 1 << 13   ; supports CMPXCHG16B instruction
+    #CPU_FEAT_ECX_XTPR        = 1 << 14   ; xTPR Update Control
+    #CPU_FEAT_ECX_PDCM        = 1 << 15   ; Perfmon and Debug Capability.
                                             ; Reserved
-    #PbFw_CPU_FEAT_ECX_PCID        = 1 << 17   ; Process-context identifiers
-    #PbFw_CPU_FEAT_ECX_DCA         = 1 << 18   ; prefetch data from a memory mapped device
-    #PbFw_CPU_FEAT_ECX_SSE4_1      = 1 << 19   ; SSE4.1 Instructions
-    #PbFw_CPU_FEAT_ECX_SSE4_2      = 1 << 20   ; SSE4.2 Instructions
-    #PbFw_CPU_FEAT_ECX_X2APIC      = 1 << 21   ; x2APIC feature
-    #PbFw_CPU_FEAT_ECX_MOVBE       = 1 << 22   ; supports MOVBE instruction
-    #PbFw_CPU_FEAT_ECX_POPCNT      = 1 << 23   ; upports the POPCNT instruction
-    #PbFw_CPU_FEAT_ECX_TSC         = 1 << 24   ; local APIC timer supports one-shot operation using a TSC deadline value
-    #PbFw_CPU_FEAT_ECX_AES         = 1 << 25   ; supports the AESNI instruction extensions
-    #PbFw_CPU_FEAT_ECX_XSAVE       = 1 << 26   ; upports the XSAVE/XRSTOR processor extended states feature
-    #PbFw_CPU_FEAT_ECX_OSXSAVE     = 1 << 27   ; has set CR4.OSXSAVE[bit 18] to enable XSETBV/XGETBV
-    #PbFw_CPU_FEAT_ECX_AVX         = 1 << 28   ; supports AVX instructions operating on 256-bit YMM
-    #PbFw_CPU_FEAT_ECX_F16C        = 1 << 29   ; supports 16-bit floating-point conversion instructions
-    #PbFw_CPU_FEAT_ECX_RDRAND      = 1 << 30   ; supports RDRAND instruction
-    #PbFw_CPU_FEAT_ECX_HYPERVISOR  = 1 << 31
+    #CPU_FEAT_ECX_PCID        = 1 << 17   ; Process-context identifiers
+    #CPU_FEAT_ECX_DCA         = 1 << 18   ; prefetch data from a memory mapped device
+    #CPU_FEAT_ECX_SSE4_1      = 1 << 19   ; SSE4.1 Instructions
+    #CPU_FEAT_ECX_SSE4_2      = 1 << 20   ; SSE4.2 Instructions
+    #CPU_FEAT_ECX_X2APIC      = 1 << 21   ; x2APIC feature
+    #CPU_FEAT_ECX_MOVBE       = 1 << 22   ; supports MOVBE instruction
+    #CPU_FEAT_ECX_POPCNT      = 1 << 23   ; upports the POPCNT instruction
+    #CPU_FEAT_ECX_TSC         = 1 << 24   ; local APIC timer supports one-shot operation using a TSC deadline value
+    #CPU_FEAT_ECX_AES         = 1 << 25   ; supports the AESNI instruction extensions
+    #CPU_FEAT_ECX_XSAVE       = 1 << 26   ; upports the XSAVE/XRSTOR processor extended states feature
+    #CPU_FEAT_ECX_OSXSAVE     = 1 << 27   ; has set CR4.OSXSAVE[bit 18] to enable XSETBV/XGETBV
+    #CPU_FEAT_ECX_AVX         = 1 << 28   ; supports AVX instructions operating on 256-bit YMM
+    #CPU_FEAT_ECX_F16C        = 1 << 29   ; supports 16-bit floating-point conversion instructions
+    #CPU_FEAT_ECX_RDRAND      = 1 << 30   ; supports RDRAND instruction
+    #CPU_FEAT_ECX_HYPERVISOR  = 1 << 31
  
-    #PbFw_CPU_FEAT_EDX_FPU         = 1 << 0    ; OnChip Floating-point Unit 
-    #PbFw_CPU_FEAT_EDX_VME         = 1 << 1    ; Virtual 8086 Mode Enhancements
-    #PbFw_CPU_FEAT_EDX_DE          = 1 << 2    ; Debugging Extensions
-    #PbFw_CPU_FEAT_EDX_PSE         = 1 << 3    ; Page Size Extension. Large pages of size 4 MByte are supported,
-    #PbFw_CPU_FEAT_EDX_TSC         = 1 << 4    ; Time Stamp Counter. The RDTSC instruction is supported
-    #PbFw_CPU_FEAT_EDX_MSR         = 1 << 5    ; Model Specific Registers RDMSR and WRMSR Instructions
-    #PbFw_CPU_FEAT_EDX_PAE         = 1 << 6    ; Physical Address Extension. Physical addresses greater than 32 bits are supported
-    #PbFw_CPU_FEAT_EDX_MCE         = 1 << 7    ; Machine Check Exception. Exception 18 is defined for Machine Checks, including CR4.MC
-    #PbFw_CPU_FEAT_EDX_CX8         = 1 << 8    ; CMPXCHG8B Instruction. The compare-and-exchange 8 bytes (64 bits) instruction is supported
-    #PbFw_CPU_FEAT_EDX_APIC        = 1 << 9    ; APIC On-Chip.
+    #CPU_FEAT_EDX_FPU         = 1 << 0    ; OnChip Floating-point Unit 
+    #CPU_FEAT_EDX_VME         = 1 << 1    ; Virtual 8086 Mode Enhancements
+    #CPU_FEAT_EDX_DE          = 1 << 2    ; Debugging Extensions
+    #CPU_FEAT_EDX_PSE         = 1 << 3    ; Page Size Extension. Large pages of size 4 MByte are supported,
+    #CPU_FEAT_EDX_TSC         = 1 << 4    ; Time Stamp Counter. The RDTSC instruction is supported
+    #CPU_FEAT_EDX_MSR         = 1 << 5    ; Model Specific Registers RDMSR and WRMSR Instructions
+    #CPU_FEAT_EDX_PAE         = 1 << 6    ; Physical Address Extension. Physical addresses greater than 32 bits are supported
+    #CPU_FEAT_EDX_MCE         = 1 << 7    ; Machine Check Exception. Exception 18 is defined for Machine Checks, including CR4.MC
+    #CPU_FEAT_EDX_CX8         = 1 << 8    ; CMPXCHG8B Instruction. The compare-and-exchange 8 bytes (64 bits) instruction is supported
+    #CPU_FEAT_EDX_APIC        = 1 << 9    ; APIC On-Chip.
                                             ; Reserved
-    #PbFw_CPU_FEAT_EDX_SEP         = 1 << 11   ; SYSENTER and SYSEXIT Instructions.
-    #PbFw_CPU_FEAT_EDX_MTRR        = 1 << 12   ; Memory Type Range Registers. MTRRs are supported
-    #PbFw_CPU_FEAT_EDX_PGE         = 1 << 13   ; Page Global Bit. The global bit is supported in paging-structure entries that map a page
-    #PbFw_CPU_FEAT_EDX_MCA         = 1 << 14   ; Machine Check Architecture
-    #PbFw_CPU_FEAT_EDX_CMOV        = 1 << 15   ; Conditional Move Instructions
-    #PbFw_CPU_FEAT_EDX_PAT         = 1 << 16   ; Page Attribute Table. Page Attribute Table is supported.
-    #PbFw_CPU_FEAT_EDX_PSE36       = 1 << 17   ; 36-Bit Page Size Extension. 4-MByte pages addressing physical memory beyond 4 GBytes are supported with 32-bit paging
-    #PbFw_CPU_FEAT_EDX_PSN         = 1 << 18   ; Processor Serial Number. The processor supports the 96-bit processor identification number feature and it's enabled
-    #PbFw_CPU_FEAT_EDX_CLFLUSH     = 1 << 19   ; CLFLUSH Instruction
-    #PbFw_CPU_FEAT_EDX_DS          = 1 << 21   ; Debug Store. The processor supports the ability to write debug information into a memory resident buffer
-    #PbFw_CPU_FEAT_EDX_ACPI        = 1 << 22   ; Thermal Monitor and Software Controlled Clock Facilities
-    #PbFw_CPU_FEAT_EDX_MMX         = 1 << 23   ; Intel MMX Technology. The processor supports the Intel MMX technology
-    #PbFw_CPU_FEAT_EDX_FXSR        = 1 << 24   ; FXSAVE and FXRSTOR Instructions
-    #PbFw_CPU_FEAT_EDX_SSE         = 1 << 25   ; SSE extensions
-    #PbFw_CPU_FEAT_EDX_SSE2        = 1 << 26   ; SSE2 extensions
-    #PbFw_CPU_FEAT_EDX_SS          = 1 << 27   ; Self Snoop
-    #PbFw_CPU_FEAT_EDX_HTT         = 1 << 28   ; Max APIC IDs reserved field is Valid.
-    #PbFw_CPU_FEAT_EDX_TM          = 1 << 29   ; The processor implements the thermal monitor automatic thermal control circuitry (TCC)
-    #PbFw_CPU_FEAT_EDX_IA64        = 1 << 30   ; Intel Itanium 64
-    #PbFw_CPU_FEAT_EDX_PBE         = 1 << 31   ; Pending Break Enable
+    #CPU_FEAT_EDX_SEP         = 1 << 11   ; SYSENTER and SYSEXIT Instructions.
+    #CPU_FEAT_EDX_MTRR        = 1 << 12   ; Memory Type Range Registers. MTRRs are supported
+    #CPU_FEAT_EDX_PGE         = 1 << 13   ; Page Global Bit. The global bit is supported in paging-structure entries that map a page
+    #CPU_FEAT_EDX_MCA         = 1 << 14   ; Machine Check Architecture
+    #CPU_FEAT_EDX_CMOV        = 1 << 15   ; Conditional Move Instructions
+    #CPU_FEAT_EDX_PAT         = 1 << 16   ; Page Attribute Table. Page Attribute Table is supported.
+    #CPU_FEAT_EDX_PSE36       = 1 << 17   ; 36-Bit Page Size Extension. 4-MByte pages addressing physical memory beyond 4 GBytes are supported with 32-bit paging
+    #CPU_FEAT_EDX_PSN         = 1 << 18   ; Processor Serial Number. The processor supports the 96-bit processor identification number feature and it's enabled
+    #CPU_FEAT_EDX_CLFLUSH     = 1 << 19   ; CLFLUSH Instruction
+    #CPU_FEAT_EDX_DS          = 1 << 21   ; Debug Store. The processor supports the ability to write debug information into a memory resident buffer
+    #CPU_FEAT_EDX_ACPI        = 1 << 22   ; Thermal Monitor and Software Controlled Clock Facilities
+    #CPU_FEAT_EDX_MMX         = 1 << 23   ; Intel MMX Technology. The processor supports the Intel MMX technology
+    #CPU_FEAT_EDX_FXSR        = 1 << 24   ; FXSAVE and FXRSTOR Instructions
+    #CPU_FEAT_EDX_SSE         = 1 << 25   ; SSE extensions
+    #CPU_FEAT_EDX_SSE2        = 1 << 26   ; SSE2 extensions
+    #CPU_FEAT_EDX_SS          = 1 << 27   ; Self Snoop
+    #CPU_FEAT_EDX_HTT         = 1 << 28   ; Max APIC IDs reserved field is Valid.
+    #CPU_FEAT_EDX_TM          = 1 << 29   ; The processor implements the thermal monitor automatic thermal control circuitry (TCC)
+    #CPU_FEAT_EDX_IA64        = 1 << 30   ; Intel Itanium 64
+    #CPU_FEAT_EDX_PBE         = 1 << 31   ; Pending Break Enable
     
     ; INPUT EAX = 07h AND ECX = 0h: Returns Feature Information 
     ; Returns in EAX: Bits 31 - 00: Reports the maximum input value for supported leaf 7 sub-leaves.
@@ -185,14 +185,14 @@ DeclareModule CPU
     ; Bit 29: SHA. supports Intel® Secure Hash Algorithm Extensions (Intel® SHA Extensions) If 1. 
     ; Bits 31 - 30: Reserved.
     
-    #PbFw_CPU_FEAT_EBX_FSGSBASE         = 1         ; Supports RDFSBASE/RDGSBASE/WRFSBASE/WRGSBASE If 1
-    #PbFw_CPU_FEAT_EBX_IA32_TSC_ADJUST  = 1 << 1    ; MSR is supported
-    #PbFw_CPU_FEAT_EBX_SGX              = 1 << 2    ; Supports Intel® Software Guard Extensions
-    #PbFw_CPU_FEAT_EBX_BMI1             = 1 << 3    ; BMI1
-    #PbFw_CPU_FEAT_EBX_HLE              = 1 << 4    ; HLE
-    #PbFw_CPU_FEAT_EBX_AVX2             = 1 << 5    ; AVX2
+    #CPU_FEAT_EBX_FSGSBASE         = 1         ; Supports RDFSBASE/RDGSBASE/WRFSBASE/WRGSBASE If 1
+    #CPU_FEAT_EBX_IA32_TSC_ADJUST  = 1 << 1    ; MSR is supported
+    #CPU_FEAT_EBX_SGX              = 1 << 2    ; Supports Intel® Software Guard Extensions
+    #CPU_FEAT_EBX_BMI1             = 1 << 3    ; BMI1
+    #CPU_FEAT_EBX_HLE              = 1 << 4    ; HLE
+    #CPU_FEAT_EBX_AVX2             = 1 << 5    ; AVX2
     
-    #PbFw_CPU_FEAT_EBX_SHA              = 1 << 29   ; SHA Instruction support
+    #CPU_FEAT_EBX_SHA              = 1 << 29   ; SHA Instruction support
     
   EndEnumeration
   
@@ -578,14 +578,14 @@ Module CPU
       If CPUID($01, @mEAX, @mEBX, @mECX, @mEDX)
       
         With *Features
-          \MMX =  Bool (mEDX & #PbFw_CPU_FEAT_EDX_MMX) 
-          \SSE =  Bool (mEDX & #PbFw_CPU_FEAT_EDX_SSE)
-          \SSE2 = Bool (mEDX & #PbFw_CPU_FEAT_EDX_SSE2)
-          \SSE3 = Bool (mECX & #PbFw_CPU_FEAT_ECX_SSE3)
+          \MMX =  Bool (mEDX & #CPU_FEAT_EDX_MMX) 
+          \SSE =  Bool (mEDX & #CPU_FEAT_EDX_SSE)
+          \SSE2 = Bool (mEDX & #CPU_FEAT_EDX_SSE2)
+          \SSE3 = Bool (mECX & #CPU_FEAT_ECX_SSE3)
           
-          \SSE4_1 = Bool (mECX & #PbFw_CPU_FEAT_ECX_SSE4_1)
-          \SSE4_2 = Bool (mECX & #PbFw_CPU_FEAT_ECX_SSE4_2)
-          \AVX =    Bool (mECX & #PbFw_CPU_FEAT_ECX_AVX)
+          \SSE4_1 = Bool (mECX & #CPU_FEAT_ECX_SSE4_1)
+          \SSE4_2 = Bool (mECX & #CPU_FEAT_ECX_SSE4_2)
+          \AVX =    Bool (mECX & #CPU_FEAT_ECX_AVX)
           \AVX2 =   0 ; ??? where to find the Flag (07h => EBX Bit 29)
           ;\AVX512 = 0
           ;\AES = 0
@@ -603,7 +603,7 @@ Module CPU
     
     With *Features
       If CPUID($07, @mEAX, @mEBX, @mECX, @mEDX)
-        \SHA = Bool(mEBX & #PbFw_CPU_FEAT_EBX_SHA)  
+        \SHA = Bool(mEBX & #CPU_FEAT_EBX_SHA)  
       EndIf
       
     EndWith
@@ -818,8 +818,9 @@ CompilerIf #PB_Compiler_IsMainFile
   MessageRequester("CPU Frequency", StrD(f) +"MHz")
 CompilerEndIf
 
-; IDE Options = PureBasic 6.03 LTS (Windows - x64)
-; CursorPosition = 22
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 579
+; FirstLine = 529
 ; Folding = -----
 ; Optimizer
 ; CPU = 5

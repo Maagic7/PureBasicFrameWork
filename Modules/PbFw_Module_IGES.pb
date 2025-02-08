@@ -6,6 +6,7 @@
 ;  DESC: IGES File Basic Implementations
 ;
 ; SOURCES: https://wiki.eclipse.org/IGES_file_Specification
+;          https://github.com/ixmilia/iges/tree/main/src/IxMilia.Iges
 ; ===========================================================================
 ;
 ; AUTHOR   :  Stefan Maag
@@ -74,21 +75,36 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
-  ;XIncludeFile "PbFw_Module_BUFFER.pb"  ; Module for Buffer handling
-  ;XIncludeFile "PbFw_Module_STRING.pb"  ; Module for extended String handling
+XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::     FrameWork control Module
 
 DeclareModule IGES
   
   Enumeration IGES_ColorNumber
-    #IGES_COL_BLACK = 1
-    #IGES_COL_RED 
+    #IGES_COL_DEFAULT   ; = 0
+    #IGES_COL_BLACK     ; = 1
+    #IGES_COL_RED       ; = 2
     #IGES_COL_GREEN 
     #IGES_COL_BLUE 
     #IGES_COL_YELLOW 
     #IGES_COL_MAGENTA 
     #IGES_COL_CYAN
-    #IGES_COL_WHITE
+    #IGES_COL_WHITE     ; = 8
   EndEnumeration
+  
+  ;- ----------------------------------------------------------------------
+  ;- Constants for IGES Units 
+  ; ----------------------------------------------------------------------
+  #IGES_Inches = 1
+  #IGES_Millimeters = 2
+  #IGES_Custom = 3
+  #IGES_Feet = 4
+  #IGES_Miles = 5
+  #IGES_Meters = 6
+  #IGES_Kilometers = 7
+  #IGES_Mils = 8
+  #IGES_Microns = 9
+  #IGES_Centimeters = 10
+  #IGES_MicroInches = 11
   
   ;- ----------------------------------------------------------------------
   ;- Constants for IGES Entity-Types 
@@ -556,7 +572,7 @@ DeclareModule IGES
   
   ; Defines a surface as a sphere. Used by a Face Entity. 
   Structure TSphericalSurface ; Type 196
-    pPoint.i      ;  Pointer To Point Entity (Type 116) Center point
+    pPoint.i      ; Pointer To Point Entity (Type 116) Center point
     R.f           ; Radius
     pAxis.i       ; Pointer To Direction Entity (Type 123) Axis direction
  	  pRef.i        ; Pointer To Direction Entity (Type 123) Gives the reference direction
@@ -740,9 +756,9 @@ DeclareModule IGES
 EndModule
   
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 22
+; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
+; CursorPosition = 78
+; FirstLine = 47
 ; Folding = --
 ; Optimizer
 ; CPU = 5
-; Compiler = PureBasic 6.00 LTS (Windows - x86)
