@@ -1,0 +1,57 @@
+**************************************************
+         Purebasic Framework History
+**************************************************
+
+2025/02/08 Now the time has come to start a better documentation.
+
+==================================================
+                 Standards
+==================================================
+
+--------------------------------------------------
+  Name scheme of public constanrs in Modules
+--------------------------------------------------
+
+#'ModuleName'_'ConstName' : #BUF_AlignInteger
+
+--------------------------------------------------
+  Prefixing for private Procedures, Variables
+--------------------------------------------------
+
+Prefixing for private Procedures/Variables
+in the Module Code to see directly what is not
+public exported: _ProcedureName()
+
+--------------------------------------------------
+  Prefixing for Public ReadOnly variables
+--------------------------------------------------
+
+In some modules there are Public variables which
+the user should not change (read only use!)
+This variables are prefixed with '_'
+
+==================================================
+                 Changelog
+==================================================
+
+--------------------------------------------------
+2025/02/08  S.Maag
+--------------------------------------------------
+
+Because shorter Module Names are better for the programming workflow,
+I try to use 3 Character Module names if possible.
+
+Changed Module Buffer BUFFER:: to BUF:: 
+Changed Module Bits:: to BIT::
+
+There was a different name scheme for the public constants in the different Moduls.
+In some, all constans where prefixed with #PbFw_'ModulName_', in some 
+only #'ModuleName_' in ohters nothing.
+I decided it would be better to have an identical prefixing or no prexfix.
+Until know I'm not sure what is better:
+- no prefix or 'ModuleName'
+For the first I decided to use 'ModuleName' and changed all public constants 
+in the Modules to #'ModuleName_'ConstantName'
+BUF::#BUF_AlignInteger  but with use of UseModule Buffer it's #BUF_AlingInteger.
+I think this helps when reading a code to now exactly where the constans from
+and do not run into Name conflicts
