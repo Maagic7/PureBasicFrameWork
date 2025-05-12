@@ -17,13 +17,13 @@
 ; 2025/02/01 S.Maag changed to the new Framework wide Constant name scheme
 ;             #'Module'_ConstantName
 ; 2025/02/01 S.Maag : Moved TSystemColor and the basic Color Macros
-;             form Modul Color To Modul PB!
+;             form Module Color to Module PB!
 ; 2025/01/30 S.Maag integrated the most common Bit functions as Macros!
 ; 2025/01/29 S.Maag added the RealTimecounter and RealTimeCounter/HighPerformanceTimer
 ;             functions from Module RTC. RTC will be obsolet in the future.
 ;
 ; 2025/01/28 S.Maag : I realized: It's better for the programming workflow
-;             to have one extention modul with the most common/needed functions
+;             to have one extention module with the most common/needed functions
 ;             instead of a lot of special moduls. Because of that I start to move
 ;             the most common Functions/Macros to this Modul.
 ;}
@@ -88,7 +88,7 @@ DeclareModule PB
   EndStructure
   
   ; An adapted version of pAny especally for character use
-  Structure pChar
+  Structure pChar   ; ATTENTION! Only use as Pointer Strukture! Do not define as a normal Var!
     StructureUnion
       a.a         ; ASCII   : 8 Bit unsigned  [0..255] 
       c.c         ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
@@ -544,10 +544,10 @@ DeclareModule PB
   Macro InvertRange(value, RangeMin, RangeMax)
     ; ret = Max - Val + Min
     (RangeMin + RangeMax - value)
-  EndMacro
+  EndMacro    
 
   ;- ----------------------------------------------------------------------
-  ;- Macros for Hex-String Conversion
+  ;- Macros for Number to String Conversion
   ;- ----------------------------------------------------------------------
 
   ; create a right aligned Hex$ with leading '0'. The stringlength
@@ -566,10 +566,45 @@ DeclareModule PB
   Macro HexQ(value)
     RSet(Hex(value, #PB_Quad), 16, "0")
   EndMacro
+  
+  ; Bin(value, #PB_Byte) converts only the LoByte to Bin
+  ; use it: Binary$ = BinB(value)
+  Macro BinB(value)  
+    RSet(Bin(value, #PB_Byte), 8, "0")
+  EndMacro
+  
+  ; use it: Binary$ = BinW(value)
+  Macro BinW(value)
+    BinB(value>>8)+"."+BinB(value)
+  EndMacro
+  
+  ; use it: Binary$ = BinL(value)
+  Macro BinL(value)
+    BinB(value>>24)+"."+BinB(value>>16)+"."+BinB(value>>8)+"."+BinB(value)
+  EndMacro
+ 
+  ; use it: Number$ = No2StrI(IntValue, length)
+  Macro No2StrI(IntValue, lenght)
+    RSet(Str(IntValue), lenght)
+  EndMacro
+  
+  ; use it: Number$ = No2StrF(IntValue, length, [decimals])
+  Macro No2StrF(floatValue, lenght, decimals=3)
+    RSet(StrF(floatValue, decimals), lenght)
+  EndMacro
+  
+  ; use it: Number$ = No2StrD(IntValue, length, [decimals])
+  Macro No2StrD(doubleValue, lenght, decimals=3)
+    RSet(StrD(doubleValue, decimals), lenght)
+  EndMacro
+ 
 
   ;- ----------------------------------------------------------------------
   ;- Macros for CHAR operations
   ;- ----------------------------------------------------------------------
+  
+  ; With INCC, DECC for Charpointer operations instead of *MyCharPointer + [1,2], -[1,2]
+  ; you can do a search for CharPointer operations. You don't have to care about CharSize! 
   
   ; Decrement CharPointer
   ; use it: DECC(MyCharPointer, [1..n])
@@ -586,82 +621,82 @@ DeclareModule PB
   EndMacro
   
   ; LowerCase a single Char in ASCii Character space
-  ; use it: result = LCaseChar(MyChar)
-  Macro LCaseChar(MyChar)
-    (MyChar + 32 * Bool( (MyChar>='A' And MyChar<='Z') Or (MyChar>=192 And MyChar<=222))  
+  ; use it: result = LCaseChar(CharValue)
+  Macro LCaseChar(CharValue)
+    (CharValue + 32 * Bool( (CharValue>='A' And CharValue<='Z') Or (CharValue>=192 And CharValue<=222))  
   EndMacro
   
   ; UpperCase a single Char in ASCii Character space
-  ; use it: result = UCaseChar(MyChar)
-   Macro UCaseChar(MyChar)
-    (MyChar - 32 * Bool( (MyChar>='a' And MyChar<='z') Or (MyChar>=224 And MyChar<=254))  
+  ; use it: result = UCaseChar(CharValue)
+  Macro UCaseChar(CharValue)
+    (CharValue - 32 * Bool( (CharValue>='a' And CharValue<='z') Or (CharValue>=224 And CharValue<=254))  
   EndMacro
 
   ; Set a Charater variable to LoChar. It's faster than MyChar = LCaseChar(MyChar)!
   ; ASCii Character space only!
-  ; use it: SetCharLo(MyChar)
-  Macro SetCharLo(VarMyChar)  
-    Select VarMyChar
+  ; use it: SetCharLo(CharValue)
+  Macro SetCharLo(varChar)  
+    Select varChar
       Case 'A' To 'Z'
-        VarMyChar + 32  ; a[97]-A[65]=32       
+        varChar + 32  ; a[97]-A[65]=32       
       Case 192 To 222   ; 'À'..222
-        VarMyChar + 32  ; 224-192 = 32        
+        varChar + 32  ; 224-192 = 32        
     EndSelect
   EndMacro
    
   ; Set a Charater variable to UpChar. It's faster than MyChar = UCaseChar(MyChar)
   ; ASCii Character space only!
   ; use it: SetCharUp(MyChar)
-  Macro SetCharUp(VarMyChar)  
-    Select VarMyChar
+  Macro SetCharUp(varChar)  
+    Select varChar
       Case 'a' To 'z'
-        VarMyChar - 32  ; a[97]-A[65]=32                
+        varChar - 32  ; a[97]-A[65]=32                
       Case 224 To 254   ; 'À'..254
-        VarMyChar - 32  ; 254-222 = 32      
+        varChar - 32  ; 254-222 = 32      
     EndSelect
   EndMacro 
   
   ; Check if Char is decimal digit : Case '0' To '9'
   ; The Bool is needed to save the result in a var: res=IsDecChar()! Without Bool only 'If IsDecChar()' is possible!
-  ; use it: result = IsDecChar(MyChar)
-  Macro IsDecChar(MyChar)
-    Bool(MyChar >='0' And MyChar <='9')
+  ; use it: result = IsDecChar(CharValue)
+  Macro IsDecChar(CharValue)
+    Bool(CharValue >='0' And CharValue <='9')
   EndMacro
   
   ; Check if Char is Hex digit : Case '0' To '9', 'A' To 'F'
-  ; use it: result = IsHexChar(MyChar)
-  Macro IsHexChar(MyChar)
-    Bool((MyChar >='0' And MyChar <='9') Or (MyChar >='A' And MyChar <='F'))
+  ; use it: result = IsHexChar(CharValue)
+  Macro IsHexChar(CharValue)
+    Bool((CharValue >='0' And CharValue <='9') Or (CharValue >='A' And CharValue <='F'))
   EndMacro
   
   ; Check if Char is binary digit : Case '0', '1'
   ; use it: result = IsBinChar(MyChar)
-  Macro IsBinChar(MyChar)
-    Bool(MyChar ='0' Or MyChar ='1')
+  Macro IsBinChar(CharValue)
+    Bool(CharValue ='0' Or CharValue ='1')
   EndMacro
   
   ; Check if Char is SPACE or TAB : Case '9', '32'
   ; use it: result = IsSpaceTabChar(MyChar)
-  Macro IsSpaceTabChar(MyChar)
-    Bool(MyChar =9 Or MyChar =32)
+  Macro IsSpaceTabChar(CharValue)
+    Bool(CharValue =9 Or CharValue =32)
   EndMacro
   
   ; Check if Char is EndOfLineChar LF or CR : Case '10', '13'
   ; use it: result = IsEolChar(MyChar)
-  Macro IsEolChar(MyChar)
-    Bool(MyChar =10 Or MyChar =13)
+  Macro IsEolChar(CharValue)
+    Bool(CharValue =10 Or CharValue =13)
   EndMacro  
   
   ; Check if Char is plus '+' or minus '-'
   ; use it: result = IsPlusMinusChar(MyChar)
-  Macro IsPlusMinusChar(MyChar)
-    Bool(MyChar ='+' Or MyChar ='-')
+  Macro IsPlusMinusChar(CharValue)
+    Bool(CharValue ='+' Or CharValue ='-')
   EndMacro  
 
   ; Check if Char is multiplication '*' or division '/'
   ; use it: result = IsMulDivChar(MyChar)
-  Macro IsMulDivChar(MyChar)
-    Bool(MyChar ='*' Or MyChar ='/')
+  Macro IsMulDivChar(CharValue)
+    Bool(CharValue ='*' Or CharValue ='/')
   EndMacro  
   
   ;- ----------------------------------------------------------------------
@@ -905,7 +940,7 @@ DeclareModule PB
   #PB_RTC_MicroSeconds = 0
   #PB_RTC_NanoSeconds = 1
   
-  #PB_RTC_MaxTimerNo = 15          ; Timers [0..#PB_RTC_MaxTimerNo]  = [0..15]! Change this value if you need more Timers
+  #PB_RTC_MaxCounterNo = 15     ; Timers [0..#PB_RTC_MaxCounterNo]  = [0..15]! Change this value if you need more Timers
   
   Structure TDateAndTime        ; DateAndTime Structure to convert a TimeStamp
     wYear.w
@@ -917,13 +952,13 @@ DeclareModule PB
     wMilliseconds.w
   EndStructure
   
-  Structure TRTC                ; Structure to hold the Timer datas
-    T.q[#PB_RTC_MaxTimerNo+1]      ; Timer Value
-    xRun.i[#PB_RTC_MaxTimerNo+1]   ; Timer Run-State : #False = Stop, #True = Run
+  Structure TRTC                      ; Structure to hold the Timer datas
+    T.q[#PB_RTC_MaxCounterNo+1]       ; Timer Value
+    xRun.i[#PB_RTC_MaxCounterNo+1]    ; Timer Run-State : #False = Stop, #True = Run
   EndStructure
   
   ; Basic Functions
-  Declare.i GetRtcResolution_ns()     ; Get the NanoSeconds per TickCount : >0 if CPU and OS support RTC Function
+  Declare.i RTC_Resolution()          ; Get the NanoSeconds per TickCount : >0 if CPU and OS support RTC Function
   Declare.q ElapsedMicroseconds()     ; Elapsed MicorSeconds
   Declare.q ElapsedNanoseconds()      ; Elapsed NanoSeconds
   
@@ -933,7 +968,7 @@ DeclareModule PB
   Declare.s TimeStampToString(TimeStamp.q, Format$="%yyyy/%mm/%dd-%hh:%mm:%ss")
   
   ; High Performance Timer
-  Declare.q RTC(TimerNo=0, cmd=#PB_RTC_START, TimeBase=#PB_RTC_MicroSeconds)
+  Declare.q RTC(CounterNo=0, cmd=#PB_RTC_START, TimeBase=#PB_RTC_MicroSeconds)
   Declare.q RTCcal()                    ; calibarte Timer (calculate Timer Start/Stop Time for clibartion)
   Declare.i RTCget(*RTCstruct.TRTC)     ; Get a copy of the internal TimerStrucure with actual values
   
@@ -1123,9 +1158,9 @@ Module PB
   ; on Windows this is (1.000.000.000 / QueryPerformanceFrequnecy())
   Global.i _rtcRes_ns 
             
-  Procedure.i GetRtcResolution_ns()
+  Procedure.i RTC_Resolution()
   ; ============================================================================
-  ; NAME: GetRtcResolution_ns
+  ; NAME: RTC_Resolution
   ; DESC: Returns the TickResolution in NanoSeconds per Tick
   ; DESC: Call this function first to check RTC support
   ; RET.i : NanoSeconds per Tick or 0 if RTC is not supported
@@ -1188,7 +1223,7 @@ Module PB
                
     CompilerEndSelect
   EndProcedure
-  _rtcRes_ns = GetRtcResolution_ns()    ; AutoInit rtcRes_ns
+  _rtcRes_ns = RTC_Resolution()    ; AutoInit rtcRes_ns
       
   Procedure.q ElapsedMicroseconds()
   ; ============================================================================
@@ -1389,21 +1424,21 @@ Module PB
   EndProcedure
      
   ; private vars
-  Global _RTC.TRTC  ; TimerValues Structure for Timers [0..#PB_RTC_MaxTimerNo]
+  Global _RTC.TRTC  ; TimerValues Structure for Timers [0..#PB_RTC_MaxCounterNo]
   Global _RTC_Calibration.q  ; calibration ticks : Time for calling RTC() in NanoSeconds
   
-  Procedure.q RTC(TimerNo=0, cmd=#PB_RTC_START, TimeBase=#PB_RTC_MicroSeconds)
+  Procedure.q RTC(CounterNo=0, cmd=#PB_RTC_START, TimeBase=#PB_RTC_MicroSeconds)
   ; ============================================================================
   ; NAME: RTC
-  ; DESC: RealTimeCounter/HighPerformanceTimer, MultiTimer
+  ; DESC: RealTimeCounter, Milti-Timer/Counter of RealTimeClockTicks [ns]
   ; DESC: Provides a set of easy to use timers for software speed tests!
-  ; VAR(TimerNo) : No of the Timer [0..#PB_RTC_MaxTimerNo]
+  ; VAR(CounterNo) : No of the Timer [0..#PB_RTC_MaxCounterNo]
   ; VAR(cmd) : #PB_RTC_START, #PB_RTC_STOP, #PB_RTC_READ
   ; VAR(TimeBase) : #PB_RTC_NanoSeconds, #PB_RTC_MicroSeconds
-  ; RET.q : Elapsed Time according to TimerNo
+  ; RET.q : Elapsed Time according to CounterNo
   ; ============================================================================
          
-    If TimerNo <0 Or TimerNo > #PB_RTC_MaxTimerNo
+    If CounterNo <0 Or CounterNo > #PB_RTC_MaxCounterNo
       ProcedureReturn -1
     EndIf
     
@@ -1414,13 +1449,13 @@ Module PB
       ;  Start the Timer
       ; ----------------------------------------------------------------------
         
-        _RTC\T[TimerNo] = ElapsedNanoseconds()        
-        _RTC\xRun[TimerNo] = #True         ; Set Run State = #True
+        _RTC\T[CounterNo] = ElapsedNanoseconds()        
+        _RTC\xRun[CounterNo] = #True         ; Set Run State = #True
         
         If TimeBase = #PB_RTC_MicroSeconds
-          ProcedureReturn _RTC\T[TimerNo] / 1000
+          ProcedureReturn _RTC\T[CounterNo] / 1000
         Else        ; #PB_RTC_NanoSeconds
-          ProcedureReturn _RTC\T[TimerNo]
+          ProcedureReturn _RTC\T[CounterNo]
         EndIf
          
       Case #PB_RTC_STOP        ; STOP Timer
@@ -1428,17 +1463,17 @@ Module PB
       ;  Stop the Timer
       ; ----------------------------------------------------------------------
         
-        _RTC\T[TimerNo] = ElapsedNanoseconds() - _RTC\T[TimerNo] - _RTC_Calibration
+        _RTC\T[CounterNo] = ElapsedNanoseconds() - _RTC\T[CounterNo] - _RTC_Calibration
   
-        If _RTC\T[TimerNo] < 0           ; Abs() because PB's Abs() is for floats only
-          _RTC\T[TimerNo] = - _RTC\T[TimerNo] 
+        If _RTC\T[CounterNo] < 0           ; Abs() because PB's Abs() is for floats only
+          _RTC\T[CounterNo] = - _RTC\T[CounterNo] 
         EndIf
         
-        _RTC\xRun[TimerNo] = #False      ; Set Run State = #False 
+        _RTC\xRun[CounterNo] = #False      ; Set Run State = #False 
         If TimeBase = #PB_RTC_MicroSeconds
-          ProcedureReturn _RTC\T[TimerNo] / 1000
+          ProcedureReturn _RTC\T[CounterNo] / 1000
         Else        ; #PB_RTC_NanoSeconds
-          ProcedureReturn _RTC\T[TimerNo]
+          ProcedureReturn _RTC\T[CounterNo]
         EndIf
         
       Case #PB_RTC_READ
@@ -1447,17 +1482,17 @@ Module PB
       ; ----------------------------------------------------------------------
         Protected ret.q
         
-        If _RTC\xRun[TimerNo]
-          ret = ElapsedNanoseconds() - _RTC\T[TimerNo] - _RTC_Calibration
+        If _RTC\xRun[CounterNo]
+          ret = ElapsedNanoseconds() - _RTC\T[CounterNo] - _RTC_Calibration
           If ret < 0 : ret = -ret : EndIf      
         Else
-          ret= _RTC\T[TimerNo]
+          ret= _RTC\T[CounterNo]
         EndIf
         
         If TimeBase = #PB_RTC_MicroSeconds
-          ProcedureReturn _RTC\T[TimerNo] / 1000
+          ProcedureReturn _RTC\T[CounterNo] / 1000
         Else        ; #PB_RTC_NanoSeconds
-          ProcedureReturn _RTC\T[TimerNo]
+          ProcedureReturn _RTC\T[CounterNo]
         EndIf
                
     EndSelect
@@ -1472,7 +1507,7 @@ Module PB
   ; DESC: subtracted from the Time when reading a Timer.
   ; DESC: If you do not call RTCcal() the calibration value is 0ns and
   ; DESC: you get the uncalibrated TimeValue when reading a Timer.
-  ; DESC: For calibration Timer(#PB_RTC_MaxTimerNo) is used.
+  ; DESC: For calibration Timer(#PB_RTC_MaxCounterNo) is used.
   ; DESC: So don't cal RTCcal() if this Timer is in operation!
   ; RET.q : Calibration offset for a Timer START/STOP call
   ; ============================================================================
@@ -1480,8 +1515,8 @@ Module PB
     
     ; detecet the Time for a Timer Start/STOP Call
     tim = ElapsedNanoseconds()
-    RTC(#PB_RTC_START, #PB_RTC_MaxTimerNo, #PB_RTC_NanoSeconds)   
-    RTC(#PB_RTC_STOP, #PB_RTC_MaxTimerNo, #PB_RTC_NanoSeconds)
+    RTC(#PB_RTC_START, #PB_RTC_MaxCounterNo, #PB_RTC_NanoSeconds)   
+    RTC(#PB_RTC_STOP, #PB_RTC_MaxCounterNo, #PB_RTC_NanoSeconds)
     tim = ElapsedNanoseconds() - tim
     If tim <0 : tim = -tim : EndIf 
     
@@ -1601,15 +1636,16 @@ Module PB
   ;- -------------------------------------------------- 
   
   Procedure.i _SplitStringArray(Array Out.s(1), *String, *Separator, ArrayRedimStep=10)
-   ; ============================================================================
-    ; NAME: _SplitStringArray
-    ; DESC: Split a String into multiple Strings
-    ; DESC: 
-    ; VAR(Out.s()) : Array to return the Substrings 
-    ; VAR(*String) : Pointer to String 
-    ; VAR(*Separator) : Pointer to mulit Char Separator 
-    ; RET.i : No of Substrings
-    ; ============================================================================
+  ; ============================================================================
+  ; NAME: _SplitStringArray
+  ; DESC: Split a String into multiple Strings
+  ; DESC: 
+  ; VAR(Out.s()) : Array to return the Substrings (ArraySize >= Substrings)
+  ; VAR(*String) : Pointer to String 
+  ; VAR(*Separator) : Pointer to mulit Char Separator 
+  ; VAR(ArrayRedimStep) : How may entries are added to the string each Redim
+  ; RET.i : No of Substrings
+  ; ============================================================================
     
     Protected *ptrString.Character = *String          ; Pointer to String
     Protected *ptrSeperator.Character = *Separator    ; Pointer to Separator
@@ -1674,16 +1710,16 @@ Module PB
   SplitStringArray = @_SplitStringArray()   ; Bind ProcedureAddress to Prototype
   
   Procedure.i _SplitStringList(List Out.s(), *String, *Separator, clrList= #True)
-   ; ============================================================================
-    ; NAME: _SplitStringList
-    ; DESC: Split a String into multiple Strings
-    ; DESC: 
-    ; VAR(Out.s())   : List to return the Substrings 
-    ; VAR(*String)   : Pointer to String 
-    ; VAR(*Separator): Pointer to Separator String 
-    ; VAR(clrList)   : #False: Append Splits to List; #True: Clear List first
-    ; RET.i          : No of Substrings
-    ; ============================================================================
+  ; ============================================================================
+  ; NAME: _SplitStringList
+  ; DESC: Split a String into multiple Strings
+  ; DESC: 
+  ; VAR(Out.s())   : List to return the Substrings 
+  ; VAR(*String)   : Pointer to String 
+  ; VAR(*Separator): Pointer to Separator String 
+  ; VAR(clrList)   : #False: Append Splits to List; #True: Clear List first
+  ; RET.i          : No of Substrings
+  ; ============================================================================
     
     Protected *ptrString.Character = *String          ; Pointer to String
     Protected *ptrSeperator.Character = *Separator    ; Pointer to Separator
@@ -1849,7 +1885,7 @@ Module PB
       If lenSep > 0 
         
         ForEach lst()
-           If lst()<>#Null$
+          If lst()<>#Null$
             CopyMemoryString(lst(), @*ptr)
           EndIf
           
@@ -1926,9 +1962,10 @@ CompilerIf #PB_Compiler_IsMainFile
   
   ; to see a real example with pChar, go to german forum
   ; https://www.purebasic.fr/german/viewtopic.php?t=33327
+  ; or open PbFw_Module_Phonetics.pb
   
   ; with the pChar Pointer I implemented phonetic encoding of Strings
-  ; for Soundex and Cologne Phonetis algortihm in an easy way!
+  ; for Soundex and Cologne Phonetics algortihm in an easy way!
   
   Debug ""
   Debug "Demo pChar Pointer use: make carzy String operations easy!"
@@ -1970,9 +2007,9 @@ CompilerEndIf
 
 
 
-; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 405
-; FirstLine = 398
-; Folding = ------------------
+; IDE Options = PureBasic 6.20 (Windows - x64)
+; CursorPosition = 611
+; FirstLine = 599
+; Folding = -------------------
 ; Optimizer
 ; CPU = 5
