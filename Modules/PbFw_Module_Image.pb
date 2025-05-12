@@ -16,7 +16,7 @@
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog:
-;{  
+;{ 2025/02/08 S.Maag some reworks done
 ;   
 ;                  
 ;}
@@ -33,7 +33,7 @@ XIncludeFile "PbFw_Module_PB.pb"          ; PB::      PureBasic extention Module
 XIncludeFile "PbFw_Module_Debug.Pb"       ; DBG::     Debugging and Exception handling
 XIncludeFile "PbFw_Module_COLOR.Pb"       ; COLOR::   24/32 Bit Color Module
 XIncludeFile "PbFw_Module_VectorColor.Pb" ; VecCol::  VectorColor Module
-XIncludeFile "PbFw_Module_Buffer.Pb"      ; Buffer::  Buffer handling Module
+XIncludeFile "PbFw_Module_Buffer.Pb"      ; BUF::     Buffer handling Module
 
 ; XIncludeFile ""
 
@@ -44,15 +44,15 @@ DeclareModule IMG
   #IMG_GreyScale_WeightedLight = 2
   
   Enumeration PbFw_IMG_Dither                 ; DitherMethode
-    #PbfW_IMG_Dither_No                       ; 0 = no dither
-    #PbfW_IMG_Dither_SierraLite               ; 1 = Sierra Lite (error diffusion)
-    #PbfW_IMG_Dither_ShiauFan                 ; 2 = Shiau-Fan (error diffusion)
-    #PbfW_IMG_Dither_BlueNoise                ; 3 = 16x16 blue noise matrix
-    #PbfW_IMG_Dither_Bayer                    ; 4 = 16x16 bayer matrix
-    #PbfW_IMG_Dither_6x6_clustered            ; 5 = 6x6 clustered dot
-    #PbfW_IMG_Dither_6x8_clustered            ; 6 = 6x8 clustered dot
-    #PbfW_IMG_Dither_6x6_diagonal_lines1      ; 7 = 6x6 diagonal lines 1
-    #PbfW_IMG_Dither_6x6_diagonal_lines2      ; 8 = 6x6 diagonal lines 2
+    #IMG_Dither_No                       ; 0 = no dither
+    #IMG_Dither_SierraLite               ; 1 = Sierra Lite (error diffusion)
+    #IMG_Dither_ShiauFan                 ; 2 = Shiau-Fan (error diffusion)
+    #IMG_Dither_BlueNoise                ; 3 = 16x16 blue noise matrix
+    #IMG_Dither_Bayer                    ; 4 = 16x16 bayer matrix
+    #IMG_Dither_6x6_clustered            ; 5 = 6x6 clustered dot
+    #IMG_Dither_6x8_clustered            ; 6 = 6x8 clustered dot
+    #IMG_Dither_6x6_diagonal_lines1      ; 7 = 6x6 diagonal lines 1
+    #IMG_Dither_6x6_diagonal_lines2      ; 8 = 6x6 diagonal lines 2
   EndEnumeration
 
   Structure TImageInfo
@@ -84,8 +84,27 @@ DeclareModule IMG
     sd.f      ; standard derivation (Standardabweichung)
   EndStructure
   
+  Declare.i InitImageInfoStruct(PbImageNo, *TImageInfo.TImageInfo, xStartDrawing=#False)
   Declare.i FreeImageBuffer(*ImgBuf.TImageBuffer)
-  Declare.i PosterizeImage(PbImageNo, Levels=4, DitherMethode=#PbfW_IMG_Dither_No, xGrayscale=#False, GammOn=#True, Gamma.f=2.23)
+  Declare.i ImageToBuffer(PbImageNo, *ImgBuf.TImageBuffer)
+  Declare.i BufferToImage(*pBuf.BUF::hBuffer, PbImageNo)
+  Declare.i NormalizeBuffer(*pBuffer, *ImageInfo.TimageInfo)
+  Declare.i GreyScaleBuffer(*pBuffer, *ImageInfo.TimageInfo, Methode=#IMG_GreyScale_Standard)
+  Declare.i GreyScaleImage(PbImageNo, Methode=#IMG_GreyScale_Standard)
+  Declare.i NegativeBuffer(*pBuffer, *ImageInfo.TimageInfo)
+  Declare.i NegativeChannelBuffer(*pBuffer, *ImageInfo.TimageInfo, Channel=#Red)
+  Declare.i InvertBuffer(*pBuffer, *ImageInfo.TimageInfo)
+  Declare.i InvertChannelBuffer(*pBuffer, *ImageInfo.TimageInfo, Channel=#Red)
+  Declare.i BrightnessBuffer(*pBuffer, *ImageInfo.TimageInfo, AddBrightAll=0, AddBrightRed=0, AddBrightGreen=0, AddBrightBlue=0)
+  Declare.i GammaBuffer(*pBuffer, *ImageInfo.TimageInfo, GammaAll.f=1.0, GammaRed.f=1.0, GammaGreen.f=1.0, GammaBlue.f=1.0)
+  Declare.i PosterizeBuffer(*pBuffer, *ImageInfo.TImageInfo, Levels=4, DitherMethode=#IMG_Dither_No, xGrayscale=#False, GammOn=#True, Gamma.f=2.23)
+  Declare.i PosterizeImage(PbImageNo, Levels=4, DitherMethode=#IMG_Dither_No, xGrayscale=#False, GammOn=#True, Gamma.f=2.23)
+  Declare.i NormalizeImage(PbImageNo)
+  Declare.i NegativeImage(PbImageNo)
+  Declare.i NegativeChannelImage(PbImageNo, Channel=#Red)
+  Declare.i InvertChannelImage(PbImageNo, Channel=#Red)
+  Declare.i BrightnessImage(PbImageNo, AddBrightAll=0, AddBrightRed=0, AddBrightGreen=0, AddBrightBlue=0)
+  Declare.i GammaImage(PbImageNo, GammaAll.f=1.0, GammaRed.f=1.0, GammaGreen.f=1.0, GammaBlue.f=1.0)
 
 EndDeclareModule
 
@@ -97,7 +116,7 @@ Module IMG
   #PbFwCfg_Module_CheckPointerException = #False
   #_Float_1div255  = 1/255.0
   ; start the Enumeration with the value for ModulSpecific Errors
-  Enumeration ; DBG::#PbFw_DBG_Err_ModulSpecific
+  Enumeration ; DBG::#DBG_Err_ModulSpecific
     #Err_Error1 
     #Err_Error2
   EndEnumeration
@@ -190,7 +209,7 @@ Module IMG
        
         ret = #True
       Else 
-        _Exception(#PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_DrawingNotStarted)
+        _Exception(#PB_Compiler_Procedure, DBG::#DBG_Err_DrawingNotStarted)
       EndIf
     EndIf
     
@@ -206,7 +225,7 @@ Module IMG
         \imgDepth = 0 
         \imgPixelFormat = 0
       EndWith       
-      _Exception(#PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_IsNotImage) 
+      _Exception(#PB_Compiler_Procedure, DBG::#DBG_Err_IsNotImage) 
     EndIf
       
     ProcedureReturn ret
@@ -243,13 +262,13 @@ Module IMG
         CopyMemory(DrawingBuffer(), *ImgBuf\hBuffer\_ptrMem, *ImgBuf\hBuffer\Memsize)
         StopDrawing()
       Else 
-        _Exception(#PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_DrawingNotStarted)
+        _Exception(#PB_Compiler_Procedure, DBG::#DBG_Err_DrawingNotStarted)
       EndIf
     
       ProcedureReturn MemorySize(*ImgBuf)
       
     Else
-       _Exception(#PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_IsNotImage)     
+       _Exception(#PB_Compiler_Procedure, DBG::#DBG_Err_IsNotImage)     
     EndIf
         
     ProcedureReturn 0
@@ -277,106 +296,220 @@ Module IMG
         StopDrawing()
         ProcedureReturn MemorySize(*pBuf)
       Else 
-       _Exception(#PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_DrawingNotStarted)
+       _Exception(#PB_Compiler_Procedure, DBG::#DBG_Err_DrawingNotStarted)
       EndIf
     Else
-      _Exception(#PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_IsNotImage)           
+      _Exception(#PB_Compiler_Procedure, DBG::#DBG_Err_IsNotImage)           
     EndIf
       
     ProcedureReturn 0
   EndProcedure
   
-  Procedure.i NormalizeImage(PbImageNo)
+  Procedure.i BrightnessBuffer(*pBuffer, *ImageInfo.TimageInfo, AddBrightAll=0, AddBrightRed=0, AddBrightGreen=0, AddBrightBlue=0)
   ; ======================================================================
-  ; NAME : NormalizeImage
-  ; DESC : Normalize image colors. Stretch the color values to use the
-  ; DESC : the complete Color Space [0..255]. Get the lightest point 
-  ; DESC : as white and the darkest as black.
-  ; VAR PbImageNo : The PureBasic ImageID
-  ; RET : #TRUE if sucseed; #FALSE if no Structure isn't created
+  ; NAME : BrightnessBuffer
+  ; DESC : Change the Brightness of an Image in a Buffer
+  ; VAR(*pBuffer)    : Pointer to the ImageBuffer
+  ;                   It can be the Pointer to a ShadwoCopy of an Image
+  ;                   or the Pointer to the active DrawingBuffer()
+  ;
+  ; VAR(*ImageInfo) : The ImageInfo Structure which describes
+  ;                   the details. This is necessary because if we work 
+  ;                   with a ShadowCopy of a Image in memory, it is not a 
+  ;                   Image identified with a PureBasic ImageID #Image.
+  ;                   So we can't get any info with the standard PureBasic
+  ;                   functions like ImageHeight(), ImageWidth()...
+  ;                   We must collect this information befor we copy the 
+  ;                   PureBasicImage into the MemoryBuffer().
+  ;                   
+  ; VAR(AddBrightAll)  : The Brightness to change at all Colors R,G and B
+  ;                      internal AddBrightAll is added to AddBright[Red/Green/Blue]
+  ; VAR(AddBrightRed)  : The Brightness to change at Red    [-255..255]
+  ; VAR(AddBrightGreen): The Brightness to change at Green  [-255..255]
+  ; VAR(AddBrightBlue) : The Brightness to change at Blue   [-255..255]
+  ; RET : #TRUE if sucseed; #FALSE if not
   ; ======================================================================
-  
-    Protected ImgInf.TImageInfo
-    Protected *Buffer                 ; Pointer to ImageBuffer
     Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
-    
-    Protected myBufferPitch           ; line lenght in Buffer
-    Protected.i X, Y, BytesPerPixel 
-    Protected.i min, max, NewColVal, kNorm
+    Protected.i X, Y, BytesPerPixel       ; X,Y Pixel position
+    Protected.i r,g,b
     Protected.i xRET = #True
-        
-    min = 255
     
-    If InitImageInfoStruct(PbImageNo, @ImgInf)
-            
-      If StartDrawing(ImageOutput(PbImageNo))
-        *Buffer = DrawingBuffer()
+    AddBrightRed + AddBrightAll
+    AddBrightGreen + AddBrightAll
+    AddBrightBlue + AddBrightAll
+    
+    ; [-100..100] = [-255..255]
+    PB::LimitToMinMax(AddBrightRed, -255, 255)
+    PB::LimitToMinMax(AddBrightGreen, -255, 255)
+    PB::LimitToMinMax(AddBrightBlue, -255, 255)
+      
+    If *pBuffer And *ImageInfo   ; if we have valid Pointers
+      
+      BytesPerPixel = *ImageInfo\imgDepth >>3     
+      ; We need 2 Loops for Pixel manipulation because a line in the Buffer() may contain
+      ; fill Bytes. We might get a problem if we use FOR P = *pBuffer To EndOfBuffer
+      ; if there is maybe 1 fill Byte at the end of each line. This byte will shift the colors
+      ; 1 Byte. 
+      For Y = 0 To (*ImageInfo\imgHeight -1)
+        *pPix = *pBuffer + *ImageInfo\imgBufferPitch * Y 
         
-        If *Buffer 
-          ; xRET = ImageToBuffer(PbImageNo, *Buffer)
-          ; Debug xRET
-     
-          BytesPerPixel = *ImageInfo\imgDepth >>3                              
-          ; We need 2 Loops for Pixel manipulation because a line in the Buffer() may contain
-          ; fill Bytes. We might get a problem if we use FOR P = *Buffer To EndOfBuffer
-          ; if there is maybe 1 fill Byte at the end of each line. This byte will shift the colors
-          ; 1 Byte. 
-          For Y = 0 To (ImgInf\imgHeight -1)
-            *pPix = *Buffer + ImgInf\imgBufferPitch * Y 
-            ; Debug " Py = " + *pPix
+        For X = 0 To (*ImageInfo\imgWidth -1)    ; process all Pixels in a line
+          With *pPix              
+            ; at TSystemColor R,G,B switches with the System color order to B,G,R
+            ; I hope this is the same as PB_PixelFormat_.._BGR and we do not need 2 prog. parts
+            r = \RGB\R + AddBrightRed
+            PB::SaturateColor(r)          ; [0..255]
+            \RGB\R = r
             
-            For X = 0 To (ImgInf\imgWidth -1)
-              PB::SaveMinMax(*pPix\ch[0], min, max)       ; MACRO SaveMinMax
-              PB::SaveMinMax(*pPix\ch[1], min, max)
-              PB::SaveMinMax(*pPix\ch[2], min, max)
-              
-              *pPix = *pPix + BytesPerPixel  ; Next Pixel
-              ; Debug " Py = " + Str(*pPix) + " / Y = " + Y
-            Next  
-          Next
-          
-          If (max-min) < 255      ; The color space is not completely used!
-            kNorm = (256 * 255)/(max-min)    ; 255/(max-min) * IntFactor; we correct IntFactor later with >>8
+            g= \RGB\G + AddBrightGreen
+            PB::SaturateColor(g)          ; [0..255]
+            \RGB\G = g
             
-            For Y = 0 To ImgInf\imgHeight -1
-              *pPix = *Buffer + ImgInf\imgBufferPitch * Y 
-              ; Debug " Px = " + *pPix
-              For X = 0 To ImgInf\imgWidth -1
-                ; Attention, here at 24Bit Color we have to use \ch[0..2]
-                NewColVal = ((*pPix\ch[0] - min) * kNorm) >> 8  ; /256
-                PB:SaturateColorMax(NewCol)
-                *pPix\ch[0] = NewColVal
-                
-                NewColVal = ((*pPix\ch[1] - min) * kNorm) >> 8  ; /256
-                PB:SaturateColorMax(NewCol)
-                *pPix\ch[1] = NewColVal
-                
-                NewColVal = ((*pPix\ch[2] - min) * kNorm) >> 8  ; /256
-                PB:SaturateColorMax(NewCol)
-                *pPix\ch[2] = NewColVal
-                 
-                *pPix = *pPix + BytesPerPixel  ; Next Pixel
-                ; Debug " Py = " +*pPix + " / Y = " + Y
-              Next 
-            Next
-          EndIf
-              
-      ;           Debug "Done"
-      ;           Debug "*Buffer = " + *Buffer
-      ;           Debug "*pPix = " + *pPix
-      ;           Debug *pPix -*Buffer             
-               
-          StopDrawing()
-        Else 
-          _Exception(#PB_Compiler_Procedure, DBG::#PbFw_DBG_Err_DrawingNotStarted)
-          xRET = #False  
-        EndIf       
+            b= \RGB\B + AddBrightBlue
+            PB::SaturateColor(b)          ; [0..255]
+            \RGB\B = b
+            
+            *pPix = *pPix + BytesPerPixel    ; Next Pixel
+          EndWith  
+        Next  
+      Next                 
+    Else
+      xRET = #False  
+    EndIf
+      
+    ProcedureReturn xRET   
+  EndProcedure
+  
+  Procedure.i BrightnessImage(PbImageNo, AddBrightAll=0, AddBrightRed=0, AddBrightGreen=0, AddBrightBlue=0)
+    Protected ImageInfo.TImageInfo
+    Protected *buf, ret 
+    
+    ret = InitImageInfoStruct(PbImageNo, ImageInfo, #True)
+    If ret
+      *buf = DrawingBuffer()
+      If *buf
+          ret = BrightnessBuffer(*buf, ImageInfo, AddBrightAll, AddBrightRed, AddBrightGreen, AddBrightBlue)
+      Else
+          ret = #False
       EndIf
+      StopDrawing()
     EndIf
     
-    ProcedureReturn xRET
+    ProcedureReturn ret   
   EndProcedure
+  
+  Structure _LUT      ; Lookup Table Structure to create 256 Value Lookup Table on Stack
+    StructureUnion
+      l.l[256]        ; 0..255
+      f.f[256]
+    EndStructureUnion
+  EndStructure
+  
+  Procedure.i GammaBuffer(*pBuffer, *ImageInfo.TimageInfo, GammaAll.f=1.0, GammaRed.f=1.0, GammaGreen.f=1.0, GammaBlue.f=1.0)
+  ; ======================================================================
+  ; NAME : GammaBuffer
+  ; DESC : Change the Gamma of an Image in a Buffer
+  ; VAR(*pBuffer)    : Pointer to the ImageBuffer
+  ;                   It can be the Pointer to a ShadwoCopy of an Image
+  ;                   or the Pointer to the active DrawingBuffer()
+  ;
+  ; VAR(*ImageInfo) : The ImageInfo Structure which describes
+  ;                   the details. This is necessary because if we work 
+  ;                   with a ShadowCopy of a Image in memory, it is not a 
+  ;                   Image identified with a PureBasic ImageID #Image.
+  ;                   So we can't get any info with the standard PureBasic
+  ;                   functions like ImageHeight(), ImageWidth()...
+  ;                   We must collect this information befor we copy the 
+  ;                   PureBasicImage into the MemoryBuffer().
+  ;                   
+  ; VAR(GammaAll)  : The Gamma to change at all Colors R,G and B
+  ;                      internal AddBrightAll is multiplied with AddBright[Red/Green/Blue]
+  ; VAR(GammaRed)  : The Gamma to change at Red    [0.01 .. 4.99]
+  ; VAR(GammaGreen): The Gamma to change at Green  [0.01 .. 4.99]
+  ; VAR(GammaBlue) : The Gamma to change at Blue   [0.01 .. 4.99]
+  ; RET : #TRUE if sucseed; #FALSE if not
+  ; ======================================================================
     
+    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color in SystemColorOrder
+    Protected.i X, Y, I, BytesPerPixel      ; X,Y Pixel position
+    Protected.i r, g, b
+    Protected.i xRET = #True
+    Protected memf.f
+    
+    #_GammaMin_ = 0.01    ; Limit of Gamma [0.01 .. 4.99] as PaintShop do!
+    #_GammaMax_ = 4.99
+    
+    PB::LimitToMinMax(GammaAll, #_GammaMin_, #_GammaMax_)
+    GammaRed = GammaAll * GammaRed  
+    GammaGreen = GammaAll * GammaGreen
+    GammaBlue = GammaAll * GammaBlue
+    
+    PB::LimitToMinMax(GammaRed, #_GammaMin_, #_GammaMax_)
+    PB::LimitToMinMax(GammaGreen, #_GammaMin_, #_GammaMax_)
+    PB::LimitToMinMax(GammaBlue, #_GammaMin_, #_GammaMax_)
+    
+    GammaRed = 1/GammaRed  
+    GammaGreen = 1/GammaGreen
+    GammaBlue = 1/GammaBlue
+    
+    Protected GltR._LUT
+    Protected GltG._LUT
+    Protected GltB._LUT
+       
+    ; Gamma Lookup Tables on Stack
+    For I = 0 To 255
+      memf = I * #_Float_1div255
+      GltR\l[I] = Pow(memf, GammaRed) * 255
+      GltG\l[I] = Pow(memf, GammaGreen) * 255
+      GltB\l[I] = Pow(memf, GammaBlue) * 255
+    Next
+    
+    If *pBuffer And *ImageInfo   ; if we have valid Pointers   
+      BytesPerPixel =  *ImageInfo\imgDepth >>3     
+      ; We need 2 Loops for Pixel manipulation because a line in the Buffer() may contain
+      ; fill Bytes. We might get a problem if we use FOR P = *pBuffer To EndOfBuffer
+      ; if there is maybe 1 fill Byte at the end of each line. This byte will shift the colors
+      ; 1 Byte. 
+      For Y = 0 To (*ImageInfo\imgHeight -1)
+        *pPix = *pBuffer + *ImageInfo\imgBufferPitch * Y 
+        
+        For X = 0 To (*ImageInfo\imgWidth -1)    ; process all Pixels in a line
+          With *pPix 
+            ; at TSystemColor R,G,B switches with the System color order to B,G,R
+            ; I hope this is the same as PB_PixelFormat_.._BGR and we do not need 2 prog. parts
+            \RGB\R = GltR\l[\RGB\R]
+            \RGB\G = GltG\l[\RGB\G]
+            \RGB\B = GltG\l[\RGB\B]                
+            *pPix = *pPix + BytesPerPixel    ; Next Pixel
+          EndWith  
+        Next  
+      Next
+                 
+     Else
+      xRET = #False  
+    EndIf
+      
+    ProcedureReturn xRET   
+  EndProcedure
+  
+  Procedure.i GammaImage(PbImageNo, GammaAll.f=1.0, GammaRed.f=1.0, GammaGreen.f=1.0, GammaBlue.f=1.0)
+    Protected ImageInfo.TImageInfo
+    Protected *buf, ret 
+    
+    ret = InitImageInfoStruct(PbImageNo, ImageInfo, #True)
+    If ret
+      *buf = DrawingBuffer()
+      If *buf
+          ret = GammaBuffer(*buf, ImageInfo, GammaAll, GammaRed, GammaGreen, GammaBlue)
+      Else
+          ret = #False
+      EndIf
+      StopDrawing()
+    EndIf
+    
+    ProcedureReturn ret   
+  EndProcedure
+   
   Procedure.i GreyScaleBuffer(*pBuffer, *ImageInfo.TimageInfo, Methode = #IMG_GreyScale_Standard)
   ; ======================================================================
   ; NAME : GreyScaleBuffer
@@ -455,9 +588,9 @@ Module IMG
     ProcedureReturn xRET
   EndProcedure
 
-  Procedure.i GreyScalePbImage(PbImageNo, Methode = #IMG_GreyScale_Standard)
+  Procedure.i GreyScaleImage(PbImageNo, Methode = #IMG_GreyScale_Standard)
   ; ======================================================================
-  ; NAME : GreyScalePbImage
+  ; NAME : GreyScaleImage
   ; DESC : conerts a PureBasic Image identified by #Image into GreyScale
   ; VAR PbImageNo : The PureBasic ImageID
   ; VAR(Methode)  : #IMG_GreyScale_[Standard/Average/WeightedLight]
@@ -482,115 +615,6 @@ Module IMG
     EndIf
     
     ProcedureReturn xRET
-  EndProcedure
-    
-  Procedure.i NegativeBuffer(*pBuffer, *ImageInfo.TimageInfo)
-  ; ======================================================================
-  ; NAME : NegativeBuffer
-  ; DESC : Negative an Image in Buffer
-  ; VAR(*pBuffer)    : Pointer to the ImageBuffer
-  ;                   It can be the Pointer to a ShadwoCopy of an Image
-  ;                   or the Pointer to the active DrawingBuffer()
-  ;
-  ; VAR(*ImageInfo) : The ImageInfo Structure which describes
-  ;                   the details. This is necessary because if we work 
-  ;                   with a ShadowCopy of a Image in memory, it is not a 
-  ;                   Image identified with a PureBasic ImageID #Image.
-  ;                   So we can't get any info with the standard PureBasic
-  ;                   functions like ImageHeight(), ImageWidth()...
-  ;                   We must collect this information befor we copy the 
-  ;                   PureBasicImage into the MemoryBuffer().
-  ;                   
-  ; RET : #TRUE if sucseed; #FALSE if not
-  ; ======================================================================
-    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
-    Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position; P pointer to PixelMemory
-    Protected.i xRET = #True
-          
-    If *pBuffer And *ImageInfo   ; if we have valid Pointers
-      
-      BytesPerPixel = *ImageInfo\imgDepth >>3                       
-      ; We need 2 Loops for Pixel manipulation because a line in the Buffer() may contain
-      ; fill Bytes. We might get a problem if we use FOR P = *pBuffer To EndOfBuffer
-      ; if there is maybe 1 fill Byte at the end of each line. This byte will shift the colors
-      ; 1 Byte. 
-      For Y = 0 To (*ImageInfo\imgHeight -1)
-        *pPix = *pBuffer + *ImageInfo\imgBufferPitch * Y 
-        
-        For X = 0 To (*ImageInfo\imgWidth -1)    ; process all Pixels in a line
-          With *pPix               
-            \RGB\R = 255- \RGB\R
-            \RGB\G = 255- \RGB\G
-            \RGB\B = 255- \RGB\B              
-            *pPix = *pPix + 3    ; Next Pixel
-          EndWith  
-        Next  
-      Next
-                 
-    Else
-      xRET = #False  
-    EndIf
-      
-    ProcedureReturn xRET   
-  EndProcedure
-  
-  Procedure.i NegativeChannelBuffer(*pBuffer, *ImageInfo.TimageInfo, Channel=#Red)
-  ; ======================================================================
-  ; NAME : NegativeChannelBuffer
-  ; DESC : Negative a Color Channel Red,Green or Blue of an Image in Buffer
-  ; VAR(*pBuffer)    : Pointer to the ImageBuffer
-  ;                   It can be the Pointer to a ShadwoCopy of an Image
-  ;                   or the Pointer to the active DrawingBuffer()
-  ;
-  ; VAR(*ImageInfo) : The ImageInfo Structure which describes
-  ;                   the details. This is necessary because if we work 
-  ;                   with a ShadowCopy of a Image in memory, it is not a 
-  ;                   Image identified with a PureBasic ImageID #Image.
-  ;                   So we can't get any info with the standard PureBasic
-  ;                   functions like ImageHeight(), ImageWidth()...
-  ;                   We must collect this information befor we copy the 
-  ;                   PureBasicImage into the MemoryBuffer().
-  ;                   
-  ; VAR(Channel)  : The Color Channel #Red, #Green or #Blue
-  ; RET : #TRUE if sucseed; #FALSE if not
-  ; ======================================================================
-    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
-    Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position
-    Protected.i ChNo, xRET = #True
-    
-    Select Channel  ; only allow #Red, #Green, #Blue
-      Case #Red
-        ChNo = PB::_SCM\idxRed
-      Case #Green
-        ChNo = PB::_SCM\idxGreen
-      Case #Blue
-        ChNo = PB::_SCM\idxBlue
-      Default
-        ProcedureReturn #False
-    EndSelect
-                 
-    If *pBuffer And *ImageInfo   ; if we have valid Pointers
-      BytesPerPixel = *ImageInfo\imgDepth >>3              
-      ; We need 2 Loops for Pixel manipulation because a line in the Buffer() may contain
-      ; fill Bytes. We might get a problem if we use FOR P = *pBuffer To EndOfBuffer
-      ; if there is maybe 1 fill Byte at the end of each line. This byte will shift the colors
-      ; 1 Byte. 
-      For Y = 0 To (*ImageInfo\imgHeight -1)
-        *pPix = *pBuffer + *ImageInfo\imgBufferPitch * Y 
-        
-        For X = 0 To (*ImageInfo\imgWidth -1)    ; process all Pixels in a line
-          With *pPix               
-            \ch[ChNo] = 255- \ch[ChNo]
-            *pPix = *pPix + BytesPerPixel    ; Next Pixel
-          EndWith  
-        Next  
-      Next
-                 
-    Else
-      xRET = #False  
-    EndIf
-      
-    ProcedureReturn xRET  
   EndProcedure
   
   Procedure.i InvertBuffer(*pBuffer, *ImageInfo.TimageInfo)
@@ -702,11 +726,29 @@ Module IMG
       
     ProcedureReturn xRET  
   EndProcedure
-
-  Procedure.i BrightnessBuffer(*pBuffer, *ImageInfo.TimageInfo, AddBrightAll=0, AddBrightRed=0, AddBrightGreen=0, AddBrightBlue=0)
+  
+  Procedure.i InvertChannelImage(PbImageNo, Channel=#Red)
+    Protected ImageInfo.TImageInfo
+    Protected *buf, ret 
+    
+    ret = InitImageInfoStruct(PbImageNo, ImageInfo, #True)
+    If ret
+      *buf = DrawingBuffer()
+      If *buf
+          ret = InvertChannelBuffer(*buf, ImageInfo, Channel)
+      Else
+          ret = #False
+      EndIf
+      StopDrawing()
+    EndIf
+    
+    ProcedureReturn ret   
+  EndProcedure
+  
+  Procedure.i NegativeBuffer(*pBuffer, *ImageInfo.TimageInfo)
   ; ======================================================================
-  ; NAME : BrightnessBuffer
-  ; DESC : Change the Brightness of an Image in a Buffer
+  ; NAME : NegativeBuffer
+  ; DESC : Negative an Image in Buffer
   ; VAR(*pBuffer)    : Pointer to the ImageBuffer
   ;                   It can be the Pointer to a ShadwoCopy of an Image
   ;                   or the Pointer to the active DrawingBuffer()
@@ -720,30 +762,15 @@ Module IMG
   ;                   We must collect this information befor we copy the 
   ;                   PureBasicImage into the MemoryBuffer().
   ;                   
-  ; VAR(AddBrightAll)  : The Brightness to change at all Colors R,G and B
-  ;                      internal AddBrightAll is added to AddBright[Red/Green/Blue]
-  ; VAR(AddBrightRed)  : The Brightness to change at Red    [-255..255]
-  ; VAR(AddBrightGreen): The Brightness to change at Green  [-255..255]
-  ; VAR(AddBrightBlue) : The Brightness to change at Blue   [-255..255]
   ; RET : #TRUE if sucseed; #FALSE if not
   ; ======================================================================
     Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
-    Protected.i X, Y, BytesPerPixel       ; X,Y Pixel position
-    Protected.i r,g,b
+    Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position; P pointer to PixelMemory
     Protected.i xRET = #True
-    
-    AddBrightRed + AddBrightAll
-    AddBrightGreen + AddBrightAll
-    AddBrightBlue + AddBrightAll
-    
-    ; [-100..100] = [-255..255]
-    PB::LimitToMinMax(AddBrightRed, -255, 255)
-    PB::LimitToMinMax(AddBrightGreen, -255, 255)
-    PB::LimitToMinMax(AddBrightBlue, -255, 255)
-      
+          
     If *pBuffer And *ImageInfo   ; if we have valid Pointers
       
-      BytesPerPixel = *ImageInfo\imgDepth >>3     
+      BytesPerPixel = *ImageInfo\imgDepth >>3                       
       ; We need 2 Loops for Pixel manipulation because a line in the Buffer() may contain
       ; fill Bytes. We might get a problem if we use FOR P = *pBuffer To EndOfBuffer
       ; if there is maybe 1 fill Byte at the end of each line. This byte will shift the colors
@@ -752,25 +779,15 @@ Module IMG
         *pPix = *pBuffer + *ImageInfo\imgBufferPitch * Y 
         
         For X = 0 To (*ImageInfo\imgWidth -1)    ; process all Pixels in a line
-          With *pPix              
-            ; at TSystemColor R,G,B switches with the System color order to B,G,R
-            ; I hope this is the same as PB_PixelFormat_.._BGR and we do not need 2 prog. parts
-            r = \RGB\R + AddBrightRed
-            PB::SaturateColor(r)          ; [0..255]
-            \RGB\R = r
-            
-            g= \RGB\G + AddBrightGreen
-            PB::SaturateColor(g)          ; [0..255]
-            \RGB\G = g
-            
-            b= \RGB\B + AddBrightBlue
-            PB::SaturateColor(b)          ; [0..255]
-            \RGB\B = b
-            
-            *pPix = *pPix + BytesPerPixel    ; Next Pixel
+          With *pPix               
+            \RGB\R = 255- \RGB\R
+            \RGB\G = 255- \RGB\G
+            \RGB\B = 255- \RGB\B              
+            *pPix = *pPix + 3    ; Next Pixel
           EndWith  
         Next  
-      Next                 
+      Next
+                 
     Else
       xRET = #False  
     EndIf
@@ -778,17 +795,10 @@ Module IMG
     ProcedureReturn xRET   
   EndProcedure
   
-  Structure _LUT      ; Lookup Table Structure to create 256 Value Lookup Table on Stack
-    StructureUnion
-      l.i[256]        ; 0..255
-      f.f[256]
-    EndStructureUnion
-  EndStructure
-  
-  Procedure.i GammaBuffer(*pBuffer, *ImageInfo.TimageInfo, GammaAll.f=1.0, GammaRed.f=1.0, GammaGreen.f=1.0, GammaBlue.f=1.0)
+  Procedure.i NegativeChannelBuffer(*pBuffer, *ImageInfo.TimageInfo, Channel=#Red)
   ; ======================================================================
-  ; NAME : GammaBuffer
-  ; DESC : Change the Gamma of an Image in a Buffer
+  ; NAME : NegativeChannelBuffer
+  ; DESC : Negative a Color Channel Red,Green or Blue of an Image in Buffer
   ; VAR(*pBuffer)    : Pointer to the ImageBuffer
   ;                   It can be the Pointer to a ShadwoCopy of an Image
   ;                   or the Pointer to the active DrawingBuffer()
@@ -802,50 +812,26 @@ Module IMG
   ;                   We must collect this information befor we copy the 
   ;                   PureBasicImage into the MemoryBuffer().
   ;                   
-  ; VAR(GammaAll)  : The Gamma to change at all Colors R,G and B
-  ;                      internal AddBrightAll is multiplied with AddBright[Red/Green/Blue]
-  ; VAR(GammaRed)  : The Gamma to change at Red    [0.01 .. 4.99]
-  ; VAR(GammaGreen): The Gamma to change at Green  [0.01 .. 4.99]
-  ; VAR(GammaBlue) : The Gamma to change at Blue   [0.01 .. 4.99]
+  ; VAR(Channel)  : The Color Channel #Red, #Green or #Blue
   ; RET : #TRUE if sucseed; #FALSE if not
   ; ======================================================================
+    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
+    Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position
+    Protected.i ChNo, xRET = #True
     
-    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color in SystemColorOrder
-    Protected.i X, Y, I, BytesPerPixel      ; X,Y Pixel position
-    Protected.i r, g, b
-    Protected.i xRET = #True
-    Protected memf.f
-    
-    #_GammaMin_ = 0.01    ; Limit of Gamma [0.01 .. 4.99] as PaintShop do!
-    #_GammaMax_ = 4.99
-    
-    PB::LimitToMinMax(GammaAll, #_GammaMin_, #_GammaMax_)
-    GammaRed = GammaAll * GammaRed  
-    GammaGreen = GammaAll * GammaGreen
-    GammaBlue = GammaAll * GammaBlue
-    
-    PB::LimitToMinMax(GammaRed, #_GammaMin_, #_GammaMax_)
-    PB::LimitToMinMax(GammaGreen, #_GammaMin_, #_GammaMax_)
-    PB::LimitToMinMax(GammaBlue, #_GammaMin_, #_GammaMax_)
-    
-    GammaRed = 1/GammaRed  
-    GammaGreen = 1/GammaGreen
-    GammaBlue = 1/GammaBlue
-    
-    Protected GltR._LUT
-    Protected GltG._LUT
-    Protected GltB._LUT
-       
-    ; Gamma Lookup Tables on Stack
-    For I = 0 To 255
-      memf = I * #_Float_1div255
-      GltR\i[I] = Pow(memf, GammaRed) * 255
-      GltG\i[I] = Pow(memf, GammaGreen) * 255
-      GltB\i[I] = Pow(memf, GammaBlue) * 255
-    Next
-    
-    If *pBuffer And *ImageInfo   ; if we have valid Pointers   
-      BytesPerPixel =  *ImageInfo\imgDepth >>3     
+    Select Channel  ; only allow #Red, #Green, #Blue
+      Case #Red
+        ChNo = PB::_SCM\idxRed
+      Case #Green
+        ChNo = PB::_SCM\idxGreen
+      Case #Blue
+        ChNo = PB::_SCM\idxBlue
+      Default
+        ProcedureReturn #False
+    EndSelect
+                 
+    If *pBuffer And *ImageInfo   ; if we have valid Pointers
+      BytesPerPixel = *ImageInfo\imgDepth >>3              
       ; We need 2 Loops for Pixel manipulation because a line in the Buffer() may contain
       ; fill Bytes. We might get a problem if we use FOR P = *pBuffer To EndOfBuffer
       ; if there is maybe 1 fill Byte at the end of each line. This byte will shift the colors
@@ -854,25 +840,156 @@ Module IMG
         *pPix = *pBuffer + *ImageInfo\imgBufferPitch * Y 
         
         For X = 0 To (*ImageInfo\imgWidth -1)    ; process all Pixels in a line
-          With *pPix 
-            ; at TSystemColor R,G,B switches with the System color order to B,G,R
-            ; I hope this is the same as PB_PixelFormat_.._BGR and we do not need 2 prog. parts
-            \RGB\R = GltR\i[\RGB\R]
-            \RGB\G = GltG\i[\RGB\G]
-            \RGB\B = GltG\i[\RGB\B]                
+          With *pPix               
+            \ch[ChNo] = 255- \ch[ChNo]
             *pPix = *pPix + BytesPerPixel    ; Next Pixel
           EndWith  
         Next  
       Next
                  
-     Else
+    Else
       xRET = #False  
     EndIf
       
-    ProcedureReturn xRET   
+    ProcedureReturn xRET  
   EndProcedure
+  
+  Procedure.i NegativeImage(PbImageNo)
+    Protected ImageInfo.TImageInfo
+    Protected *buf, ret 
+    
+    ret = InitImageInfoStruct(PbImageNo, ImageInfo, #True)
+    If ret
+      *buf = DrawingBuffer()
+      If *buf
+          ret = NegativeBuffer(*buf, ImageInfo)
+      Else
+          ret = #False
+      EndIf
+      StopDrawing()
+    EndIf
+    
+    ProcedureReturn ret   
+  EndProcedure
+  
+  Procedure.i NegativeChannelImage(PbImageNo, Channel=#Red)
+    Protected ImageInfo.TImageInfo
+    Protected *buf, ret 
+    
+    ret = InitImageInfoStruct(PbImageNo, ImageInfo, #True)
+    If ret
+      *buf = DrawingBuffer()
+      If *buf
+          ret = NegativeChannelBuffer(*buf, ImageInfo, Channel)
+      Else
+          ret = #False
+      EndIf
+      StopDrawing()
+    EndIf
+    
+    ProcedureReturn ret   
+  EndProcedure
+ 
+  Procedure.i NormalizeBuffer(*pBuffer, *ImageInfo.TimageInfo)
+  ; ======================================================================
+  ; NAME : NormalizeBuffer
+  ; DESC : Normalize colors of an image in a Buffer.
+  ; DESC : Stretch the color values To use the
+  ; DESC : The complete Color Space [0..255]. Get the lightest point 
+  ; DESC : as white and the darkest as black.
+  ; VAR(*pBuffer)    : Pointer to the ImageBuffer
+  ;                   It can be the Pointer to a ShadwoCopy of an Image
+  ;                   or the Pointer to the active DrawingBuffer()
+  ;
+  ; VAR(*ImageInfo) : The ImageInfo Structure which describes
+  ;                   the details. This is necessary because if we work 
+  ;                   with a ShadowCopy of a Image in memory, it is not a 
+  ;                   Image identified with a PureBasic ImageID #Image.
+  ;                   So we can't get any info with the standard PureBasic
+  ;                   functions like ImageHeight(), ImageWidth()...
+  ;                   We must collect this information befor we copy the 
+  ;                   PureBasicImage into the MemoryBuffer().
+  ; RET : #TRUE if sucseed; #FALSE if no Structure isn't created
+  ; ======================================================================
 
-  Procedure.i PosterizeBuffer(*pBuffer, *ImageInfo.TImageInfo, Levels=4, DitherMethode=#PbfW_IMG_Dither_No, xGrayscale=#False, GammOn=#True, Gamma.f=2.23)
+
+    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
+    Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position
+    Protected.i xRET = #True
+    Protected min, max, kNorm, NewColVal   
+          
+    If *pBuffer And *ImageInfo   ; if we have valid Pointers
+      BytesPerPixel = *ImageInfo\imgDepth >>3                              
+      ; We need 2 Loops for Pixel manipulation because a line in the Buffer() may contain
+      ; fill Bytes. We might get a problem if we use FOR P = *pBuffer To EndOfBuffer
+      ; if there is maybe 1 fill Byte at the end of each line. This byte will shift the colors
+      ; 1 Byte. 
+      For Y = 0 To (*ImageInfo\imgHeight -1)
+        *pPix = *pBuffer + *ImageInfo\imgBufferPitch * Y 
+        ; Debug " Py = " + *pPix
+        
+        For X = 0 To (*ImageInfo\imgWidth -1)
+          PB::SaveMinMax(*pPix\ch[0], min, max)       ; MACRO SaveMinMax
+          PB::SaveMinMax(*pPix\ch[1], min, max)
+          PB::SaveMinMax(*pPix\ch[2], min, max)
+          
+          *pPix = *pPix + BytesPerPixel  ; Next Pixel
+          ; Debug " Py = " + Str(*pPix) + " / Y = " + Y
+        Next  
+      Next
+
+      If (max-min) < 255      ; The color space is not completely used!
+        kNorm = (256 * 255)/(max-min)    ; 255/(max-min) * IntFactor; we correct IntFactor later with >>8
+        
+        For Y = 0 To *ImageInfo\imgHeight -1
+          *pPix = *pBuffer + *ImageInfo\imgBufferPitch * Y 
+          ; Debug " Px = " + *pPix
+          For X = 0 To *ImageInfo\imgWidth -1
+            ; Attention, here at 24Bit Color we have to use \ch[0..2]
+            NewColVal = ((*pPix\ch[0] - min) * kNorm) >> 8  ; /256
+            PB::SaturateColorMax(NewColVal)
+            *pPix\ch[0] = NewColVal
+            
+            NewColVal = ((*pPix\ch[1] - min) * kNorm) >> 8  ; /256
+            PB::SaturateColorMax(NewColVal)
+            *pPix\ch[1] = NewColVal
+            
+            NewColVal = ((*pPix\ch[2] - min) * kNorm) >> 8  ; /256
+            PB::SaturateColorMax(NewColVal)
+            *pPix\ch[2] = NewColVal
+             
+            *pPix = *pPix + BytesPerPixel  ; Next Pixel
+            ; Debug " Py = " +*pPix + " / Y = " + Y
+          Next 
+        Next
+      EndIf
+                 
+    Else
+      xRET = #False  
+    EndIf
+    
+    ProcedureReturn xRET
+  EndProcedure
+  
+  Procedure.i NormalizeImage(PbImageNo)
+    Protected ImageInfo.TImageInfo
+    Protected *buf, ret 
+    
+    ret = InitImageInfoStruct(PbImageNo, ImageInfo, #True)  ; Create ImageInfo and keep Drawing On
+    If ret
+      *buf = DrawingBuffer()
+      If *buf
+          ret = NormalizeBuffer(*buf, ImageInfo)
+      Else
+          ret = #False
+      EndIf
+      StopDrawing()
+    EndIf
+    
+    ProcedureReturn ret   
+  EndProcedure
+   
+  Procedure.i PosterizeBuffer(*pBuffer, *ImageInfo.TImageInfo, Levels=4, DitherMethode=#IMG_Dither_No, xGrayscale=#False, GammOn=#True, Gamma.f=2.23)
   ; ======================================================================
   ; NAME : PosterizeBuffer
   ; DESC : Posterize an Image in a Buffer with Dithering and Gamma correction
@@ -891,15 +1008,15 @@ Module IMG
   ;                   
   ; VAR(Levels)  : Posterize Levels [2..64]
   ; VAR(DitherMethode) : Dither Methode
-  ;       #PbfW_IMG_Dither_No                       ; 0 = no dither
-  ;       #PbfW_IMG_Dither_SierraLite               ; 1 = Sierra Lite (error diffusion)
-  ;       #PbfW_IMG_Dither_ShiauFan                 ; 2 = Shiau-Fan (error diffusion)
-  ;       #PbfW_IMG_Dither_BlueNoise                ; 3 = 16x16 blue noise matrix
-  ;       #PbfW_IMG_Dither_Bayer                    ; 4 = 16x16 bayer matrix
-  ;       #PbfW_IMG_Dither_6x6_clustered            ; 5 = 6x6 clustered dot
-  ;       #PbfW_IMG_Dither_6x8_clustered            ; 6 = 6x8 clustered dot
-  ;       #PbfW_IMG_Dither_6x6_diagonal_lines1      ; 7 = 6x6 diagonal lines 1
-  ;       #PbfW_IMG_Dither_6x6_diagonal_lines2      ; 8 = 6x6 diagonal lines 2
+  ;       #IMG_Dither_No                       ; 0 = no dither
+  ;       #IMG_Dither_SierraLite               ; 1 = Sierra Lite (error diffusion)
+  ;       #IMG_Dither_ShiauFan                 ; 2 = Shiau-Fan (error diffusion)
+  ;       #IMG_Dither_BlueNoise                ; 3 = 16x16 blue noise matrix
+  ;       #IMG_Dither_Bayer                    ; 4 = 16x16 bayer matrix
+  ;       #IMG_Dither_6x6_clustered            ; 5 = 6x6 clustered dot
+  ;       #IMG_Dither_6x8_clustered            ; 6 = 6x8 clustered dot
+  ;       #IMG_Dither_6x6_diagonal_lines1      ; 7 = 6x6 diagonal lines 1
+  ;       #IMG_Dither_6x6_diagonal_lines2      ; 8 = 6x6 diagonal lines 2
   ; VAR(xGrayscale): True: grayscale the image
   ; VAR(GammOn): Ture : activates the Gamma correction with standard 2.23
   ; VAR(Gamma) : Gamma correction factor [0.01 .. 4.99]
@@ -978,7 +1095,7 @@ Module IMG
       Debug "mx = " + mx
       Debug "my = " + my
       
-      If DitherMethode=#PbfW_IMG_Dither_SierraLite Or DitherMethode=#PbfW_IMG_Dither_ShiauFan
+      If DitherMethode=#IMG_Dither_SierraLite Or DitherMethode=#IMG_Dither_ShiauFan
         ; error diffusion buffers
         Protected Dim _c0.l(mx+3)
         Protected Dim _c1.l(mx+3)
@@ -990,7 +1107,7 @@ Module IMG
         
         Select DitherMethode
             
-          Case #PbfW_IMG_Dither_Bayer
+          Case #IMG_Dither_Bayer
             ; 16x16 Bayer data
             dx=16: dy=16
             dm(00)=$a8288808a0208000: dm(01)=$aa2a8a0aa2228202: dm(02)=$68e848c860e040c0: dm(03)=$6aea4aca62e242c2
@@ -1002,25 +1119,25 @@ Module IMG
             dm(24)=$a7278707af2f8f0f: dm(25)=$a5258505ad2d8d0d: dm(26)=$67e747c76fef4fcf: dm(27)=$65e545c56ded4dcd
             dm(28)=$9717b7379f1fbf3f: dm(29)=$9515b5359d1dbd3d: dm(30)=$57d777f75fdf7fff: dm(31)=$55d575f55ddd7dfd
             
-          Case #PbfW_IMG_Dither_6x6_clustered
+          Case #IMG_Dither_6x6_clustered
             ; 6x6 clustered dot (converted from image magick)
             dx=6: dy=6
             dm(00)=$f8dc23156a87b1bf: dm(01)=$7895eacd32075ca3: dm(02)=$87b1bf23156a404e: dm(03)=$4e78a3f8dc32075c
             dm(04)=$95eacd40
             
-          Case #PbfW_IMG_Dither_6x8_clustered
+          Case #IMG_Dither_6x8_clustered
             ; 6x8 clustered dot
             dx=6: dy=8
             dm(00)=$1045a5af855a507a: dm(01)=$c525053ae4efba1b: dm(02)=$9acf8f653070dafa: dm(03)=$efba5a507aa5af85
             dm(04)=$3adafac51b1045e4: dm(05)=$6530709acf8f2505
             
-          Case #PbfW_IMG_Dither_6x6_diagonal_lines1
+          Case #IMG_Dither_6x6_diagonal_lines1
             ; 6x6 diagonal lines 1
             dx=6: dy=6
             dm(00)=$4aca27fba651d17c: dm(01)=$19ed98437520f49f: dm(02)=$3cbc6712e691c36e: dm(03)=$59048a35b5600bdf
             dm(04)=$d8832eae
             
-          Case #PbfW_IMG_Dither_6x6_diagonal_lines2
+          Case #IMG_Dither_6x6_diagonal_lines2
             ; 6x6 diagonal lines 2
             dx=6: dy=6
             dm(00)=$ed98277cd1fba651: dm(01)=$0b60b5df43196ec3: dm(02)=$d8832e0459ae8a35: dm(03)=$4a20bce6913c1267
@@ -1078,7 +1195,7 @@ Module IMG
             *pLine + pitch
           Next y    
           
-        ElseIf DitherMethode=#PbfW_IMG_Dither_SierraLite
+        ElseIf DitherMethode=#IMG_Dither_SierraLite
           
           For y=0 To my
             *c = *pLine         
@@ -1105,7 +1222,7 @@ Module IMG
             *pLine + pitch
           Next y    
           
-        ElseIf DitherMethode=#PbfW_IMG_Dither_ShiauFan
+        ElseIf DitherMethode=#IMG_Dither_ShiauFan
           
           For y=0 To my
             *c = *pLine         
@@ -1156,7 +1273,7 @@ Module IMG
             *pLine + pitch
           Next y    
           
-        ElseIf DitherMethode=#PbfW_IMG_Dither_SierraLite
+        ElseIf DitherMethode=#IMG_Dither_SierraLite
           For y=0 To my
             *c=*pLine         
             ; Sierra Lite error diffusion dither (color)
@@ -1175,7 +1292,7 @@ Module IMG
             *pLine + pitch
           Next y    
           
-        ElseIf DitherMethode=#PbfW_IMG_Dither_ShiauFan
+        ElseIf DitherMethode=#IMG_Dither_ShiauFan
           
           For y=0 To my
             *c=*pLine         
@@ -1222,7 +1339,7 @@ Module IMG
     EndIf
   EndProcedure
   
-  Procedure.i PosterizeImage(PbImageNo, Levels=4, DitherMethode=#PbfW_IMG_Dither_No, xGrayscale=#False, GammOn=#True, Gamma.f=2.23)
+  Procedure.i PosterizeImage(PbImageNo, Levels=4, DitherMethode=#IMG_Dither_No, xGrayscale=#False, GammOn=#True, Gamma.f=2.23)
     Protected ImageInfo.TImageInfo
     Protected *buf, ret 
     
@@ -1235,7 +1352,7 @@ Module IMG
     
     ProcedureReturn ret   
   EndProcedure
-
+  
 EndModule
 
 CompilerIf #PB_Compiler_IsMainFile
@@ -1305,9 +1422,8 @@ CompilerIf #PB_Compiler_IsMainFile
   EndIf
   
 CompilerEndIf
-; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 462
-; FirstLine = 459
-; Folding = ----
+; IDE Options = PureBasic 6.20 (Windows - x64)
+; CursorPosition = 19
+; Folding = -----
 ; Optimizer
 ; CPU = 5
