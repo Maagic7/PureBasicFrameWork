@@ -1,6 +1,25 @@
-﻿
-; Snap7 is distributed as a binary shared library with full source code under GNU Library 
-; or Lesser General Public License version 3.0 (LGPLv3)
+﻿; ===========================================================================
+; FILE : PbFw_Module_Snap7.pb
+; NAME : PureBasic Framework : Module Snap7 [Snap7::]
+; DESC : The Modul version of snap7.pbi
+; DESC : Snap7 is an open source library for connecting with Siemens S7 PLC
+; DESC : 
+; DESC :
+; SOURCES: https://snap7.sourceforge.net/
+;          
+; ===========================================================================
+;
+; AUTHOR   :  Stefan Maag (porting the snap7.pbi to Module version) 
+; DATE     :  2025/03/20
+; VERSION  :  1.4.2
+; OS       :  all
+; LICENCE  :  Snap7 is distributed as a binary shared library with full source code  
+;             under GNU Library or Lesser General Public License version 3.0 (LGPLv3)
+; ===========================================================================
+; ChangeLog: 
+;{ 
+;}
+; ===========================================================================
 
 DeclareModule Snap7
   
@@ -945,8 +964,8 @@ Module Snap7
 EndModule
 
 
-; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 1
+; IDE Options = PureBasic 6.20 (Windows - x64)
+; CursorPosition = 21
 ; Folding = --
 ; EnableXP
 ; CPU = 5
