@@ -1,0 +1,9 @@
+libnodave.dll  : the original libnodave 8.5.1 dll
+
+libnodave_jfkmod.dll : modified libnodave  (bugfixes)
+   by Jochen Kühner
+   https://github.com/dotnetprojects/DotNetSiemensPLCToolBoxLibrary/tree/master/externalDlls/libnodave
+
+
+snap7.dll  : the original Snap7
+  https://snap7.sourceforge.net/

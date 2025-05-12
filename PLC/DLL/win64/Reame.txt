@@ -1,0 +1,11 @@
+
+libnodave x64 do not exist in the original version.
+But in the modified version by Jochen Kühner
+
+libnodave_jfkmod64.dll : modified libnodave  (bugfixes)
+   by Jochen Kühner
+   https://github.com/dotnetprojects/DotNetSiemensPLCToolBoxLibrary/tree/master/externalDlls/libnodave
+
+
+snap7.dll  : the original Snap7
+  https://snap7.sourceforge.net/

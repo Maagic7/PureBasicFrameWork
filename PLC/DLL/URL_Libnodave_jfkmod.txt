@@ -1,0 +1,3 @@
+By Jochen Kühner - SPS-Forum
+
+https://github.com/dotnetprojects/DotNetSiemensPLCToolBoxLibrary/tree/master/externalDlls/libnodave
