@@ -1,25 +1,23 @@
 ﻿; ===========================================================================
-;  FILE: PbFw_Module_Snap7.pb
-;  NAME: Module Snap7 
-;  DESC: Snap7 Module. Ported from the original Snap7.pbi 1.4.2
-;  DESC: 
-;  DESC: 
-;  DESC: 
-;  SOURCES: http://snap7.sourceforge.net/
+; FILE : PbFw_Module_Snap7.pb
+; NAME : PureBasic Framework : Module Snap7 [Snap7::]
+; DESC : The Modul version of snap7.pbi
+; DESC : Snap7 is an open source library for connecting with Siemens S7 PLC
+; DESC : 
+; DESC :
+; SOURCES: https://snap7.sourceforge.net/
+;          
 ; ===========================================================================
 ;
-; AUTHOR   :  Stefan Maag
-; DATE     :  2024/12/08
+; AUTHOR   :  Stefan Maag (porting the snap7.pbi to Module version) 
+; DATE     :  2025/03/20
 ; VERSION  :  1.4.2
-; COMPILER :  PureBasic 
-;
-; LICENCE  :  Open Source, see Snap7 License conditions
+; OS       :  all
+; LICENCE  :  Snap7 is distributed as a binary shared library with full source code  
+;             under GNU Library or Lesser General Public License version 3.0 (LGPLv3)
 ; ===========================================================================
-;; ChangeLog: 
-;{ 2024/12/08 S.Maag 
-;  
-;}
-;{ TODO:
+; ChangeLog: 
+;{ 
 ;}
 ; ===========================================================================
 
@@ -956,8 +954,8 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 487
-; FirstLine = 528
+; IDE Options = PureBasic 6.20 (Windows - x64)
+; CursorPosition = 20
 ; Folding = --
 ; EnableXP
+; CPU = 5
