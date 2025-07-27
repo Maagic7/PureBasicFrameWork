@@ -36,7 +36,7 @@
 ;XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 ;XIncludeFile "PbFw_Module_Debug.pb"        ; DBG::      Debug Module
 
-XIncludeFile "..\Modules\PbFw_Module_PB.pb"        ; PB::      Purebasic Extention Module
+XIncludeFile "..\Modules\PbFw_Module_PX.pb"        ; PX::      Purebasic Extention Module
 
 ;- ----------------------------------------------------------------------
 ;-   Documentation
@@ -1606,7 +1606,7 @@ Module ModBus
       ret = SendNetworkData(\ConnectionID, \SendBuffer(), \Status\BytesToSend)
       If ret = \Status\BytesToSend
         
-        *Modbus\Status\timSend = PB::GetTimeStamp()     ; Save the TimeStamp send in Modbus Structrue
+        *Modbus\Status\timSend = PX::GetTimeStamp()     ; Save the TimeStamp send in Modbus Structrue
         
         If \TimeOut <= 0 : \TimeOut = #MODBUS_STANDARD_TIMEOUT : EndIf ; 1000ms
         TimeOut = \TimeOut 
@@ -1618,7 +1618,7 @@ Module ModBus
           If NetworkClientEvent(*Modbus\ConnectionID) = #PB_NetworkEvent_Data
      
             BytesReceived = ReceiveNetworkData(\ConnectionID, \ReceiveBuffer(), #_BufferSizeByte)
-            *Modbus\Status\timReceive = PB::GetTimeStamp()     ; Save the TimeStamp receive in Modbus Structrue
+            *Modbus\Status\timReceive = PX::GetTimeStamp()     ; Save the TimeStamp receive in Modbus Structrue
  
             If BytesReceived > 6
               \Status\BytesReceived = BytesReceived
@@ -2055,8 +2055,9 @@ Module ModBus
 EndModule
 
 
-; IDE Options = PureBasic 6.04 LTS (Windows - x86)
-; CursorPosition = 18
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 38
+; FirstLine = 35
 ; Folding = -----------
 ; Optimizer
 ; CPU = 5
