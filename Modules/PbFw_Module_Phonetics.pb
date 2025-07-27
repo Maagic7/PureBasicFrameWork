@@ -28,6 +28,7 @@
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
+;   2025/07/25 : integrated Module PX:: and changed individual pChar Structure and UCaseChar to PX::  
 ;   2025/01/23 : added SoundexEN/DE with englisch and german encoding table
 ;}
 ;{ TODO:
@@ -38,8 +39,9 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
-XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::     FrameWork control Module
-XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::      Debug Module
+XIncludeFile "PbFw_Module_PX.pb"          ; PX::      Purebasic Extention Module
+XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
+XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::     Debug Module
 
 ; XIncludeFile ""
 
@@ -50,13 +52,13 @@ DeclareModule Phonetics
   ;- STRUCTURES and CONSTANTS
   ;  ----------------------------------------------------------------------
   
-  Structure TWord
-    ID.i
-    Word.s
-    ArticleID.i ; Verweis der, die, das, -
-    TypeID.i    ; Substantiv, Verb, Adjectiv
-    BaseID.i    ; Wortstamm : Pointer zum Stammwort
-  EndStructure
+;   Structure TWord
+;     ID.i
+;     Word.s
+;     ArticleID.i ; Verweis der, die, das, -
+;     TypeID.i    ; Substantiv, Verb, Adjectiv
+;     BaseID.i    ; Wortstamm : Pointer zum Stammwort
+;   EndStructure
   
   Declare.s EncodeCologne(String$)
   
@@ -71,33 +73,11 @@ Module Phonetics
   EnableExplicit
   PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
   
-  Structure pChar
-    StructureUnion
-      a.a       ; ASCII   : 8 Bit unsigned  [0..255] 
-      c.c       ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
-      u.u       ; UNICODE : 2 Byte unsigned [0..65535]
-      aa.a[0]   ; ASCII   : 8 Bit unsigned  [0..255] 
-      cc.c[0]   ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
-      uu.u[0]   ; UNICODE : 2 Byte unsigned [0..65535]
-    EndStructureUnion
-  EndStructure
-  
-  Macro UCaseChar(MyChar, ReturnChar)  
-    Select MyChar
-      Case 'a' To 'z'
-        ReturnChar = MyChar - 32  ; a[97]-A[65]=32                
-       Case 224 To 254            ; 'À'..254
-        ReturnChar = MyChar - 32  ; 254-222 = 32      
-      Default
-        ReturnChar = MyChar
-    EndSelect
-  EndMacro
-
   Macro mac_KeepChar()          ; Macro for compacting Strings when removing Chars
   	If *pWrite <> *pRead        ; If  WritePosition <> ReadPosition
   		*pWrite\c = *pRead\c      ; Copy the Character from ReadPosition to WritePosition => compacting the String
   	EndIf
-  	*pWrite + SizeOf(Character) ; Set new Write-Position 
+  	PX::INCC(*pWrite)           ; increment Charpointer -> Set new Write-Position 
   EndMacro
   
   ;- ----------------------------------------------------------------------
@@ -153,7 +133,7 @@ Module Phonetics
     
     Protected xEncoded, xFirstChar = #True
     Protected phon$
-    Protected *pC.pChar, *pPh.pChar
+    Protected *pC.PX::pChar, *pPh.PX::pChar
            
     String$ = LCase(String$)
     phon$ = Space(Len(String$)*2)
@@ -228,7 +208,7 @@ Module Phonetics
         Case 'ß' ; = 'ss'
           ; 88
           *pPh\c ='8'
-          *pPh + SizeOf(Character)      ; move one char forward
+          PX::INCC(*pPh)     ; move one char forward
           *pPh\c ='8'         
         ; --------------------------------------------------  
           
@@ -268,13 +248,13 @@ Module Phonetics
           ; X=48 if it is the first Char or not after c,k,q
           ; so first set 48 and correct later if x is after c,k,q
           *pPh\c ='4' 
-          *pPh + SizeOf(Character)      ; move one char forward
+          PX::INCC(*pPh)                    ; move one char forward
           *pPh\c ='8'          
           
           If Not xFirstChar
             Select *pC\cc[-1]               ; check previous Char
               Case 'c', 'k', 'q'            ; x after c,k,q 
-                *pPh - SizeOf(Character)    ; move one char back to the 4 
+                PX::DECC(*pPh)              ; move one char back to the 4 
                 *pPh\c ='8'                 ; overwerite the 4 with 8                    
             EndSelect
           EndIf
@@ -291,10 +271,10 @@ Module Phonetics
         ; --------------------------------------------------         
       EndSelect
       
-      *pC + SizeOf(Character)       ; Pointer String to Next Char
+      PX::INCC(*pC)                 ; Pointer String to Next Char
       
       If xEncoded                   ; If it was a char to encode
-        *pPh + SizeOf(Character)    ; Pointer phonetic encoded String to Next Char
+        PX::INCC(*pPh)              ; Pointer phonetic encoded String To Next Char
       EndIf
       
       xFirstChar =#False
@@ -310,11 +290,11 @@ Module Phonetics
       ; Step 3: Remove all '0' except at the beginning
       ; ----------------------------------------------------------------------
       
-      Protected *pRead.pChar
-      Protected *pWrite.pChar
+      Protected *pRead.PX::pChar
+      Protected *pWrite.PX::pChar
   
       *pRead = @phon$   ; set the Read Pointer To start of phonetic string
-      *pRead + SizeOf(Character)  ; set Pointer to 2nd Char -> never remove 1st Char
+      PX::INCC(*pRead)  ; set Pointer to 2nd Char -> never remove 1st Char
       *pWrite = *pRead
             
       ; we start at second char with removing duplicates and '0'
@@ -331,7 +311,7 @@ Module Phonetics
               mac_KeepChar()
             EndIf
         EndSelect  
-        *pRead + SizeOf(Character)
+        PX::INCC(*pRead)      ; increment CharPointer 
       Wend
       *pWrite\c = 0   ; Add EndOfString
       ; ----------------------------------------------------------------------
@@ -389,7 +369,7 @@ Module Phonetics
     ; ============================================================================
      
     Protected length, cnt, xEncoded
-    Protected *pC.pChar, *pPh.pChar
+    Protected *pC.PX::pChar, *pPh.PX::pChar ; universal Charpointer definition from Module PX::
     
     Protected phon$ = "0000"    ; Soundex phonetic is always 4 characters long
            
@@ -407,11 +387,10 @@ Module Phonetics
     ; Step 1: Keep the first Character of Text in Phon$
     ; ----------------------------------------------------------------------
     
-    ; *pPh\c = Asc(UCase(Chr(*pC\c)))   ; ! Change to UCaseChar Macro !
-    UCaseChar(*pC\c, *pPh\c)    ; UCaseChar Macro
-    *pPh + SizeOf(Character)
-    *pC + SizeOf(Character)
-    cnt + 1       ; Number of valid characters encoded
+    *pPh\c = PX::UCaseChar(*pC\c)    ; UCaseChar Macro for ASCII Characters only
+    PX::INCC(*pPh)    ; increment Charpointer
+    PX::INCC(*pC)     ; increment Charpointer
+    cnt + 1           ; Number of valid characters encoded
     
     ; ----------------------------------------------------------------------
     ; Step 2: Character wise phonetic encoding
@@ -461,13 +440,13 @@ Module Phonetics
         If *pPh\c = *pPh\cc[-1]
           ; double digit -> ignor it! Do nothing!
         Else
-          *pPh + SizeOf(Character)    ; Pointer phonetic encoded String to Next Char
+          PX::INCC(*pPh)              ; Pointer phonetic encoded String to Next Char
           cnt + 1                     ; Count the number of valid encodings and quit if Len(phon$)=4
         EndIf      
       EndIf
       
       If cnt = 4 : Break : EndIf    ; Stop at Len(phon$)=4
-      *pC + SizeOf(Character)       ; Pointer String to Next Char
+      PX::INCC(*pC)                 ; Pointer String to Next Char
     Wend
     
     ProcedureReturn phon$
@@ -485,7 +464,7 @@ Module Phonetics
     ; ============================================================================
      
     Protected length, cnt, xEncoded
-    Protected *pC.pChar, *pPh.pChar
+    Protected *pC.PX::pChar, *pPh.PX::pChar
     
     Protected phon$ = "0000"    ; Soundex phonetic is always 4 characters long
            
@@ -503,11 +482,10 @@ Module Phonetics
     ; Step 1: Keep the first Character
     ; ----------------------------------------------------------------------
     
-    ; *pPh\c = Asc(UCase(Chr(*pC\c)))   ; ! Change to UCaseChar Macro !
-    UCaseChar(*pC\c, *pPh\c)    ; UCaseChar Macro
-    *pPh + SizeOf(Character)
-    *pC + SizeOf(Character)
-    cnt + 1       ; Number of valid characters encoded
+    *pPh\c = PX::UCaseChar(*pC\c) ;  ; UCaseChar Macro for ASCII Characters only
+    PX::INCC(*pPh)    ; increment Charpointer
+    PX::INCC(*pC)     ; increment Charpointer
+    cnt + 1           ; Number of valid characters encoded
     
     ; ----------------------------------------------------------------------
     ; Step 2: Character wise phonetic encoding
@@ -532,11 +510,11 @@ Module Phonetics
         ; --------------------------------------------------  
           
         Case 'c'
-          If *pC\cc[1] = 'h'   ; c followed by h = ch  
-            *pPh\c ='7'        ; 'ch'
-            *pc + SizeOf(Character)  ; step 1 Char forward because 2 Chars 'ch'
+          If *pC\cc[1] = 'h'    ; c followed by h = ch  
+            *pPh\c ='7'         ; 'ch'
+            PX::INCC(*pc)       ; step 1 Char forward because 2 Chars 'ch'
           Else
-            *pPh\c ='2'    ; 'c'
+            *pPh\c ='2'         ; 'c'
           EndIf
         
         Case 'd', 't'
@@ -565,13 +543,13 @@ Module Phonetics
         If *pPh\c = *pPh\cc[-1] 
           ; double digit -> ignor it! Do nothing!
         Else
-          *pPh + SizeOf(Character)    ; Pointer phonetic encoded String to Next Char
+          PX::INCC(*pPh)              ; Pointer phonetic encoded String to Next Char
           cnt + 1                     ; Count the number of valid encodings and quit if Len(phon$)=4
         EndIf      
       EndIf
       
       If cnt = 4 : Break : EndIf    ; Stop at Len(phon$)=4
-      *pC + SizeOf(Character)       ; Pointer String to Next Char
+      PX::INCC(*pC)                 ; Pointer String to Next Char
     Wend
     
     ProcedureReturn phon$
@@ -645,9 +623,9 @@ DataSection
 EndDataSection
 
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 281
-; FirstLine = 232
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 60
+; FirstLine = 34
 ; Folding = --
 ; Optimizer
 ; CPU = 5

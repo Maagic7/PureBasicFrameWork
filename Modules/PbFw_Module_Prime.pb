@@ -1153,8 +1153,8 @@ CompilerIf #PB_Compiler_IsMainFile
     cnt = PrimeFactors(Num, Factors())
     t1 = ElapsedMilliseconds()-t1
     #Mio = 1000000 
-    #Loops = 1 * #Mio
-
+    #Loops = 400 * #Mio
+    
 ;     t2 = ElapsedMilliseconds()
 ;       For I = 1 To #Loops Step 2
 ;         If IsPrime(I)
@@ -1163,9 +1163,9 @@ CompilerIf #PB_Compiler_IsMainFile
 ;       Next
 ;     t2 = ElapsedMilliseconds()-t2
     
-    t2 = ElapsedMilliseconds()
-      cnt2 = CountPrimes(#Loops)
-    t2 = ElapsedMilliseconds()-t2
+;     t2 = ElapsedMilliseconds()
+;       cnt2 = CountPrimes(#Loops)
+;     t2 = ElapsedMilliseconds()-t2
    
     ; IsPrime_x64 Miller Rabin Test
     t3 = ElapsedMilliseconds()
@@ -1195,8 +1195,8 @@ CompilerIf #PB_Compiler_IsMainFile
       str + #CRLF$ + Str(Factors())
     Next
     Str + #CRLF$
-    str + #CRLF$ + "PB  = " + Str(t2) + " : Primes found = " + Str(cnt2)
-    str + #CRLF$ + "ASM= " + Str(t3) + " : Primes found = " + Str(cnt3)
+    str + #CRLF$ + "PB  = " + Str(t2) + "ms : Primes found = " + Str(cnt2)
+    str + #CRLF$ + "ASM= " + Str(t3) + "ms : Primes found = " + Str(cnt3)
     
    
     ClearClipboard()  ; Clear the Clipboard
@@ -1218,9 +1218,9 @@ CompilerIf #PB_Compiler_IsMainFile
 ;   Next
   
 CompilerEndIf
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 876
-; FirstLine = 881
+; IDE Options = PureBasic 6.20 (Windows - x64)
+; CursorPosition = 1201
+; FirstLine = 1158
 ; Folding = -----
 ; Optimizer
 ; CPU = 5

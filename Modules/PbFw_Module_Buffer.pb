@@ -17,7 +17,7 @@
 ;   2025/02/08 S.Maag : BUFFER:: ist to long for the workflow. Changed to BUF::
 ;   2025/02/06 S.Maag : Added Functions for Bit-Buffers
 ;   2025/01/20 S.Maag : Moved the general Any-Pointer definition TUptr from
-;                       Module Buffer:: to PB:: and changend Name to pAny 
+;                       Module Buffer:: to PX:: and changend Name to pAny 
 ;                       AllocateBuffer() option ClearBuffer=#False was not o.k.
 ;}
 ;{ TODO:
@@ -28,7 +28,7 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
- XIncludeFile "PbFw_Module_PB.pb"           ; PB::     Purebasic Extention Module
+ XIncludeFile "PbFw_Module_PX.pb"           ; PX::     Purebasic Extention Module
  XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::   FrameWork control Module
  XIncludeFile "PbFw_Module_Debug.pb"        ; DBG::    Debug Module
  XIncludeFile "PbFw_Module_Bit.pb"          ; BIT::    Bit Operation Module
@@ -49,10 +49,10 @@ DeclareModule BUF
   #BUF_AlignMemPage  = 4096     ; Align Buffer Size to 4094 Bytes (It's the Standard Size of a Memory-Page)
   #BUF_AlignSektor4K = 4096     ; Aling Buffer Size to 4K Sektor (4096 Bytes)
   
-  ; 2025/01/20 : Now hBuffer use AnyPointer from Modul PB:: instead of it's own TUptr definition
+  ; 2025/01/20 : Now hBuffer use AnyPointer from Modul PX:: instead of it's own TUptr definition
   Structure hBuffer
-    *_ptrMem.PB::pAny ; Pointer to BufferStart in Memory (ATTENTION!! Never change this value! => Programm will chrash!)
-    *UserPtr.PB::pAny ; Any Pointer (actual processed BUFFER position)
+    *_ptrMem.PX::pAny ; Pointer to BufferStart in Memory (ATTENTION!! Never change this value! => Programm will chrash!)
+    *UserPtr.PX::pAny ; Any Pointer (actual processed BUFFER position)
     AlignMode.i       ; AlignMode (#BUF_AlignWord, #BUF_AlignLong, #BUF_AlignInteger ...)
     MemSize.i         ; Allocated MemorySize in [BYTES]
     RequestedSize.i   ; the requested Size in [BYTES] (maybe lower than MemSize)
@@ -338,7 +338,7 @@ Module BUF
   ; VAR(NoOfBytes) : NoOfBytes to count [1 .. \Memsize]; <=0; count all Bytes
   ; RET : No of Hi Bits 
   ; ============================================================================
-    Protected cnt, *pBuf.PB::pAny, *pEnd
+    Protected cnt, *pBuf.PX::pAny, *pEnd
        
     If NoOfBytes <= 0 Or NoOfBytes > *hBUF\MemSize
       NoOfBytes = *hBUF\MemSize     

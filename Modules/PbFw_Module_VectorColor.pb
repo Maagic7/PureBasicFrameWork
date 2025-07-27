@@ -30,7 +30,7 @@
 ;  ----------------------------------------------------------------------
 
 XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
-XIncludeFile "PbFw_Module_PB.pb"          ; PB::      PureBasic extention Module
+XIncludeFile "PbFw_Module_PX.pb"          ; PX::      PureBasic extention Module
 XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::     Debug Module
 XIncludeFile "PbFw_Module_COLOR.pb"       ; COLOR::   RGBA-Color Module
 XIncludeFile "PbFw_Module_VECTORf.pb"     ; VECf::    single precision Vector Module

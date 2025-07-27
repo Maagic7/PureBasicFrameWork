@@ -17,7 +17,7 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{ 
-; 2025/01/31 S.Maag :  Module PB:: included. Solved the Color oder Problem!
+; 2025/01/31 S.Maag :  Module PX:: included. Solved the Color oder Problem!
 ;                       
 ;}
 ;{ TODO:
@@ -30,7 +30,7 @@
 ;- ----------------------------------------------------------------------
 
 XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw:: FrameWork control Module
-XIncludeFile "PbFw_Module_PB.pb"          ; PB::   PureBasic extention Module
+XIncludeFile "PbFw_Module_PX.pb"          ; PX::   PureBasic extention Module
 
 DeclareModule X11Col
   EnableExplicit
@@ -473,7 +473,7 @@ Module X11Col
     ; because it is a RGB sorted table, we can start in the middle for an
     ; effectiv search
     
-    RGB = PB::SetAlpha(RGB, 0)     ; Remove Alpha Channel
+    RGB = PX::SetAlpha(RGB, 0)     ; Remove Alpha Channel
 
     start = (#ColTableEntries-1) >> 1    ; starting in the middle of the table
     
@@ -593,7 +593,7 @@ Module X11Col
     If ColorID >0 And ColorID <= #ColTableEntries
       col = ColorTable(ColorID)\Details\RGB
       If Alpha
-        col = PB::SetAlpha(col, Alpha)
+        col = PX::SetAlpha(col, Alpha)
       EndIf      
     EndIf
     
@@ -793,7 +793,7 @@ Module X11Col
     Data.s ""               ; End! Use "" because #Null$ do not work correctly here
     
     X11_Colors: ; RGB sorted ColorList - Attention Unix notation $RGB, for Windows we need $BGR
-     ;     $RGB, Hue[°], HSV_S[%], HSV_V[%], HSL_S[%], HSL_L[%]           
+     ;     $BGR, Hue[°], HSV_S[%], HSV_V[%], HSL_S[%], HSL_L[%]           
     Data.l $000000,   0,   0,   0,   0,   0 ; Black
     Data.l $000080, 240,  50, 100, 100,  25 ; Navy Blue
     Data.l $00008B, 240,  55, 100, 100,  27 ; Dark Blue
@@ -963,8 +963,8 @@ Next
 ; Debug ID
 
 ; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 606
-; FirstLine = 529
+; CursorPosition = 799
+; FirstLine = 780
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

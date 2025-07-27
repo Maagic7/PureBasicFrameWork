@@ -32,7 +32,7 @@
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog: 
-;{
+;{ 2025/02/08 S.Maag integrated the PB Extention Modul PX:: to do Character operations
 ;}
 ;{ TODO:
 ;}
@@ -43,7 +43,7 @@
 ;  ----------------------------------------------------------------------
 
 XIncludeFile "PbFw_Module_PbFw.pb"       ; PbFw::   FrameWork control Module
-XIncludeFile "PbFw_Module_PB.pb"         ; PB::     Purebasic Extention Module
+XIncludeFile "PbFw_Module_PX.pb"         ; PX::     Purebasic Extention Module
 
 ; XIncludeFile ""
 
@@ -127,7 +127,7 @@ Module IsNum
     Protected RET, Digits
     Protected xPrefix, xSpaceAtEnd
     Protected xIsBin = #True
-    Protected *pC.PB::pChar     ; Pointer to virtual CHAR-ARRAY
+    Protected *pC.PX::pChar     ; Pointer to virtual CHAR-ARRAY
     
     *pC = *String             ; overlay the String with a virtual Char-Array
     If Not *pC                ; If *Pointer to String is #Null
@@ -135,8 +135,8 @@ Module IsNum
     EndIf
     
     ; Skip Tab and Spaces at beginning    
-    While PB::IsSpaceTabChar(*pC\c)
-      PB::INCC(*pC)   ; increment CharPointer
+    While PX::IsSpaceTabChar(*pC\c)
+      PX::INCC(*pC)   ; increment CharPointer
     Wend
     
     ; ----------------------------------------------------------------------
@@ -156,7 +156,7 @@ Module IsNum
     EndIf      
     
     If xPrefix    
-      PB::INCC(*pC)   ; increment CharPointer
+      PX::INCC(*pC)   ; increment CharPointer
     EndIf
 
     ; ----------------------------------------------------------------------
@@ -166,7 +166,7 @@ Module IsNum
     
       While *pC\c     
         Select *pC\c
-          Case #TAB, PB::#PB_SPACE
+          Case #TAB, PX::#PX_SPACE
             xSpaceAtEnd=#True   ; Space dedected : if it is not in the middle it is ok!
             Break
             
@@ -178,17 +178,17 @@ Module IsNum
             Break
            
         EndSelect      
-        PB::INCC(*pC)   ; increment CharPointer : Attention when leaving While with Break Pointer is not incremented
+        PX::INCC(*pC)   ; increment CharPointer : Attention when leaving While with Break Pointer is not incremented
       Wend      
       ; ----------------------------------------------------------------------
       ;  Skip possible SPACEs at the end
       ; ---------------------------------------------------------------------- 
       If xSpaceAtEnd        
         While *pC\c                  ; if all Chars at end are TABs/SPACEs it is ok f
-          If Not PB::IsSpaceTabChar(*pC\c) ; if any other Char follows after the Space, it is not an INT
+          If Not PX::IsSpaceTabChar(*pC\c) ; if any other Char follows after the Space, it is not an INT
             xIsBin = #False
           EndIf
-          PB::INCC(*pC)   ; increment CharPointer             
+          PX::INCC(*pC)   ; increment CharPointer             
         Wend      
       EndIf
       
@@ -217,7 +217,7 @@ Module IsNum
     Protected RET, Digits
     Protected xPrefix, xSpaceAtEnd
     Protected xIsHex = #True
-    Protected *pC.PB::pChar       ; Pointer to virtual CHAR-ARRAY
+    Protected *pC.PX::pChar       ; Pointer to virtual CHAR-ARRAY
     
     *pC = *String           ; overlay the String with a virtual Char-Array       
     If Not *pC           ; If *Pointer to String is #Null
@@ -225,8 +225,8 @@ Module IsNum
     EndIf
         
     ; Skip Tab and Spaces at beginning    
-    While PB::IsSpaceTabChar(*pC\c)
-      PB::INCC(*pC)   ; increment CharPointer
+    While PX::IsSpaceTabChar(*pC\c)
+      PX::INCC(*pC)   ; increment CharPointer
     Wend
     
     ; ----------------------------------------------------------------------
@@ -246,7 +246,7 @@ Module IsNum
     EndIf    
     
     If xPrefix    
-      PB::INCC(*pC)   ; increment CharPointer
+      PX::INCC(*pC)   ; increment CharPointer
     EndIf
 
     ; ----------------------------------------------------------------------
@@ -256,7 +256,7 @@ Module IsNum
     
       While *pC\c
         Select *pC\c
-          Case #TAB, PB::#PB_SPACE
+          Case #TAB, PX::#PX_SPACE
             xSpaceAtEnd=#True   ; TAB, Space dedected : if it is not in the middle it is ok!
             Break
             
@@ -267,7 +267,7 @@ Module IsNum
             xIsHex = #False
             Break          
         EndSelect      
-        PB::INCC(*pC)   ; increment CharPointer
+        PX::INCC(*pC)   ; increment CharPointer
       Wend
       
       ; ----------------------------------------------------------------------
@@ -275,10 +275,10 @@ Module IsNum
       ; ---------------------------------------------------------------------- 
       If xIsHex And xSpaceAtEnd             
         While *pC\c                         ; if all Chars at end are Spaces it is ok 
-          If Not PB::IsSpaceTabChar(*pC\c)  ; if any other Char follows after the Space, it is not an INT
+          If Not PX::IsSpaceTabChar(*pC\c)  ; if any other Char follows after the Space, it is not an INT
             xIsHex = #False
           EndIf
-          PB::INCC(*pC)   ; increment CharPointer
+          PX::INCC(*pC)   ; increment CharPointer
         Wend      
       EndIf
           
@@ -302,7 +302,7 @@ Module IsNum
     Protected RET, Digits
     Protected xSign, xNegativ, xSpaceAtEnd
     Protected xIsINT = #True
-    Protected *pC.PB::pChar   ; Pointer to virtual CHAR-ARRAY
+    Protected *pC.PX::pChar   ; Pointer to virtual CHAR-ARRAY
     
     *pC = *String          ; overlay the String with a virtual Char-Array        
     If Not *pC            ; If *Pointer to String is #Null
@@ -310,8 +310,8 @@ Module IsNum
     EndIf
     
     ; Skip Tab and Spaces at beginning    
-    While PB::IsSpaceTabChar(*pC\c)
-      PB::INCC(*pC)   ; increment CharPointer
+    While PX::IsSpaceTabChar(*pC\c)
+      PX::INCC(*pC)   ; increment CharPointer
     Wend
 
     ; ----------------------------------------------------------------------
@@ -325,7 +325,7 @@ Module IsNum
     EndIf
     
     If xSign    
-      PB::INCC(*pC)   ; increment CharPointer
+      PX::INCC(*pC)   ; increment CharPointer
     EndIf
    
     ; ----------------------------------------------------------------------
@@ -334,7 +334,7 @@ Module IsNum
     While *pC\c    
       Select *pC\c
           
-        Case #TAB, PB::#PB_SPACE
+        Case #TAB, PX::#PX_SPACE
           xSpaceAtEnd=#True   ; Space dedected : if it is not in the middle it is ok!
           Break
           
@@ -346,7 +346,7 @@ Module IsNum
           Break
          
      EndSelect      
-     PB::INCC(*pC)   ; increment CharPointer   
+     PX::INCC(*pC)   ; increment CharPointer   
    Wend
    
     ; ----------------------------------------------------------------------
@@ -354,11 +354,11 @@ Module IsNum
     ; ---------------------------------------------------------------------- 
     If xIsINT And xSpaceAtEnd
       While *pC\c       ; if all Chars at end are Spaces it is ok 
-        If Not PB::IsSpaceTabChar(*pC\c) ; if any other Char follows after the Space, it is not an INT
+        If Not PX::IsSpaceTabChar(*pC\c) ; if any other Char follows after the Space, it is not an INT
           xIsINT = #False
           Break
         EndIf
-        PB::INCC(*pC)   ; increment CharPointer   
+        PX::INCC(*pC)   ; increment CharPointer   
       Wend      
     EndIf
     
@@ -382,7 +382,7 @@ Module IsNum
     Protected RET, Digits, ExpDigits
     Protected xSign, xNegativ, xDecimal, xSpaceAtEnd, xExp, xExpNegative
     Protected xIsFloat = #True
-    Protected *pC.PB::pChar       ; Pointer to virtual CHAR-ARRAY
+    Protected *pC.PX::pChar       ; Pointer to virtual CHAR-ARRAY
     
     *pC = *String         ; overlay the String with a virtual Char-Array
     If Not *pC            ; If *Pointer to String is #Null
@@ -390,8 +390,8 @@ Module IsNum
     EndIf
     
     ; Skip Tab and Spaces at beginning    
-    While PB::IsSpaceTabChar(*pC\c)
-      PB::INCC(*pC)   ; increment CharPointer
+    While PX::IsSpaceTabChar(*pC\c)
+      PX::INCC(*pC)   ; increment CharPointer
     Wend
 
     ; ----------------------------------------------------------------------
@@ -405,7 +405,7 @@ Module IsNum
     EndIf
     
     If xSign    
-      PB::INCC(*pC)   ; increment CharPointer
+      PX::INCC(*pC)   ; increment CharPointer
     EndIf
     
     ; ----------------------------------------------------------------------
@@ -414,7 +414,7 @@ Module IsNum
     While *pC\c      
       Select *pC\c
           
-        Case #TAB, PB::#PB_SPACE              ; Tab or Space
+        Case #TAB, PX::#PX_SPACE              ; Tab or Space
           xSpaceAtEnd=#True     ; Space dedected : if it is not in the middle it is ok!
           Break
           
@@ -434,10 +434,10 @@ Module IsNum
           If *pC\cc[1] = '-'
             xExpNegative = #True
             xExp =#True
-            PB::INCC(*pC)   ; increment CharPointer
+            PX::INCC(*pC)   ; increment CharPointer
           ElseIf *pC\cc[1] = '+'
             xExp =#True
-            PB::INCC(*pC)   ; increment CharPointer
+            PX::INCC(*pC)   ; increment CharPointer
           Else
             xIsFloat =#False
             Break
@@ -447,7 +447,7 @@ Module IsNum
           xIsFloat = #False      ; Is not an Integer
           Break      
      EndSelect      
-     PB::INCC(*pC)   ; increment CharPointer
+     PX::INCC(*pC)   ; increment CharPointer
     Wend   
     ; ----------------------------------------------------------------------
     ;  Parse Exponent
@@ -455,7 +455,7 @@ Module IsNum
     If xExp And xIsFloat
       While *pC\c
         Select *pC\c
-          Case #TAB, PB::#PB_SPACE
+          Case #TAB, PX::#PX_SPACE
             xSpaceAtEnd=#True     ; Space dedected : if it is not in the middle it is ok!
             Break        
           Case '0' To '9'
@@ -464,7 +464,7 @@ Module IsNum
             xIsFloat = #False  
             Break
         EndSelect       
-        PB::INCC(*pC)   ; increment CharPointer
+        PX::INCC(*pC)   ; increment CharPointer
       Wend         
     EndIf
     
@@ -477,11 +477,11 @@ Module IsNum
     ; ---------------------------------------------------------------------- 
     If xSpaceAtEnd And xIsFloat
       While *pC\c       ; if all Chars at end are Spaces it is ok for an Integer
-        If Not PB::IsSpaceTabChar(*pC\c) ; If any other Char follows after the Space, it is nov valid
+        If Not PX::IsSpaceTabChar(*pC\c) ; If any other Char follows after the Space, it is nov valid
           xIsFloat = #False
           Break
         EndIf
-        PB::INCC(*pC)   ; increment CharPointer      
+        PX::INCC(*pC)   ; increment CharPointer      
       Wend      
     EndIf
     
@@ -507,7 +507,7 @@ Module IsNum
     Protected xSpaceAtEnd
     Protected xYear, xMonth, xDay, xHour, xMin, xSec, xMilliSec
     Protected IsDate = #True
-    Protected *pC.PB::pChar   ; Pointer to virtual CHAR-ARRAY
+    Protected *pC.PX::pChar   ; Pointer to virtual CHAR-ARRAY
     
     *pC = *String          ; overlay the String with a virtual Char-Array        
     If Not *pC            ; If *Pointer to String is #Null
@@ -515,8 +515,8 @@ Module IsNum
     EndIf
     
     ; Skip Tab and Spaces at beginning    
-    While PB::IsSpaceTabChar(*pC\c)
-      PB::INCC(*pC)   ; increment CharPointer
+    While PX::IsSpaceTabChar(*pC\c)
+      PX::INCC(*pC)   ; increment CharPointer
     Wend
     ; ----------------------------------------------------------------------
     ;  Parse Number
@@ -540,18 +540,18 @@ Module IsNum
           Break
          
      EndSelect      
-     PB::INCC(*pC)   ; increment CharPointer
+     PX::INCC(*pC)   ; increment CharPointer
     Wend
     ; ----------------------------------------------------------------------
     ;  Skip possible SPACEs at the end
     ; ---------------------------------------------------------------------- 
     If IsDate And xSpaceAtEnd And IsDate
       While *pC\c       ; if all Chars at end are TABs, Spaces it is ok
-        If Not PB::IsSpaceTabChar(*pC\c) ; If any other Char follows after the Space, it is nov valid
+        If Not PX::IsSpaceTabChar(*pC\c) ; If any other Char follows after the Space, it is nov valid
           IsDate = #False
           Break
         EndIf
-        PB::INCC(*pC)   ; increment CharPointer
+        PX::INCC(*pC)   ; increment CharPointer
       Wend      
     EndIf
     
@@ -577,7 +577,7 @@ Module IsNum
     Protected RET, Digits
     Protected xSign, xNegativ, xDecimal, xSpaceAtEnd
     Protected xIsCur = #True
-    Protected *pC.PB::pChar   ; Pointer to virtual CHAR-ARRAY
+    Protected *pC.PX::pChar   ; Pointer to virtual CHAR-ARRAY
     
     *pC = *String          ; overlay the String with a virtual Char-Array        
     If Not *pC            ; If *Pointer to String is #Null
@@ -585,8 +585,8 @@ Module IsNum
     EndIf
         
     ; Skip Tab and Spaces at beginning    
-    While PB::IsSpaceTabChar(*pC\c)
-      PB::INCC(*pC)   ; increment CharPointer
+    While PX::IsSpaceTabChar(*pC\c)
+      PX::INCC(*pC)   ; increment CharPointer
     Wend
     
     ; ----------------------------------------------------------------------
@@ -600,7 +600,7 @@ Module IsNum
     EndIf
     
     If xSign    
-      PB::INCC(*pC)   ; increment CharPointer
+      PX::INCC(*pC)   ; increment CharPointer
     EndIf
     
     ; ----------------------------------------------------------------------
@@ -609,7 +609,7 @@ Module IsNum
     While *pC\c  
       Select *pC\c         
           
-        Case #TAB, PB::#PB_SPACE
+        Case #TAB, PX::#PX_SPACE
           xSpaceAtEnd=#True     ; Space dedected : if it is not in the middle it is ok!
           Break
           
@@ -631,18 +631,18 @@ Module IsNum
           Break
          
       EndSelect      
-      PB::INCC(*pC)   ; increment CharPointer
+      PX::INCC(*pC)   ; increment CharPointer
     Wend   
     ; ----------------------------------------------------------------------
     ;  Skip possible SPACEs at the end
     ; ---------------------------------------------------------------------- 
     If xIsCur And xSpaceAtEnd And xIsCur
       While *pC\c       ; if all Chars at end are Spaces it is ok for an Integer
-        If Not PB::IsSpaceTabChar(*pC\c) ; if any other Char follows after the Space, it is not valid
+        If Not PX::IsSpaceTabChar(*pC\c) ; if any other Char follows after the Space, it is not valid
           xIsCur = #False
           Break
         EndIf
-        PB::INCC(*pC)   ; increment CharPointer
+        PX::INCC(*pC)   ; increment CharPointer
       Wend      
     EndIf
     
@@ -665,7 +665,7 @@ Module IsNum
     Protected I, RET, Digits, c.c
     Protected xSign, xNegativ, xSpaceAtEnd
     Protected xIsPercent = #True, xPercentChar
-    Protected *pC.PB::pChar   ; Pointer to virtual CHAR-ARRAY
+    Protected *pC.PX::pChar   ; Pointer to virtual CHAR-ARRAY
     
     *pC = *String          ; overlay the String with a virtual Char-Array        
     If Not *pC            ; If *Pointer to String is #Null
@@ -673,8 +673,8 @@ Module IsNum
     EndIf
     
    ; Skip Tab and Spaces at beginning    
-    While PB::IsSpaceTabChar(*pC\c)
-      PB::INCC(*pC)   ; increment CharPointer
+    While PX::IsSpaceTabChar(*pC\c)
+      PX::INCC(*pC)   ; increment CharPointer
     Wend
     
     ; ----------------------------------------------------------------------
@@ -688,7 +688,7 @@ Module IsNum
     EndIf
     
     If xSign    
-      PB::INCC(*pC)   ; increment CharPointer
+      PX::INCC(*pC)   ; increment CharPointer
     EndIf
     
     ; ----------------------------------------------------------------------
@@ -697,7 +697,7 @@ Module IsNum
     While *pC\c    
       Select *pC\c
           
-        Case #TAB, PB::#PB_SPACE              ; TAB, Space
+        Case #TAB, PX::#PX_SPACE              ; TAB, Space
           xSpaceAtEnd=#True     ; Space dedected : if it is not in the middle it is ok!
           Break
           
@@ -722,22 +722,22 @@ Module IsNum
           Break
          
      EndSelect      
-     PB::INCC(*pC)   ; increment CharPointer
+     PX::INCC(*pC)   ; increment CharPointer
     Wend   
     ; ----------------------------------------------------------------------
     ;  Skip possible SPACEs at the end
     ; ---------------------------------------------------------------------- 
     If xIsPercent And xSpaceAtEnd      ; if we left While with break and have to detect End-Spaces
-      PB::INCC(*pC)   ; increment CharPointer
+      PX::INCC(*pC)   ; increment CharPointer
       If Not xPercentChar       ; % must be detected, we allow 1Space after the Number
         If  *pC\c ='%'   
           xPercentChar =#True   ;'%'found
-          PB::INCC(*pC)   ; increment CharPointer
+          PX::INCC(*pC)   ; increment CharPointer
         EndIf
       EndIf 
       
       While *pC\cc          ; if all Chars at end are Spaces it is ok 
-        If Not PB::IsSpaceTabChar(*pC\c) ; if any other Char follows after the Space, it is not valid
+        If Not PX::IsSpaceTabChar(*pC\c) ; if any other Char follows after the Space, it is not valid
           xIsPercent = #False
           Break
         EndIf
@@ -866,9 +866,8 @@ EndModule
   Debug check("-234.0")
     
 CompilerEndIf 
-; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 741
-; FirstLine = 684
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 34
 ; Folding = ---
 ; Markers = 99
 ; Optimizer

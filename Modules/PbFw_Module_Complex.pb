@@ -107,10 +107,11 @@
 ;- ----------------------------------------------------------------------
 ;- Include Files
 ;  ----------------------------------------------------------------------
+; XIncludeFile "PbFw_Module_Complex.pb"     ; PX::      Complex Math Module
 
-XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::     FrameWork control Module
-XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::      Debug Module
-XIncludeFile "PbFw_Module_CPU.pb"         ; CPU::      CPU-Features
+XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
+XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::     Debug Module
+XIncludeFile "PbFw_Module_CPU.pb"         ; CPU::     CPU-Features
 ; XIncludeFile ""
 
 DeclareModule Complex
@@ -136,7 +137,6 @@ DeclareModule Complex
   Declare.d CAbs(*Z.TComplex)
   Declare.d CArg(*Z.TComplex)
   
-
   ;  Functions returning a Complex
   Declare.i CSet(*OUT.TComplex, re.d, im.d)
   Declare.i CModQ(*OUT.TComplex, *Z.TComplex)
@@ -291,7 +291,7 @@ Module Complex
     If *Z1\re = *Z2\re And *Z1\im = *Z2\im
       ; Complex values are equal
       ProcedureReturn 0
-    ElseIf *Z1\re < *Z2\re Or (*Z1\re = *Z2\re And *Z1\im < *Z2\im)
+    ElseIf (*Z1\re < *Z2\re) Or (*Z1\re = *Z2\re And *Z1\im < *Z2\im)
       ; Z1 is less than Z2
       ProcedureReturn -1
     Else
@@ -391,20 +391,20 @@ Module Complex
         
     DBG::mac_CheckPointer3(*OUT, *Z1, *Z2)      ; Check Pointer Exception
     
-    Protected.d div
+    Protected.d denom
     
     ;  z1      x1 + iy1      x1*x2 + y1*y2          x2 * y1 - x1 * y2   
     ; ---- =  ---------- =  ---------------- + i ---------------------------
     ;  z2      x2 + iy2       x2² + y2²                x2² + y2²
     
-    div = *Z2\re * *Z2\re + *Z2\im * *Z2\im
+    denom = 1/(*Z2\re * *Z2\re + *Z2\im * *Z2\im)
     
-    If div = 0
+    If denom = Infinity()
       *OUT\re = Infinity()
       *OUT\im = Infinity()
     Else  
-      *OUT\re = (*Z1\re * *Z2\re + *Z1\im * *Z2\im) / div
-      *OUT\im = (*Z2\re * *Z1\im - *Z1\re * *Z2\im) / div
+      *OUT\re = (*Z1\re * *Z2\re + *Z1\im * *Z2\im) * denom
+      *OUT\im = (*Z2\re * *Z1\im - *Z1\re * *Z2\im) * denom
     EndIf
     
     ProcedureReturn *OUT   
@@ -492,7 +492,7 @@ Module Complex
      
     ; z² = 	(x² - y²) + i·2xy 
     
-    *OUT\re = *Z\re * *Z\re - *Z\im * *Z\im
+    *OUT\re = (*Z\re * *Z\re) - (*Z\im * *Z\im)
     *OUT\im = *Z\re * *Z\im * 2
 
     ProcedureReturn *OUT
@@ -564,17 +564,19 @@ Module Complex
     
     DBG::mac_CheckPointer(*Z)      ; Check Pointer Exception
 
-    Protected.i  K 
-    Protected.d R_RootN, Phi_n, val
+    Protected.i K 
+    Protected.d R_RootN, Phi_n, _1divN, val
     
     If N > 1  
       ReDim OUT(N-1)
       
-      R_RootN = Pow(Sqr(*Z\re * *Z\re + *Z\im * *Z\im), 1/N) ; CAbs(*Z)^(1/N)
-      Phi_n = ATan2(*Z\re, *Z\im) / N
+      _1divN = 1/n
+      
+      R_RootN = Pow(Sqr(*Z\re * *Z\re + *Z\im * *Z\im), _1divN) ; CAbs(*Z)^(1/N)
+      Phi_n = ATan2(*Z\re, *Z\im) * _1divN ; / N
       
       For K = 0 To N-1
-        val = Phi_n + (2*#PI)*K/N
+        val = Phi_n + (2*#PI)* _1divN * K ; /N
         OUT(K)\re = R_RootN * Cos(val)
         OUT(K)\im = R_RootN * Sin(val)
       Next      
@@ -1161,9 +1163,9 @@ CompilerIf #PB_Compiler_IsMainFile
    
 CompilerEndIf
 
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 965
-; FirstLine = 1096
+; IDE Options = PureBasic 6.20 (Windows - x64)
+; CursorPosition = 138
+; FirstLine = 147
 ; Folding = -------
 ; Optimizer
 ; CPU = 5

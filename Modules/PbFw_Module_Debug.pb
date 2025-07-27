@@ -35,7 +35,7 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::   FrameWork control Module
-XIncludeFile "PbFw_Module_PB.pb"          ; PB::     PureBasic extention Module
+XIncludeFile "PbFw_Module_PX.pb"          ; PX::     PureBasic extention Module
 
 ; All files are already included in ECAD_Main.pb! 
 ; It's just to know which Include Files are necessary
@@ -343,7 +343,7 @@ Module DBG
     Protected INFO.TExceptionInfo
     
     With INFO
-      \Timestamp =PB::GetTimeStamp()    ; Get millisecond second TimeStamp ; Date()*1000+MilliSeconds
+      \Timestamp =PX::GetTimeStamp()    ; Get millisecond second TimeStamp ; Date()*1000+MilliSeconds
       \ModuleName = ModuleName
       \FunctionName = FunctionName
       \ExceptionCode = ExceptionType

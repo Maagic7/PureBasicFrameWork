@@ -29,7 +29,7 @@
 ;- ----------------------------------------------------------------------
 
 XIncludeFile "PbFw_Module_PbFw.Pb"        ; PbFw::    FrameWork control Module
-XIncludeFile "PbFw_Module_PB.pb"          ; PB::      PureBasic extention Module
+XIncludeFile "PbFw_Module_PX.pb"          ; PX::      PureBasic extention Module
 XIncludeFile "PbFw_Module_Debug.Pb"       ; DBG::     Debugging and Exception handling
 XIncludeFile "PbFw_Module_COLOR.Pb"       ; COLOR::   24/32 Bit Color Module
 XIncludeFile "PbFw_Module_VectorColor.Pb" ; VecCol::  VectorColor Module
@@ -329,7 +329,7 @@ Module IMG
   ; VAR(AddBrightBlue) : The Brightness to change at Blue   [-255..255]
   ; RET : #TRUE if sucseed; #FALSE if not
   ; ======================================================================
-    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
+    Protected *pPix.PX::TSystemColor  ; Pointer to actual Pixel/Color
     Protected.i X, Y, BytesPerPixel       ; X,Y Pixel position
     Protected.i r,g,b
     Protected.i xRET = #True
@@ -339,9 +339,9 @@ Module IMG
     AddBrightBlue + AddBrightAll
     
     ; [-100..100] = [-255..255]
-    PB::LimitToMinMax(AddBrightRed, -255, 255)
-    PB::LimitToMinMax(AddBrightGreen, -255, 255)
-    PB::LimitToMinMax(AddBrightBlue, -255, 255)
+    PX::LimitToMinMax(AddBrightRed, -255, 255)
+    PX::LimitToMinMax(AddBrightGreen, -255, 255)
+    PX::LimitToMinMax(AddBrightBlue, -255, 255)
       
     If *pBuffer And *ImageInfo   ; if we have valid Pointers
       
@@ -358,15 +358,15 @@ Module IMG
             ; at TSystemColor R,G,B switches with the System color order to B,G,R
             ; I hope this is the same as PB_PixelFormat_.._BGR and we do not need 2 prog. parts
             r = \RGB\R + AddBrightRed
-            PB::SaturateColor(r)          ; [0..255]
+            PX::SaturateColor(r)          ; [0..255]
             \RGB\R = r
             
             g= \RGB\G + AddBrightGreen
-            PB::SaturateColor(g)          ; [0..255]
+            PX::SaturateColor(g)          ; [0..255]
             \RGB\G = g
             
             b= \RGB\B + AddBrightBlue
-            PB::SaturateColor(b)          ; [0..255]
+            PX::SaturateColor(b)          ; [0..255]
             \RGB\B = b
             
             *pPix = *pPix + BytesPerPixel    ; Next Pixel
@@ -430,7 +430,7 @@ Module IMG
   ; RET : #TRUE if sucseed; #FALSE if not
   ; ======================================================================
     
-    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color in SystemColorOrder
+    Protected *pPix.PX::TSystemColor  ; Pointer to actual Pixel/Color in SystemColorOrder
     Protected.i X, Y, I, BytesPerPixel      ; X,Y Pixel position
     Protected.i r, g, b
     Protected.i xRET = #True
@@ -439,14 +439,14 @@ Module IMG
     #_GammaMin_ = 0.01    ; Limit of Gamma [0.01 .. 4.99] as PaintShop do!
     #_GammaMax_ = 4.99
     
-    PB::LimitToMinMax(GammaAll, #_GammaMin_, #_GammaMax_)
+    PX::LimitToMinMax(GammaAll, #_GammaMin_, #_GammaMax_)
     GammaRed = GammaAll * GammaRed  
     GammaGreen = GammaAll * GammaGreen
     GammaBlue = GammaAll * GammaBlue
     
-    PB::LimitToMinMax(GammaRed, #_GammaMin_, #_GammaMax_)
-    PB::LimitToMinMax(GammaGreen, #_GammaMin_, #_GammaMax_)
-    PB::LimitToMinMax(GammaBlue, #_GammaMin_, #_GammaMax_)
+    PX::LimitToMinMax(GammaRed, #_GammaMin_, #_GammaMax_)
+    PX::LimitToMinMax(GammaGreen, #_GammaMin_, #_GammaMax_)
+    PX::LimitToMinMax(GammaBlue, #_GammaMin_, #_GammaMax_)
     
     GammaRed = 1/GammaRed  
     GammaGreen = 1/GammaGreen
@@ -531,7 +531,7 @@ Module IMG
   ; RET : #TRUE if sucseed; #FALSE if not
   ; ======================================================================
 
-    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
+    Protected *pPix.PX::TSystemColor  ; Pointer to actual Pixel/Color
     Protected.i GreyCol               ; the grey color value
     Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position
     Protected.i fR, fG, fB  ; WeightFactors for RED, GREEN, BLUE Channel
@@ -637,7 +637,7 @@ Module IMG
   ; VAR(Channel)  : The Color Channel #Red, #Green or #Blue
   ; RET : #TRUE if sucseed; #FALSE if not
   ; ======================================================================
-    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
+    Protected *pPix.PX::TSystemColor  ; Pointer to actual Pixel/Color
     Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position
     Protected.i xRET = #True
           
@@ -688,17 +688,17 @@ Module IMG
   ; VAR(Channel)  : The Color Channel #Red, #Green or #Blue
   ; RET : #TRUE if sucseed; #FALSE if not
   ; ======================================================================
-    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
+    Protected *pPix.PX::TSystemColor  ; Pointer to actual Pixel/Color
     Protected.i X, Y, BytesPerPixel       ; X,Y Pixel position
     Protected.i ChNo, xRET = #True
     
     Select Channel  ; only allow #Red, #Green, #Blue
       Case #Red
-        ChNo = PB::_SCM\idxRed
+        ChNo = PX::_SCM\idxRed
       Case #Green
-        ChNo = PB::_SCM\idxGreen
+        ChNo = PX::_SCM\idxGreen
       Case #Blue
-        ChNo = PB::_SCM\idxBlue
+        ChNo = PX::_SCM\idxBlue
       Default
         ProcedureReturn #False
     EndSelect
@@ -764,7 +764,7 @@ Module IMG
   ;                   
   ; RET : #TRUE if sucseed; #FALSE if not
   ; ======================================================================
-    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
+    Protected *pPix.PX::TSystemColor  ; Pointer to actual Pixel/Color
     Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position; P pointer to PixelMemory
     Protected.i xRET = #True
           
@@ -815,17 +815,17 @@ Module IMG
   ; VAR(Channel)  : The Color Channel #Red, #Green or #Blue
   ; RET : #TRUE if sucseed; #FALSE if not
   ; ======================================================================
-    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
+    Protected *pPix.PX::TSystemColor  ; Pointer to actual Pixel/Color
     Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position
     Protected.i ChNo, xRET = #True
     
     Select Channel  ; only allow #Red, #Green, #Blue
       Case #Red
-        ChNo = PB::_SCM\idxRed
+        ChNo = PX::_SCM\idxRed
       Case #Green
-        ChNo = PB::_SCM\idxGreen
+        ChNo = PX::_SCM\idxGreen
       Case #Blue
-        ChNo = PB::_SCM\idxBlue
+        ChNo = PX::_SCM\idxBlue
       Default
         ProcedureReturn #False
     EndSelect
@@ -862,9 +862,9 @@ Module IMG
     If ret
       *buf = DrawingBuffer()
       If *buf
-          ret = NegativeBuffer(*buf, ImageInfo)
+        ret = NegativeBuffer(*buf, ImageInfo)
       Else
-          ret = #False
+        ret = #False
       EndIf
       StopDrawing()
     EndIf
@@ -880,9 +880,9 @@ Module IMG
     If ret
       *buf = DrawingBuffer()
       If *buf
-          ret = NegativeChannelBuffer(*buf, ImageInfo, Channel)
+        ret = NegativeChannelBuffer(*buf, ImageInfo, Channel)
       Else
-          ret = #False
+        ret = #False
       EndIf
       StopDrawing()
     EndIf
@@ -913,10 +913,10 @@ Module IMG
   ; ======================================================================
 
 
-    Protected *pPix.PB::TSystemColor  ; Pointer to actual Pixel/Color
+    Protected *pPix.PX::TSystemColor  ; Pointer to actual Pixel/Color
     Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position
     Protected.i xRET = #True
-    Protected min, max, kNorm, NewColVal   
+    Protected.i min, max, kNorm, NewColVal   
           
     If *pBuffer And *ImageInfo   ; if we have valid Pointers
       BytesPerPixel = *ImageInfo\imgDepth >>3                              
@@ -929,9 +929,9 @@ Module IMG
         ; Debug " Py = " + *pPix
         
         For X = 0 To (*ImageInfo\imgWidth -1)
-          PB::SaveMinMax(*pPix\ch[0], min, max)       ; MACRO SaveMinMax
-          PB::SaveMinMax(*pPix\ch[1], min, max)
-          PB::SaveMinMax(*pPix\ch[2], min, max)
+          PX::SaveMinMax(*pPix\ch[0], min, max)       ; MACRO SaveMinMax
+          PX::SaveMinMax(*pPix\ch[1], min, max)
+          PX::SaveMinMax(*pPix\ch[2], min, max)
           
           *pPix = *pPix + BytesPerPixel  ; Next Pixel
           ; Debug " Py = " + Str(*pPix) + " / Y = " + Y
@@ -947,15 +947,15 @@ Module IMG
           For X = 0 To *ImageInfo\imgWidth -1
             ; Attention, here at 24Bit Color we have to use \ch[0..2]
             NewColVal = ((*pPix\ch[0] - min) * kNorm) >> 8  ; /256
-            PB::SaturateColorMax(NewColVal)
+            PX::SaturateColorMax(NewColVal)
             *pPix\ch[0] = NewColVal
             
             NewColVal = ((*pPix\ch[1] - min) * kNorm) >> 8  ; /256
-            PB::SaturateColorMax(NewColVal)
+            PX::SaturateColorMax(NewColVal)
             *pPix\ch[1] = NewColVal
             
             NewColVal = ((*pPix\ch[2] - min) * kNorm) >> 8  ; /256
-            PB::SaturateColorMax(NewColVal)
+            PX::SaturateColorMax(NewColVal)
             *pPix\ch[2] = NewColVal
              
             *pPix = *pPix + BytesPerPixel  ; Next Pixel
@@ -1422,8 +1422,9 @@ CompilerIf #PB_Compiler_IsMainFile
   EndIf
   
 CompilerEndIf
-; IDE Options = PureBasic 6.20 (Windows - x64)
-; CursorPosition = 19
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 936
+; FirstLine = 909
 ; Folding = -----
 ; Optimizer
 ; CPU = 5

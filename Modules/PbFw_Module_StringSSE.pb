@@ -14,13 +14,14 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/12/04
-; VERSION  :  0.53 Developper Version
+; VERSION  :  0.54 Developer Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
+ ; 2025/02/25 S.Maag : Added 0-Pointer-Check to SSE_Len, SSE_LenA
  ; 2024/03/01 S.Maag : 16 Byte Aling check and manually align unaligend Strings
  ; 2024/01/09 S.Maag : SSE_StringCompare: now return -1,0,1 instead of char difference
  ;                     to be compatible with PB Command CompareMemoryString().
@@ -241,6 +242,9 @@ Module StrSSE
       !XOR RDX, RDX           ; RDX = 0
       !XOR RCX, RCX           ; RCX = 0
       !MOV RAX, [p.p_String]  ; RAX = *String
+      !Test RAX, RAX            ; If *String = 0
+      !JZ .Exit                 ; Exit -> Retrun 0    
+
       !@@:                    ; 
       !TEST RAX, 0Fh          ; Test for 16Byte align
       !JZ @f                  ; If NOT aligned
@@ -264,6 +268,7 @@ Module StrSSE
       
       !.Return:
       !SUB RAX, [p.p_String] 
+      !.Exit:
       ProcedureReturn
       
     CompilerElse   
@@ -271,6 +276,9 @@ Module StrSSE
       !XOR EDX, EDX           ; EDX = 0
       !XOR ECX, ECX           ; RCX = 0
       !MOV EAX, [p.p_String]  ; EAX = *String
+      !Test EAX, EAX            ; If *String = 0
+      !JZ .Exit                 ; Exit -> Retrun 0    
+      
       !@@:                    ; 
       !TEST EAX, 0Fh          ; Test for 16Byte align
       !JZ @f                  ; If NOT aligned
@@ -281,11 +289,11 @@ Module StrSSE
       !JMP @b                 ; Jump back to @@      
       !@@:                    ; from here we have 16Byte aligned address
       
-      !PXOR XMM0, XMM0    
-      !SUB EAX, 16
+      !PXOR XMM0, XMM0        ; XMM0 = 0
+      !SUB EAX, 16            ; *String -16
       
       !@@:  
-        !ADD EAX, 16    
+        !ADD EAX, 16          ; *String +16
         !PCMPISTRI XMM0, [EAX], 0001000b ; EQUAL_EACH, unsigned_Bytes
       !JNZ @b
       ; ECX will contain the offset from eax where the first null
@@ -294,6 +302,7 @@ Module StrSSE
       
       !.Return:
       !SUB EAX, [p.p_String] 
+      !.Exit:
       ProcedureReturn
       
     CompilerEndIf 
@@ -331,7 +340,9 @@ Module StrSSE
         !XOR RDX, RDX
         !XOR RCX, RCX
         !MOV RAX, [p.p_String] 
-        
+        !Test RAX, RAX            ; If *String = 0
+        !JZ .Exit                 ; Exit -> Retrun 0    
+
         !@@:
         !TEST RAX, 0Fh            ; Test for 16Byte align
         !JZ @f                    ; If NOT aligned
@@ -342,22 +353,23 @@ Module StrSSE
         !JMP @b                   ; Jump back to @@   
         !@@:                      ; from here we have 16Byte aligned address
         
-        !PXOR XMM0, XMM0
-        !SUB RAX, 16      
+        !PXOR XMM0, XMM0          ; XMM0 = 0
+        !SUB RAX, 16              ; *String -16
         
         !@@:  
-          !ADD RAX, 16
+          !ADD RAX, 16            ; *String +16
           !PCMPISTRI XMM0, [RAX], 0001001b  ; EQUAL_EACH WORD
         !JNZ @b
         
         ; RCX will contain the offset from RAX where the first null
       	; terminating character was found.
-        !SHL RCX, 1   ; Word to Byte
+        !SHL RCX, 1               ; Word to Byte
         !ADD RAX, RCX
         
         !.Return:
         !SUB RAX, [p.p_String]
         !SHR RAX, 1               ; ByteCounter to Word
+        !.Exit:
         ProcedureReturn
         
       CompilerElse ; #PB_Compiler_32Bit       
@@ -365,6 +377,8 @@ Module StrSSE
         !XOR EDX, EDX
         !XOR ECX, ECX
         !MOV EAX, [p.p_String] 
+        !Test EAX, EAX            ; If *String = 0
+        !JZ .Exit                 ; Exit -> Retrun 0    
         
         !@@:
         !TEST EAX, 0Fh            ; Test for 16Byte align
@@ -376,11 +390,11 @@ Module StrSSE
         !JMP @b                   ; Jump back to @@   
         
         !@@:                      ; from here we have 16Byte aligned address
-        !PXOR XMM0, XMM0
-        !SUB EAX, 16      
+        !PXOR XMM0, XMM0          ; XMM0 = 0
+        !SUB EAX, 16              ; *String -16
         
         !@@:  
-          !ADD EAX, 16  
+          !ADD EAX, 16            ; *String +16
           !PCMPISTRI XMM0, [EAX], 0001001b  ; EQUAL_EACH WORD
         !JNZ @b
         
@@ -392,6 +406,7 @@ Module StrSSE
         !.Return:
         !SUB EAX, [p.p_String]
         !SHR EAX, 1               ; Byte to Word
+        !.Exit:
       CompilerEndIf
       
     CompilerElse  ; #PB_Compiler_Backend = #PB_Backend_C
@@ -609,7 +624,7 @@ Module StrSSE
         
         !MOV EXC, EAX           ; EXC = *String1
         !AND EXC, 0Fh           ; Filter the Aling Offset to 16Bytes      
-        !MOV EDX, EBX            ; EDX = *String2
+        !MOV EDX, EBX           ; EDX = *String2
         !SUB EBX, EAX
         
         !AND EDX, 0Fh           ; Filter the Aling Offset to 16Bytes
@@ -1214,9 +1229,8 @@ CompilerEndIf
 ;   pop edi
 ;   pop esi
 ;   ret
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 1072
-; FirstLine = 1061
+; IDE Options = PureBasic 6.20 (Windows - x64)
+; CursorPosition = 16
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

@@ -15,6 +15,7 @@
 ; ===========================================================================
 ; ChangeLog: 
 ;{ 
+;  2025/05/16 S.Maag : corrected wrong Shufflemask load in ASMx64_ChangeByteOrder
 ;  2024/01/28 S.Maag : added ASM x64 optiomations for CountChar, ReplaceChar
 ;                      added Fast LenStr_x64() function and Macro LenStrFast()
 ;                        to use it only at x64!
@@ -1540,7 +1541,7 @@ Module FStr
     !SUB RAX, 8                 ; Sub 16 to start with an ADD in the While Loop 
     
     !PXOR XMM2, XMM2
-    !MOVLPS XMM2, [ts_mask]     ; load Shuffle Mask
+    !MOVLPS XMM2, [mask]     ; load Shuffle Mask
     !PXOR XMM0, XMM0            ; MM0 = 0 needed for search EndOfString
   
     !.loop:  
@@ -1560,7 +1561,7 @@ Module FStr
     DataSection   
       ; ASM DataSection
       ; Mask:   ; Shuffle Mask to xchange the 2 Bytes in each of the 4 Words form a DoublQuad
-      !.mask: dq 0607040502030001h
+      !mask: dq 0607040502030001h
     EndDataSection  
     EnableDebugger
   EndMacro
@@ -2241,10 +2242,9 @@ CompilerIf #False
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 1517
-; FirstLine = 1514
+; IDE Options = PureBasic 6.20 (Windows - x64)
+; CursorPosition = 1572
 ; Folding = ---------
-; Markers = 679
+; Markers = 680
 ; Optimizer
 ; CPU = 5

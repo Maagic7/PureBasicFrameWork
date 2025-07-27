@@ -38,7 +38,7 @@
 ;
 ;   - Added Exeption Handling because I want to have it for my Project
 ;
-; 2025/02/02 S.Maag; use Module PB:: now; removed Module COL:: 
+; 2025/02/02 S.Maag; use Module PX:: now; removed Module COL:: 
 ; 2024/07/17 S.Maag; added functions for regular Star shape and Triangle from Radius
 ;
 ; 2023/08/22 S.Maag; moved all local data to _TThis Structure to prepare for OOP 
@@ -52,7 +52,7 @@
 ;  ----------------------------------------------------------------------
 
 XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::     FrameWork control Module
-XIncludeFile "PbFw_Module_PB.pb"          ; PB::       Purebasic Extention Module
+XIncludeFile "PbFw_Module_PX.pb"          ; PX::       Purebasic Extention Module
 XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::      Debug Module
 
 ;{ *** All PB Vectro drawing commands ****
@@ -251,12 +251,31 @@ Module VDraw
     Array Pattern.d(1)
   EndStructure  
     
+;   PBNo.i
+;   OutPutType.i=#VDraw_FLAG_Canvas
+;   Unit.i=#PB_Unit_Pixel
+;   Zoom.d=1.0
+;   DPIscaling=#False
+  
   Structure _TThis
     Line._TLineInfo
     Stroke.d
     VStart.i
   EndStructure
   
+  ; new hVdraw with full drawing and Output Info!
+  ; use for *This
+  Structure hVDraw
+    Line._TLineInfo
+    Stroke.d
+    VStart.i
+    PBNo.i
+    OutPutType.i  ; = #VDraw_FLAG_Canvas
+    Unit.i        ; = #PB_Unit_Pixel
+    Zoom.d        ; =1.0
+    DPIscaling.i    ; =#False
+  EndStructure
+
   Global This._TThis
   Global *This._TThis  ; prepare a Pointer on This to prepare it for OOP use
   *This = @This
@@ -299,7 +318,7 @@ Module VDraw
   ; Private
   Procedure _LineXY(X1.d, Y1.d, X2.d, Y2.d, Color.l)
     
-    PB::SetAlphaIfNull(Color) ; set Alpha Channel to 255 if it is 0
+    PX::SetAlphaIfNull(Color) ; set Alpha Channel to 255 if it is 0
 
     MovePathCursor(X1, Y1)
     AddPathLine(X2, Y2)
@@ -373,7 +392,7 @@ Module VDraw
   Procedure _CalculateStarPoints(Array StarPoints._TPoint(1), outerRadius.d, innerRadius.d, numPoints, StartAngle=0)
   ; ======================================================================
   ; NAME: CalculateStarPoints
-  ; DESC: Calculates the Points of regular Star
+  ; DESC: Calculates the Points of a regular Star
   ; VAR(Array StarPoints.Point(1)): Arry to return the Pionts
   ; VAR(outerRadius.f): Radius of the outer circle
   ; VAR(outerRadius.f): Radius of the inner circle
@@ -429,7 +448,8 @@ Module VDraw
   ;- ----------------------------------------------------------------------
   ;- Module Public Functions
   ;- ----------------------------------------------------------------------
-    
+  
+  
   Procedure.i V_StartDraw(PBNo.i, OutPutType.i=#VDraw_FLAG_Canvas, Unit.i=#PB_Unit_Pixel, Zoom.d=1.0, DPIscaling=#False) 
   ; ======================================================================
   ; NAME: V_StartDraw
@@ -532,7 +552,7 @@ Module VDraw
       Width  = mac_ScaleX(Width)
       Height = mac_ScaleY(Height)
        
-      PB::SetAlphaIfNull(Color) ; set Alpha Channel to 255 if it is 0
+      PX::SetAlphaIfNull(Color) ; set Alpha Channel to 255 if it is 0
       
       If Rotate <>0 : RotateCoordinates(X, Y, Rotate) : EndIf
       
@@ -541,11 +561,11 @@ Module VDraw
       
       If FillColor <> #PB_Default
         
-        PB::SetAlphaIfNull(FillColor) ; set Alpha Channel to 255 if it is 0
+        PX::SetAlphaIfNull(FillColor) ; set Alpha Channel to 255 if it is 0
   
         If GradientColor <> #PB_Default
           
-          PB::SetAlphaIfNull(GradientColor) ; set Alpha Channel to 255 if it is 0
+          PX::SetAlphaIfNull(GradientColor) ; set Alpha Channel to 255 if it is 0
 
           If Flags & #VDraw_FLAG_Horizontal
             VectorSourceLinearGradient(X, Y, X + Width, Y)
@@ -605,16 +625,16 @@ Module VDraw
       Y = mac_ScaleY(Y)
       Radius = mac_ScaleX(Radius)
        
-      PB::SetAlphaIfNull(Color)             ; set Alpha Channel to 255 if it is 0
+      PX::SetAlphaIfNull(Color)             ; set Alpha Channel to 255 if it is 0
       
       AddPathCircle(X, Y, Radius)
       
       If FillColor <> #PB_Default
         
-        PB::SetAlphaIfNull(FillColor)       ; set Alpha Channel to 255 if it is 0
+        PX::SetAlphaIfNull(FillColor)       ; set Alpha Channel to 255 if it is 0
         
         If GradientColor <> #PB_Default
-          PB::SetAlphaIfNull(GradientColor) ; set Alpha Channel to 255 if it is 0
+          PX::SetAlphaIfNull(GradientColor) ; set Alpha Channel to 255 if it is 0
           
           VectorSourceCircularGradient(X, Y, Radius)
           VectorSourceGradientColor(FillColor, 1.0)
@@ -666,7 +686,7 @@ Module VDraw
       Y = mac_ScaleY(Y)
       Radius = mac_ScaleX(Radius)
        
-      PB::SetAlphaIfNull(Color)           ; set Alpha Channel to 255 if it is 0
+      PX::SetAlphaIfNull(Color)           ; set Alpha Channel to 255 if it is 0
       
       AddPathCircle(X, Y, Radius, startAngle, endAngle)
       
@@ -712,7 +732,7 @@ Module VDraw
       Y = mac_ScaleY(Y)
       Radius = mac_ScaleX(Radius)
        
-      PB::SetAlphaIfNull(Color)             ; set Alpha Channel to 255 if it is 0
+      PX::SetAlphaIfNull(Color)             ; set Alpha Channel to 255 if it is 0
   
       MovePathCursor(X, Y)
       AddPathCircle(X, Y, Radius, startAngle, endAngle, #PB_Path_Connected)
@@ -720,10 +740,10 @@ Module VDraw
       
       If FillColor <> #PB_Default
         
-        PB::SetAlphaIfNull(FillColor)       ; set Alpha Channel to 255 if it is 0
+        PX::SetAlphaIfNull(FillColor)       ; set Alpha Channel to 255 if it is 0
         
         If GradientColor <> #PB_Default
-          PB::SetAlphaIfNull(GradientColor) ; set Alpha Channel to 255 if it is 0
+          PX::SetAlphaIfNull(GradientColor) ; set Alpha Channel to 255 if it is 0
           
           VectorSourceCircularGradient(X, Y, Radius)
           VectorSourceGradientColor(FillColor, 0.0)
@@ -777,7 +797,7 @@ Module VDraw
       RadiusX = mac_ScaleX(RadiusX)
       RadiusY = mac_ScaleY(RadiusY)
         
-      PB::SetAlphaIfNull(Color)             ; set Alpha Channel to 255 if it is 0
+      PX::SetAlphaIfNull(Color)             ; set Alpha Channel to 255 if it is 0
       
       If Rotate <>0 : RotateCoordinates(X, Y, Rotate) : EndIf
       
@@ -785,10 +805,10 @@ Module VDraw
       
       If FillColor <> #PB_Default
         
-        PB::SetAlphaIfNull(FillColor)       ; set Alpha Channel to 255 if it is 0
+        PX::SetAlphaIfNull(FillColor)       ; set Alpha Channel to 255 if it is 0
         
         If GradientColor <> #PB_Default
-          PB::SetAlphaIfNull(GradientColor) ; set Alpha Channel to 255 if it is 0
+          PX::SetAlphaIfNull(GradientColor) ; set Alpha Channel to 255 if it is 0
           
           If RadiusX > RadiusY
             VectorSourceCircularGradient(X, Y, RadiusX)
@@ -849,7 +869,7 @@ Module VDraw
       RadiusX = mac_ScaleX(RadiusX)
       RadiusY = mac_ScaleY(RadiusY)
         
-      PB::SetAlphaIfNull(Color)         ; set Alpha Channel to 255 if it is 0
+      PX::SetAlphaIfNull(Color)         ; set Alpha Channel to 255 if it is 0
      
       AddPathEllipse(X, Y, RadiusX, RadiusY, startAngle, endAngle)
       VectorSourceColor(Color)
@@ -891,7 +911,7 @@ Module VDraw
       Height = mac_ScaleY(Height)
       
       ; AlphaCheck will be done in _LineXY()
-      ; PB::SetAlphaIfNull(Color)     ; set Alpha Channel to 255 if it is 0
+      ; PX::SetAlphaIfNull(Color)     ; set Alpha Channel to 255 if it is 0
       
       If Width And Height
         
@@ -1042,7 +1062,7 @@ Module VDraw
       Y3 = mac_ScaleY(Y3)
       Radius = mac_ScaleX(Radius)
       
-      PB::SetAlphaIfNull(Color) ; set Alpha Channel to 255 if it is 0
+      PX::SetAlphaIfNull(Color) ; set Alpha Channel to 255 if it is 0
       
       MovePathCursor(X1, Y1)
       AddPathArc(X2, Y2, X3, Y3, Radius)
@@ -1095,7 +1115,7 @@ Module VDraw
       X4 = mac_ScaleX(X4)
       Y4 = mac_ScaleY(Y4)
        
-      PB::SetAlphaIfNull(Color) ; set Alpha Channel to 255 if it is 0
+      PX::SetAlphaIfNull(Color) ; set Alpha Channel to 255 if it is 0
       
       Angle = _FindArcFromTangents(X1, Y1, X2, Y2, X3, Y3, X4, Y4, @isP)
       
@@ -1159,7 +1179,7 @@ Module VDraw
       X = mac_ScaleX(X)
       Y = mac_ScaleY(Y)
        
-      PB::SetAlphaIfNull(Color) ; set Alpha Channel to 255 if it is 0
+      PX::SetAlphaIfNull(Color) ; set Alpha Channel to 255 if it is 0
       
       If Rotate <> 0 : RotateCoordinates(X, Y, Rotate) : EndIf
       
@@ -1333,9 +1353,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf  
 
 
-; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 237
-; FirstLine = 203
+; IDE Options = PureBasic 6.20 (Windows - x64)
+; CursorPosition = 399
+; FirstLine = 388
 ; Folding = -------
 ; Optimizer
 ; CPU = 5

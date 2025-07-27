@@ -30,7 +30,7 @@
 ;  ----------------------------------------------------------------------
 
 XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
-XIncludeFile "PbFw_Module_PB.pb"          ; PB::      Purebasic Extention Module
+XIncludeFile "PbFw_Module_PX.pb"          ; PX::      Purebasic Extention Module
 XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::     Debug Module
 
 ; XIncludeFile ""
@@ -174,7 +174,7 @@ Module Sort
     EndIf   
   EndProcedure
 
-  Procedure.i _NaturalCompare_Right(*A.PB::pChar, *B.PB::pChar)
+  Procedure.i _NaturalCompare_Right(*A.PX::pChar, *B.PX::pChar)
   ; ============================================================================
   ; NAME: _NaturalCompare_Right
   ; DESC: helper function for NaturalCompareString
@@ -192,13 +192,13 @@ Module Sort
     
     While *A\c And *B\c
       
-      If (Not PB::IsDecChar(*A\c)) And (Not PB::IsDecChar(*B\c))
+      If (Not PX::IsDecChar(*A\c)) And (Not PX::IsDecChar(*B\c))
         ProcedureReturn bias
         
-      ElseIf (Not PB::IsDecChar(*A\c))
+      ElseIf (Not PX::IsDecChar(*A\c))
         ProcedureReturn #PB_String_Lower
         
-      ElseIf (Not PB::IsDecChar(*B\c))
+      ElseIf (Not PX::IsDecChar(*B\c))
         ProcedureReturn #PB_String_Greater
         
       ElseIf *A\c < *B\c
@@ -214,14 +214,14 @@ Module Sort
       ElseIf (Not *A\c) And (Not *B\c)
         ProcedureReturn bias
       EndIf
-   	  PB::INCC(*A)    ; increment CharPointer
-  	  PB::INCC(*B)    ; increment CharPointer
+   	  PX::INCC(*A)    ; increment CharPointer
+  	  PX::INCC(*B)    ; increment CharPointer
    Wend
     
     ProcedureReturn #PB_String_Equal
   EndProcedure
   
-  Procedure.i _NaturalCompare_Left(*A.PB::pChar, *B.PB::pChar)
+  Procedure.i _NaturalCompare_Left(*A.PX::pChar, *B.PX::pChar)
   ; ============================================================================
   ; NAME: _NaturalCompare_Left
   ; DESC: helper function for NaturalCompareString
@@ -236,13 +236,13 @@ Module Sort
     
     While *A\c And *B\c
       
-      If (Not PB::IsDecChar(*A\c)) And (Not PB::IsDecChar(*B\c)) ; both not a Decimal
+      If (Not PX::IsDecChar(*A\c)) And (Not PX::IsDecChar(*B\c)) ; both not a Decimal
         ProcedureReturn #PB_String_Equal
         
-      ElseIf Not PB::IsDecChar(*A\c)
+      ElseIf Not PX::IsDecChar(*A\c)
         ProcedureReturn #PB_String_Lower
         
-      ElseIf Not PB::IsDecChar(*B\c)
+      ElseIf Not PX::IsDecChar(*B\c)
         ProcedureReturn #PB_String_Greater
         
       ElseIf *A\c  < *B\c
@@ -252,14 +252,14 @@ Module Sort
         ProcedureReturn #PB_String_Greater
       EndIf
       
-  	  PB::INCC(*A)    ; increment CharPointer
-  	  PB::INCC(*B)    ; increment CharPointer
+  	  PX::INCC(*A)    ; increment CharPointer
+  	  PX::INCC(*B)    ; increment CharPointer
     Wend
     
     ProcedureReturn #PB_String_Equal
   EndProcedure
   
-  Procedure.i _NaturalCompareString(*A.PB::pChar, *B.PB::pChar, Mode=#PB_String_CaseSensitive )
+  Procedure.i _NaturalCompareString(*A.PX::pChar, *B.PX::pChar, Mode=#PB_String_CaseSensitive )
   ; ============================================================================
   ; NAME: _NaturalCompareString
   ; DESC: !PointerVersion! use it as ProtoType NaturalCompareString()
@@ -273,13 +273,13 @@ Module Sort
     While *A\c And *B\c
       
       ; Skip Tabs and Spaces at A
-      While PB::IsSpaceTabChar(*A\c)
- 	      PB::INCC(*A)    ; increment CharPointer
+      While PX::IsSpaceTabChar(*A\c)
+ 	      PX::INCC(*A)    ; increment CharPointer
       Wend
       
       ; Skip Tabs and Spaces at B
-      While PB::IsSpaceTabChar(*B\c)
- 	      PB::INCC(*B)    ; increment CharPointer
+      While PX::IsSpaceTabChar(*B\c)
+ 	      PX::INCC(*B)    ; increment CharPointer
       Wend
       
       ; both at EndOfString -> only SPACE and TAB -> Strings are equal!
@@ -288,7 +288,7 @@ Module Sort
   	  EndIf
      
    	  ; process compare digits
-  	  If PB::IsDecChar(*A\c) And PB::IsDecChar(*B\c)
+  	  If PX::IsDecChar(*A\c) And PX::IsDecChar(*B\c)
   	    If *A\c ='0' Or *B\c = '0'  ; if  (ca == '0' || cb == '0'); one of both is a '0'      
   	      result = _NaturalCompare_Left(*A, *B)	      
   	      If result 
@@ -303,8 +303,8 @@ Module Sort
   	  EndIf 
   	  
   	  If Mode <> #PB_String_CaseSensitive
-  	    PB::SetCharLo(*A\c)
-  	    PB::SetCharLo(*B\c)
+  	    PX::SetCharLo(*A\c)
+  	    PX::SetCharLo(*B\c)
   	  EndIf
     
   	  If *A\c < *B\c
@@ -312,8 +312,8 @@ Module Sort
   	  ElseIf *A\c > *B\c
   	    ProcedureReturn #PB_String_Greater
   	  EndIf 	  
-  	  PB::INCC(*A)    ; increment CharPointer
-  	  PB::INCC(*B)    ; increment CharPointer
+  	  PX::INCC(*A)    ; increment CharPointer
+  	  PX::INCC(*B)    ; increment CharPointer
   	Wend
   	
   	ProcedureReturn #PB_String_Equal
@@ -377,7 +377,7 @@ Module Sort
         IndexEnd = Size
       EndIf
       
-      PB::MinNull(IndexStart)
+      PX::MinNull(IndexStart)
             
       If PbSort & #PB_Sort_Ascending
         _QuickSortStringArray_Asc(StrArray(),IndexStart,IndexEnd)     

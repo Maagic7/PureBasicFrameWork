@@ -41,7 +41,8 @@
 ;- Include Files
 ;  --------------------------------------------------
 
-XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
+XIncludeFile "PbFw_Module_PbFw.pb"          ; PbFw::    FrameWork control Module
+XIncludeFile "PbFw_Module_PX.pb"            ; PX::      Purebasic Extention Module
 ; XIncludeFile ""
 
 
@@ -84,8 +85,8 @@ DeclareModule INT
 ;     EndMacro
 ;   CompilerEndIf
 ;   
-;   Declare.i SqrI(X.i)
-;   Declare.i RootN(Number.i, N.i) 
+   Declare.i SqrI(X.i)
+   Declare.i RootN(Number.i, N.i) 
 
 EndDeclareModule
 
@@ -419,13 +420,13 @@ CompilerIf  #PB_Compiler_IsMainFile
   
     Debug #Null$
     Debug "Macro AbsI()"
-    K = AbsI(N)
+    K = PX::AbsI(N)
     Debug K
-    K = AbsI(-N)
+    K = PX::AbsI(-N)
     Debug K
     
     Debug #Null$ 
-    K = AbsI(N)
+    K = PX::AbsI(N)
     L= Abs(N)
     K -L
     Debug "AbsI(N) - Abs(N) = " + K
@@ -444,8 +445,8 @@ CompilerIf  #PB_Compiler_IsMainFile
     t1 =$123
     t1 = ElapsedMilliseconds()
     For I = 1 To #LOOPS
-      K =  AbsI(-I)
-      L =  AbsI(I)
+      K =  PX::AbsI(-I)
+      L =  PX::AbsI(I)
     Next
     t1 = ElapsedMilliseconds() - t1
     
@@ -467,9 +468,9 @@ CompilerIf  #PB_Compiler_IsMainFile
   CompilerEndIf
   
 CompilerEndIf
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 73
-; FirstLine = 44
+; IDE Options = PureBasic 6.20 (Windows - x64)
+; CursorPosition = 448
+; FirstLine = 409
 ; Folding = ---
 ; Optimizer
 ; Executable = ..\Test\AbsTest_C_x64.exe

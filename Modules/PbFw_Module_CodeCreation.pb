@@ -25,7 +25,7 @@
 ;- Include Files
 ;- ----------------------------------------------------------------------
 XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
-XIncludeFile "PbFw_Module_PB.pb"          ; PB::      Purebasic Extention Module
+XIncludeFile "PbFw_Module_PX.pb"          ; PX::      Purebasic Extention Module
 
 DeclareModule CC
   
@@ -265,7 +265,7 @@ Module CC
  
     ; use the JoinList Function from String Module to produce a singel String 
     ; from all Code-Lines
-    SetClipboardText(PB::JoinList(lstCodeLine(), #CRLF$))
+    SetClipboardText(PX::JoinList(lstCodeLine(), #CRLF$))
     
     ; Protected txt.s  
     ; ForEach lstCodeLine()

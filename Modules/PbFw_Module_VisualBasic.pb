@@ -956,7 +956,9 @@ Module VB
 EndModule
 
 
-; Function List
+; ----------------------------------------------------------------------
+; VB Function List
+; ----------------------------------------------------------------------
 ; ABS	Returns the absolute value of a number (Variant).
 ; And	The logical 'AND' operator (Boolean).
 ; APPACTIVATE	Activates an application Or window currently running on Windows.
@@ -1434,9 +1436,8 @@ EndModule
 
 ; Variant (With numbers) 	16 bytes 	Any numeric value up To the range of a Double
 ; Variant (With characters) 	22 bytes + string length (24 bytes on 64-bit systems) 	Same range As For variable-length String
-; IDE Options = PureBasic 6.11 LTS (Windows - x64)
-; CursorPosition = 64
-; FirstLine = 169
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 961
 ; Folding = --
 ; Optimizer
 ; CPU = 5

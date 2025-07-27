@@ -22,7 +22,7 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
-XIncludeFile "PbFw_Module_PB.pb"           ; PB::       Purebasic Extentions
+XIncludeFile "PbFw_Module_PX.pb"           ; PX::       Purebasic Extentions
 XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 XIncludeFile "PbFw_Module_FileSystem.pb"   ; FS::       File Functions
 XIncludeFile "PbFw_Module_Buffer.pb"       ; BUF::      Buffer handling
@@ -69,9 +69,8 @@ CompilerIf #PB_Compiler_IsMainFile
   
 CompilerEndIf
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
+; IDE Options = PureBasic 6.21 (Windows - x64)
 ; CursorPosition = 24
 ; Folding = -
 ; Optimizer
 ; CPU = 5
-; Compiler = PureBasic 6.00 LTS (Windows - x86)

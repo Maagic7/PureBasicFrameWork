@@ -733,7 +733,7 @@ CompilerIf #PB_Compiler_IsMainFile
   ;- ----------------------------------------------------------------------
 
   EnableExplicit
-  UseModule Prime
+  UseModule Float
 
   Define xf.f, xd.d
   
@@ -781,9 +781,9 @@ CompilerIf #PB_Compiler_IsMainFile
   ; Debug CompareDouble(1001, 1003, 8)
   
 CompilerEndIf
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 433
-; FirstLine = 419
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 740
+; FirstLine = 714
 ; Folding = ------
 ; Optimizer
 ; CPU = 5

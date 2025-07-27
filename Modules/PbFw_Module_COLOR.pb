@@ -15,7 +15,7 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{  
-;   2025/02/02 S.Maag : Removed Macros and Functions moved to Modul PB::
+;   2025/02/02 S.Maag : Removed Macros and Functions moved to Modul PX::
 ;                       Rework of the functions
 ;}
 ;{ TODO:
@@ -28,7 +28,7 @@
 ;  ----------------------------------------------------------------------
 
 XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::   FrameWork control Module
-XIncludeFile "PbFw_Module_PB.pb"          ; PB::     PureBasic extention Module
+XIncludeFile "PbFw_Module_PX.pb"          ; PX::     PureBasic extention Module
 
 DeclareModule COLOR
   
@@ -101,7 +101,7 @@ Module COLOR
     
     Protected.i Alpha1, Alpha2 
     
-    Protected.PB::TSystemColor c1, c2  
+    Protected.PX::TSystemColor c1, c2  
     
     Alpha1 = Alpha
     Alpha2 = 255 - Alpha1
@@ -129,7 +129,7 @@ Module COLOR
     
     Protected.i Alpha1, Alpha2 
     
-    Protected.PB::TSystemColor c1, c2  
+    Protected.PX::TSystemColor c1, c2  
     
     c1\col = Color1
     c2\col = Color2
@@ -157,7 +157,7 @@ Module COLOR
   
     Protected.f r, g, b
     Protected.f delta, min
-    Protected SysRGB.PB::TSystemColor
+    Protected SysRGB.PX::TSystemColor
        
     #_ColorFactor_ = 0.00392156885937  ; = 1/255
     
@@ -167,8 +167,8 @@ Module COLOR
     g= #_ColorFactor_ * SysRGB\RGB\G
     b= #_ColorFactor_ * SysRGB\RGB\B
         
-    PB::MinOf3(min,r,g,b)           ;  min        = Min(r,g,b)
-    PB::MaxOf3(*HSVcolor\V, r,g,b)  ; *HSVcolor\V = Max(r,g,b)
+    PX::MinOf3(min,r,g,b)           ;  min        = Min(r,g,b)
+    PX::MaxOf3(*HSVcolor\V, r,g,b)  ; *HSVcolor\V = Max(r,g,b)
        
     delta = *HSVcolor\V - min
   

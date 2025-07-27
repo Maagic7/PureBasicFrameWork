@@ -25,7 +25,7 @@
 ; ChangeLog: 
 ;{ 
 ;  2025/02/12 S.Maag : added Map SDK functions 
-;  2022/01/07 S.Maag : added comments and chaned VAR-Names for Handels
+;  2022/01/07 S.Maag : added comments and changed VAR-Names for Handels
 ;                      (like WindowID to hWindows) to see it is a OS-Handle
 ;  2021/12/10 mk-soft 
 ;}
@@ -608,6 +608,8 @@ CompilerIf #PB_Compiler_IsMainFile
   EndIf
 CompilerEndIf
 ; IDE Options = PureBasic 6.20 (Windows - x64)
+; CursorPosition = 44
+; FirstLine = 366
 ; Folding = ----
 ; Optimizer
 ; Executable = SystemTest.exe

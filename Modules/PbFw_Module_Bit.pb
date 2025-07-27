@@ -17,6 +17,7 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2025/06/29  S.Maag: some small changes
 ; 2025/02/06  S.Maag: added BitCountINT
 ; 2025/01/30  S.Maag: solved Bug in ASMx32 BSWAP_Mem64()! Swap of Lo-Hi DWORD was missing!
 ; 2024/09/06  S.Maag: added INTtoBCD(), BCDtoINT(), IsBCD()
@@ -66,20 +67,34 @@ DeclareModule BIT
   #BIT_SHF_REVERSE_16_hi= $0001020304050607 ; Bit Shuffle Mask hiQuad to reverse 16 Bits
   #BIT_SHF_REVERSE_16_lo= $08090A0B0C0D0E0F ; Bit Shuffle Mask loQuad to reverse 16 Bits
  
-  Structure TBitField8  ; Byte Representation of 8Bit
+  Structure TBitField8  ; Byte Representation of 8 Bits
     StructureUnion
       q.q         ; a 8 Byte Quad
       a.a[8]      ; 8 Bytes [0..7] 
     EndStructureUnion
   EndStructure
   
-  Structure TBitField16  ; Byte Representation of 8Bit
+  Structure TBitField16  ; Byte Representation of 16 Bits
     StructureUnion
       q.q[2]       ; 2x 8 Byte Quads
       a.a[16]      ; 16 Bytes [0..15] 
     EndStructureUnion
   EndStructure
   
+  Structure TBitField32  ; Byte Representation of 32 Bits
+    StructureUnion
+      q.q[4]       ; 4x 8 Byte Quads
+      a.a[32]      ; 32 Bytes [0..31] 
+    EndStructureUnion
+  EndStructure
+  
+  Structure TBitField64  ; Byte Representation of 64 Bits
+    StructureUnion
+      q.q[8]       ; 8x 8 Byte Quads
+      a.a[64]      ; 64 Bytes [0..63] 
+    EndStructureUnion
+  EndStructure
+ 
   Structure Int128 
     l.q
     h.q
@@ -299,9 +314,7 @@ Module BIT
   ;  VAR(N.i): The number to Encode in Gray
   ;  RET.i:  Gray encoded value of N
   ; ====================================================================== 
-    
-    ; TODO! Maybe wrong because of PB's arithmetic Shift    
-    
+        
     ; This should solve the arithmetic Shift problem! Not tested yet!
     If N >= 0
       ProcedureReturn N ! (N >> 1) ; N XOR ShiftRight(N,1)
@@ -321,9 +334,7 @@ Module BIT
   ; ======================================================================   
     Protected.i Mask = G 
     ; https://de.wikipedia.org/wiki/Gray-Code
-    
-    ; TODO! Maybe wrong because of PB's arithmetic Shift      
-    
+        
     ; This should solve the arithmetic Shift problem! Not tested yet!
     If mask < 0
       Mask= (Mask >> 1) & #_MaskOutSign  ;  ShiftRight(Mask, 1)
@@ -846,7 +857,7 @@ Module BIT
     ; Attention: FASM nees a leading 0 for hex values
     ; 16 Byte Mask to be prepared for 16 Bit Shuffle too
     !mask:  dq 08040201008040201h   ; mask to filter in each byte 1 Bit higher
-    !filt:  dq 00101010101010101h   ; Filter to creat BOOLs with value 1
+    !filt:  dq 00101010101010101h   ; Filter to create BOOLs with value 1
     !lim:   dq 00707070707070707h   ; Limit Mask for ShuffleMask 
     EndDataSection
   
@@ -1078,7 +1089,7 @@ Module BIT
         ProcedureReturn
         
       CompilerCase #PbFwCfg_Module_Compile_C
-        !return __builtin_bswap64(v_value);
+        !return __builtin_bswap64(v_value) ;
        
       CompilerDefault     ; Classic Code without ASM or C optimations       
         Protected *Swap.pSwap
@@ -1451,7 +1462,7 @@ CompilerIf #PB_Compiler_IsMainFile
   ;- ----------------------------------------------------------------------
 
   EnableExplicit
-  UseModule Bits
+  UseModule Bit
   
   Macro HexW(_var_)
     RSet(Hex(_var_, #PB_Word), 4, "0")
@@ -1579,11 +1590,10 @@ CompilerIf #PB_Compiler_IsMainFile
   
 CompilerEndIf
 
-; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 125
-; FirstLine = 299
-; Folding = 0--------
-; Markers = 303,325
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 1463
+; FirstLine = 1460
+; Folding = ---------
 ; Optimizer
 ; EnableXP
 ; CPU = 5

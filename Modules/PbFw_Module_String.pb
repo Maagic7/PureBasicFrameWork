@@ -7,14 +7,17 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/11/08
-; VERSION  :  0.17 untested Developer Version
-; COMPILER :  PureBasic 6.0 and higher
+; VERSION  :  0.20 untested Developer Version
+; COMPILER :  PureBasic 6.0+
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog: 
 ;{ 
+;  2025/07/25 S.Maag : moved SetMid() to PB-Extention Module PX::
+;                      changed Fast Functions to Prototype-Version
+;  2025/02/28 S.Maag : Added ReplaceAccents, CharHistogram
 ;  2024/12/30 S.Maag : Added SetMid(); changed pChar Definition
 ;  2024/12/25 S.Maag : Added StringArray <-> StringList functions
 ;  2024/12/08 S.Maag : Added StringsBetween Functions from PB Forum by mk_soft
@@ -32,7 +35,7 @@
 ;  --------------------------------------------------
 
 XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
-XIncludeFile "PbFw_Module_PB.pb"          ; PB::      Purebasic Extention Module
+XIncludeFile "PbFw_Module_PX.pb"          ; PX::      Purebasic Extention Module
 ; XIncludeFile ""
 
 DeclareModule STR
@@ -91,38 +94,52 @@ DeclareModule STR
  
   Declare.s GetVisibleAsciiCharset()
   
-  Prototype.i ReplaceChar(String$, cSearch.c, cReplace.c) ; ProtoType-Function for ReplaceChar
-  Global ReplaceChar.ReplaceChar                          ; define Prototype-Handler for CountChar
-
-  Prototype.i CountChar(String$, cSearch.c)  ; ProtoType-Function for CountChar
-  Global CountChar.CountChar                 ; define Prototype-Handler for CountChar
-    
-  Declare RemoveCharFast(*String, Char.c)
-  Declare.i RemoveChars(*String.String, Char1.c, Char2.c=0, xTrim=#False)
+  Prototype.i CountChar(String$, cSearch.c)     ; ProtoType-Function for CountChar
+  Global CountChar.CountChar                    ; define Prototype-Handler for CountChar
   
-  Declare RemoveNonWordChars(*String)
+  Prototype.i CharHistogram(String$, Array hist(1), Mode=#PB_Ascii)
+  Global CharHistogram.CharHistogram
+  
+  ; ----------------------------------------------------------------------
+  ; The following Functions exist in two versions:
+  ;   - the Fast version: the passed strings are modified directly in memory.
+  ;   - the standard version: The strings are copied twice. A Copy is
+  ;     passed to the function and a other copy will be returned. Thats the
+  ;     PB standard way of processing Strings
+  ; ----------------------------------------------------------------------
+  Prototype.i ReplaceCharFast(String$, cSearch.c, cReplace.c)   ; The Fast version (in Memory)
+  Global ReplaceCharFast.ReplaceCharFast                        ; define Prototype-Handler for ReplaceCharFast
+  Declare.s ReplaceChar(String$, cSearch.c, cReplace.c)         ; The standard version
+   
+  Prototype.i RemoveCharFast(String$, Char.c)
+  Global RemoveCharFast.RemoveCharFast                          ; define Prototype-Handler for RemoveCharFast
+  Declare.s RemoveChar(String$, Char.c)
 
+  Prototype.i RemoveCharsFast(String$, Char1.c, Char2.c=0, xTrim=#False)
+  Global RemoveCharsFast.RemoveCharsFast
+  Declare.s RemoveChars(String$, Char1.c, Char2.c=0, xTrim=#False)
+  
+  Prototype.i RemoveNonWordCharsFast(*String)
+  Global RemoveNonWordCharsFast.RemoveNonWordCharsFast
+  Declare.s RemoveNonWordChars(String$)
+  
+  Prototype.i RemoveTabsAndDoubleSpaceFast(String$)
+  Global RemoveTabsAndDoubleSpaceFast.RemoveTabsAndDoubleSpaceFast
   Declare.s RemoveTabsAndDoubleSpace(String$)  
-  Declare.i RemoveTabsAndDoubleSpaceFast(*String)
   
- ; --------------------------------------------------
- ; Split and Join
- ; -------------------------------------------------- 
-
-;   Prototype SplitToArray(Array Out.s(1), String$, Separator$)
-;   Global SplitToArray.SplitToArray
-;   
-;   Prototype SplitToList(List Out.s(), String$, Separator$, clrList= #True)
-;   Global SplitToList.SplitToList
+  Prototype.i ReplaceAccentsFast(String$)
+  Global ReplaceAccentsFast.ReplaceAccentsFast
+  Declare.s ReplaceAccents(String$)
+  
+  ; --------------------------------------------------
+  ; CSV Functions
+  ; -------------------------------------------------- 
   
   Prototype SplitCsvToArray(Array Out.s(1), String$, Separator.c=';', cQuotes.c='"')
   Global SplitCsvToArray.SplitCsvToArray
  
   Prototype SplitCsvToList(List Out.s(), String$, Separator.c=';', cQuotes.c='"')
   Global SplitCsvToList.SplitCsvToList
-  
-;   Declare.s JoinArray(Array ary.s(1), Separator$, EndIndex=-1, StartIndex=0, *OutLen=0)
-;   Declare.s JoinList(List lst.s(), Separator$, *OutLen=0)  
     
   ; ----------------------------------------------------------------------
   ; HEX String Functions
@@ -138,19 +155,16 @@ DeclareModule STR
   ; -------------------------------------------------- 
   
   Prototype.s AddQuotes(String$, cQuotes.c=#STR_CHAR_DoubleQuote)
-  Global AddQuotes.AddQuotes                 ; define Prototype-Handler for AddQuotes
+  Global AddQuotes.AddQuotes              ; define Prototype-Handler for AddQuotes
   
   Prototype.s UnQuote(String$, xDoubleQuotes = #True, xSingleQuotes=#True, xTrim=#True)  ; 
-  Global UnQuote.UnQuote                 ; define Prototype-Handler for AddQuotes
+  Global UnQuote.UnQuote                  ; define Prototype-Handler for UnQuote
   
   Prototype.i CountWords(String$, cSeparator.c=' ', IngnoreSpaces=#True)
-  Global CountWords.CountWords               ; define Prototype-Handler for CountWords
+  Global CountWords.CountWords            ; define Prototype-Handler for CountWords
   
   Prototype CreateWordIndex(String$, List WordIndex.TWordIndex(), cSeparator.c=' ', UnQuoteMode = 0, xTrim=#True)
-  Global CreateWordIndex.CreateWordIndex 
-  
-  Prototype.i SetMid(String$, StringToSet$, Pos, Length=#PB_Default)
-  Global SetMid.SetMid
+  Global CreateWordIndex.CreateWordIndex  ; define Prototype-Handler for CreateWordIndex
   
   ; --------------------------------------------------
   ;  StringsBetween
@@ -171,37 +185,13 @@ Module STR      ; Module STRING [STR::]
     
   EnableExplicit
   PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
-   
-  Structure pChar   ; virtual CHAR-ARRAY, used as Pointer to overlay on strings 
-    StructureUnion
-      a.a
-      c.c
-      aa.a[0]          ; fixed ARRAY Of CHAR Length 0
-      cc.c[0]
-    EndStructureUnion
-  EndStructure
-  
+     
   #_ArrayRedimStep = 10                   ; Redim-Step if Arraysize is to small
 
   ;- --------------------------------------------------
   ;- Module Private Functions
   ;- --------------------------------------------------
-  
-;   Macro LCaseChar(Char, ReturnChar)
-;     
-;     Select char
-;       Case 'A' To ' Z'
-;         ReturnChar = Char + 32  ;  a[97]-A[65]=32
-;         
-;       Case 192 To 222   ;'À'..222
-;         ReturnChar = Char + 32  ;  224-192 = 32
-;         
-;       Default
-;         ReturnChar = Char
-;     EndSelect
-; 
-;   EndMacro
-  
+   
   Procedure.s _GetCharModeName(CharMode.i = #PB_Default)
     
     Protected RET.s
@@ -310,10 +300,79 @@ Module STR      ; Module STRING [STR::]
   ;   Debug Asc(Mid(ret$,191))
     ProcedureReturn PeekS(@ret$)
   EndProcedure
-       
-  Procedure.i _ReplaceChar(*String, cSearch.c, cReplace.c)
+  
+  ; for Strings we can use the PB CountString()
+  Procedure.i _CountChar(*String, cSearch.c)
   ; ============================================================================
-  ; NAME: _ReplaceChar
+  ; NAME: _CountChar
+  ; DESC: !PointerVersion! use it as ProtoType CountChar()
+  ; DESC: Counts the number of found Characters of cSearch Character
+  ; VAR(String$) : The String
+  ; VAR(cSearch) : Character to count
+  ; RET.i : Number of Characters found
+  ; ============================================================================
+          
+    Protected *char.Character    ; Pointer to a virutal Char-Array
+    Protected N
+    
+    *char = *String               ; overlay the String with a virtual Char-Array
+    If *char        
+      While *char\c               ; until end of String
+        If *char\c =  cSearch 
+          N + 1                   ; count the Char
+        EndIf
+        *char + SizeOf(Character)     ; Index to next Char
+      Wend
+    EndIf
+    ProcedureReturn N  ; return the number of Chars found  
+  EndProcedure
+  CountChar = @_CountChar()     ; Bind ProcedureAddress to the PrototypeHandler
+  
+  Procedure.i _CharHistogram(*String, Array hist(1), Mode=#PB_Ascii)
+  ; ============================================================================
+  ; NAME: CharHistogram
+  ; DESC: !PointerVersion! use it as ProtoType CharHistogram()
+  ; DESC: Counts the number of all Character
+  ; VAR(String$) : The String
+  ; VAR( Array hist()) : Array to receive the Character counts
+  ; RET.i : max Array Index; 255 for ASCII or 65535 for Unicode Strings
+  ; ============================================================================
+    Protected *c.Character   ; Pointer to a virutal Char-Struct
+    Protected ret
+    
+    *c = *String
+   
+    If *c      
+      If Mode = #PB_Ascii
+        Dim hist(255)
+        ret = 255
+      Else
+        Dim hist(65535)
+        ret = 65535
+      EndIf
+     
+      If Mode = #PB_Ascii
+        While *c
+          If *c\c <=255 
+            hist(*c\c) + 1
+          EndIf
+          *c + SizeOf(Character)
+        Wend
+      Else
+        While *c
+          hist(*c\c) + 1
+          *c + SizeOf(Character)
+        Wend       
+      EndIf   
+    EndIf    
+    
+    ProcedureReturn ret
+  EndProcedure
+  CharHistogram = @_CharHistogram()     ; Bind ProcedureAddress to the PrototypeHandler
+       
+  Procedure.i _ReplaceCharFast(*String, cSearch.c, cReplace.c)
+  ; ============================================================================
+  ; NAME: _ReplaceCharFast
   ; DESC: !PointerVersion! use it as ProtoType ReplaceChar()
   ; DESC: Replace a Character in a String with an other Character
   ; DESC: To replace all ',' with a '.' use : _ReplaceChar(@MyString, ',', '.')
@@ -340,37 +399,16 @@ Module STR      ; Module STRING [STR::]
         *char + SizeOf(Character)   ; Index to next Char
       Wend
     EndIf
+    
     ProcedureReturn N     
   EndProcedure
-  ReplaceChar = @_ReplaceChar()     ; Bind ProcedureAdress to the PrototypeHandler
-
-  ; for Strings we can use the PB CountString()
-  Procedure.i _CountChar(*String, cSearch.c)
-  ; ============================================================================
-  ; NAME: _CountChar
-  ; DESC: !PointerVersion! use it as ProtoType CountChar()
-  ; DESC: Counts the number of found Characters of cSearch Character
-  ; VAR(String$) : The String
-  ; VAR(cSearch) : Character to count
-  ; RET.i : Number of Characters found
-  ; ============================================================================
-          
-    Protected *char.Character    ; Pointer to a virutal Char-Array
-    Protected N
-    
-    *char = *String               ; overlay the String with a virtual Char-Array
-    If *char        
-      While *char\c               ; until end of String
-        If *char\c =  cSearch 
-          N + 1                   ; count the Char
-        EndIf
-        *char + SizeOf(Character)     ; Index to next Char
-      Wend
-    EndIf
-    ProcedureReturn N  ; return the number of Chars found
+  ReplaceCharFast = @_ReplaceCharFast()     ; Bind ProcedureAddress to the PrototypeHandler
   
+  Procedure.s ReplaceChar(String$, cSearch.c, cReplace.c)
+    _ReplaceCharFast(@String$,cSearch, cReplace)
+    ProcedureReturn PeekS(@String$)  
   EndProcedure
-  CountChar = @_CountChar()     ; Bind ProcedureAdress to the PrototypeHandler
+  
    
   ; ----------------------------------------------------------------------------
   Macro mac_RemoveChar_KeepChar()
@@ -380,16 +418,16 @@ Module STR      ; Module STRING [STR::]
   	*pWrite + SizeOf(Character) ; set new Write-Position 
   EndMacro
 
-  Procedure.i RemoveCharFast(*String, Char.c)
+  Procedure.i _RemoveCharFast(*String, Char.c)
   ; ============================================================================
-  ; NAME: RemoveChars
+  ; NAME: RemoveCharFast
   ; NAME: Attention! This is a Pointer-Version! Be sure to call it with a
   ; DESC: correct String-Pointer
   ; DESC: Removes a Character from the String
   ; DESC: The String will be shorter after
   ; VAR(*String) : Pointer to String
   ; VAR(Char.c) : The Character to remove
-  ; RET: - 
+  ; RET.i: Number of removed Chars 
   ; ============================================================================
     
    Protected *pRead.Character = *String
@@ -403,7 +441,7 @@ Module STR      ; Module STRING [STR::]
  	    If *pRead\c <> Char
  	      mac_RemoveChar_KeepChar()
       EndIf           
-      *pRead + SizeOf(Character) ; Set Pointer to NextChar
+      PX::INCC(*pRead)  ; Set Pointer to NextChar
     Wend
   	
   	; If *pWrite is not at end of orignal *pRead,
@@ -414,10 +452,16 @@ Module STR      ; Module STRING [STR::]
   	
   	ProcedureReturn (*pRead - *pWrite)/SizeOf(Character) ; Number of characters removed
   EndProcedure
- 
-  Procedure.i RemoveChars(*String.Character, Char1.c, Char2.c=0, xTrim=#False)
+  RemoveCharFast = @_RemoveCharFast()
+  
+  Procedure.s RemoveChar(String$, Char.c)
+    _RemoveCharFast(@String$, Char)
+    ProcedureReturn PeekS(@String$)
+  EndProcedure
+  
+  Procedure.i _RemoveCharsFast(*String, Char1.c, Char2.c=0, xTrim=#False)
   ; ============================================================================
-  ; NAME: RemoveChars
+  ; NAME: RemoveCharsFast
   ; DESC: Removes up to 2 different Character from a String
   ; DESC: The String will be shorter after
   ; DESC: Example: str\s= " ..This, is a, Test.! " : RemoveChars(str\s, '.' , ',' ,#True)
@@ -442,18 +486,13 @@ Module STR      ; Module STRING [STR::]
     EndIf 
 
     ; ----------------------------------------------------------------------
-    ; If xTrim Then !remove leading characters of {Space, TAB}
+    ; If xTrim Then !remove leading characters {Space, TAB}
     ; ----------------------------------------------------------------------
     If xTrim     ; if remove leading Space AND char
-      Repeat
-        Select *pRead\c
-          Case #STR_CHAR_SPACE,  #TAB  ; Character Is Space or TABr
-            *pRead + SizeOf(Character)    ; Set the ReadPositon to next Character
-            cnt +1        ; count removed Characters           
-          Default
-            Break           
-        EndSelect
-      ForEver
+      While PX::IsSpaceTabChar(*pRead\c)
+        PX::INCC(*pRead)  ; Set the ReadPositon to next Character
+        cnt +1            ; count removed Characters           
+      Wend 
     EndIf  
     
     ; ----------------------------------------------------------------------
@@ -467,19 +506,21 @@ Module STR      ; Module STRING [STR::]
         Default             ; keep Char
           mac_RemoveChar_KeepChar()			
       EndSelect
-      *pRead + SizeOf(Character) ; Set Pointer to NextChar
+      PX::INCC(*pRead)      ; Set Pointer to NextChar
     Wend
     
     ; ----------------------------------------------------------------------
-    ; If xTrim Then !remove characters of {Space, TAB} at right
+    ; If xTrim Then !remove characters {Space, TAB} at right
     ; ----------------------------------------------------------------------  
-    *pRead - SizeOf(Character)
-    While *pRead\c = #STR_CHAR_SPACE Or *pRead\c = #STR_CHAR_SPACE
-      *pRead\c = 0               ; Write EndOfString
-      *pRead - SizeOf(Character)
-      cnt +1            ; count removed Characters 
-    Wend
-    
+    If xTrim
+      PX::DECC(*pRead)    ; Decrement CharPointer
+      While PX::IsSpaceTabChar(*pRead\c)
+        *pRead\c = 0      ; Write EndOfString
+        PX::DECC(*pRead)  ; Decrement CharPointer
+        cnt +1            ; count removed Characters 
+      Wend
+    EndIf
+  
     ; If Write Postion *pWrite <> Readpostion *pRead Then Write a NullChar at the end
     If *pWrite <> *pRead
       *pWrite\c = 0  
@@ -487,18 +528,24 @@ Module STR      ; Module STRING [STR::]
     
     ProcedureReturn cnt
   EndProcedure
+  RemoveCharsFast = @_RemoveCharsFast()
+  
+  Procedure.s RemoveChars(String$, Char1.c, Char2.c=0, xTrim=#False)
+    _RemoveCharsFast(@String$, Char1, Char2, xTrim)
+    ProcedureReturn PeekS(@String$)
+  EndProcedure
 
-  Procedure RemoveNonWordChars(*String)
-    ; ============================================================================
-    ; NAME: RemoveNonWordChars
-    ; NAME: Attention! This is a Pointer-Version! Be sure to call it with a
-    ; DESC: correct String-Pointer
-    ; DESC: Removes NonWord Characters from the String
-    ; DESC: The String will be shorter after
-    ; DESC: (question at PB-Forum: https://www.purebasic.fr/english/viewtopic.php?t=82139)
-    ; VAR(*String) : Pointer to String
-    ; RET: - 
-    ; ============================================================================
+  Procedure.i _RemoveNonWordCharsFast(*String)
+  ; ============================================================================
+  ; NAME: RemoveNonWordCharsFast
+  ; NAME: Attention! This is a Pointer-Version! Be sure to call it with a
+  ; DESC: correct String-Pointer
+  ; DESC: Removes NonWord Characters from the String
+  ; DESC: The String will be shorter after
+  ; DESC: (question at PB-Forum: https://www.purebasic.fr/english/viewtopic.php?t=82139)
+  ; VAR(*String) : Pointer to String
+  ; RET.i: *String 
+  ; ============================================================================
     
     Protected *pRead.Character = *String  	
     Protected *pWrite.Character = *String
@@ -540,135 +587,63 @@ Module STR      ; Module STRING [STR::]
   	If *pRead <> *pWrite
   		*pWrite\c = 0
   	EndIf
-  
+    ProcedureReturn *String
   EndProcedure
-
+  RemoveNonWordCharsFast = @_RemoveNonWordCharsFast()
+  
+  Procedure.s RemoveNonWordChars(String$)
+    _RemoveNonWordCharsFast(@String$)
+    ProcedureReturn PeekS(@String$)
+  EndProcedure
+   
+  ; ----------------------------------------------------------------------------
   Macro mac_RemoveTabsAndDoubleSpace_KeepChar()
   	If *pWrite <> *pRead          ; if  WritePosition <> ReadPosition
-  		*pWrite\c = *pRead\cc[0]    ; Copy the Character from ReadPosition to WritePosition => compacting the String
+  		*pWrite\c = *pRead\c        ; Copy the Character from ReadPosition to WritePosition => compacting the String
   	EndIf
   	*pWrite + SizeOf(Character)   ; set new Write-Position 
   EndMacro
-
-  Procedure.s RemoveTabsAndDoubleSpace(String$)
-    ; ============================================================================
-    ; NAME: RemoveTabsAndDoubleSpace
-    ; DESC: correct String-Pointer
-    ; DESC: Removes all TABs and all double SPACEs from the String
-    ; DESC: This is ths Standard-Version where PB creats a copy ot the String
-    ; DESC: and return a String.
-    ; DESC: A fast version which modifies the String in Memory is 
-    ; DESC: RemoveTabsAndDoubleSpaceFast()
-    ; VAR(String$) : The String
-    ; RET.s: The new String 
-    ; ============================================================================
-    
-    ; PB creates a copy of the orignal String in String$
-    ; so we can write directly into String$ and do not affect the original String
-    Protected *pRead.pChar = @String$
-    Protected *pWrite.Character = @String$
-         	      
-    ; Trim leading TABs and Spaces
-    While *pRead\cc[0]
-      If *pRead\cc[0] = #STR_CHAR_SPACE      
-      ElseIf *pRead\cc[0] = #TAB       
-      Else
-         Break
-      EndIf    
-      *pRead + SizeOf(Character)
-    Wend
-    
-  	While *pRead\cc[0]     ; While Not NullChar
-  	  
-  	  Select *pRead\cc[0]
-  	       	      
-        ; If we check for the most probably Chars first, we speed up the operation
-        ; because we minimze the number of checks to do!
-        Case #TAB
-          
-          If *pRead\cc[1] = #STR_CHAR_SPACE        
-            ; if NextChar = SPACE Then remove   
-          ElseIf *pRead\cc[1] = #TAB
-            ; if NextChar = TAB Then remove   
-          Else
-            ; if NextChar <> SPACE And NextChar <> TAB   
-            *pRead\cc[0] = #STR_CHAR_SPACE        ; Change TAB to SPACE
-            mac_RemoveTabsAndDoubleSpace_KeepChar()   ; keep the Char
-          EndIf
-            
-        Case #STR_CHAR_SPACE
-          
-          If *pRead\cc[1] = #STR_CHAR_SPACE        
-           ; if NextChar = SPACE Then remove   
-          Else
-            mac_RemoveTabsAndDoubleSpace_KeepChar()   ; keep the Char
-          EndIf          
-          
-        Default
-          mac_RemoveTabsAndDoubleSpace_KeepChar()		  ; keep the Char
-         
-      EndSelect
-      
-      *pRead + SizeOf(Character) ; Set Pointer to NextChar		
-    Wend
-  	
-  	; If *pWrite is not at end of orignal *String,
-  	; we removed some char and must write a 0-Termination as new EndOfString 
-  	If *pRead <> *pWrite
-  		*pWrite\c = 0
-  	EndIf
-  	
-  	; Remove last Char if it is a SPACE => RightTrim
-  	*pWrite - SizeOf(Character)
-  	If *pWrite\c = #STR_CHAR_SPACE
-  		*pWrite\c = 0
- 	  EndIf
- 	  ProcedureReturn PeekS(@String$)
-  EndProcedure
   
-  Procedure.I RemoveTabsAndDoubleSpaceFast(*String)
-    ; ============================================================================
-    ; NAME: RemoveTabsAndDoubleSpaceFast
-    ; DESC: Attention! This is a Pointer-Version! Be sure to call it with a
-    ; DESC: correct String-Pointer
-    ; DESC: Removes all TABs and all double SPACEs from the String dirctly
-    ; DESC: in memory. The String will be shorter after!
-    ; VAR(*String) : Pointer to String
-    ; RET.i: *String 
-    ; ============================================================================
+  Procedure.i _RemoveTabsAndDoubleSpaceFast(*String)
+  ; ============================================================================
+  ; NAME: RemoveTabsAndDoubleSpaceFast
+  ; DESC: Attention! This is a Pointer-Version! Be sure to call it with a
+  ; DESC: correct String-Pointer
+  ; DESC: Removes all TABs and all double SPACEs from the String dirctly
+  ; DESC: in memory by keeping allocated memory. The String will be shorter after!
+  ; VAR(*String) : Pointer to String
+  ; RET.i: *String 
+  ; ============================================================================
     
     Protected *pWrite.Character = *String
-    Protected *pRead.pChar = *String
+    Protected *pRead.PX::pChar = *String
          	  
     If Not *String
       ProcedureReturn
     EndIf
     
     ; Trim leading TABs and Spaces
-    While *pRead\cc[0]
-      If *pRead\cc[0] = #STR_CHAR_SPACE      
-      ElseIf *pRead\cc[0] = #TAB       
+    While *pRead\c
+      If PX::IsSpaceTabChar(*pRead\c)
       Else
          Break
       EndIf    
-      *pRead + SizeOf(Character)
+      PX::INCC(*pRead) ; increment CharPointer
     Wend
     
-  	While *pRead\cc[0]     ; While Not NullChar
+  	While *pRead\c     ; While Not NullChar
   	  
-  	  Select *pRead\cc[0]
+  	  Select *pRead\c
   	       	      
         ; If we check for the most probably Chars first, we speed up the operation
         ; because we minimze the number of checks to do!
         Case #TAB
           
-          If *pRead\cc[1] = #STR_CHAR_SPACE        
-            ; if NextChar = SPACE Then remove   
-          ElseIf *pRead\cc[1] = #TAB
-            ; if NextChar = TAB Then remove   
+          If PX::IsSpaceTabChar(*pRead\cc[1])
+            ; if NextChar = 'SPACE or TAB) Then remove   
           Else
             ; if NextChar <> SPACE And NextChar <> TAB   
-            *pRead\cc[0] = #STR_CHAR_SPACE    ; Change TAB to SPACE
+            *pRead\c = #STR_CHAR_SPACE    ; Change TAB to SPACE
             mac_RemoveTabsAndDoubleSpace_KeepChar()   ; keep the Char
           EndIf
             
@@ -685,8 +660,7 @@ Module STR      ; Module STRING [STR::]
          
       EndSelect
       
-      *pRead + SizeOf(Character) ; Set Pointer to NextChar
-  		
+      PX::INCC(*pRead)    ; Set Pointer to NextChar 		
     Wend
   	
   	; If *pWrite is not at end of orignal *String,
@@ -695,173 +669,99 @@ Module STR      ; Module STRING [STR::]
   		*pWrite\c = 0
   	EndIf
   	
-  	; Remove last Char if it is a SPACE => RightTrim
-  	*pWrite - SizeOf(Character)
+  	; Remove last Char if it is a SPACE -> RightTrim
+  	PX::DECC(*pWrite)
   	If *pWrite\c = #STR_CHAR_SPACE
   		*pWrite\c = 0
  	  EndIf
  	  ProcedureReturn *String
   EndProcedure
-   
- ;- --------------------------------------------------
- ;-  Split and Join
- ;- -------------------------------------------------- 
+  RemoveTabsAndDoubleSpaceFast=@_RemoveTabsAndDoubleSpaceFast()
   
-  ; moved to Module PB::
-  
-;   Procedure.i _SplitToArray(Array Out.s(1), *String, *Separator)
-;    ; ============================================================================
-;     ; NAME: SplitToArray
-;     ; DESC: Split a String into multiple Strings
-;     ; DESC: 
-;     ; VAR(Out.s()) : Array to return the Substrings 
-;     ; VAR(*String) : Pointer to String 
-;     ; VAR(*Separator) : Pointer to mulit Char Separator 
-;     ; RET.i : No of Substrings
-;     ; ============================================================================
-;     
-;     Protected *ptrString.Character = *String          ; Pointer to String
-;     Protected *ptrSeperator.Character = *Separator    ; Pointer to Separator
-;     Protected *Start.Character = *String              ; Pointer to Start of SubString    
-;     Protected xEqual, lenSep, N, ASize, L
-;       
-;     lenSep = MemoryStringLength(*Separator)           ; Length of Separator
-;      
-;     ASize = ArraySize(Out())
-;      
-;     While *ptrString\c
-;     ; ----------------------------------------------------------------------
-;     ;  Outer Loop: Stepping trough *String
-;     ; ----------------------------------------------------------------------
-;       
-;       If  *ptrString\c = *ptrSeperator\c ; 1st Character of Seperator in String   
-;         ; Debug "Equal : " +  Chr(*ptrString\c)
-;         
-;         xEqual =#True
-;         
-;         While *ptrSeperator\c
-;         ; ------------------------------------------------------------------
-;         ;  Inner Loop: Char by Char compare Separator with String
-;         ; ------------------------------------------------------------------
-;           If *ptrString\c
-;             If *ptrString\c <> *ptrSeperator\c
-;               xEqual = #False     ; Not Equal
-;               Break               ; Exit While
-;             EndIf
-;           Else 
-;             xEqual =#False        ; Not Equal
-;             Break                 ; Exit While
-;           EndIf
-;           *ptrSeperator + SizeOf(Character)  ; NextChar Separator
-;           *ptrString + SizeOf(Character)     ; NextChar String  
-;         Wend
-;         
-;         ; If we found the complete Separator in String
-;         If xEqual
-;           ; Length of the String from Start up to Separator
-;           L =  (*ptrString - *Start)/SizeOf(Character) - lenSep 
-;           Out(N) = PeekS(*Start, L)
-;           *Start = *ptrString             ; the New Startposition
-;           ; Debug "Start\c= " + Str(*Start\c) + " : " + Chr(*Start\c)
-;           *ptrString - SizeOf(Character)  ; bo back 1 char to detected double single separators like ,,
-;            N + 1   
-;            If ASize < N
-;              ASize + #_ArrayRedimStep
-;              ReDim Out(ASize)
-;            EndIf      
-;         EndIf
-;         
-;       EndIf   
-;       *ptrSeperator = *Separator            ; Reset Pointer of Seperator to 1st Char
-;       *ptrString + SizeOf(Character)        ; NextChar in String
-;     Wend
-;    
-;     Out(N) = PeekS(*Start)  ; Part after the last Separator
-;     ProcedureReturn N+1     ; Number of Substrings
-;         
-;   EndProcedure
-;   SplitToArray = @_SplitToArray()   ; Bind ProcedureAddress to Prototype
-  
-;   Procedure.i _SplitToList(List Out.s(), *String, *Separator, clrList= #True)
-;    ; ============================================================================
-;     ; NAME: SplitToList
-;     ; DESC: Split a String into multiple Strings
-;     ; DESC: 
-;     ; VAR(Out.s())   : List to return the Substrings 
-;     ; VAR(*String)   : Pointer to String 
-;     ; VAR(*Separator): Pointer to Separator String 
-;     ; VAR(clrList)   : #False: Append Splits to List; #True: Clear List first
-;     ; RET.i          : No of Substrings
-;     ; ============================================================================
-;     
-;     Protected *ptrString.Character = *String          ; Pointer to String
-;     Protected *ptrSeperator.Character = *Separator    ; Pointer to Separator
-;     Protected *Start.Character = *String              ; Pointer to Start of SubString   
-;     Protected xEqual, lenSep, N, L
-;       
-;     lenSep = MemoryStringLength(*Separator)           ; Length of Separator
-;     
-;     If clrList
-;       ClearList(Out())  
-;     EndIf
-;     
-;     While *ptrString\c
-;     ; ----------------------------------------------------------------------
-;     ;  Outer Loop: Stepping trough *String
-;     ; ----------------------------------------------------------------------
-;       
-;       If  *ptrString\c = *ptrSeperator\c ; 1st Character of Seperator in String   
-;         ; Debug "Equal : " +  Chr(*ptrString\c)
-;         xEqual =#True
-;        
-;         While *ptrSeperator\c
-;         ; ------------------------------------------------------------------
-;         ;  Inner Loop: Char by Char compare Separator with String
-;         ; ------------------------------------------------------------------
-;           If *ptrString\c 
-;             If *ptrString\c <> *ptrSeperator\c
-;               xEqual = #False     ; Not Equal
-;               Break               ; Exit While
-;            EndIf
-;           Else 
-;             xEqual =#False        ; Not Equal
-;             Break                 ; Exit While
-;           EndIf
-;           *ptrSeperator + SizeOf(Character)  ; NextChar Separator
-;           *ptrString + SizeOf(Character)     ; NextChar String  
-;         Wend
-;         
-;         ; If we found the complete Separator in String
-;         If xEqual
-;           ; Length of the String from Start up to Separator
-;           L =  (*ptrString - *Start)/SizeOf(Character) - lenSep 
-;           AddElement(Out())
-;           Out() = PeekS(*Start, L)
-;           *Start = *ptrString             ; the New Startposition
-;           ; Debug "Start\c= " + Str(*Start\c) + " : " + Chr(*Start\c)
-;           *ptrString - SizeOf(Character)  ; bo back 1 char to detected double single separators like ,,
-;            N + 1   
-;          EndIf
-;         
-;       EndIf   
-;       *ptrSeperator = *Separator            ; Reset Pointer of Seperator to 1st Char
-;       *ptrString + SizeOf(Character)        ; NextChar in String
-;     Wend
-;    
-;     AddElement(Out())
-;     Out() = PeekS(*Start)  ; Part after the last Separator
-;     ProcedureReturn N+1     ; Number of Substrings
-;         
-;   EndProcedure
-;   SplitToList = @_SplitToList()   ; Bind ProcedureAddress to Prototype
+  Procedure.s RemoveTabsAndDoubleSpace(String$)
+  ; ============================================================================
+  ; NAME: RemoveTabsAndDoubleSpace
+  ; DESC: correct String-Pointer
+  ; DESC: Removes all TABs and all double SPACEs from the String
+  ; DESC: This is ths Standard-Version where PB creats a copy ot the String
+  ; DESC: and return a String.
+  ; DESC: A fast version which modifies the String in Memory is 
+  ; DESC: RemoveTabsAndDoubleSpaceFast()
+  ; VAR(String$) : The String
+  ; RET.s: The new String 
+  ; ============================================================================
+    
+    _RemoveTabsAndDoubleSpaceFast(@String$)
+ 	  ProcedureReturn PeekS(@String$)
+  EndProcedure
 
-
+  Procedure.i _ReplaceAccentsFast(*String)
+  ; ============================================================================
+  ; NAME: ReplaceAccents
+  ; DESC: Replace accent characters with their base characters
+  ; DESC: áàä..->a, éè..->e, ìí..->i ...
+  ; DESC: Removes all accent characters in the ASCII Table >=192 with the base
+  ; DESC: characters.
+  ; VAR(*String) : Pointer to the String with accent characters
+  ; RET.i: *String
+  ; ============================================================================
+    
+    Protected *c.Character = *String
+    
+    If *c 	
+      While *c\c
+        If *c\c >= 192   ; Accent chars start at 192 with 'À'    
+          
+          Select *c\c
+            Case 224 To 230   ; 'a' with accents
+              *c\c = 'a'            
+            Case 232 To 235   ; 'e' with accents
+              *c\c = 'e'              
+            Case 236 To 239   ; 'i' with accents
+              *c\c = 'i'             
+            Case 242 To 246   ; 'o' with accents
+      				*c\c = 'o'             
+            Case 249 To 252   ; 'u' with accents
+      				*c\c = 'u'
+  
+            Case 192 To 198   ; 'A' with accents
+              *c\c = 'A'
+            Case 200 To 203   ; 'E' with accents
+              *c\c = 'E'           
+            Case 204 To 207   ; 'I' with accents
+              *c\c = 'I'
+            Case 210 To 214   ; 'O' with accents
+      				*c\c = 'O'
+            Case 217 To 220   ; 'U' with accents
+      				*c\c = 'U'
+                    				
+        		Case 241          ; 'n' with accent 
+        	    *c\c = 'n'
+      			Case 209          ; 'N' with accent
+       				*c\c = 'N'
+       				
+       			Case 221          ; 'Y' with accent
+      			  *c\c = 'Y'
+      			Case 253, 255     ; 'y' with accents
+       				*c\c = 'y'    				     			  
+       		EndSelect
+      	EndIf     	
+      	*c + SizeOf(Character)
+    	Wend
+    EndIf
+    ProcedureReturn *String
+  EndProcedure
+  ReplaceAccentsFast = @_ReplaceAccentsFast()
+  
+  Procedure.s ReplaceAccents(String$)
+    _ReplaceAccentsFast(@String$)
+    ProcedureReturn PeekS(@String$)  
+  EndProcedure
+  
  ; The Macro for SplitCsvToArray to LeftTrim TAB, SPACE and Quotes by adjusting the Pointer
   Macro _mac_LeftTrimCSV()
      While *Start\c
         Select *Start\c
-          Case 0
-            Break
           Case 9, 32                    ; TAB or SPACE or Quotes
             *Start + SizeOf(Character)
           Case cQuotes
@@ -876,8 +776,6 @@ Module STR      ; Module STRING [STR::]
   Macro _mac_RightTrimCSV()
     While *End > *Start
       Select *End\c
-        Case 0
-          Break
         Case 9, 32       ; TAB or SPACE
           *End - SizeOf(Character)
         Case  cQuotes      ; Quotes
@@ -1013,131 +911,6 @@ Module STR      ; Module STRING [STR::]
   EndProcedure
   SplitCsvToList = @_SplitCsvToList()     ; Bind ProcedureAddress to Prototype  
     
-;   Procedure.s JoinArray(Array ary.s(1), Separator$, EndIndex=-1, StartIndex=0, *OutLen=0)
-;   ; ============================================================================
-;   ; NAME: JoinArray
-;   ; DESC: Join all ArrayElements to a single String
-;   ; VAR(ary.s(1)) : The String Array
-;   ; VAR(Separator$) : A separator String
-;   ; VAR(StartIndex) : The Index of the 1st Entry to start with
-;   ; VAR(StartIndex) : The Index of the last Entry
-;   ; RET.s: the String
-;   ; ============================================================================
-;     Protected ret$
-;     Protected I, L, N, lenSep, ASize
-;     Protected *ptr
-;     
-;     lenSep = Len(Separator$)
-;     
-;     ASize = ArraySize(ary())
-;     If EndIndex > ASize Or EndIndex < 0
-;       EndIndex = ASize
-;     EndIf
-;     
-;     If StartIndex > EndIndex
-;       StartIndex = EndIndex
-;     EndIf
-;     
-;     N = EndIndex- StartIndex + 1
-;     
-;     If ASize
-;       For I = StartIndex To EndIndex
-;         ;L = L + LenStrFast(ary(I))    
-;         L = L + Len(ary(I))    
-;      Next    
-;       L = L + (N-1) * lenSep
-;       ret$ = Space(L)
-;       
-;       *ptr = @ret$
-;       
-; ;       Debug "ptr= " + Str(*ptr)
-; ;       Debug "-"
-;       
-;       If lenSep > 0
-;         For I = StartIndex To EndIndex
-;           If ary(I)<>#Null$
-;             CopyMemoryString(ary(I), @*ptr)
-;           EndIf
-;           
-;           If I < EndIndex
-;             CopyMemoryString(Separator$,@*ptr)
-;           EndIf
-;         Next
-;       Else
-;         
-;         For I = StartIndex To EndIndex
-;            If ary(I)<>#Null$
-;             CopyMemoryString(ary(I), @*ptr)
-;           EndIf
-;         Next
-;     
-;       EndIf
-;       
-;     EndIf
-;     
-;     ProcedureReturn ret$
-;   EndProcedure
-;   
-;   Procedure.s JoinList(List lst.s(), Separator$, *OutLen=0)
-;   ; ============================================================================
-;   ; NAME: JoinList
-;   ; DESC: Join all ListElements to a single String
-;   ; VAR(lst.s()) : The String List
-;   ; VAR(Separator$) : A separator String
-;   ; RET.s: the String
-;   ; ============================================================================
-;     Protected ret$
-;     Protected I, L, N, lenSep
-;     Protected *ptr
-;     
-;     ;lenSep = MemoryStringLength(@Separator$)
-;     lenSep = Len(Separator$)
-;     
-;     N = ListSize(lst())
-;     Debug "ListLength = " + N
-;     
-;     If N
-;       ; ----------------------------------------
-;       ;  With Separator
-;       ; ----------------------------------------
-;       ForEach lst()
-;         L = L + Len(lst()) 
-;       Next
-;       L = L + (N-1) * lenSep
-;       ret$ = Space(L)
-;       *ptr = @ret$
-;             
-;       If lenSep > 0 
-;         
-;         ForEach lst()
-;            If lst()<>#Null$
-;             CopyMemoryString(lst(), @*ptr)
-;           EndIf
-;           
-;           I + 1
-;           If I < N
-;             CopyMemoryString(Separator$, @*ptr)
-;           EndIf
-;         Next
-;         
-;       Else          
-;       ; ----------------------------------------
-;       ;  Without Separator
-;       ; ----------------------------------------
-;         
-;         ForEach lst()
-;            If lst()<>#Null$
-;             CopyMemoryString(lst(), @*ptr)
-;           EndIf
-;         Next
-;     
-;       EndIf
-;       
-;     EndIf
-;     
-;     ProcedureReturn ret$
-;   EndProcedure
-;   
   ;- ----------------------------------------------------------------------
   ;- HEX String Functions
   ;- ---------------------------------------------------------------------- 
@@ -1151,7 +924,7 @@ Module STR      ; Module STRING [STR::]
   ; VAR(Bytes) : Number of Bytes to convert    
   ; RET.s: The String with the Bytes Hex-Values
   ; ============================================================================
-   Protected I, *src.pChar, *dest.pChar
+   Protected I, *src.PX::pChar, *dest.PX::pChar
    Protected hiNibble.a, loNibble.a 
    Protected sRet.s
       
@@ -1187,7 +960,7 @@ Module STR      ; Module STRING [STR::]
   ; VAR(Bytes) : Number of Bytes to convert    
   ; RET.i: Number of Bytes copied
   ; ============================================================================    
-    Protected I, *src.pChar, *dest.pChar 
+    Protected I, *src.PX::pChar, *dest.PX::pChar 
     Protected hiNibble.a, loNibble.a 
         
     If *Buffer        
@@ -1235,7 +1008,7 @@ Module STR      ; Module STRING [STR::]
     EndIf  
     ProcedureReturn I
   EndProcedure
-  HexStringToBuffer = @_HexStringToBuffer()     ; Bind ProcedureAdress to the PrototypeHandler
+  HexStringToBuffer = @_HexStringToBuffer()     ; Bind ProcedureAddress to the PrototypeHandler
   
   ;- --------------------------------------------------
   ;-  Miscellaneous
@@ -1253,7 +1026,7 @@ Module STR      ; Module STRING [STR::]
     ; ASCII-34 = ", ASCII-39 = '
     ProcedureReturn Chr(cQuotes) + PeekS(*String) + Chr(cQuotes)
   EndProcedure
-  AddQuotes = @_AddQuotes()     ; Bind ProcedureAdress to the PrototypeHandler
+  AddQuotes = @_AddQuotes()     ; Bind ProcedureAddress to the PrototypeHandler
   
   Procedure.s _UnQuote(*String, xDoubleQuotes = #True, xSingleQuotes=#True, xTrim=#True)  ; 
   ; ============================================================================
@@ -1296,16 +1069,13 @@ Module STR      ; Module STRING [STR::]
       
       If xTrim
         While *pRead\c
-          
-          Select *pRead\c
-            Case #STR_CHAR_SPACE, #TAB
-             ;  
-            Default
-              *pStart = *pRead
-              Break
-          EndSelect
-          
-          *pRead + SizeOf(Character)
+          If PX::IsSpaceTabChar(*pRead\c)
+            ; do nothing
+          Else
+            *pStart = *pRead
+            Break            
+          EndIf                 
+          PX::INCC(*pRead) ; increment CharPointer
         Wend
       EndIf      
       
@@ -1327,7 +1097,7 @@ Module STR      ; Module STRING [STR::]
             *pEnd = *pRead
             Break
         EndSelect
-        *pRead - SizeOf(Character)  
+        PX::DECC(*pRead) ; decrement CharPointer  
         
       Wend
             
@@ -1340,7 +1110,7 @@ Module STR      ; Module STRING [STR::]
     EndIf
 
   EndProcedure
-  UnQuote = @_UnQuote()     ; Bind ProcedureAdress to the PrototypeHandler
+  UnQuote = @_UnQuote()     ; Bind ProcedureAddress to the PrototypeHandler
   
   Procedure.i _CountWords(*String, cSeparator.c=' ', IngnoreSpaces=#True)
   ; ============================================================================
@@ -1395,7 +1165,7 @@ Module STR      ; Module STRING [STR::]
     EndIf   
     ProcedureReturn N   
   EndProcedure
-  CountWords = @_CountWords()     ; Bind ProcedureAdress to the PrototypeHandler
+  CountWords = @_CountWords()     ; Bind ProcedureAddress to the PrototypeHandler
 
   Procedure _CreateWordIndex(*String, List WordIndex.TWordIndex(), cSeparator.c=' ', UnQuoteMode = 0, xTrim=#True)
   ; ============================================================================
@@ -1411,7 +1181,7 @@ Module STR      ; Module STRING [STR::]
   ; RET.i : Number of Words found; ListSize(WordIndex())
   ; ============================================================================
      
-    Protected *char.pChar   ; Pointer to a virutal Char-Array
+    Protected *char.PX::pChar   ; Pointer to a virutal Char-Array
     Protected I, N
     Protected xWordStart, PosStart, PosEnd
     Protected idx.TWordIndex
@@ -1458,63 +1228,8 @@ Module STR      ; Module STRING [STR::]
     Wend
     ProcedureReturn ListSize(WordIndex())
   EndProcedure
-  CreateWordIndex = @_CreateWordIndex()     ; Bind ProcedureAdress to the PrototypeHandler
-  
-  Procedure.i _SetMid(*String, *StringToSet, Pos, Length)
-  ; ============================================================================
-  ; NAME: _SetMid
-  ; DESC: Because PureBasic do not have a Function to set Middle of String,
-  ; DESC: we need our own solution. PokeS is possible but do not have any
-  ; DESC: plausiblity checks with PokeS
-  ; DESC: !PointerVersion! use it as ProtoType SetMid()
-  ; VAR(*String) : Pointer to the main String$
-  ; VAR(Pos): Startposition for insert
-  ; VAR(Length) : number or characters to insert
-  ; VAR(*StringToSet): Pointer to StringToSet$
-  ; RET.i : Number of copied characters
-  ; ============================================================================
-    Protected *Dest.pChar, *Source.pChar
-    Protected cntChar, I
+  CreateWordIndex = @_CreateWordIndex()     ; Bind ProcedureAddress to the PrototypeHandler
     
-    If Pos > 0 
-      
-      If Length < 0
-        Length = 2147483647   ; max Long
-      EndIf
-      
-      *Source = *StringToSet
-      *Dest= *String + (Pos-1) * SizeOf(Character)
-     
-      ; move *Destination-Pointer to Start-Pos and check plausiblity of Start-Pos
-      For I=0 To Pos -1         
-        If *Dest\c = 0
-          ProcedureReturn 0       ; Start-Pos is outside of String
-        Else
-          *Source + SizeOf(Character)
-        EndIf
-      Next    
-      
-       
-      While *Source\c                 ; If Source not at EndOfString
-        If *Dest\c                    ; If Destination not at EndOfString  
-          *Dest\c = *Source\c         ; Destination = Source
-          *Source + SizeOf(Character) ; Set Pointer to next char
-          *Dest + SizeOf(Character)  
-          cntChar + 1                 ; count number of characters
-          If cntChar > = Length
-            Break
-          EndIf
-        Else
-          Break  
-        EndIf         
-      Wend
-        
-    EndIf
-  
-    ProcedureReturn cntChar
-  EndProcedure
-  SetMid = @_SetMid()
-  
   ;- --------------------------------------------------
   ;-  StringsBetween
   ;- -------------------------------------------------- 
@@ -1524,7 +1239,7 @@ Module STR      ; Module STRING [STR::]
   ; NAME: TextBetween
   ; DESC: Gets the Text between two String elements Left$ and Right$
   ; DESC: Attention it is an easy version which do not support cascaded between 
-  ; DESC: like in brackets "((InBrackets))". TextBetwween will deliver "(InBrackets"
+  ; DESC: like in brackets "((InBrackets))". TextBetween will deliver "(InBrackets"
   ; VAR(String$) : The String
   ; VAR(Left$) : The left side like "("
   ; VAR(Right$) : The right side like ")"
@@ -1776,9 +1491,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 1719
-; FirstLine = 20
-; Folding = -------
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 169
+; FirstLine = 138
+; Folding = --------
 ; Optimizer
 ; CPU = 5
