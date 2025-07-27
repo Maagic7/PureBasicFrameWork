@@ -2,32 +2,33 @@
 ;  FILE : PbFw_Module_PX.pb
 ;  NAME : Module PureBasic Extentions [PX::]
 ;  DESC : It's a PureBasic command extention and provides functions
-;  DESC : not directly integrated in PB in an optimzed way!
+;  DESC : not directly integrated in PB in an optimized way!
 ;  DESC : 
 ; ===========================================================================
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2025/01/07
-; VERSION  :  0.5.1 untested Developer Version
+; VERSION  :  0.52 untested Developer Version
 ; COMPILER :  I hope all versions!
 ; OS       :  all
 ; ===========================================================================
 ; ChangeLog:
 ;{
-; 2025/07/25 S.Maag changed Module name from PB:: to PX:: because with PB we
+; 2025/07/27 S.Maag : added Macro IsLetter(CharValue)
+; 2025/07/25 S.Maag : changed Module name from PB:: to PX:: because with PB we
 ;            will run into name convention problems with PB-Compiler because 
 ;            of #PB_ use. #PX_ prevents from such problems with comiler definitions.
 
 ;            moved SetMid form String Module STR:: to PX::
 ;            added Stringfunctions: SetLeft(), SetMid(), SetRight()
 
-; 2025/06/29 S.Maag added SetGadgetTextAlign from PB-Forum by MK-Soft
+; 2025/06/29 S.Maag : added SetGadgetTextAlign from PB-Forum by MK-Soft
 ; 2025/02/01 S.Maag changed to the new Framework wide Constant name scheme
 ;             #'Module'_ConstantName
 ; 2025/02/01 S.Maag : Moved TSystemColor and the basic Color Macros
 ;             form Module Color to Module PB!
-; 2025/01/30 S.Maag integrated the most common Bit functions as Macros!
-; 2025/01/29 S.Maag added the RealTimecounter and RealTimeCounter/HighPerformanceTimer
+; 2025/01/30 S.Maag : integrated the most common Bit functions as Macros!
+; 2025/01/29 S.Maag : added the RealTimecounter and RealTimeCounter/HighPerformanceTimer
 ;             functions from Module RTC. RTC will be obsolet in the future.
 ;
 ; 2025/01/28 S.Maag : I realized: It's better for the programming workflow
@@ -707,6 +708,12 @@ DeclareModule PX
   Macro IsMulDivChar(CharValue)
     Bool(CharValue ='*' Or CharValue ='/')
   EndMacro  
+  
+  ; Check if Char is a letter : Case 'A' To 'Z', 'a' To 'z'
+  ; use it: result = IsLetter(CharValue)
+  Macro IsLetter(CharValue)
+    Bool( (CharValue >= 'A' And CharValue <= 'Z') Or (CharValue >= 'a' And CharValue <= 'z'))  
+  EndMacro
   
   ;- ----------------------------------------------------------------------
   ;- Macros for COLOR operations
@@ -2324,9 +2331,9 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 2013
-; FirstLine = 1976
+; CursorPosition = 28
+; FirstLine = 27
 ; Folding = ---------------------
-; Markers = 1119,2182
+; Markers = 1126,2189
 ; Optimizer
 ; CPU = 5
