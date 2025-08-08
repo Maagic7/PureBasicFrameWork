@@ -1007,11 +1007,7 @@ Module FStr
       ; ASM_POP_XMM_4to5(RDX)     ; POP non volatile Registers we PUSH'ed at start
       
       ProcedureReturn   ; RAX
-         
-    ; **********************************************************************
-    ; CompilerCase #PbFwCfg_Module_Compile_ASM32    ; ASM x32 Version            
-    ; **********************************************************************
-      
+               
     ; **********************************************************************
     ; CompilerCase #PbFwCfg_Module_Compile_C        ; C-Backend
     ; **********************************************************************
@@ -1167,11 +1163,7 @@ Module FStr
       ; ASM_POP_XMM_4to5(RDX)     ; POP non volatile Registers we PUSH'ed at start
       
       ProcedureReturn   ; RAX
-         
-    ; **********************************************************************
-    ; CompilerCase #PbFwCfg_Module_Compile_ASM32    ; ASM x32 Version            
-    ; **********************************************************************
-      
+               
     ; **********************************************************************
     ; CompilerCase #PbFwCfg_Module_Compile_C        ; C-Backend
     ; **********************************************************************
@@ -1517,11 +1509,7 @@ Module FStr
       ; ASM_POP_XMM_4to5(RDX)     ; POP non volatile Registers we PUSH'ed at start
      
       ProcedureReturn   ; RAX     
-       
-    ; **********************************************************************
-    ; CompilerCase #PbFwCfg_Module_Compile_ASM32    ; ASM x32 Version            
-    ; **********************************************************************
-      
+             
     ; **********************************************************************
     ; CompilerCase #PbFwCfg_Module_Compile_C        ; C-Backend
     ; **********************************************************************
@@ -2059,11 +2047,7 @@ CompilerIf #False
     ; **********************************************************************
     ; CompilerCase #PbFwCfg_Module_Compile_ASM64      ; ASM x64 Version             
 	  ; **********************************************************************    
-         
-    ; **********************************************************************
-    ; CompilerCase #PbFwCfg_Module_Compile_ASM32    ; ASM x32 Version            
-    ; **********************************************************************
-      
+               
     ; **********************************************************************
     ; CompilerCase #PbFwCfg_Module_Compile_C        ; C-Backend
     ; **********************************************************************
@@ -2078,8 +2062,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 191
-; FirstLine = 211
+; CursorPosition = 2049
+; FirstLine = 1992
 ; Folding = --------
 ; DPIAware
 ; CPU = 5
