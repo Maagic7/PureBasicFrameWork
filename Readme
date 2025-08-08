@@ -15,8 +15,9 @@ PbFw_Module_DbCodeCreation: DataBase CodeCreation Module
 
 PbFw_Module_FileSystem : File-System Functions
 
-PbFW_Module_PB		: PureBasic Command extention. Add missing commands: 
+PbFW_Module_PX		: PureBasic Command extention. Add missing commands: 
                       Min, Max,.., ElapsedMicrosenconds/Nanoseconds, Color Macros
+					  SplitString, JoinString, TextBetween
 
 PbFw_Module_Prime   : fast 64Bit Prime Number Test and Prime Factorisation
                       using Modulo(30) distance for reducing caclculations
