@@ -5,11 +5,11 @@ Do not use any code in your projects until you tested it!
  
 Some Module descriptions
 PbFw_ASM_Macros.pbi : Collection of Assembler optimation Macros					  
-PbFw_Module_Bits    : optimized Bit manipulation functions
+PbFw_Module_Bit     : optimized Bit manipulation functions
 
 PbFw_Module_CodeCreation  : Helper Functions for Creating PB-Code and copy it to ClipBoard
 PbFw_Module_Complex       : Module for Math with complex numbers
-PbFw_Module_CPU           : CPU indentification und Featuer Flags
+PbFw_Module_CPU           : CPU indentification and Feature Flags
 
 PbFw_Module_DbCodeCreation: DataBase CodeCreation Module
 
