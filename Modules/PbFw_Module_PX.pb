@@ -8,12 +8,19 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2025/01/07
-; VERSION  :  0.52 untested Developer Version
+; VERSION  :  0.53 untested Developer Version
 ; COMPILER :  I hope all versions!
 ; OS       :  all
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2025/08/08 S.Maag : added new TextBetween(), TextBetweenList(), TextBetweenArray()
+;                     now with Prototyping and special Pointer techiques for more speed,
+;                     token from new SplitString-Functions.
+; 2025/08/04 S.Maag : switched to new SplitString Array/List functions.
+;                     Former Pointer Version had problems with splitting at double
+;                     characters like "//" or ".."
+; 2025/08/04 S.Maag : Added Char=247 check to UCaseChar
 ; 2025/07/27 S.Maag : added Macro IsLetter(CharValue)
 ; 2025/07/25 S.Maag : changed Module name from PB:: to PX:: because with PB we
 ;            will run into name convention problems with PB-Compiler because 
@@ -62,9 +69,9 @@ DeclareModule PX
   #PX_MaxBitNo = (SizeOf(Integer)*8-1)    ; 63 for x64 and 31 for x32
   
   Enumeration ePXTextAlign
-    #PX_TextLeft
-    #PX_TextCenter
-    #PX_TextRight
+    #PX_AlignLeft
+    #PX_AlignCenter
+    #PX_AlignRight
   EndEnumeration
   
   ; Any or Universal Pointer (see PurePasic IDE Common.pb Structrue PTR)
@@ -455,7 +462,7 @@ DeclareModule PX
   ; use it: result = IsInRange(value, MinValue, MaxValue)
   ;         result = IsInRange(value, a-b, a+b)       ; use with MinValue, MaxValue as Expression
   Macro IsInRange(value, MinValue, MaxValue)
-    Bool((value >=(MinValue)) And (value <=(MaxValue))  
+    Bool( (value)>=(MinValue) And (value)<=(MaxValue) )  
   EndMacro 
   
   ; saves Min and Max values to varMin, varMax
@@ -484,8 +491,8 @@ DeclareModule PX
   ;- Macros for Math
   ;- ----------------------------------------------------------------------
 
-  ; because PB do not have a square function x²
-  ; it is possible to use expression : y = SQ(3+2)  = 25
+  ; Because PB do not have a square function x².
+  ; It is possible to use expression : y = SQ(3+2)  = 25
   ; use it: result = SQ(value)
   ;         result = SQ(a+b)        ; use with value as Expression
   Macro SQ(value)
@@ -630,16 +637,18 @@ DeclareModule PX
     ptrChar + PX::#PX_CharSize ; (NoOfChars * PX::#PX_CharSize)
   EndMacro
   
-  ; LowerCase a single Char in ASCii Character space
+  ; LowerCase a single Char in ASCii Character space, Unicode Chars are not affected!
   ; use it: result = LCaseChar(CharValue)
+  ; <<5 = *32 what is the CharDifference between Lo and Up
   Macro LCaseChar(CharValue)
-    (CharValue + 32 * Bool( (CharValue>='A' And CharValue<='Z') Or (CharValue>=192 And CharValue<=222)))  
+    (CharValue + Bool((CharValue>='A' And CharValue<='Z') Or (CharValue>=192 And CharValue<=222))<<5)  
   EndMacro
   
-  ; UpperCase a single Char in ASCii Character space
+  ; UpperCase a single Char in ASCii Character space, Unicode Chars are not affected!
   ; use it: result = UCaseChar(CharValue)
+  ; <<5 = *32 what is the CharDifference between Lo and Up
   Macro UCaseChar(CharValue)
-    (CharValue - 32 * Bool( (CharValue>='a' And CharValue<='z') Or (CharValue>=224 And CharValue<=254)))  
+    (CharValue - Bool((CharValue>='a' And CharValue<='z') Or (CharValue>=224 And CharValue<=254 And CharValue<>247))<<5)  
   EndMacro
 
   ; Set a Charater variable to LoChar. It's faster than MyChar = LCaseChar(MyChar)!
@@ -661,6 +670,7 @@ DeclareModule PX
     Select varChar
       Case 'a' To 'z'
         varChar - 32  ; a[97]-A[65]=32                
+      Case 247        ; '÷'
       Case 224 To 254   ; 'À'..254
         varChar - 32  ; 254-222 = 32      
     EndSelect
@@ -920,7 +930,7 @@ DeclareModule PX
   
   ;- ----------------------------------------------------------------------
   ;-  RTC: RealTimeCounter & HighPerformanceTimer
-  ;- ----------------------------------------------------------------------
+  ;  ----------------------------------------------------------------------
   
   ; --------------------------------------------------
   ; Test results: i.O.
@@ -973,6 +983,10 @@ DeclareModule PX
     xRun.i[#PX_RTC_MaxCounterNo+1]    ; Timer Run-State : #False = Stop, #True = Run
   EndStructure
   
+  ;- --------------------------------------------------
+  ;- Declare Public Functions
+  ;- --------------------------------------------------
+  
   ; Basic Functions
   Declare.i RTC_Resolution()          ; Get the NanoSeconds per TickCount : >0 if CPU and OS support RTC Function
   Declare.q ElapsedMicroseconds()     ; Elapsed MicorSeconds
@@ -1000,6 +1014,15 @@ DeclareModule PX
   
   Prototype.i SetRight(String$, StringToSet$, Length=#PB_All)
   Global SetRight.SetRight
+  
+  Prototype.s TextBetween(String$, Left$, Right$)
+  Global TextBetween.TextBetween
+  
+  Prototype.i TextBetweenList(List Out.s(), String$, Left$, Right$)
+  Global TextBetweenList.TextBetweenList
+  
+  Prototype.i TextBetweenArray(Array Out.s(1), String$, Left$, Right$, ArrayRedimStep=10)
+  Global TextBetweenArray.TextBetweenArray
 
   Prototype SplitStringArray(Array Out.s(1), String$, Separator$, ArrayRedimStep=10)
   Global SplitStringArray.SplitStringArray
@@ -1009,6 +1032,9 @@ DeclareModule PX
     
   Declare.s JoinArray(Array ary.s(1), Separator$, StartIndex=0, EndIndex=-1, *IOutLen.Integer=0)
   Declare.s JoinList(List lst.s(), Separator$, *IOutLen.Integer=0)  
+  
+  Declare.i StringArrayToList(Array aryStr.s(1), List lstStr.s())
+  Declare.i StringListToArray(List lstStr.s(), Array aryStr.s(1))
   
   ; --------------------------------------------------
   ; Gadgets
@@ -1683,7 +1709,7 @@ Module PX
   ;-  STRING Functions
   ;- -------------------------------------------------- 
   
-  Procedure.i _SetLeft(*String, *StringToSet, Length)
+  Procedure.i _SetLeft(*String, *StringToSet, Length=#PB_All)
   ; ============================================================================
   ; NAME: _SetLeft
   ; DESC: Because PureBasic do not have a Function to set the left of a String,
@@ -1723,7 +1749,7 @@ Module PX
   EndProcedure
   SetLeft = @_SetLeft()   ; Bind ProcedureAddress to Prototype
   
-  Procedure.i _SetMid(*String, *StringToSet, Pos, Length)
+  Procedure.i _SetMid(*String, *StringToSet, Pos, Length=#PB_All)
   ; ============================================================================
   ; NAME: _SetMid
   ; DESC: Because PureBasic do not have a Function to set the middle of a String,
@@ -1777,7 +1803,7 @@ Module PX
   EndProcedure
   SetMid = @_SetMid()   ; Bind ProcedureAddress to Prototype
   
-  Procedure.i _SetRight(*String, *StringToSet, Length)
+  Procedure.i _SetRight(*String, *StringToSet, Length=#PB_All)
   ; ============================================================================
   ; NAME: _SetRight
   ; DESC: Because PureBasic do not have a Function to set the right of a String,
@@ -1831,6 +1857,178 @@ Module PX
     ProcedureReturn cntChar
   EndProcedure
   SetRight = @_SetRight()   ; Bind ProcedureAddress to Prototype
+    
+  Procedure.s _TextBetween(*String, Left$, Right$)
+  ; ============================================================================
+  ; NAME: TextBetween
+  ; DESC: Gets the Text between the first two String elements Left$ and Right$
+  ; DESC: Attention it is an easy version which do not support cascaded between 
+  ; DESC: like in brackets "((InBrackets))". TextBetween will deliver "(InBrackets"
+  ; VAR(String$) : The String
+  ; VAR(Left$) : The left side like "("
+  ; VAR(Right$) : The right side like ")"
+  ; RET.s : The Text between Left$ and Right$
+  ; ============================================================================
+    
+    Protected posL, posR
+    Protected Str.String, *pStr.Integer ; for hooking *String into Str.String 
+    
+   ; because FindString() do not accept Pointers, we have to hook the 
+    ; *String and *Separator into a String-Structure, The trick is to overlay
+    ; an Integer Structure over the String Structure - this is like StructureUnion
+    ; but hand made!
+    *pStr = @Str            ; Overlay IntergerStructure on String Structure
+    *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))
+    
+    posL = FindString(Str\s, Left$)   
+    If posL
+      *String + posL*SizeOf(Character)                  ; Pointer to Char after Position found
+      *pStr\i = *String + Len(Left$)*SizeOf(Character)  ; New Startposition after Left$
+      posR = FindString(Str\s, Right$)
+      
+      If posR
+        *pStr\i = 0   ; Unhook String -> delete the Pointer of the String in Str\s
+        ProcedureReturn PeekS(*String, posR)
+      EndIf
+    EndIf
+    
+    ; befor leaving the Procedure we have to unhook the Strings, otherwise PB will delete
+    ; the original String allocated Memory and the original String Point to non allocated
+    ; Memory.
+    *pStr\i = 0   ; Unhook String -> delete the Pointer of the String in Str\s   
+    ProcedureReturn #Null$
+  EndProcedure
+  TextBetween=@_TextBetween()
+  
+  Procedure.i _TextBetweenList(List Out.s(), *String, Left$, Right$)
+  ; ============================================================================
+  ; NAME: TextBetweenList
+  ; DESC: Gets the Text between two String elements Left$ and Right$
+  ; DESC: as a List. It can be used to get get the text between '<' '>'
+  ; DESC: in html files. And for many other use. 
+  ; VAR(List lstResults()) : The List with the found Strings
+  ; VAR(*String) : Pointer to String
+  ; VAR(Left$) : The left side like "("
+  ; VAR(Right$) : The right side like ")"
+  ; VAR(List Out.s()) : The List with the found Strings
+  ; RET.i : The number of found Strings (it is identical with the ListSize)
+  ; ============================================================================
+    Protected posL, posR        ; Character postion of found Char 
+    Protected lenBL, lenBR      ; Bytelength of Left$, Right$ 
+    Protected Str.String, *pStr.Integer ; for hooking *String into Str.String 
+        
+    ClearList(Out())
+    lenBL = Len(Left$) * SizeOf(Character)
+    lenBR = Len(Right$) * SizeOf(Character)
+    
+    If *String=0 Or lenBL=0 Or lenBR=0
+      ProcedureReturn 0  
+    EndIf
+    
+    ; because FindString() do not accept Pointers, we have to hook the 
+    ; *String and *Separator into a String-Structure, The trick is to overlay
+    ; an Integer Structure over the String Structure - this is like StructureUnion
+    ; but hand made!
+    *pStr = @Str            ; Overlay IntergerStructure on String Structure
+    *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))
+    
+    Repeat
+      posL = FindString(Str\s, Left$)
+      If posL
+        *String + posL*SizeOf(Character)    ; Pointer to Char after Position found
+        *pStr\i = *String + lenBL           ; New Startposition after Left$
+        posR = FindString(Str\s, Right$)
+        
+        If posR
+          AddElement(Out())
+          Out()=PeekS(*String, posR)
+          *String + posR*SizeOf(Character)  ; Pointer to Char after Position found
+        *pStr\i = *String + lenBR           ; New Startposition after Left$
+        Else
+          Break        
+        EndIf       
+      Else
+        Break
+      EndIf       
+    ForEver
+    
+    ; befor leaving the Procedure we have to unhook the Strings, otherwise PB will delete
+    ; the original String allocated Memory and the original String Point to non allocated
+    ; Memory.
+    *pStr\i = 0   ; Unhook String -> delete the Pointer of the String in Str\s   
+    ProcedureReturn ListSize(Out())
+  EndProcedure
+  TextBetweenList=@_TextBetweenList()
+  
+  Procedure.i _TextBetweenArray(Array Out.s(1), *String, Left$, Right$, ArrayRedimStep=10)
+  ; ============================================================================
+  ; NAME: TextBetweenList
+  ; DESC: Gets the Text between two String elements Left$ and Right$
+  ; DESC: as an Array. It can be used to get get the text between '<' '>'
+  ; DESC: in html files. And for many other use. 
+  ; VAR(List lstResults()) : The List with the found Strings
+  ; VAR(*String) : Pointer to String
+  ; VAR(Left$) : The left side like "("
+  ; VAR(Right$) : The right side like ")"
+  ; VAR(Array Out.s(1)) : The Array with the found Strings
+  ; RET.i : The number of found Strings (it is identical with the ListSize)
+  ; ============================================================================
+    Protected posL, posR        ; Character postion of found Char 
+    Protected lenBL, lenBR      ; Bytelength of Left$, Right$ 
+    Protected ASize, N
+    Protected Str.String, *pStr.Integer ; for hooking *String into Str.String 
+        
+    lenBL = Len(Left$) * SizeOf(Character)
+    lenBR = Len(Right$) * SizeOf(Character)
+    
+    If *String=0 Or lenBL=0 Or lenBR=0
+      ProcedureReturn 0  
+    EndIf
+    
+    ASize = ArraySize(Out())    
+    If ASize = -1         ; not Dim
+      ASize = ArrayRedimStep
+      Dim Out(ASize)
+    EndIf            
+    
+    ; because FindString() do not accept Pointers, we have to hook the 
+    ; *String and *Separator into a String-Structure, The trick is to overlay
+    ; an Integer Structure over the String Structure - this is like StructureUnion
+    ; but hand made!
+    *pStr = @Str            ; Overlay IntergerStructure on String Structure
+    *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))
+    
+    Repeat
+      posL = FindString(Str\s, Left$)
+      If posL
+        *String + posL*SizeOf(Character)    ; Pointer to Char after Position found
+        *pStr\i = *String + lenBL           ; New Startposition after Left$
+        posR = FindString(Str\s, Right$)
+        
+        If posR
+          If ASize < N
+            ASize + ArrayRedimStep
+            ReDim Out(ASize)
+          EndIf            
+          Out(N)=PeekS(*String, posR)
+          *String + posR*SizeOf(Character)  ; Pointer to Char after Position found
+          *pStr\i = *String + lenBR         ; New Startposition after Left$
+          N+1
+        Else
+          Break        
+        EndIf       
+      Else
+        Break
+      EndIf       
+    ForEver
+    
+    ; befor leaving the Procedure we have to unhook the Strings, otherwise PB will delete
+    ; the original String allocated Memory and the original String Point to non allocated
+    ; Memory.
+    *pStr\i = 0   ; Unhook String -> delete the Pointer of the String in Str\s   
+    ProcedureReturn N
+  EndProcedure
+  TextBetweenArray=@_TextBetweenArray()
 
   Procedure.i _SplitStringArray(Array Out.s(1), *String, *Separator, ArrayRedimStep=10)
   ; ============================================================================
@@ -1839,74 +2037,70 @@ Module PX
   ; DESC: 
   ; VAR(Out.s()) : Array to return the Substrings (ArraySize >= Substrings)
   ; VAR(*String) : Pointer to String 
-  ; VAR(*Separator) : Pointer to mulit Char Separator 
-  ; VAR(ArrayRedimStep) : How may entries are added to the string each Redim
+  ; VAR(*Separator) : Pointer to Separator String 
+  ; VAR(ArrayRedimStep) : How may entries are added to the String each ReDim
   ; RET.i : No of Substrings
   ; ============================================================================
+        
+    Protected lsep, N, Pos, ASize
+    Protected Str.String, *pStr.Integer ; for hooking *String into Str.String 
+    Protected Sep.String, *pSep.Integer ; for hooking *Separator into Sep.String 
+        
+    If Not *String
+      ProcedureReturn 0
+    EndIf
     
-    Protected *ptrString.Character = *String          ; Pointer to String
-    Protected *ptrSeperator.Character = *Separator    ; Pointer to Separator
-    Protected *Start.Character = *String              ; Pointer to Start of SubString    
-    Protected xEqual, lenSep, N, ASize, L
+    ASize = ArraySize(Out())    
+    If ASize = -1         ; not Dim
+      ASize = ArrayRedimStep
+      Dim Out(ASize)
+    EndIf            
+
+    If Not *Separator
+      Out(0) = PeekS(*String)
+      ProcedureReturn 1     
+    EndIf
+    
+    ; because FindString() do not accept Pointers, we have to hook the 
+    ; *String and *Separator into a String-Structure. The trick is to overlay
+    ; an Integer Structure over the String Structure - this is like StructureUnion
+    ; but hand made!
+    *pStr = @Str            ; Overlay IntergerStructure on String Structure
+    *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))
+    
+    *pSep = @Sep            ; Overlay IntergerStructure on String Structure
+    *pSep\i = *Separator    ; Hook Separator into Sep\s => PokeI(@Sep, *Separator))
      
-    lenSep = MemoryStringLength(*Separator)           ; Length of Separator
+    lsep = MemoryStringLength(*Separator)
      
-    ASize = ArraySize(Out())
-     
-    While *ptrString\c
-    ; ----------------------------------------------------------------------
-    ;  Outer Loop: Stepping trough *String
-    ; ----------------------------------------------------------------------
-      
-      If  *ptrString\c = *ptrSeperator\c ; 1st Character of Seperator in String   
-        ; Debug "Equal : " +  Chr(*ptrString\c)
-        
-        xEqual =#True
-        
-        While *ptrSeperator\c
-        ; ------------------------------------------------------------------
-        ;  Inner Loop: Char by Char compare Separator with String
-        ; ------------------------------------------------------------------
-          If *ptrString\c
-            If *ptrString\c <> *ptrSeperator\c
-              xEqual = #False     ; Not Equal
-              Break               ; Exit While
-            EndIf
-          Else 
-            xEqual =#False        ; Not Equal
-            Break                 ; Exit While
-          EndIf
-          INCC(*ptrSeperator)     ; Pointer to NextChar Separator
-          INCC(*ptrString)        ; Pointer to NextChar String
-         Wend
-        
-        ; If we found the complete Separator in String
-        If xEqual
-          ; Length of the String from Start up to Separator
-          L =  (*ptrString - *Start)/SizeOf(Character) - lenSep 
-          Out(N) = PeekS(*Start, L)
-          *Start = *ptrString             ; the New Startposition
-          ; Debug "Start\c= " + Str(*Start\c) + " : " + Chr(*Start\c)
-          DECC(*ptrString)    ; go back 1 char to detected double single separators like ,,
-          N + 1   
-          If ASize < N
-            ASize + ArrayRedimStep
-            ReDim Out(ASize)
-          EndIf      
-        EndIf
-        
-      EndIf   
-      *ptrSeperator = *Separator          ; Reset Pointer of Seperator to 1st Char
-      INCC(*ptrString)                    ; NextChar in String
-    Wend
-   
-    Out(N) = PeekS(*Start)  ; Part after the last Separator
-    ProcedureReturn N+1     ; Number of Substrings
-        
+    Pos = FindString(Str\s, Sep\s)  
+    While pos     
+      If ASize < N
+        ASize + ArrayRedimStep
+        ReDim Out(ASize)
+      EndIf            
+      Pos -1      ; because the length in characters is Pos-1
+      Out(N) = PeekS(*pStr\i, Pos)
+      ; because *pStr is an overlay on Str.String, we can move the Stringpointer
+      ; @Str\s directly by manipulating *pStr\i what is same as the Pointer of the String
+       *pStr\i = *pStr\i + (Pos + lsep)*SizeOf(Character) ; move @Str\s to new Startposition
+      N + 1       
+      pos = FindString(Str\s, Sep\s)      
+    Wend 
+    
+    Out(N) = PeekS(*pStr\i)
+    
+    ; befor leaving the Procedure we have to unhook the Strings, otherwise PB will delete
+    ; the original String allocated Memory and the original String Point to non allocated
+    ; Memory.
+    *pStr\i = 0   ; Unhook String
+    *pSep\i = 0   ; Unhook Seperator
+
+    ProcedureReturn N+1     ; Number of Substrings       
   EndProcedure
   SplitStringArray = @_SplitStringArray()   ; Bind ProcedureAddress to Prototype
   
-  Procedure.i _SplitStringList(List Out.s(), *String, *Separator, clrList= #True)
+ Procedure.i _SplitStringList(List Out.s(), *String, *Separator, clrList= #True)
   ; ============================================================================
   ; NAME: _SplitStringList
   ; DESC: Split a String into multiple Strings
@@ -1918,64 +2112,58 @@ Module PX
   ; RET.i          : No of Substrings
   ; ============================================================================
     
-    Protected *ptrString.Character = *String          ; Pointer to String
-    Protected *ptrSeperator.Character = *Separator    ; Pointer to Separator
-    Protected *Start.Character = *String              ; Pointer to Start of SubString   
-    Protected xEqual, lenSep, N, L
-      
-    lenSep = MemoryStringLength(*Separator)           ; Length of Separator
+    Protected lsep, N, Pos
+    Protected Str.String, *pStr.Integer ; for hooking *String into Str.String 
+    Protected Sep.String, *pSep.Integer ; for hooking *Separator into Sep.String 
+        
+    If Not *String
+      ProcedureReturn 0
+    EndIf
     
     If clrList
       ClearList(Out())  
     EndIf
     
-    While *ptrString\c
-    ; ----------------------------------------------------------------------
-    ;  Outer Loop: Stepping trough *String
-    ; ----------------------------------------------------------------------
-      
-      If  *ptrString\c = *ptrSeperator\c ; 1st Character of Seperator in String   
-        ; Debug "Equal : " +  Chr(*ptrString\c)
-        xEqual =#True
-       
-        While *ptrSeperator\c
-        ; ------------------------------------------------------------------
-        ;  Inner Loop: Char by Char compare Separator with String
-        ; ------------------------------------------------------------------
-          If *ptrString\c 
-            If *ptrString\c <> *ptrSeperator\c
-              xEqual = #False     ; Not Equal
-              Break               ; Exit While
-           EndIf
-          Else 
-            xEqual =#False        ; Not Equal
-            Break                 ; Exit While
-          EndIf
-          INCC(*ptrSeperator)     ; Pointer to NextChar Separator
-          INCC(*ptrString)        ; Pointer to NextChar String
-        Wend
+    If Not *Separator
+      AddElement(Out())
+      Out() = PeekS(*String)
+      ProcedureReturn 1
+    EndIf
+    
+    ; because FindString() do not accept Pointers, we have to hook the 
+    ; *String and *Separator into a String-Structure. The trick is to overlay
+    ; an Integer Structure over the String Structure - this is like StructureUnion
+    ; but hand made!
+    *pStr = @Str            ; Overlay IntergerStructure on String Structure
+    *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))
+    
+    *pSep = @Sep            ; Overlay IntergerStructure on String Structure
+    *pSep\i = *Separator    ; Hook Separator into Sep\s => PokeI(@Sep, *Separator))
         
-        ; If we found the complete Separator in String
-        If xEqual
-          ; Length of the String from Start up to Separator
-          L =  (*ptrString - *Start)/SizeOf(Character) - lenSep 
-          AddElement(Out())
-          Out() = PeekS(*Start, L)
-          *Start = *ptrString             ; the New Startposition
-          ; Debug "Start\c= " + Str(*Start\c) + " : " + Chr(*Start\c)
-          DECC(*ptrString)      ; go back 1 char to detected double single separators like ,,
-          N + 1   
-        EndIf
-        
-      EndIf   
-      *ptrSeperator = *Separator      ; Reset Pointer of Seperator to 1st Char
-      INCC(*ptrString)                ; NextChar in String
-    Wend
-   
+    lsep = MemoryStringLength(*Separator)
+     
+    Pos = FindString(Str\s, Sep\s)  
+    While pos 
+      Pos -1      ; because the length in characters is Pos-1
+      AddElement(Out())
+      Out() = PeekS(*pStr\i, Pos)
+      ; because *pStr is an overlay on Str.String, we can move the Stringpointer
+      ; @Str\s directly by manipulating *pStr\i what is same as the Pointer of the String
+       *pStr\i = *pStr\i + (Pos + lsep)*SizeOf(Character) ; move @Str\s to new Startposition
+      N + 1       
+      pos = FindString(Str\s, Sep\s)
+    Wend 
+    
     AddElement(Out())
-    Out() = PeekS(*Start)   ; Part after the last Separator
-    ProcedureReturn N+1     ; Number of Substrings
-        
+    Out() = PeekS(*pStr\i)
+    
+    ; befor leaving the Procedure we have to unhook the Strings, otherwise PB will delete
+    ; the original String allocated Memory and the original String Point to non allocated
+    ; Memory.
+    *pStr\i = 0   ; Unhook String -> delete the Pointer of the String in Str\s
+    *pSep\i = 0   ; Unhook Seperator -> delete the Pointer of the String in Sep\s
+
+    ProcedureReturn N+1     ; Number of Substrings        
   EndProcedure 
   SplitStringList = @_SplitStringList()   ; Bind ProcedureAddress to Prototype
   
@@ -2037,8 +2225,7 @@ Module PX
           EndIf
         Next
     
-      EndIf
-      
+      EndIf      
     EndIf
     
     If *IOutLen
@@ -2097,13 +2284,12 @@ Module PX
       ; ----------------------------------------
         
         ForEach lst()
-           If lst()<>#Null$
+          If lst()<>#Null$
             CopyMemoryString(lst(), @*ptr)
           EndIf
         Next
     
-      EndIf
-      
+      EndIf     
     EndIf
     
     If *IOutLen
@@ -2111,6 +2297,48 @@ Module PX
     EndIf
     
     ProcedureReturn ret$
+  EndProcedure
+  
+  Procedure.i StringArrayToList(Array aryStr.s(1), List lstStr.s())
+  ; ============================================================================
+  ; NAME: StringArrayToList
+  ; DESC: Copies a String-Array to a StringList
+  ; VAR(Array aryStr.s(1)) : The StringArray with 1 dimension
+  ; VAR(List lstStr.s()) : The StringList
+  ; RET.i : The number of found Strings copied
+  ; ============================================================================
+    Protected I, N
+    
+    N = ArraySize(aryStr())   
+    If N
+      ClearList(lstStr())     
+      For I = 0 To N 
+        AddElement(lstStr())
+        lstStr() = aryStr(I)
+      Next
+    EndIf 
+    ProcedureReturn N+1
+  EndProcedure
+  
+  Procedure.i StringListToArray(List lstStr.s(), Array aryStr.s(1))
+  ; ============================================================================
+  ; NAME: StringListToArray
+  ; DESC: Copies a StringList to a String-Array
+  ; VAR(List lstStr.s()) : The StringList
+  ; VAR(Array aryStr.s(1)) : The StringArray with 1 dimension
+  ; RET.i : The number of found Strings copied
+  ; ============================================================================
+    Protected I, N
+    
+    N = ListSize(lstStr())   
+    If N
+      Dim aryStr(N-1)
+      ForEach lstStr()
+        aryStr(I) = lstStr()
+        I + 1 
+      Next
+    EndIf    
+    ProcedureReturn N
   EndProcedure
   
   ;- --------------------------------------------------
@@ -2125,7 +2353,7 @@ Module PX
   ; DESC: All OS
   ; DESC: original from PB-Forum by mk-Soft
   ; VAR(GadgetNo): PB Gadget-No
-  ; VAR(AlignType): #PX_TextLeft, #PX_TextCenter, #PX_TextRight 
+  ; VAR(AlignType): #PX_AlignLeft, #PX_AlignCenter, #PX_AlignRight 
   ; RET.i : -
   ; ============================================================================
     
@@ -2142,11 +2370,11 @@ Module PX
         Protected style = GetWindowLongPtr_(hwnd, #GWL_STYLE)
         
         Select AlignType
-          Case #PX_TextLeft
+          Case #PX_AlignLeft
             style = style & ~#ES_CENTER & ~#ES_RIGHT
-          Case #PX_TextCenter
+          Case #PX_AlignCenter
             style = style & ~#ES_RIGHT | #ES_CENTER
-          Case #PX_TextRight
+          Case #PX_AlignRight
             style = style & ~#ES_CENTER | #ES_RIGHT
         EndSelect
         SetWindowLongPtr_(hwnd, #GWL_STYLE, style)
@@ -2162,11 +2390,11 @@ Module PX
             
           Case #PB_GadgetType_String
             Select AlignType
-              Case #PX_TextLeft
+              Case #PX_AlignLeft
                 gtk_entry_set_alignment(widget, 0.0)
-              Case #PX_TextCenter
+              Case #PX_AlignCenter
                 gtk_entry_set_alignment(widget, 0.5)
-              Case #PX_TextRight
+              Case #PX_AlignRight
                 gtk_entry_set_alignment(widget, 1.0)
             EndSelect
             
@@ -2174,13 +2402,13 @@ Module PX
             
             CompilerIf Subsystem("GTK2")
               Select AlignType
-                Case #PX_TextLeft
+                Case #PX_AlignLeft
                   gtk_misc_set_alignment(widget, 0.0, 0.0)
                   gtk_label_set_justify_(widget, #GTK_JUSTIFY_LEFT)
-                Case #PX_TextCenter
+                Case #PX_AlignCenter
                   gtk_misc_set_alignment(widget, 0.5, 0.0)
                   gtk_label_set_justify_(widget, #GTK_JUSTIFY_CENTER)
-                Case #PX_TextRight
+                Case #PX_AlignRight
                   gtk_misc_set_alignment(widget, 1.0, 0.0)
                   gtk_label_set_justify_(widget, #GTK_JUSTIFY_RIGHT)
               EndSelect
@@ -2190,13 +2418,13 @@ Module PX
               ; Normally Linux installs the GTK parallel if any GTK Application is installed under QT.
               ; Maybe a PB applikation under QT links the GTK library, so it will be installed.
               Select AlignType
-                Case #PX_TextLeft
+                Case #PX_AlignLeft
                   gtk_label_set_xalign(widget, 0.0)
                   gtk_label_set_justify_(widget, #GTK_JUSTIFY_LEFT)
-                Case #PX_TextCenter
+                Case #PX_AlignCenter
                   gtk_label_set_xalign(widget, 0.5)
                   gtk_label_set_justify_(widget, #GTK_JUSTIFY_CENTER)
-                Case #PX_TextRight
+                Case #PX_AlignRight
                   gtk_label_set_xalign(widget, 1.0)
                   gtk_label_set_justify_(widget, #GTK_JUSTIFY_RIGHT)
               EndSelect
@@ -2331,9 +2559,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 28
-; FirstLine = 27
-; Folding = ---------------------
-; Markers = 1126,2189
+; CursorPosition = 22
+; Folding = ----------------------
+; Markers = 1152,2417
 ; Optimizer
 ; CPU = 5

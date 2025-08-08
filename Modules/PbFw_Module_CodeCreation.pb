@@ -7,7 +7,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2023/11/17
-; VERSION  :  0.1 untested Developer Version
+; VERSION  :  0.2 untested Developer Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -15,7 +15,8 @@
 ; ===========================================================================
 ; ChangeLog: 
 ;{
-; 
+; 2025/07/28 S.Maag : added Column Function COL to create a fixed with String 
+;                     for Tables 
 ;}
 ;{ TODO:
 ;}
@@ -24,6 +25,9 @@
 ;- ----------------------------------------------------------------------
 ;- Include Files
 ;- ----------------------------------------------------------------------
+
+; XIncludeFile "PbFw_Module_CodeCreation.pb"        ; CC::    Code creation Module
+
 XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
 XIncludeFile "PbFw_Module_PX.pb"          ; PX::      Purebasic Extention Module
 
@@ -40,7 +44,7 @@ DeclareModule CC
   EndEnumeration
   
   ; Test to make 'End-Commands easier! Use automatic shift
-  Enumeration EEndCommand
+  Enumeration eEndCommand
     #CC_CMD_Else  
     #CC_CMD_EndEnumeration  
     #CC_CMD_EndIf   
@@ -54,6 +58,12 @@ DeclareModule CC
     #CC_CMD_Wend             
   EndEnumeration
   
+  Enumeration eCCAlign
+    #CC_AlignLeft
+    #CC_AlignCenter
+    #CC_AlignRight
+  EndEnumeration
+
   Macro DQ
   "
   EndMacro
@@ -68,6 +78,7 @@ DeclareModule CC
   Declare ADD(sCodeLine.s="", Shift = #CC_NoShift) ; Add a line To the CodeList
   Declare PRC(ProcName$, Paramters$, ReturnAs$=".i")   ; Add a Procedure definition to the CodeList
   Declare ADE(EnumCmd = #CC_CMD_EndIf)            ; Easy way to add an 'End'-Command with automatic shifting
+  Declare.s COL(Text$, ColWidth=12, TextAlign=#CC_AlignCenter)
 
   Declare ClearCode()         ; Clear all the code in lstCodeList()
   Declare CopyToClipBoard()   ; Copy the Code stored in the List lstCodeLine To the ClipBoard
@@ -244,6 +255,39 @@ Module CC
     ADD(sText, ShiftMode)
   EndProcedure
   
+  Procedure.s COL(Text$, ColWidth=12, TextAlign=#CC_AlignCenter)
+  ; ============================================================================
+  ; NAME: COL
+  ; DESC: Get a Table Column String
+  ; VAR(Text$): The Columns Text
+  ; VAR(ColWidth): The column width in No of characters
+  ; VAR(TextAlign): How to align the text in the column #CC_Align{Left/Center/Right})
+  ; RET : -
+  ; ============================================================================
+    Protected ret.s 
+    Protected lTxt = Len(Text$)
+    
+    Select TextAlign
+        
+      Case #CC_AlignCenter
+        If lTxt >= ColWidth
+          ret = Left(Text$, ColWidth)
+        Else
+          ret = Space(ColWidth)
+          PX::SetMid(ret,Text$, (ColWidth-lTxt)/2)
+        EndIf
+        
+      Case #CC_AlignLeft
+        ret = LSet(Text$, ColWidth, " ")
+                
+      Case #CC_AlignRight
+        ret = RSet(Text$, ColWidth, " ")
+    
+    EndSelect
+    
+    ProcedureReturn ret
+  EndProcedure
+  
   Procedure ClearCode()
   ; ============================================================================
   ; NAME: ClearCode
@@ -251,7 +295,8 @@ Module CC
   ; RET : -
   ; ============================================================================
     
-    ClearList(lstCodeLine())  
+    ClearList(lstCodeLine())
+    ClrShift()
   EndProcedure
 
   Procedure CopyToClipBoard()
@@ -314,9 +359,9 @@ CompilerEndIf
 ;   EndProcedure
 
 
-; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 310
-; FirstLine = 238
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 267
+; FirstLine = 242
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

@@ -15,6 +15,7 @@
 ; ===========================================================================
 ; ChangeLog: 
 ;{ 
+;  2025/08/08 S.Maag : moved TextBetween Functions to PB-Extention Module PX::
 ;  2025/07/25 S.Maag : moved SetMid() to PB-Extention Module PX::
 ;                      changed Fast Functions to Prototype-Version
 ;  2025/02/28 S.Maag : Added ReplaceAccents, CharHistogram
@@ -165,20 +166,7 @@ DeclareModule STR
   
   Prototype CreateWordIndex(String$, List WordIndex.TWordIndex(), cSeparator.c=' ', UnQuoteMode = 0, xTrim=#True)
   Global CreateWordIndex.CreateWordIndex  ; define Prototype-Handler for CreateWordIndex
-  
-  ; --------------------------------------------------
-  ;  StringsBetween
-  ; -------------------------------------------------- 
-  Declare.s TextBetween(String$, Left$, Right$)
-  Declare.i StringsBetweenList(String$, Left$, Right$, List Result.s())
-  Declare.i StringsBetweenArray(String$, Left$, Right$, Array Result.s(1))
-  
-  ; --------------------------------------------------
-  ;  Array<=>List
-  ; -------------------------------------------------- 
-  Declare.i StringArrayToList(Array aryStr.s(1), List lstStr.s())
-  Declare.i StringListToArray(List lstStr.s(), Array aryStr.s(1))
-
+    
  EndDeclareModule
 
 Module STR      ; Module STRING [STR::]
@@ -283,19 +271,19 @@ Module STR      ; Module STRING [STR::]
   ; ============================================================================
     Protected I
     Protected ret$ = Space(255)
-    Protected *String.Character = @ret$
+    Protected *pC.Character = @ret$
     
     For I = 32 To 127
-      *String\c = I
-      *String + SizeOf(Character)
+      *pC\c = I
+      *pC + SizeOf(Character)
     Next
     
     For I = 161 To 255
-      *String\c = I
-      *String + SizeOf(Character)
+      *pC\c = I
+      *pC + SizeOf(Character)
     Next 
     ; Add EndOfString
-    *String\c = 0
+    *pC\c = 0
   ;   Debug Len(ret$)
   ;   Debug Asc(Mid(ret$,191))
     ProcedureReturn PeekS(@ret$)
@@ -312,19 +300,19 @@ Module STR      ; Module STRING [STR::]
   ; RET.i : Number of Characters found
   ; ============================================================================
           
-    Protected *char.Character    ; Pointer to a virutal Char-Array
+    Protected *pC.Character     ; Pointer to a virutal Char-Array
     Protected N
     
-    *char = *String               ; overlay the String with a virtual Char-Array
-    If *char        
-      While *char\c               ; until end of String
-        If *char\c =  cSearch 
-          N + 1                   ; count the Char
+    *pC = *String               ; overlay the String with a virtual Char-Array
+    If *pC        
+      While *pC\c               ; until end of String
+        If *pC\c =  cSearch 
+          N + 1                 ; count the Char
         EndIf
-        *char + SizeOf(Character)     ; Index to next Char
+        *pC + SizeOf(Character) ; Index to next Char
       Wend
     EndIf
-    ProcedureReturn N  ; return the number of Chars found  
+    ProcedureReturn N           ; return the number of Chars found  
   EndProcedure
   CountChar = @_CountChar()     ; Bind ProcedureAddress to the PrototypeHandler
   
@@ -337,12 +325,12 @@ Module STR      ; Module STRING [STR::]
   ; VAR( Array hist()) : Array to receive the Character counts
   ; RET.i : max Array Index; 255 for ASCII or 65535 for Unicode Strings
   ; ============================================================================
-    Protected *c.Character   ; Pointer to a virutal Char-Struct
+    Protected *pC.Character   ; Pointer to a virutal Char-Struct
     Protected ret
     
-    *c = *String
+    *pC = *String
    
-    If *c      
+    If *pC      
       If Mode = #PB_Ascii
         Dim hist(255)
         ret = 255
@@ -352,16 +340,16 @@ Module STR      ; Module STRING [STR::]
       EndIf
      
       If Mode = #PB_Ascii
-        While *c
-          If *c\c <=255 
-            hist(*c\c) + 1
+        While *pC
+          If *pC\c <=255 
+            hist(*pC\c) + 1
           EndIf
-          *c + SizeOf(Character)
+          *pC + SizeOf(Character)
         Wend
       Else
-        While *c
-          hist(*c\c) + 1
-          *c + SizeOf(Character)
+        While *pC
+          hist(*pC\c) + 1
+          *pC + SizeOf(Character)
         Wend       
       EndIf   
     EndIf    
@@ -386,17 +374,17 @@ Module STR      ; Module STRING [STR::]
   ; RET.i : Number of Chars replaced
   ; ============================================================================
           
-    Protected *char.Character   ; Pointer to a virutal Char-Struct
+    Protected *pC.Character   ; Pointer to a virutal Char-Struct
     Protected N
     
-    *char = *String         
-    If *char    
-      While *char\c               ; until end of String
-        If *char\c =  cSearch
-          *char\c = cReplace    ; replace the Char
+    *pC = *String         
+    If *pC    
+      While *pC\c               ; until end of String
+        If *pC\c =  cSearch
+          *pC\c = cReplace    ; replace the Char
           N + 1
         EndIf
-        *char + SizeOf(Character)   ; Index to next Char
+        *pC + SizeOf(Character)   ; Index to next Char
       Wend
     EndIf
     
@@ -757,160 +745,7 @@ Module STR      ; Module STRING [STR::]
     _ReplaceAccentsFast(@String$)
     ProcedureReturn PeekS(@String$)  
   EndProcedure
-  
- ; The Macro for SplitCsvToArray to LeftTrim TAB, SPACE and Quotes by adjusting the Pointer
-  Macro _mac_LeftTrimCSV()
-     While *Start\c
-        Select *Start\c
-          Case 9, 32                    ; TAB or SPACE or Quotes
-            *Start + SizeOf(Character)
-          Case cQuotes
-            *Start + SizeOf(Character)
-          Default
-            Break
-        EndSelect
-      Wend  
-  EndMacro
-  
-  ; The Macro for SplitCsvToArray to RightTrim TAB, SPACE and Quotes by adjusting the Pointer
-  Macro _mac_RightTrimCSV()
-    While *End > *Start
-      Select *End\c
-        Case 9, 32       ; TAB or SPACE
-          *End - SizeOf(Character)
-        Case  cQuotes      ; Quotes
-          *End - SizeOf(Character)
-        Default
-          Break       
-      EndSelect    
-    Wend
-  EndMacro
-   
-  Procedure.i _SplitCsvToArray(Array Out.s(1), *String, cSeparator.c=';', cQuotes.c='"')
-  ; ============================================================================
-  ; NAME: SplitCsvToArray
-  ; DESC: SplitString optimized for CSV-File Lines
-  ; DESC: Split a String into multiple Strings with left and right Trim
-  ; DESC; of TAB, SPACE and Quotes
-  ; VAR(Out.s()) : Array to return the Substrings: longer than NoOfSubstrings 
-  ;                Use For I=0 to N-1 to Step trough all Substrings or
-  ;                Redim(Out(N-1)). This gives more speed if you know how
-  ;                much Substrings you get (that's normal for .CSV)
-  ; VAR(*String)    : Pointer to String 
-  ; VAR(*cSeparator) : Separator Character; typical ';' or ','
-  ; VAR(cQuotes)     : 0 to deacivate or Quotes to remove " (34) or ' (39) 
-  ; RET.i           : No of Substrings
-  ; ============================================================================
-
-    Protected *ptrString.Character = *String        ; Pointer to String      
-    Protected *Start.Character = *String            ; Pointer to Start of SubString
-    Protected *End.Character                        ; Pointer to End of Substring   
-    Protected xEqual, N, ASize, L
-            
-    ASize = ArraySize(Out())
-    
-    While *ptrString\c                          ; Stepping trough *String
-       
-      If  *ptrString\c = cSeparator             ; Seperator found in String                       
-        _mac_LeftTrimCSV()                      ; LeftTrim TAB, SPACE, Quotes    
-        *End = *ptrString - SizeOf(Character)
-        ;Debug "EndChar= " + Chr(*End\c)
-        _mac_RightTrimCSV()                     ; RightTrim TAB, SPACE, Quotes
-                  
-        ; Length of the String from trimed Start to trimmed End
-        L =  (*End - *Start)/SizeOf(Character) + 1
-        Out(N) = PeekS(*Start, L)
-        *Start = *ptrString + SizeOf(Character) ; The new Sart position
-        N + 1   
-        If ASize < N                            ; Check ArraySize and Redim it
-          ASize + #_ArrayRedimStep              ; Add 10 elements
-          ReDim Out(ASize)
-        EndIf              
-      EndIf   
-      
-      *ptrString + SizeOf(Character)      
-    Wend
-    
-    _mac_LeftTrimCSV()                          ; LeftTrim TAB, SPACE, Quotes
-    
-    L = MemoryStringLength(*Start)
-    If L > 0
-      *End = *Start + (L-1) * SizeOf(Character)
-      ; Debug "End= " +Str(*End)  + " : Start= " + Str(*Start)
-      _mac_RightTrimCSV()
-      ; Debug "End= " +Str(*End)  + " : Start= " + Str(*Start)
-      Out(N) = PeekS(*Start, (*End - *Start)/SizeOf(Character)+1)
-      ; Debug Out(N)
-    Else
-      Out(N)=""  
-    EndIf
-    
-    ProcedureReturn N+1                   ; Number of Substrings
-  EndProcedure
-  SplitCsvToArray = @_SplitCsvToArray()     ; Bind ProcedureAddress to Prototype
-  
-  Procedure.i _SplitCsvToList(List Out.s(), *String, cSeparator.c=';', cQuotes.c='"', clrList= #True)
-  ; ============================================================================
-  ; NAME: SplitCsvToList
-  ; DESC: SplitString optimized for CSV-File Lines
-  ; DESC: Split a String into multiple Strings with left and right Trim
-  ; DESC; of TAB, SPACE and Quotes
-  ; VAR(Out.s()) : List to return the Substrings
-  ; VAR(*String) : Pointer to String 
-  ; VAR(cSeparator) : Separator Character; typical ';' or ','
-  ; VAR(cQuotes)  : 0 to deacivate or Quotes to remove " (34) or ' (39) 
-  ; VAR(clrList) : #False: Append Splits to List; #True: Clear List first
-  ; RET.i : No of Substrings
-  ; ============================================================================
-
-    Protected *ptrString.Character = *String        ; Pointer to String      
-    Protected *Start.Character = *String            ; Pointer to Start of SubString
-    Protected *End.Character                        ; Pointer to End of Substring   
-    Protected xEqual, N, L  
-        
-    If clrList
-      ClearList(Out())  
-    EndIf
-    
-    While *ptrString\c                          ; Stepping trough *String
-       
-      If  *ptrString\c = cSeparator              ; Seperator found in String                       
-        _mac_LeftTrimCSV()                      ; LeftTrim TAB, SPACE, Quotes    
-        *End = *ptrString - SizeOf(Character)
-        ;Debug "EndChar= " + Chr(*End\c)
-        _mac_RightTrimCSV()                     ; RightTrim TAB, SPACE, Quotes
-                  
-        ; Length of the String from trimed Start to trimmed End
-        L =  (*End - *Start)/SizeOf(Character) + 1
-        AddElement(Out())
-        Out() = PeekS(*Start, L)
-        *Start = *ptrString + SizeOf(Character) ; The new Sart position
-        N + 1   
-       EndIf   
-      
-      *ptrString + SizeOf(Character)      
-    Wend
-    
-    _mac_LeftTrimCSV()                          ; LeftTrim TAB, SPACE, Quotes
-    
-    L = MemoryStringLength(*Start)
-    If L > 0
-      *End = *Start + (L-1) * SizeOf(Character)
-      ; Debug "End= " +Str(*End)  + " : Start= " + Str(*Start)
-      _mac_RightTrimCSV()
-      ; Debug "End= " +Str(*End)  + " : Start= " + Str(*Start)
-      AddElement(Out())
-      Out() = PeekS(*Start, (*End - *Start)/SizeOf(Character)+1)
-      ; Debug Out(N)
-    Else
-     AddElement(Out())
-     Out()=""  
-    EndIf
-    
-    ProcedureReturn N+1                   ; Number of Substrings
-  EndProcedure
-  SplitCsvToList = @_SplitCsvToList()     ; Bind ProcedureAddress to Prototype  
-    
+     
   ;- ----------------------------------------------------------------------
   ;- HEX String Functions
   ;- ---------------------------------------------------------------------- 
@@ -1128,17 +963,17 @@ Module STR      ; Module STRING [STR::]
   ; RET.i : Number of Words found
   ; ============================================================================
     
-    Protected *char.Character     ; Pointer to a virutal Char-Array
+    Protected *pC.Character     ; Pointer to a virutal Char-Array
     Protected  N
     Protected  xWordStart
    
-    *char = *String          ; overlay the String with a virtual Char-Array        
-    If Not *char             ; If *Pointer to String is #Null
+    *pC = *String          ; overlay the String with a virtual Char-Array        
+    If Not *pC             ; If *Pointer to String is #Null
       ProcedureReturn 0
     EndIf
     
-    While *char\c         ; until end of String
-      Select *char\c
+    While *pC\c         ; until end of String
+      Select *pC\c
           
         Case cSeparator         
           If xWordStart
@@ -1156,7 +991,7 @@ Module STR      ; Module STRING [STR::]
         Default 
           xWordStart = #True
       EndSelect      
-       *char + SizeOf(Character)     ; Index to next Char
+       *pC + SizeOf(Character)     ; Index to next Char
     Wend
     
     ; If a Word was started And we reached the End of String, we have To count this last Word
@@ -1181,19 +1016,19 @@ Module STR      ; Module STRING [STR::]
   ; RET.i : Number of Words found; ListSize(WordIndex())
   ; ============================================================================
      
-    Protected *char.PX::pChar   ; Pointer to a virutal Char-Array
+    Protected *pC.PX::pChar   ; Pointer to a virutal Char-Array
     Protected I, N
     Protected xWordStart, PosStart, PosEnd
     Protected idx.TWordIndex
     
-    *char = *String         ; overlay the String with a virtual Char-Array
+    *pC = *String         ; overlay the String with a virtual Char-Array
         
-    If Not *char            ; If *Pointer to String is #Null
+    If Not *pC            ; If *Pointer to String is #Null
       ProcedureReturn 0
     EndIf
     
-    While *char\cc[I]         ; until end of String
-      Select *char\cc[I]
+    While *pC\cc[I]         ; until end of String
+      Select *pC\cc[I]
           
         Case cSeparator         
           If xWordStart
@@ -1230,173 +1065,7 @@ Module STR      ; Module STRING [STR::]
   EndProcedure
   CreateWordIndex = @_CreateWordIndex()     ; Bind ProcedureAddress to the PrototypeHandler
     
-  ;- --------------------------------------------------
-  ;-  StringsBetween
-  ;- -------------------------------------------------- 
-
-  Procedure.s TextBetween(String$, Left$, Right$)
-  ; ============================================================================
-  ; NAME: TextBetween
-  ; DESC: Gets the Text between two String elements Left$ and Right$
-  ; DESC: Attention it is an easy version which do not support cascaded between 
-  ; DESC: like in brackets "((InBrackets))". TextBetween will deliver "(InBrackets"
-  ; VAR(String$) : The String
-  ; VAR(Left$) : The left side like "("
-  ; VAR(Right$) : The right side like ")"
-  ; RET.s : The Text between Left$ and Right$
-  ; ============================================================================
-    
-    Protected posLeft, posRight
-    
-    posLeft = FindString(String$, Left$)
-    
-    If posLeft
-      posLeft + Len(Left$)
-      posRight = FindString(String$, Right$, posLeft)
-      
-      If posRight
-        ProcedureReturn Mid(String$, posLeft, posRight - posLeft)
-      EndIf
-    EndIf
-      
-    ProcedureReturn #Null$
-  EndProcedure
-  
-  Procedure.i StringsBetweenList(String$, Left$, Right$, List Result.s())
-  ; ============================================================================
-  ; NAME: StringsBetweenList
-  ; DESC: Gets the Strings between two String elements Left$ and Right$
-  ; DESC: as a List. It can be used to get get the text between '<' '>'
-  ; DESC: in html files. And for many other use. 
-  ; DESC: This code is from the PB forum by mk_soft. 
-  ; VAR(String$) : The String
-  ; VAR(Left$) : The left side like "("
-  ; VAR(Right$) : The right side like ")"
-  ; VAR(List Result.s()) : The List with the found Strings
-  ; RET.i : The nuber of found Strings (it is identical with the ListSize)
-  ; ============================================================================
-    Protected pos1, pos2, len1, len2
-    
-    ClearList(Result())
-    len1 = Len(Left$)
-    len2 = Len(Right$)
-    
-    Repeat
-      pos1 = FindString(String$, Left$, pos1)     
-      If pos1
-        pos1 + len1
-        pos2 = FindString(String$, Right$, pos1)
-        If pos2
-          AddElement(Result())
-          Result() = Mid(String$, pos1, pos2 - pos1)
-          pos1 = pos2 + len2
-        Else
-          Break
-        EndIf
-      Else
-        Break
-      EndIf       
-    ForEver
-    
-    ProcedureReturn ListSize(Result())
-  EndProcedure
-  
-  Procedure.i StringsBetweenArray(String$, Left$, Right$, Array Result.s(1))
-  ; ============================================================================
-  ; NAME: StringsBetweenArray
-  ; DESC: Gets the Strings between two String elements Left$ and Right$
-  ; DESC: as an Array of Strings. It can be used to get get the text 
-  ; DESC: between '<' '>' in html files. And for many other use. 
-  ; DESC: This code is from the PB forum by mk_soft. 
-  ; VAR(String$) : The String
-  ; VAR(Left$) : The left side like "("
-  ; VAR(Right$) : The right side like ")"
-  ; VAR(Array Result.s(1)) : The Array with the found Strings
-  ; RET.i : The number of found Strings (it is identical with ArraySize-1)
-  ; ============================================================================
-    Protected pos1, pos2, len1, len2, size, count
-    
-    Dim Result(0)
-    len1 = Len(Left$)
-    len2 = Len(Right$)
-    
-    Repeat
-      pos1 = FindString(String$, Left$, pos1)
-      If pos1
-        pos1 + len1
-        pos2 = FindString(String$, Right$, pos1)
-        If pos2
-          If size < count
-            size + 8
-            ReDim Result(size)
-          EndIf
-          Result(count) = Mid(String$, pos1, pos2 - pos1)
-          count + 1
-          pos1 = pos2 + len2
-        Else
-          Break
-        EndIf
-      Else
-        Break
-      EndIf
-    ForEver
-    If count > 0
-      ReDim Result(count - 1)
-    EndIf  
-    ProcedureReturn count
-  EndProcedure
-  
-  ;- --------------------------------------------------
-  ;-  Array <-> List
-  ;- -------------------------------------------------- 
-  
-  Procedure.i StringArrayToList(Array aryStr.s(1), List lstStr.s())
-  ; ============================================================================
-  ; NAME: StringArrayToList
-  ; DESC: Copies a String-Array to a StringList
-  ; VAR(Array aryStr.s(1)) : The StringArray with 1 dimension
-  ; VAR(List lstStr.s()) : The StringList
-  ; RET.i : The number of found Strings copied
-  ; ============================================================================
-    Protected I, N
-    
-    N = ArraySize(aryStr())
-    
-    If N
-      ClearList(lstStr())
-      
-      For I = 0 To N 
-        AddElement(lstStr())
-        lstStr() = aryStr(I)
-      Next
-    EndIf
-  
-    ProcedureReturn N+1
-  EndProcedure
-  
-  Procedure.i StringListToArray(List lstStr.s(), Array aryStr.s(1))
-  ; ============================================================================
-  ; NAME: StringListToArray
-  ; DESC: Copies a StringList to a String-Array
-  ; VAR(List lstStr.s()) : The StringList
-  ; VAR(Array aryStr.s(1)) : The StringArray with 1 dimension
-  ; RET.i : The number of found Strings copied
-  ; ============================================================================
-    Protected I, N
-    
-    N = ListSize(lstStr())
-    
-    If N
-      Dim aryStr(N-1)
-      ForEach  lstStr()
-        aryStr(I) = lstStr()
-        I + 1 
-      Next
-    EndIf
-    
-    ProcedureReturn N
-  EndProcedure
-  
+     
 EndModule
 
 
@@ -1492,8 +1161,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 169
-; FirstLine = 138
-; Folding = --------
+; CursorPosition = 747
+; FirstLine = 673
+; Folding = ------
 ; Optimizer
 ; CPU = 5

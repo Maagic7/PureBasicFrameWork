@@ -7,7 +7,7 @@
 ;  DESC : the in Procedure Assembler variable convetion is used
 ;  DESC : [p.p_] [p.v_] for Pointers / Variables
 ;  DESC : For use outside of Procedures you have to use [p_] [v_]
-; SOURCES:
+;  SOURCES:
 ;   A full description of the Intel Assembler Commands
 ;   https://hjlebbink.github.io/x86doc/
 
@@ -97,7 +97,7 @@
 ; PCMPEQW         : SSE2  : Compare Packed Data for Equal
 ; PSHUFLW         : SSE2  : Shuffle Packed Low Words
 ; PSHUFHW         : SSE2  : Shuffle Packed High Words
-; PSHUFB          : SSE3  : Packed Shuffle Bytes
+; PSHUFB          : SSE3  : Packed Shuffle Bytes !
 ; PEXTR[B/W/D/Q]  : SSE4.1 : PEXTRB RAX, XMM0, 1 : loads Byte 1 of XMM0[Byte 0..7] 
 ; PINSR[B/W/D/Q]  : SSE4.1 : PINSRB XMM0, RAX, 1 : transfers RAX LoByte to Byte 1 of XMM0 
 ; PCMPESTRI       : SSE4.2 : Packed Compare Implicit Length Strings, Return Index
@@ -536,9 +536,8 @@ EndMacro
 ; Debug ASM_VecMul_PDW(In1, In2)
 
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 165
-; FirstLine = 115
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 99
 ; Folding = --------
 ; Optimizer
 ; CPU = 5

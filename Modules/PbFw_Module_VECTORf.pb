@@ -47,7 +47,7 @@
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/12/04
 ; VERSION  :  0.513 Developer Version
-; COMPILER :  PureBasic 6.0
+; COMPILER :  PureBasic 6.0+
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
 ;             or \PbFramWork\MitLicence.txt
@@ -2072,9 +2072,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 1422
-; FirstLine = 1419
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 395
+; FirstLine = 329
 ; Folding = --------------
 ; Optimizer
 ; CPU = 5

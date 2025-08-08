@@ -15,12 +15,13 @@
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/12/04
 ; VERSION  :  0.54 Developer Version
-; COMPILER :  PureBasic 6.0
+; COMPILER :  PureBasic 6.0+
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
+ ; 2025/08/04 S.Maag : removed 32Bit ASM-Code because PbFramework only proivides x64 ASM optimation
  ; 2025/02/25 S.Maag : Added 0-Pointer-Check to SSE_Len, SSE_LenA
  ; 2024/03/01 S.Maag : 16 Byte Aling check and manually align unaligend Strings
  ; 2024/01/09 S.Maag : SSE_StringCompare: now return -1,0,1 instead of char difference
@@ -237,7 +238,7 @@ Module StrSSE
     ; XMM1 = [String1] : XMM2=[String2] : XMM3=WideCharMask
     
     DisableDebugger
-    CompilerIf #PB_Compiler_64Bit
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_64Bit
       
       !XOR RDX, RDX           ; RDX = 0
       !XOR RCX, RCX           ; RCX = 0
@@ -273,41 +274,11 @@ Module StrSSE
       
     CompilerElse   
       
-      !XOR EDX, EDX           ; EDX = 0
-      !XOR ECX, ECX           ; RCX = 0
-      !MOV EAX, [p.p_String]  ; EAX = *String
-      !Test EAX, EAX            ; If *String = 0
-      !JZ .Exit                 ; Exit -> Retrun 0    
-      
-      !@@:                    ; 
-      !TEST EAX, 0Fh          ; Test for 16Byte align
-      !JZ @f                  ; If NOT aligned
-        !MOV DL, BYTE[EAX]    ;   process Char by Char until aligned
-        !TEST EDX, EDX        ;   Check for EndOfString
-        !JZ .Return           ;   Break if EndOfString
-        !INC EAX              ;   Pointer to NextChar
-      !JMP @b                 ; Jump back to @@      
-      !@@:                    ; from here we have 16Byte aligned address
-      
-      !PXOR XMM0, XMM0        ; XMM0 = 0
-      !SUB EAX, 16            ; *String -16
-      
-      !@@:  
-        !ADD EAX, 16          ; *String +16
-        !PCMPISTRI XMM0, [EAX], 0001000b ; EQUAL_EACH, unsigned_Bytes
-      !JNZ @b
-      ; ECX will contain the offset from eax where the first null
-    	; terminating character was found.
-      !ADD EAX, ECX    
-      
-      !.Return:
-      !SUB EAX, [p.p_String] 
-      !.Exit:
-      ProcedureReturn
+       ProcedureReturn MemoryStringLength(*String, #PB_Ascii)
       
     CompilerEndIf 
-    
     EnableDebugger
+ 
   EndProcedure
   
   Procedure.i SSE_Len(*String)
@@ -333,9 +304,8 @@ Module StrSSE
     
     DisableDebugger
     
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_64Bit And #PB_Unicode
       
-      CompilerIf #PB_Compiler_64Bit     
         
         !XOR RDX, RDX
         !XOR RCX, RCX
@@ -371,44 +341,7 @@ Module StrSSE
         !SHR RAX, 1               ; ByteCounter to Word
         !.Exit:
         ProcedureReturn
-        
-      CompilerElse ; #PB_Compiler_32Bit       
-        
-        !XOR EDX, EDX
-        !XOR ECX, ECX
-        !MOV EAX, [p.p_String] 
-        !Test EAX, EAX            ; If *String = 0
-        !JZ .Exit                 ; Exit -> Retrun 0    
-        
-        !@@:
-        !TEST EAX, 0Fh            ; Test for 16Byte align
-        !JZ @f                    ; If NOT aligned
-          !MOV DX, WORD [EAX]     ;   process Char by Char until aligned
-          !TEST EDX, EDX          ;   Check for EndOfString
-          !JZ .Return             ;   Break if EndOfString
-          !INC EAX                ;   Pointer to NextChar
-        !JMP @b                   ; Jump back to @@   
-        
-        !@@:                      ; from here we have 16Byte aligned address
-        !PXOR XMM0, XMM0          ; XMM0 = 0
-        !SUB EAX, 16              ; *String -16
-        
-        !@@:  
-          !ADD EAX, 16            ; *String +16
-          !PCMPISTRI XMM0, [EAX], 0001001b  ; EQUAL_EACH WORD
-        !JNZ @b
-        
-        ; ECX will contain the offset from EAX where the first null
-      	; terminating character was found.
-        !SHL ECX, 1   ; Word to Byte
-        !ADD EAX, ECX
-        
-        !.Return:
-        !SUB EAX, [p.p_String]
-        !SHR EAX, 1               ; Byte to Word
-        !.Exit:
-      CompilerEndIf
-      
+              
     CompilerElse  ; #PB_Compiler_Backend = #PB_Backend_C
       
       ProcedureReturn MemoryStringLength(*String)
@@ -432,344 +365,172 @@ Module StrSSE
     ; XMM1 = [String1] : XMM2=[String2]
   ;  DisableDebugger
     
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm
-      CompilerIf #PB_Compiler_64Bit 
-        DisableDebugger
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_64Bit And #PB_Unicode
+      DisableDebugger
        
-        ; used Registers
-        ;   RAX : *String1
-        ;   R8  : *String2
-        ;   RCX : operating Register
-        ;   RDX : operating Register
-        
-        ; ----------------------------------------------------------------------
-        ; Check the *String1 and *String2 align
-        ; The Problem of not aligend 16 is: Reading over the end of a 
-        ; memory page. If the next page is not allocated to our programm we
-        ; produce a crash! So we have to be sure do not read over the 
-        ; EndOfPage if the String ends short before. PCMPISTRI process 16Bytes,
-        ; so if we use PCMPISTRI at align 16 we can't read over the end of
-        ; String without detecting EndOfString first!
-        ; ----------------------------------------------------------------------
-        !MOV RAX, [p.p_String1]
-        !MOV R8, [p.p_String2]
-        
-        !MOV RCX, RAX           ; RCX = *String1
-        !AND RCX, 0Fh           ; Filter the Aling Offset to 16Bytes      
-        !MOV RDX, R8            ; RDX = *String2
-        !SUB R8, RAX
-        
-        !AND RDX, 0Fh           ; Filter the Aling Offset to 16Bytes
-        !TEST RDX, 1            ; Test for Odd align -> Align 16 not possible
-        !JNZ .NotAligned        
-        
-        !CMP RDX, RCX           ; Test if align of String1 and String2 is identical
-        !JNE .NotAligned      
-        
-        !TEST RCX, RCX          ; Test if it is aligend to 16Bytes (Offset ==0)
-        !JZ .a16                ; aligned to 16 Bytes, we have to do nothing
-        
-        ; ----------------------------------------------------------------------
-        ; Case I: Not aligned to 16 Bytes but it's possilbe to align manually
-        ; ----------------------------------------------------------------------
-
-        ; identical align but not to 16Bytes
-        !SUB RAX, 2
-        
-        ; so first we compare Char by Char until the Address is 16 Byte aligned  
-        !@@:                      ; Loop
-          !ADD RAX, 2
-          ;!ADD R8, 2
-          !TEST RAX, 0Fh          ; (AND RAX, 0Fh) == 0
-          !JZ .a16                ; Continue at Case III: aligend to 16 Byte
-          !MOV CX, WORD[RAX]
-          !CMP CX, WORD[RAX+R8]
-          !JA .GREATER
-          !JB .LOWER
-          ; if identical check for EndOfString
-          !TEST CX, CX            ; TEST results in 0 if CX==0
-          !JZ .EQUAL
-        !JMP @b                   ; Not EndOfString -> Repeat Loop  
-        
-        ; ----------------------------------------------------------------------
-        ; Case II:
-        ; A complete different align of *String1 and *String2, so it is not
-        ; possible to aling both toghether to 16Byte. In this case we have
-        ; 2 options:
-        ;   I) we don't use PCMPISTRI and do a classic Char by Char compare
-        ;  II) we have to check EndOfMemPage and use classic Char by Char
-        ;      at end of MemoryPages (4096 Bytes). But that's more 
-        ;      complicated
-        ; ----------------------------------------------------------------------
-        
-        !.NotAligned:             ; Not aligned : a complete different align       
-        !SUB RAX, 2
-         
-        !@@:
-          !ADD RAX, 2
-          !MOV CX, WORD[RAX]
-          !CMP CX, WORD[RAX+R8]
-          !JA .GREATER
-          !JB .LOWER         
-          ; if identical check for EndOfString
-          !TEST CX, 0             ; TEST results in 0 if CX==0 
-          !JZ .EQUAL
-        !JMP @b                   ; Not EndOfString -> Repeat Loop
-                       
-        ; ----------------------------------------------------------------------
-        ; Case III:
-        ; If *String1 And *String is aligned to 16Bytes
-        ; we can use PCMPISTRI what is a 16Byte operation
-        ; ----------------------------------------------------------------------
-        
-        !.a16:
-        ; Subtract s2(RDX) from s1(RAX). This admititedly looks odd, but we
-      	; can now use RDX to index into s1 and s2. As we adjust RDX to move
-      	; forward into s2, we can then add RDX to RAX and this will give us
-      	; the comparable offset into s1 i.e. if we take RDX + 16 then:
-      	;
-      	;	RDX     = RDX + 16		        = RDX + 16
-      	;	RAX+RDX	= RAX -RDX + RDX + 16	= RAX + 16
-      	;
-      	; therefore RDX points to s2 + 16 and RAX + RDX points to s1 + 16.
-      	; We only need one index, convoluted but effective.
+      ; used Registers
+      ;   RAX : *String1
+      ;   R8  : *String2
+      ;   RCX : operating Register
+      ;   RDX : operating Register
       
-       	!SUB RAX, 16		         
-        !XOR RCX, RCX   
-        
-        !@@:
-         	!ADD RAX, 16
-         	!MOVDQA XMM0, [RAX]         	
-         	; IMM8[1:0]	= 00b
-       	  ;	00b: Src data is unsigned bytes(16 packed unsigned bytes)
-       	  ;	01b: Src data is unsigned words( 8 packed unsigned words)
-        	
-         	; IMM8[3:2]	= 10b
-        	; 	We are using Equal Each aggregation
-        	; IMM8[5:4]	= 01b
-        	;	Negative Polarity, IntRes2	= -1 XOR IntRes1
-        	; IMM8[6]	= 0b
-        	;	ECX contains the least significant set bit in IntRes2  	
-        	!PCMPISTRI XMM0, [RAX+R8], 0011001b ; EQUAL_EACH + NEGATIVE_POLARITY + UNSIGNED_WORDS  	
-        	; Loop while ZF=0 and CF=0:
-        	;	1) We find a null in s1(RDX+RAX) ZF=1
-        	;	2) We find a char that does not match CF=1  	
-        !JA	@b      ; IF CF=0 And ZF=0     	  	         
-      	!JC	@f      ; IF CF=1 : Jump if CF=1, we found a mismatched char      	          
-       	!JMP .EQUAL	; We terminated loop due to a null character i.e. CF=0 and ZF=1 -> The Strings are equal
-       	
-       	!@@:
-          ; ECX is the offset from the current poition in NoOfChars where the two strings do not match,
-        	; so copy the respective non-matching char into DX and compare it with the position in *String2
-        	; in remaining bits w/ zero. Because of 2ByteChar we have to convert Word to Byte
-          
-          !SHL RCX, 1             ; Number of Chars to Adress Offset
-          !ADD RAX, RCX
-          !MOV DX, WORD[RAX]
-         	; If S1=S2 : Return (0) ; #PB_String_Equal
-          ; If S1>S2 : Return (+) ; #PB_String_Greater
-          ; If S1<S2 : Return (-) ; #PB_String_Lower
-          !CMP DX, WORD [RAX+R8]
-          !JA .GREATER
-          !JB .LOWER
-          ;!JMP .EQUAL 
-          
-        !.EQUAL:                    ; The Strings are equal
-          !MOV R8, RAX  
-          !XOR RAX, RAX             ; #PB_String_Equal, 0  
-          !JMP @f                      
-        !.LOWER:                    ; String1 < String2
-          !MOV R8, RAX  
-          !XOR RAX, RAX
-          !DEC RAX                  ; #PB_String_Lower, -1  
-          !JMP @f                      
-        !.GREATER:                  ; String1 > String2
-          !MOV R8, RAX  
-          !XOR RAX, RAX
-          !INC RAX                  ; #PB_String_Greater, 1
-        !@@:  
-          ; check for Return of CharNo in Pos 
-          !MOV RDX, [p.p_Pos]       ; RDX = *Pos
-          !TEST RDX, RDX            ; 
-          !JZ .return               ; If *Pos = 0 Then return  
-            !SUB R8, [p.p_String1]
-            !SHR R8, 1              ; Byte to Word
-            !MOV [RDX], R8          ; Pos = CharNo which do not match
-        !.return:
-        ProcedureReturn ; RAX
-        EnableDebugger
-        
-      CompilerElse  ; #PB_Compiler_32Bit
-        
-        DisableDebugger
+      ; ----------------------------------------------------------------------
+      ; Check the *String1 and *String2 align
+      ; The Problem of not aligend 16 is: Reading over the end of a 
+      ; memory page. If the next page is not allocated to our programm we
+      ; produce a crash! So we have to be sure do not read over the 
+      ; EndOfPage if the String ends short before. PCMPISTRI process 16Bytes,
+      ; so if we use PCMPISTRI at align 16 we can't read over the end of
+      ; String without detecting EndOfString first!
+      ; ----------------------------------------------------------------------
+      !MOV RAX, [p.p_String1]
+      !MOV R8, [p.p_String2]
+      
+      !MOV RCX, RAX           ; RCX = *String1
+      !AND RCX, 0Fh           ; Filter the Aling Offset to 16Bytes      
+      !MOV RDX, R8            ; RDX = *String2
+      !SUB R8, RAX
+      
+      !AND RDX, 0Fh           ; Filter the Aling Offset to 16Bytes
+      !TEST RDX, 1            ; Test for Odd align -> Align 16 not possible
+      !JNZ .NotAligned        
+      
+      !CMP RDX, RCX           ; Test if align of String1 and String2 is identical
+      !JNE .NotAligned      
+      
+      !TEST RCX, RCX          ; Test if it is aligend to 16Bytes (Offset ==0)
+      !JZ .a16                ; aligned to 16 Bytes, we have to do nothing
+      
+      ; ----------------------------------------------------------------------
+      ; Case I: Not aligned to 16 Bytes but it's possilbe to align manually
+      ; ----------------------------------------------------------------------
+
+      ; identical align but not to 16Bytes
+      !SUB RAX, 2
+      
+      ; so first we compare Char by Char until the Address is 16 Byte aligned  
+      !@@:                      ; Loop
+        !ADD RAX, 2
+        ;!ADD R8, 2
+        !TEST RAX, 0Fh          ; (AND RAX, 0Fh) == 0
+        !JZ .a16                ; Continue at Case III: aligend to 16 Byte
+        !MOV CX, WORD[RAX]
+        !CMP CX, WORD[RAX+R8]
+        !JA .GREATER
+        !JB .LOWER
+        ; if identical check for EndOfString
+        !TEST CX, CX            ; TEST results in 0 if CX==0
+        !JZ .EQUAL
+      !JMP @b                   ; Not EndOfString -> Repeat Loop  
+      
+      ; ----------------------------------------------------------------------
+      ; Case II:
+      ; A complete different align of *String1 and *String2, so it is not
+      ; possible to aling both toghether to 16Byte. In this case we have
+      ; 2 options:
+      ;   I) we don't use PCMPISTRI and do a classic Char by Char compare
+      ;  II) we have to check EndOfMemPage and use classic Char by Char
+      ;      at end of MemoryPages (4096 Bytes). But that's more 
+      ;      complicated
+      ; ----------------------------------------------------------------------
+      
+      !.NotAligned:             ; Not aligned : a complete different align       
+      !SUB RAX, 2
        
-        ; used Registers
-        ;   EAX : *String1
-        ;   EBX  : *String2
-        ;   ECX : operating Register
-        ;   EDX : operating Register
-        
-        ASM_PUSH_EBX()
-        ; ----------------------------------------------------------------------
-        ; Check the *String1 abd *String2 align
-        ; The Problem of not aligend 16 is: Reading over the end of a 
-        ; memory page. If the next page is not allocated to our programm we
-        ; produce a crash! So we have to be sure do not read over the 
-        ; EndOfPage if the String ends short before. PCMPISTRI process 16Bytes,
-        ; so if we use PCMPISTRI at align 16 we can't read over the end of
-        ; String without detecting EndOfString first!
-        ; ----------------------------------------------------------------------
-        !MOV EAX, [p.p_String1]
-        !MOV EBX, [p.p_String2]
-        
-        !MOV EXC, EAX           ; EXC = *String1
-        !AND EXC, 0Fh           ; Filter the Aling Offset to 16Bytes      
-        !MOV EDX, EBX           ; EDX = *String2
-        !SUB EBX, EAX
-        
-        !AND EDX, 0Fh           ; Filter the Aling Offset to 16Bytes
-        !TEST EDX, 1            ; Test for Odd align -> Align 16 not possible
-        !JNZ .NotAligned        
-        
-        !CMP EDX, EXC           ; Test if align of String1 and String2 is identical
-        !JNE .NotAligned      
-        
-        !TEST EXC, EXC          ; Test if it is aligend to 16Bytes (Offset ==0)
-        !JZ .a16                ; aligned to 16 Bytes, we have to to nothing
-        
-        ; ----------------------------------------------------------------------
-        ; Case I: Not aligned to 16 Bytes but it's possilbe to align manually
-        ; ----------------------------------------------------------------------
-
-        ; identical align but not to 16Bytes
-        !SUB EAX, 2
-        
-        ; so first we compare Char by Char until the Address is 16 Byte aligned  
-        !@@:                      ; Loop
-          !ADD EAX, 2
-          ;!ADD EBX, 2
-          !TEST EAX, 0Fh          ; (AND EAX, 0Fh) == 0
-          !JZ .a16                ; Continue at Case III: aligend to 16 Byte
-          !MOV CX, WORD[EAX]
-          !CMP CX, WORD[EAX+EBX]
-          !JA .GREATER
-          !JB .LOWER
-          ; if identical check for EndOfString
-          !TEST CX, CX            ; TEST results in 0 if CX==0
-          !JZ .EQUAL
-        !JMP @b                   ; Not EndOfString -> Repeat Loop  
-        
-        ; ----------------------------------------------------------------------
-        ; Case II:
-        ; A complete different align of *String1 and *String2, so it is not
-        ; possible to aling both toghether to 16Byte. In this case we have
-        ; 2 options:
-        ;   I) we don't use PCMPISTRI and do a classic Char by Char compare
-        ;  II) we have to check EndOfMemPage and use classic Char by Char
-        ;      at end of MemoryPages (4096 Bytes). But that's more 
-        ;      complicated
-        ; ----------------------------------------------------------------------
-        
-        !.NotAligned:             ; Not aligned : a complet different align       
-        !SUB EAX, 2
-         
-        !@@:
-          !ADD EAX, 2
-          !MOV CX, WORD[EAX]
-          !CMP CX, WORD[EAX+EBX]
-          !JA .GREATER
-          !JB .LOWER         
-          ; if identical check for EndOfString
-          !TEST CX, CX            ; TEST results in 0 if CX==0 
-          !JZ .EQUAL
-        !JMP @b                   ; Not EndOfString -> Repeat Loop
-                       
-        ; ----------------------------------------------------------------------
-        ; Case III:
-        ; If *String1 And *String is aligned to 16Bytes
-        ; we can use PCMPISTRI what is a 16Byte operation
-        ; ----------------------------------------------------------------------
-        
-        !.a16:
-        ; Subtract s2(EDX) from s1(EAX). This admititedly looks odd, but we
-      	; can now use EDX to index into s1 and s2. As we adjust EDX to move
-      	; forward into s2, we can then add EDX to EAX and this will give us
-      	; the comparable offset into s1 i.e. if we take EDX + 16 then:
-      	;
-      	;	EDX     = EDX + 16		        = EDX + 16
-      	;	EAX+EDX	= EAX -EDX + EDX + 16	= EAX + 16
-      	;
-      	; therefore EDX points to s2 + 16 and EAX + EDX points to s1 + 16.
-      	; We only need one index, convoluted but effective.
+      !@@:
+        !ADD RAX, 2
+        !MOV CX, WORD[RAX]
+        !CMP CX, WORD[RAX+R8]
+        !JA .GREATER
+        !JB .LOWER         
+        ; if identical check for EndOfString
+        !TEST CX, 0             ; TEST results in 0 if CX==0 
+        !JZ .EQUAL
+      !JMP @b                   ; Not EndOfString -> Repeat Loop
+                     
+      ; ----------------------------------------------------------------------
+      ; Case III:
+      ; If *String1 And *String is aligned to 16Bytes
+      ; we can use PCMPISTRI what is a 16Byte operation
+      ; ----------------------------------------------------------------------
       
-       	!SUB EAX, 16		         
-        !XOR EXC, EXC   
-        
-        !@@:
-         	!ADD EAX, 16
-         	!MOVDQA XMM0, [EAX]         	
-         	; IMM8[1:0]	= 00b
-       	  ;	00b: Src data is unsigned bytes(16 packed unsigned bytes)
-       	  ;	01b: Src data is unsigned words( 8 packed unsigned words)
-        	
-         	; IMM8[3:2]	= 10b
-        	; 	We are using Equal Each aggregation
-        	; IMM8[5:4]	= 01b
-        	;	Negative Polarity, IntRes2	= -1 XOR IntRes1
-        	; IMM8[6]	= 0b
-        	;	ECX contains the least significant set bit in IntRes2  	
-        	!PCMPISTRI XMM0, [EAX+EBX], 0011001b ; EQUAL_EACH + NEGATIVE_POLARITY + UNSIGNED_WORDS  	
-        	; Loop while ZF=0 and CF=0:
-        	;	1) We find a null in s1(EDX+EAX) ZF=1
-        	;	2) We find a char that does not match CF=1  	
-        !JA	@b      ; IF CF=0 And ZF=0     	  	         
-      	!JC	@f      ; IF CF=1 : Jump if CF=1, we found a mismatched char      	          
-       	!JMP .EQUAL	; We terminated loop due to a null character i.e. CF=0 and ZF=1 -> The Strings are equal
-       	
-       	!@@:
-          ; ECX is the offset from the current poition in NoOfChars where the two strings do not match,
-        	; so copy the respective non-matching char into DX and compare it with the position in *String2
-        	; in remaining bits w/ zero. Because of 2ByteChar we have to convert Word to Byte
-          
-          !SHL EXC, 1             ; Number of Chars to Adress Offset
-          !ADD EAX, EXC
-          !MOV DX, WORD[EAX]
-         	; If S1=S2 : Return (0) ; #PB_String_Equal
-          ; If S1>S2 : Return (+) ; #PB_String_Greater
-          ; If S1<S2 : Return (-) ; #PB_String_Lower
-          !CMP DX, WORD [EAX+EBX]
-          !JA .GREATER
-          !JB .LOWER
-          ;!JMP .EQUAL 
-          
-        !.EQUAL:                    ; The Strings are equal
-          !MOV EBX, EAX  
-          !XOR EAX, EAX             ; #PB_String_Equal, 0  
-          !JMP @f                      
-        !.LOWER:                    ; String1 < String2
-          !MOV EBX, EAX  
-          !XOR EAX, EAX
-          !DEC EAX                  ; #PB_String_Lower, -1  
-          !JMP @f                      
-        !.GREATER:                  ; String1 > String2
-          !MOV EBX, EAX  
-          !XOR EAX, EAX
-          !INC EAX                  ; #PB_String_Greater, 1
-        !@@:  
-          ; check for Return of CharNo in Pos 
-          !MOV EDX, [p.p_Pos]       ; EDX = *Pos
-          !TEST EDX, EDX            ; 
-          !JZ .return               ; If *Pos = 0 Then return  
-            !SUB EBX, [p.p_String1]
-            !SHR EBX, 1              ; Byte to Word
-            !MOV [EDX], EBX          ; Pos = CharNo which do not match
-        !.return:     
-        ASM_POP_EBX()   
-        ProcedureReturn ; EAX
-        EnableDebugger
-        
-      CompilerEndIf
+      !.a16:
+      ; Subtract s2(RDX) from s1(RAX). This admititedly looks odd, but we
+    	; can now use RDX to index into s1 and s2. As we adjust RDX to move
+    	; forward into s2, we can then add RDX to RAX and this will give us
+    	; the comparable offset into s1 i.e. if we take RDX + 16 then:
+    	;
+    	;	RDX     = RDX + 16		        = RDX + 16
+    	;	RAX+RDX	= RAX -RDX + RDX + 16	= RAX + 16
+    	;
+    	; therefore RDX points to s2 + 16 and RAX + RDX points to s1 + 16.
+    	; We only need one index, convoluted but effective.
+    
+     	!SUB RAX, 16		         
+      !XOR RCX, RCX   
       
+      !@@:
+       	!ADD RAX, 16
+       	!MOVDQA XMM0, [RAX]         	
+       	; IMM8[1:0]	= 00b
+     	  ;	00b: Src data is unsigned bytes(16 packed unsigned bytes)
+     	  ;	01b: Src data is unsigned words( 8 packed unsigned words)
+      	
+       	; IMM8[3:2]	= 10b
+      	; 	We are using Equal Each aggregation
+      	; IMM8[5:4]	= 01b
+      	;	Negative Polarity, IntRes2	= -1 XOR IntRes1
+      	; IMM8[6]	= 0b
+      	;	ECX contains the least significant set bit in IntRes2  	
+      	!PCMPISTRI XMM0, [RAX+R8], 0011001b ; EQUAL_EACH + NEGATIVE_POLARITY + UNSIGNED_WORDS  	
+      	; Loop while ZF=0 and CF=0:
+      	;	1) We find a null in s1(RDX+RAX) ZF=1
+      	;	2) We find a char that does not match CF=1  	
+      !JA	@b      ; IF CF=0 And ZF=0     	  	         
+    	!JC	@f      ; IF CF=1 : Jump if CF=1, we found a mismatched char      	          
+     	!JMP .EQUAL	; We terminated loop due to a null character i.e. CF=0 and ZF=1 -> The Strings are equal
+     	
+     	!@@:
+        ; ECX is the offset from the current poition in NoOfChars where the two strings do not match,
+      	; so copy the respective non-matching char into DX and compare it with the position in *String2
+      	; in remaining bits w/ zero. Because of 2ByteChar we have to convert Word to Byte
+        
+        !SHL RCX, 1             ; Number of Chars to Adress Offset
+        !ADD RAX, RCX
+        !MOV DX, WORD[RAX]
+       	; If S1=S2 : Return (0) ; #PB_String_Equal
+        ; If S1>S2 : Return (+) ; #PB_String_Greater
+        ; If S1<S2 : Return (-) ; #PB_String_Lower
+        !CMP DX, WORD [RAX+R8]
+        !JA .GREATER
+        !JB .LOWER
+        ;!JMP .EQUAL 
+        
+      !.EQUAL:                    ; The Strings are equal
+        !MOV R8, RAX  
+        !XOR RAX, RAX             ; #PB_String_Equal, 0  
+        !JMP @f                      
+      !.LOWER:                    ; String1 < String2
+        !MOV R8, RAX  
+        !XOR RAX, RAX
+        !DEC RAX                  ; #PB_String_Lower, -1  
+        !JMP @f                      
+      !.GREATER:                  ; String1 > String2
+        !MOV R8, RAX  
+        !XOR RAX, RAX
+        !INC RAX                  ; #PB_String_Greater, 1
+      !@@:  
+        ; check for Return of CharNo in Pos 
+        !MOV RDX, [p.p_Pos]       ; RDX = *Pos
+        !TEST RDX, RDX            ; 
+        !JZ .return               ; If *Pos = 0 Then return  
+          !SUB R8, [p.p_String1]
+          !SHR R8, 1              ; Byte to Word
+          !MOV [RDX], R8          ; Pos = CharNo which do not match
+      !.return:
+      ProcedureReturn ; RAX
+      EnableDebugger
+               
     CompilerElse    ; C-Backend
       
       ; for now use PB CompareMemoryString. So it will work on other Platforms too.
@@ -795,183 +556,92 @@ Module StrSSE
     
     ; TODO! Solve the 16Byte align problem
     
-    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm
+   CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_64Bit
+      Protected memRAX, memRDX
+      ; Returns a pointer To the first occurrence of str2 in str1, Or a null pointer If str2 is Not part of str1. 
+      ; The matching process does not include the terminating null-characters, but it stops there
+      ; RAX = haystack (Heuhaufen), RDX = needle (Nadel)
       
-      CompilerIf #PB_Compiler_64Bit 
-        Protected memRAX, memRDX
-        ; Returns a pointer To the first occurrence of str2 in str1, Or a null pointer If str2 is Not part of str1. 
-        ; The matching process does not include the terminating null-characters, but it stops there
-        ; RAX = haystack (Heuhaufen), RDX = needle (Nadel)
+      ; XMM0 XMM1 XMM2 XMM3 XMM4
+      ; XMM1 = [String1] : XMM2=[String2]
+      
+      !MOV RAX, [p.p_String]        ; haystack
+      !MOV RDX, [p.p_StringToFind]  ; needle
+      !MOVDQU XMM2, DQWORD[RDX] ; load the first 16 bytes of neddle (String to find)
+  
+     	!SUB RAX, 16		; Avoid extra jump in main loop
+         
+      ; ----------------------------------------------------------------------
+      ; Find the first possible match of 16-byte fragment in haystack
+      ; ----------------------------------------------------------------------
+      !FindStr_MainLoop:
+        !ADD RAX, 16      ; Step up Counter
+        !MOVDQU XMM1, DQWORD[RAX]
+       ;!PCMPISTRI XMM2, XMM1, 1100b ; EQUAL_ORDERED ; for ASCII Strings
+        !PCMPISTRI XMM2, XMM1, 1101b ; EQUAL_ORDERED + UNSIGNED_WORDS; 11001b
+        ; now RCX contains the offset in WORDS where a match was found
+       	; Loop while ZF=0 and CF=0:
+      	;	1) We find a null in s1(RAX) ZF=1
+        ;	2) We find a char that does not match CF=1 
+      !JA FindStr_MainLoop
+      ; Jump if CF=0, we found only matching chars  
+      !JNC FindStr_StrNotFound
+      
+      ; possible match found at WordOffset in RCX
+      !ADD RCX, RCX ; Word to Byte
+      !ADD RAX, RCX ; save the possible match start
+              
+      !MOV [p.v_memRDX], RDX ; mov edi, edx; save RDX
+      !MOV [p.v_memRAX], RAX ; mov esi, eax; save RAX
+      
+      ; ----------------------------------------------------------------------
+      ; Compare String, at possible match postion in haystack, with needle
+      ; ----------------------------------------------------------------------
+      !SUB RDX, RAX
+      !SUB RAX, 16  ; counter
+      
+      !PXOR XMM3, XMM3          ; XMM3 = 0
+      
+      ; compare the strings
+      !FindStr_Compare:
+        !ADD RAX, 16  ; Counter
+        !MOVDQU XMM1, DQWORD[RAX+RDX] ; Haystack          
+        ; mask out invalid bytes in the haystack
+       ;!PCMPISTRM XMM3, XMM1, 1011000b   ; EQUAL_EACH + NEGATIVE_POLARITY + BYTE_MASK  ; for ASCII Strings
+        !PCMPISTRM XMM3, XMM1, 1011001b   ; EQUAL_EACH + NEGATIVE_POLARITY + BYTE_MASK + UNSIGNED_WORDS
+        ; PCMPISTRM writes as result a Mask To XMM0, we used BYTE_MASK
+        !MOVDQU XMM4, DQWORD[RAX] ; haystack  
+        !PAND XMM4, XMM0
         
-        ; XMM0 XMM1 XMM2 XMM3 XMM4
-        ; XMM1 = [String1] : XMM2=[String2]
+       ;!PCMPISTRI XMM1, XMM4, 0011000b ; EQUAL_EACH + NEGATIVE_POLARITY ; for ASCII Strings
+        !PCMPISTRI XMM1, XMM4, 0011001b ; EQUAL_EACH + NEGATIVE_POLARITY + UNSIGNED_WORDS
+       	; Loop while ZF=0 and CF=0:
+      	;	1) We find a null in s1(RDX+RCX) ZF=1      {JA CF=0 & ZF=0} {JE : ZF=1)
+        ;	2) We find a char that does not match CF=1 {JC, JNC}
+        ; 3) We find a null in s2 SF=1               {JS, JNS}
+        ;!JS FindStr_StrNotFound 
+      !JA FindStr_Compare ; CF=0 AND ZF=0
+      
+      !MOV RDX, [p.v_memRDX]
+      !MOV RAX, [p.v_memRAX]
+      !JNC FindStr_StrFound
+      
+      ;!SUB RAX, 15  ; for ASCII Strings
+      !SUB RAX, 14
+      !JMP FindStr_MainLoop
+      
+      !FindStr_StrNotFound:
+        !XOR RAX, RAX
+        !JMP FindStr_End
         
-        !MOV RAX, [p.p_String]        ; haystack
-        !MOV RDX, [p.p_StringToFind]  ; needle
-        !MOVDQU XMM2, DQWORD[RDX] ; load the first 16 bytes of neddle (String to find)
-    
-       	!SUB RAX, 16		; Avoid extra jump in main loop
-           
-        ; ----------------------------------------------------------------------
-        ; Find the first possible match of 16-byte fragment in haystack
-        ; ----------------------------------------------------------------------
-        !FindStr_MainLoop:
-          !ADD RAX, 16      ; Step up Counter
-          !MOVDQU XMM1, DQWORD[RAX]
-         ;!PCMPISTRI XMM2, XMM1, 1100b ; EQUAL_ORDERED ; for ASCII Strings
-          !PCMPISTRI XMM2, XMM1, 1101b ; EQUAL_ORDERED + UNSIGNED_WORDS; 11001b
-          ; now RCX contains the offset in WORDS where a match was found
-         	; Loop while ZF=0 and CF=0:
-        	;	1) We find a null in s1(RAX) ZF=1
-          ;	2) We find a char that does not match CF=1 
-        !JA FindStr_MainLoop
-        ; Jump if CF=0, we found only matching chars  
-        !JNC FindStr_StrNotFound
-        
-        ; possible match found at WordOffset in RCX
-        !ADD RCX, RCX ; Word to Byte
-        !ADD RAX, RCX ; save the possible match start
-                
-        !MOV [p.v_memRDX], RDX ; mov edi, edx; save RDX
-        !MOV [p.v_memRAX], RAX ; mov esi, eax; save RAX
-        
-        ; ----------------------------------------------------------------------
-        ; Compare String, at possible match postion in haystack, with needle
-        ; ----------------------------------------------------------------------
-        !SUB RDX, RAX
-        !SUB RAX, 16  ; counter
-        
-        !PXOR XMM3, XMM3          ; XMM3 = 0
-        
-        ; compare the strings
-        !FindStr_Compare:
-          !ADD RAX, 16  ; Counter
-          !MOVDQU XMM1, DQWORD[RAX+RDX] ; Haystack          
-          ; mask out invalid bytes in the haystack
-         ;!PCMPISTRM XMM3, XMM1, 1011000b   ; EQUAL_EACH + NEGATIVE_POLARITY + BYTE_MASK  ; for ASCII Strings
-          !PCMPISTRM XMM3, XMM1, 1011001b   ; EQUAL_EACH + NEGATIVE_POLARITY + BYTE_MASK + UNSIGNED_WORDS
-          ; PCMPISTRM writes as result a Mask To XMM0, we used BYTE_MASK
-          !MOVDQU XMM4, DQWORD[RAX] ; haystack  
-          !PAND XMM4, XMM0
-          
-         ;!PCMPISTRI XMM1, XMM4, 0011000b ; EQUAL_EACH + NEGATIVE_POLARITY ; for ASCII Strings
-          !PCMPISTRI XMM1, XMM4, 0011001b ; EQUAL_EACH + NEGATIVE_POLARITY + UNSIGNED_WORDS
-         	; Loop while ZF=0 and CF=0:
-        	;	1) We find a null in s1(RDX+RCX) ZF=1      {JA CF=0 & ZF=0} {JE : ZF=1)
-          ;	2) We find a char that does not match CF=1 {JC, JNC}
-          ; 3) We find a null in s2 SF=1               {JS, JNS}
-          ;!JS FindStr_StrNotFound 
-        !JA FindStr_Compare ; CF=0 AND ZF=0
-        
-        !MOV RDX, [p.v_memRDX]
-        !MOV RAX, [p.v_memRAX]
-        !JNC FindStr_StrFound
-        
-        ;!SUB RAX, 15  ; for ASCII Strings
-        !SUB RAX, 14
-        !JMP FindStr_MainLoop
-        
-        !FindStr_StrNotFound:
-          !XOR RAX, RAX
-          !JMP FindStr_End
-          
-        !FindStr_StrFound:
-          ; because RAX contains the Pointer we have to calculate the Char-No.
-          !SUB RAX, [p.p_String]    ; Sub the Haystack Start-Pointer
-          !SHR RAX, 1  ; Byte to Word: not needed for ASCII Strings
-          !ADD RAX, 1  ; Add 1 to start with 1 as first Char-No.
-        !FindStr_End:
-        ProcedureReturn  ; !RAX
- 
-      CompilerElse  ; #PB_Compiler_32Bit
-        
-        Protected memEAX, memEDX
-        ; Returns a pointer To the first occurrence of str2 in str1, Or a null pointer If str2 is Not part of str1. 
-        ; The matching process does not include the terminating null-characters, but it stops there
-        ; RAX = haystack (Heuhaufen), EDX = needle (Nadel)
-        
-        ; XMM0 XMM1 XMM2 XMM3 XMM4
-        ; XMM1 = [String1] : XMM2=[String2]
-        
-        !MOV EAX, [p.p_String]        ; haystack
-        !MOV EDX, [p.p_StringToFind]  ; needle
-        !MOVDQU XMM2, DQWORD[EDX] ; load the first 16 bytes of neddle (String to find)
-    
-       	!SUB EAX, 16		; Avoid extra jump in main loop
-           
-        ; ----------------------------------------------------------------------
-        ; Find the first possible match of 16-byte fragment in haystack
-        ; ----------------------------------------------------------------------
-        !FindStr_MainLoop:
-          !ADD EAX, 16      ; Step up Counter
-          !MOVDQU XMM1, DQWORD[EAX]
-         ;!PCMPISTRI XMM2, XMM1, 1100b ; EQUAL_ORDERED ; for ASCII Strings
-          !PCMPISTRI XMM2, XMM1, 1101b ; EQUAL_ORDERED + UNSIGNED_WORDS; 11001b
-          ; now RCX contains the offset in WORDS where a match was found
-         	; Loop while ZF=0 and CF=0:
-        	;	1) We find a null in s1(EAX) ZF=1
-          ;	2) We find a char that does not match CF=1 
-        !JA FindStr_MainLoop
-        ; Jump if CF=0, we found only matching chars  
-        !JNC FindStr_StrNotFound
-        
-        ; possible match found at WordOffset in ECX
-        !ADD ECX, ECX ; Word to Byte
-        !ADD EAX, ECX ; save the possible match start
-                
-        !MOV [p.v_memEDX], EDX ; mov edi, edx; save EDX
-        !MOV [p.v_memEAX], EAX ; mov esi, eax; save EAX
-        
-        ; ----------------------------------------------------------------------
-        ; Compare String, at possible match postion in haystack, with needle
-        ; ----------------------------------------------------------------------
-        !SUB EDX, EAX
-        !SUB EAX, 16  ; counter
-        
-        !PXOR XMM3, XMM3          ; XMM3 = 0
-        
-        ; compare the strings
-        !FindStr_Compare:
-          !ADD EAX, 16  ; Counter
-          !MOVDQU XMM1, DQWORD[EAX+EDX] ; Haystack          
-          ; mask out invalid bytes in the haystack
-         ;!PCMPISTRM XMM3, XMM1, 1011000b   ; EQUAL_EACH + NEGATIVE_POLARITY + BYTE_MASK  ; for ASCII Strings
-          !PCMPISTRM XMM3, XMM1, 1011001b   ; EQUAL_EACH + NEGATIVE_POLARITY + BYTE_MASK + UNSIGNED_WORDS
-          ; PCMPISTRM writes as result a Mask To XMM0, we used BYTE_MASK
-          !MOVDQU XMM4, DQWORD[EAX] ; haystack  
-          !PAND XMM4, XMM0
-          
-         ;!PCMPISTRI XMM1, XMM4, 0011000b ; EQUAL_EACH + NEGATIVE_POLARITY ; for ASCII Strings
-          !PCMPISTRI XMM1, XMM4, 0011001b ; EQUAL_EACH + NEGATIVE_POLARITY + UNSIGNED_WORDS
-         	; Loop while ZF=0 and CF=0:
-        	;	1) We find a null in s1(EDX+ECX) ZF=1      {JA CF=0 & ZF=0} {JE : ZF=1)
-          ;	2) We find a char that does not match CF=1 {JC, JNC}
-          ; 3) We find a null in s2 SF=1               {JS, JNS}
-          ;!JS FindStr_StrNotFound 
-        !JA FindStr_Compare ; CF=0 AND ZF=0
-        
-        !MOV EDX, [p.v_memEDX]
-        !MOV EAX, [p.v_memEAX]
-        !JNC FindStr_StrFound
-        
-        ;!SUB EAX, 15  ; for ASCII Strings
-        !SUB EAX, 14
-        !JMP FindStr_MainLoop
-        
-        !FindStr_StrNotFound:
-          !XOR EAX, EAX
-          !JMP FindStr_End
-          
-        !FindStr_StrFound:
-          ; because EAX contains the Pointer we have to calculate the Char-No.
-          !SUB EAX, [p.p_String]    ; Sub the Haystack Start-Pointer
-          !SHR EAX, 1  ; Byte to Word: not needed for ASCII Strings
-          !ADD EAX, 1  ; Add 1 to start with 1 as first Char-No.
-        !FindStr_End:
+      !FindStr_StrFound:
+        ; because RAX contains the Pointer we have to calculate the Char-No.
+        !SUB RAX, [p.p_String]    ; Sub the Haystack Start-Pointer
+        !SHR RAX, 1  ; Byte to Word: not needed for ASCII Strings
+        !ADD RAX, 1  ; Add 1 to start with 1 as first Char-No.
+      !FindStr_End:
+      ProcedureReturn  ; !RAX
        
-        ProcedureReturn 
-      CompilerEndIf  ; #PB_Compiler_32Bit
-      
     CompilerElse    ; C-Backend
       
       ; for now use PB FindString. So it will work on other Platforms too.
@@ -1229,8 +899,8 @@ CompilerEndIf
 ;   pop edi
 ;   pop esi
 ;   ret
-; IDE Options = PureBasic 6.20 (Windows - x64)
-; CursorPosition = 16
-; Folding = ----
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 26
+; Folding = ---
 ; Optimizer
 ; CPU = 5
