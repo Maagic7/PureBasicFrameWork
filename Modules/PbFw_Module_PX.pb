@@ -56,11 +56,7 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
-#PbFw_Present = #False
-
-CompilerIf #PbFw_Present
-  XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::   FrameWork control Module
-CompilerEndIf
+; XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::   FrameWork control Module
 
 DeclareModule PX
   ;- ----------------------------------------------------------------------
@@ -1055,7 +1051,7 @@ EndDeclareModule
 Module PX
   EnableExplicit
   
-  CompilerIf #PbFw_Present
+ CompilerIf Defined(PbFw, #PB_Module)
     PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
   CompilerEndIf 
   
@@ -2712,8 +2708,9 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 16
+; CursorPosition = 1050
+; FirstLine = 1010
 ; Folding = ----------------------
-; Markers = 1164,2570
+; Markers = 1160,2566
 ; Optimizer
 ; CPU = 5
