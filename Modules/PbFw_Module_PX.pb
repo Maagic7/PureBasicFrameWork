@@ -14,6 +14,8 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2025/08/12 S.Maag : updated SplitString Array/List functions with DQuote and changed
+;                     the way of implementation. 
 ; 2025/08/08 S.Maag : added new TextBetween(), TextBetweenList(), TextBetweenArray()
 ;                     now with Prototyping and special Pointer techiques for more speed,
 ;                     token from new SplitString-Functions.
@@ -290,7 +292,7 @@ DeclareModule PX
   ; Swaps the 2 Bytes of a 16Bit value
   ; use it : result = BSwap16(x, [0..$FFFF])
   Macro BSwap16(WordValue)
-    ((WordValue & $FF)<< 8) + (WordValue >>8)& $FF)  
+    ((WordValue & $FF)<<8) + ((WordValue >>8)& $FF)  
   EndMacro
   
   ; Get the Bit specified by BitNo from value
@@ -626,15 +628,15 @@ DeclareModule PX
   ; Decrement CharPointer
   ; use it: DECC(MyCharPointer, [1..n])
   ;     or  MyNewCharPointer = DECC(MyOldCharPointer, [1..n])
-  Macro DECC(ptrChar)
-    ptrChar - PX::#PX_CharSize ; (NoOfChars * PX::#PX_CharSize)
+  Macro DECC(ptrChar, cnt=1)
+    ptrChar - cnt*PX::#PX_CharSize 
   EndMacro
 
   ; Increment CharPointer
   ; use it: INCC(MyCharPointer, [1..n])
   ;     or  MyNewCharPointer = INCC(MyOldCharPointer, [1..n])
-  Macro INCC(ptrChar)
-    ptrChar + PX::#PX_CharSize ; (NoOfChars * PX::#PX_CharSize)
+  Macro INCC(ptrChar, cnt=1)
+    ptrChar + cnt*PX::#PX_CharSize
   EndMacro
   
   ; LowerCase a single Char in ASCii Character space, Unicode Chars are not affected!
@@ -1021,13 +1023,15 @@ DeclareModule PX
   Prototype.i TextBetweenList(List Out.s(), String$, Left$, Right$)
   Global TextBetweenList.TextBetweenList
   
+  Declare.s ColumnText(Text$, ColWidth=12, TextAlign=#PX_AlignCenter)
+
   Prototype.i TextBetweenArray(Array Out.s(1), String$, Left$, Right$, ArrayRedimStep=10)
   Global TextBetweenArray.TextBetweenArray
 
-  Prototype SplitStringArray(Array Out.s(1), String$, Separator$, ArrayRedimStep=10)
+  Prototype SplitStringArray(Array Out.s(1), String$, Separator$, DQuote=#False, ArrayRedimStep=10)
   Global SplitStringArray.SplitStringArray
   
-  Prototype SplitStringList(List Out.s(), String$, Separator$, clrList= #True)
+  Prototype SplitStringList(List Out.s(), String$, Separator$, DQuote=#False, clrList= #True)
   Global SplitStringList.SplitStringList
     
   Declare.s JoinArray(Array ary.s(1), Separator$, StartIndex=0, EndIndex=-1, *IOutLen.Integer=0)
@@ -1857,7 +1861,40 @@ Module PX
     ProcedureReturn cntChar
   EndProcedure
   SetRight = @_SetRight()   ; Bind ProcedureAddress to Prototype
+  
+  Procedure.s ColumnText(Text$, ColWidth=12, TextAlign=#PX_AlignCenter)
+  ; ============================================================================
+  ; NAME: ColumnText
+  ; DESC: Get a Table Column String
+  ; VAR(Text$): The Columns Text
+  ; VAR(ColWidth): The column width in No of characters
+  ; VAR(TextAlign): How to align the text in the column #CC_Align{Left/Center/Right})
+  ; RET : -
+  ; ============================================================================
+    Protected ret.s 
+    Protected lTxt = Len(Text$)
     
+    Select TextAlign
+        
+      Case #PX_AlignCenter
+        If lTxt >= ColWidth
+          ret = Left(Text$, ColWidth)
+        Else
+          ret = Space(ColWidth)
+          PX::SetMid(ret,Text$, (ColWidth-lTxt)/2)
+        EndIf
+        
+      Case #PX_AlignLeft
+        ret = LSet(Text$, ColWidth, " ")
+                
+      Case #PX_AlignRight
+        ret = RSet(Text$, ColWidth, " ")
+    
+    EndSelect
+    
+    ProcedureReturn ret
+  EndProcedure
+
   Procedure.s _TextBetween(*String, Left$, Right$)
   ; ============================================================================
   ; NAME: TextBetween
@@ -2030,77 +2067,138 @@ Module PX
   EndProcedure
   TextBetweenArray=@_TextBetweenArray()
 
-  Procedure.i _SplitStringArray(Array Out.s(1), *String, *Separator, ArrayRedimStep=10)
+  Procedure.i _SplitStringArray(Array Out.s(1), *String, *Separator, DQuote=#False, ArrayRedimStep=10)
   ; ============================================================================
   ; NAME: _SplitStringArray
   ; DESC: Split a String into multiple Strings
   ; DESC: 
-  ; VAR(Out.s()) : Array to return the Substrings (ArraySize >= Substrings)
-  ; VAR(*String) : Pointer to String 
+  ; VAR(Out.s())    : Array to return the Substrings (ArraySize >= Substrings)
+  ; VAR(*String)    : Pointer to String 
   ; VAR(*Separator) : Pointer to Separator String 
+  ; VAR(DQuote)     : #True=skip search for Separator in quoted text, #Flase=search everywhere  
   ; VAR(ArrayRedimStep) : How may entries are added to the String each ReDim
-  ; RET.i : No of Substrings
+  ;                       if you know the exact No of Substrings before, use it here!
+  ;                       this prevents from ReDim.
+  ; RET.i           : No of Substrings
   ; ============================================================================
-        
-    Protected lsep, N, Pos, ASize
-    Protected Str.String, *pStr.Integer ; for hooking *String into Str.String 
-    Protected Sep.String, *pSep.Integer ; for hooking *Separator into Sep.String 
-        
+    
+    Protected lsep, I, xDo, N, ASize
+    Protected *pStart 
+    Protected *pRead.pChar
+    Protected *pSep.pChar
+    
     If Not *String
       ProcedureReturn 0
     EndIf
     
+    *pRead = *String        ; ReadPointer
+    *pStart = *String       ; Pointer of search Start
+    *pSep = *Separator      ; Pointer of Separator
+         
+    If *Separator
+      ; lsep = Len(Separator)
+      While *pSep\cc[lsep]    ; Trick to get length with indexed pChar
+        lsep + 1
+      Wend
+    EndIf
+    
     ASize = ArraySize(Out())    
+    
+    If *Separator=0 Or lsep=0
+      If ASize = -1         ; not Dim
+         Dim Out(0)
+      EndIf            
+      Out(0) = PeekS(*String)
+      ProcedureReturn 1
+    EndIf
+    
     If ASize = -1         ; not Dim
       ASize = ArrayRedimStep
       Dim Out(ASize)
     EndIf            
-
-    If Not *Separator
-      Out(0) = PeekS(*String)
-      ProcedureReturn 1     
-    EndIf
+        
+    Repeat      
+      ; ----------------------------------------------------------------------
+      If DQuote  ; skip qutoed Text for search Separator -> do not split in quotes
+      ; ----------------------------------------------------------------------  
+        ; move *pRead to first matching Character
+        While *pRead\c <> *pSep\c
+          Select *pRead\c
+            Case 0    ; Break if EndOfString
+              Break 
+              
+            Case '"'  ; DoubleQuote
+              ; move *pRead to 2nd " to ignore Text in Quotes
+              *pRead + SizeOf(Character)  ; Char after "
+              While *pRead\c <> '"'
+                *pRead + SizeOf(Character)
+                If *pRead\c = 0
+                  Break 2
+                EndIf
+              Wend             
+          EndSelect
+          *pRead + SizeOf(Character)
+        Wend        
+      ; ----------------------------------------------------------------------
+      Else    ; do not check for Text in Quotes
+      ; ----------------------------------------------------------------------      
+        ; move *pRead to first matching Character
+        While *pRead\c <> *pSep\c
+          If *pRead\c = 0    ; Break if EndOfString
+            Break 
+          EndIf   
+          *pRead + SizeOf(Character)
+        Wend
+        
+      EndIf
+      ; ----------------------------------------------------------------------
     
-    ; because FindString() do not accept Pointers, we have to hook the 
-    ; *String and *Separator into a String-Structure. The trick is to overlay
-    ; an Integer Structure over the String Structure - this is like StructureUnion
-    ; but hand made!
-    *pStr = @Str            ; Overlay IntergerStructure on String Structure
-    *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))
+      If *pRead\c ; If Not EndOfString -> we found a Separator
+        If lsep = 1
+          ; if Len(Separator) = 1 -> split here
+          xDo = #True
+        Else         
+          xDo = #True
+          ; Check if all Characters matching?
+          For I = 1 To lsep-1 ; we can start at 2nd char because 1st char is steill checked for equal
+            If *pRead\cc[I] <> *pSep\cc[I]
+              xDo = #False  ; Character do not Match -> Separator not found!
+            EndIf
+          Next
+        EndIf
+      
+        ; If CompareMemoryString(*pRead, *Separator, #PB_String_CaseSensitive, lsep)= #PB_String_Equal
+        If xDo  
+          If ASize < N
+            ASize + ArrayRedimStep
+            ReDim Out(ASize)
+          EndIf
+        
+          Out(N) = PeekS(*pStart, (*pRead - *pStart)/SizeOf(Character))
+          N+1
+          *pRead + lsep * SizeOf(Character)
+          *pStart = *pRead
+        EndIf 
+      Else
+        Break
+      EndIf
+      
+    ForEver ; Until *pRead\c = 0 
     
-    *pSep = @Sep            ; Overlay IntergerStructure on String Structure
-    *pSep\i = *Separator    ; Hook Separator into Sep\s => PokeI(@Sep, *Separator))
-     
-    lsep = MemoryStringLength(*Separator)
-     
-    Pos = FindString(Str\s, Sep\s)  
-    While pos     
-      If ASize < N
-        ASize + ArrayRedimStep
-        ReDim Out(ASize)
-      EndIf            
-      Pos -1      ; because the length in characters is Pos-1
-      Out(N) = PeekS(*pStr\i, Pos)
-      ; because *pStr is an overlay on Str.String, we can move the Stringpointer
-      ; @Str\s directly by manipulating *pStr\i what is same as the Pointer of the String
-       *pStr\i = *pStr\i + (Pos + lsep)*SizeOf(Character) ; move @Str\s to new Startposition
-      N + 1       
-      pos = FindString(Str\s, Sep\s)      
-    Wend 
-    
-    Out(N) = PeekS(*pStr\i)
-    
-    ; befor leaving the Procedure we have to unhook the Strings, otherwise PB will delete
-    ; the original String allocated Memory and the original String Point to non allocated
-    ; Memory.
-    *pStr\i = 0   ; Unhook String
-    *pSep\i = 0   ; Unhook Seperator
-
-    ProcedureReturn N+1     ; Number of Substrings       
-  EndProcedure
+    ; return last Element
+    If ASize < N
+      ASize + 1
+      ReDim Out(ASize)
+;     ElseIf Asize > N
+;       ReDim Out(N)
+    EndIf  
+    Out(N) = PeekS(*pStart) 
+    N+1      
+    ProcedureReturn N     ; Number of Substrings        
+  EndProcedure 
   SplitStringArray = @_SplitStringArray()   ; Bind ProcedureAddress to Prototype
   
- Procedure.i _SplitStringList(List Out.s(), *String, *Separator, clrList= #True)
+  Procedure.i _SplitStringList(List Out.s(), *String, *Separator, DQuote = #False, clrList= #True)
   ; ============================================================================
   ; NAME: _SplitStringList
   ; DESC: Split a String into multiple Strings
@@ -2108,14 +2206,16 @@ Module PX
   ; VAR(Out.s())   : List to return the Substrings 
   ; VAR(*String)   : Pointer to String 
   ; VAR(*Separator): Pointer to Separator String 
+  ; VAR(DQuote)    : #True=skip search for Separator in quoted text, #Flase=search everywhere  
   ; VAR(clrList)   : #False: Append Splits to List; #True: Clear List first
   ; RET.i          : No of Substrings
   ; ============================================================================
     
-    Protected lsep, N, Pos
-    Protected Str.String, *pStr.Integer ; for hooking *String into Str.String 
-    Protected Sep.String, *pSep.Integer ; for hooking *Separator into Sep.String 
-        
+    Protected lsep, I, xDo
+    Protected *pStart 
+    Protected *pRead.pChar
+    Protected *pSep.pChar
+    
     If Not *String
       ProcedureReturn 0
     EndIf
@@ -2124,46 +2224,91 @@ Module PX
       ClearList(Out())  
     EndIf
     
-    If Not *Separator
+    *pRead = *String        ; ReadPointer
+    *pStart = *String       ; Pointer of search Start
+    *pSep = *Separator      ; Pointer of Separator
+   
+    If *Separator
+      ; lsep = Len(Separator)
+      While *pSep\cc[lsep]    ; Trick to get length with indexed pChar
+        lsep + 1
+      Wend
+    EndIf
+    
+    If *Separator=0 Or lsep=0
       AddElement(Out())
       Out() = PeekS(*String)
       ProcedureReturn 1
     EndIf
-    
-    ; because FindString() do not accept Pointers, we have to hook the 
-    ; *String and *Separator into a String-Structure. The trick is to overlay
-    ; an Integer Structure over the String Structure - this is like StructureUnion
-    ; but hand made!
-    *pStr = @Str            ; Overlay IntergerStructure on String Structure
-    *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))
-    
-    *pSep = @Sep            ; Overlay IntergerStructure on String Structure
-    *pSep\i = *Separator    ; Hook Separator into Sep\s => PokeI(@Sep, *Separator))
+           
+    Repeat      
+      ; ----------------------------------------------------------------------
+      If DQuote  ; skip qutoed Text for search Separator -> do not split in quotes
+      ; ----------------------------------------------------------------------  
+        ; move *pRead to first matching Character
+        While *pRead\c <> *pSep\c
+          Select *pRead\c
+            Case 0    ; Break if EndOfString
+              Break 
+              
+            Case '"'  ; DoubleQuote
+              ; move *pRead to 2nd " to ignore Text in Quotes
+              *pRead + SizeOf(Character)  ; Char after "
+              While *pRead\c <> '"'
+                *pRead + SizeOf(Character)
+                If *pRead\c = 0
+                  Break 2
+                EndIf
+              Wend             
+          EndSelect
+          *pRead + SizeOf(Character)
+        Wend        
+      ; ----------------------------------------------------------------------
+      Else    ; do not check for Text in Quotes
+      ; ----------------------------------------------------------------------      
+        ; move *pRead to first matching Character
+        While *pRead\c <> *pSep\c
+          If *pRead\c = 0    ; Break if EndOfString
+            Break 
+          EndIf   
+          *pRead + SizeOf(Character)
+        Wend
         
-    lsep = MemoryStringLength(*Separator)
-     
-    Pos = FindString(Str\s, Sep\s)  
-    While pos 
-      Pos -1      ; because the length in characters is Pos-1
-      AddElement(Out())
-      Out() = PeekS(*pStr\i, Pos)
-      ; because *pStr is an overlay on Str.String, we can move the Stringpointer
-      ; @Str\s directly by manipulating *pStr\i what is same as the Pointer of the String
-       *pStr\i = *pStr\i + (Pos + lsep)*SizeOf(Character) ; move @Str\s to new Startposition
-      N + 1       
-      pos = FindString(Str\s, Sep\s)
-    Wend 
+      EndIf
+      ; ----------------------------------------------------------------------
     
+      If *pRead\c ; If Not EndOfString -> we found a Separator
+        If lsep = 1
+          ; if Len(Separator) = 1 -> split here
+          xDo = #True
+        Else         
+          xDo = #True
+          ; Check if all Characters matching?
+          For I = 1 To lsep-1 ; we can start at 2nd char because 1st char is steill checked for equal
+            If *pRead\cc[I] <> *pSep\cc[I]
+              xDo = #False  ; Character do not Match -> Separator not found!
+            EndIf
+          Next
+        EndIf
+      
+        ; If CompareMemoryString(*pRead, *Separator, #PB_String_CaseSensitive, lsep)= #PB_String_Equal
+        If xDo  
+          AddElement(Out())
+          Out() = PeekS(*pStart, (*pRead - *pStart)/SizeOf(Character))      
+          *pRead + lsep * SizeOf(Character)
+          *pStart = *pRead
+        EndIf 
+      Else
+         Break
+      EndIf
+      
+    ForEver ; Until *pRead\c = 0 
+    
+    ; return last Element
     AddElement(Out())
-    Out() = PeekS(*pStr\i)
-    
-    ; befor leaving the Procedure we have to unhook the Strings, otherwise PB will delete
-    ; the original String allocated Memory and the original String Point to non allocated
-    ; Memory.
-    *pStr\i = 0   ; Unhook String -> delete the Pointer of the String in Str\s
-    *pSep\i = 0   ; Unhook Seperator -> delete the Pointer of the String in Sep\s
-
-    ProcedureReturn N+1     ; Number of Substrings        
+    Out() = PeekS(*pStart)      
+       
+    ProcedureReturn ListSize(Out())     ; Number of Substrings        
   EndProcedure 
   SplitStringList = @_SplitStringList()   ; Bind ProcedureAddress to Prototype
   
@@ -2559,8 +2704,9 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 22
+; CursorPosition = 634
+; FirstLine = 612
 ; Folding = ----------------------
-; Markers = 1152,2417
+; Markers = 1156,2562
 ; Optimizer
 ; CPU = 5

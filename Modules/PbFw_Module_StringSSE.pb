@@ -196,10 +196,10 @@ Module StrSSE
   #NEGATIVE_POLARITY  = %0010000
   #BYTE_MASK	        = %1000000
   
-  Structure pChar   ; virtual CHAR-ARRAY, used as Pointer to overlay on strings 
-    a.a[0]          ; fixed ARRAY Of CHAR Length 0
-    c.c[0]          
-  EndStructure
+;   Structure pChar   ; virtual CHAR-ARRAY, used as Pointer to overlay on strings 
+;     aa.a[0]          ; fixed ARRAY Of CHAR Length 0
+;     cc.c[0]          
+;   EndStructure
 
   ;- ----------------------------------------------------------------------
   ;- Module Public
@@ -900,7 +900,8 @@ CompilerEndIf
 ;   pop esi
 ;   ret
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 26
+; CursorPosition = 201
+; FirstLine = 167
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

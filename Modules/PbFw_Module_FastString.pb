@@ -2,7 +2,7 @@
 ;  FILE : PbFw_Module_FastString.pb
 ;  NAME : Module Fast String [FStr:]
 ;  DESC : Provides fast String and Char Functions with ASM optimations in x64.
-;  DESC : This Modul is a combination of Str::, FStr:: and FChar::
+;  DESC : This Modul is a combination of former Str::, FStr:: and FChar::
 ;  DESC : because all Modulues did similar things.
 ;  DESC : Now the Assembler optimations are used for x64 ASM Backend only.
 ;  DESC : So the user do not have to choose the right Module.
@@ -78,42 +78,42 @@ DeclareModule FStr
   CompilerEndIf
   ;#FStr_CharSize = SizeOf(Character)   ; Application CharacterSize = 2 Bytes
   
-   EnumerationBinary eCharTypeFlags      ; Character classification Flags
-    #FStr_Flag_Lo          ; 0
-    #FStr_Flag_Up          ; 1
-  	#FStr_Flag_Letter          ; 2
-  	#FStr_Flag_Accent          ; 3
-   	#FStr_Flag_Dec             ; 4
-  	#FStr_Flag_Bin             ; 5
-  	#FStr_Flag_Hex             ; 6
-  	#FStr_Flag_Visible         ; 7
+  EnumerationBinary eCharTypeFlags      ; Character classification Flags
+    #FStr_Flag_Lo           ; 0
+    #FStr_Flag_Up           ; 1
+  	#FStr_Flag_Letter       ; 2
+  	#FStr_Flag_Accent       ; 3
+   	#FStr_Flag_Dec          ; 4
+  	#FStr_Flag_Bin          ; 5
+  	#FStr_Flag_Hex          ; 6
+  	#FStr_Flag_Visible      ; 7
   
-  	#FStr_Flag_Numeric         ; 8
-  	#FStr_Flag_Math            ; 9
-  	#FStr_Flag_Punctuation     ; 10
-  	#FStr_Flag_SpecialChar     ; 11
-   	#FStr_Flag_Control         ; 12
-  	#FStr_Flag_13         ; 13
-  	#FStr_Flag_14         ; 14
-  	#FStr_Flag_15         ; 15
+  	#FStr_Flag_Numeric      ; 8
+  	#FStr_Flag_Math         ; 9
+  	#FStr_Flag_Punctuation  ; 10
+  	#FStr_Flag_SpecialChar  ; 11
+   	#FStr_Flag_Control      ; 12
+  	#FStr_Flag_SpaceTab     ; 13    ; Tab or Space
+  	#FStr_Flag_Ascii        ; 14    ; Ascii-Char   <=255
+  	#FStr_Flag_UniCode      ; 15    ; UniCode-Char >=256
   
-  	#FStr_Flag_GermanExt       ; 16
-  	#FStr_Flag_FrenchExt       ; 17
-  	#FStr_Flag_SpanishExt      ; 18
-  	#FStr_Flag_19         ; 19
-  	#FStr_Flag_20         ; 20
-  	#FStr_Flag_21         ; 21
-  	#FStr_Flag_22         ; 22
-  	#FStr_Flag_23         ; 23
+  	#FStr_Flag_GermanExt    ; 16
+  	#FStr_Flag_FrenchExt    ; 17
+  	#FStr_Flag_SpanishExt   ; 18
+  	#FStr_Flag_19           ; 19
+  	#FStr_Flag_20           ; 20
+  	#FStr_Flag_21           ; 21
+  	#FStr_Flag_22           ; 22
+  	#FStr_Flag_23           ; 23
   
-  	#FStr_Flag_User_0          ; 24
-  	#FStr_Flag_User_1          ; 25
-  	#FStr_Flag_User_2          ; 26
-  	#FStr_Flag_User_3          ; 27
-  	#FStr_Flag_User_4          ; 28
-  	#FStr_Flag_User_5          ; 29
-  	#FStr_Flag_User_6          ; 30
-  	#FStr_Flag_User_7          ; 31
+  	#FStr_Flag_User_0       ; 24
+  	#FStr_Flag_User_1       ; 25
+  	#FStr_Flag_User_2       ; 26
+  	#FStr_Flag_User_3       ; 27
+  	#FStr_Flag_User_4       ; 28
+  	#FStr_Flag_User_5       ; 29
+  	#FStr_Flag_User_6       ; 30
+  	#FStr_Flag_User_7       ; 31
   EndEnumeration  
   
   ; --------------------------------------------------
@@ -185,6 +185,16 @@ DeclareModule FStr
     Bool(FChr::FlagTable(CharValue & $FF) & FChr::#FStr_Dec) * Bool(CharValue<255))
   EndMacro
   
+  CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm) And #PB_Compiler_64Bit And #PB_Compiler_Unicode
+    Macro LenFast(String)
+      LenSSE(@String)  
+    EndMacro
+  CompilerElse
+    Macro LenFast(String)
+      Len(String)
+    EndMacro     
+  CompilerEndIf  
+
   ;- --------------------------------------------------
   ;- Declare Public
   ; -------------------------------------------------- 
@@ -201,12 +211,16 @@ DeclareModule FStr
   Declare.s GetVisibleAsciiCharset()
   
   Declare.s GetSpecialCharName(Char.c)
-  Declare.i SetUserFlag(Char.c, UserFlag=#FStr_Flag_User_0, FlagValue=#True)
-  
-  Declare.i SetUserFlag(Char.c, UserFlag=#FStr_Flag_User_0, FlagValue=#True)
+  Declare.i SetCharUserFlag(Char.c, UserFlag=#FStr_Flag_User_7, FlagValue=#True)
   
   Prototype.i CharHistogram(String$, Array hist(1), Mode=#PB_Ascii, *outLength.Integer=0)
   Global CharHistogram.CharHistogram
+  
+  Declare.i LenSSE(*String)
+  
+  Prototype.i ToggleStringEndianessF(String$, *outLength.Integer=0)
+  Global ToggleStringEndianessF.ToggleStringEndianessF
+  Prototype.s ToggleStringEndianess(String$, *outLength.Integer=0)
   
   ; -----------------------
   ; --- LCase and UCase ---
@@ -364,6 +378,15 @@ Module FStr
     Protected.l ret
     
     ; --------------------------------------------------
+    ;   Ascii of Unicode
+    ; --------------------------------------------------       
+    If Char <=255
+      ret | #FStr_Flag_Ascii  
+    Else
+      ret | #FStr_Flag_Unicode        
+    EndIf
+    
+    ; --------------------------------------------------
     ;   CharLo/CharUp
     ; --------------------------------------------------       
     If Char <> 255 ; LCase(Chr(255)) = 376 -> this is unicode not ASCII
@@ -468,7 +491,15 @@ Module FStr
       Case '§'
         ret | #FStr_Flag_SpecialChar      
     EndSelect
-     
+    
+    ; --------------------------------------------------  
+    ;   TAB or SPACE
+    ; --------------------------------------------------    
+    Select Char
+      Case 9, 32
+        ret | #FStr_Flag_SpaceTab
+    EndSelect
+    
     ; --------------------------------------------------
     ;   ControlChar
     ; --------------------------------------------------
@@ -703,7 +734,7 @@ Module FStr
     ProcedureReturn n      
   EndProcedure
   
-  Procedure.i SetUserFlag(Char.c, UserFlag=#FStr_Flag_User_7, FlagValue=#True)
+  Procedure.i SetCharUserFlag(Char.c, UserFlag=#FStr_Flag_User_7, FlagValue=#True)
     Protected ret
     
     If UserFlag >= #FStr_Flag_User_0 Or UserFlag = #FStr_Flag_User_7 ; #FStr_User_7 might be negative, if passed as .l 
@@ -772,7 +803,133 @@ Module FStr
     ProcedureReturn ret
   EndProcedure
   CharHistogram = @_CharHistogram()     ; Bind ProcedureAddress to the PrototypeHandler
+  
+  Procedure.i LenSSE(*String)
+  ; ============================================================================
+  ; NAME: LenSSE
+  ; DESC: Length in number of characters of 2-Byte Char Strings
+  ; DESC: Use SSE PCmpIStrI operation. This is aprox. 3 times faster than PB Len()
+  ; DESC: This functions needs CPU SSE4.2 support, introduced 2012.
+  ; DESC: Better do not use it direct. Use it with Macro LenFast(String)
+  ; VAR(*String): Pointer to String
+  ; RET.i: Number of Characters
+  ; ============================================================================
+     
+    DisableDebugger
+   
+    ; **********************************************************************
+    CompilerIf #PbFwCfg_Module_Compile=#PbFwCfg_Module_Compile_ASM64 And #PB_Compiler_Unicode
+    ; **********************************************************************
+	            
+      ; IMM8[1:0]	= 00b
+    	;	Src data is unsigned bytes(16 packed unsigned bytes)
+    	; IMM8[3:2]	= 10b
+    	; 	We are using Equal Each aggregation
+    	; IMM8[5:4]	= 00b
+    	;	Positive Polarity, IntRes2	= IntRes1
+    	; IMM8[6]	= 0b
+    	;	ECX contains the least significant set bit in IntRes2
+      
+      ; XMM0 XMM1 XMM2 XMM3 XMM4
+      ; XMM1 = [String1] : XMM2=[String2] : XMM3=WideCharMask
+                           
+      !XOR RDX, RDX
+      !XOR RCX, RCX
+      !MOV RAX, [p.p_String] 
+      !Test RAX, RAX            ; If *String = 0
+      !JZ .Exit                 ; Exit -> Retrun 0    
 
+      !@@:
+      !TEST RAX, 0Fh            ; Test for 16Byte align
+      !JZ @f                    ; If NOT aligned
+        !MOV DX, WORD [RAX]     ;   process Char by Char until aligned
+        !TEST RDX, RDX          ;   Check for EndOfString
+        !JZ .Return             ;   Break if EndOfString
+        !INC RAX                ;   Pointer to NextChar
+      !JMP @b                   ; Jump back to @@   
+      !@@:                      ; from here we have 16Byte aligned address
+      
+      !PXOR XMM0, XMM0          ; XMM0 = 0
+      !SUB RAX, 16              ; *String -16
+      
+      !@@:  
+        !ADD RAX, 16            ; *String +16
+        !PCMPISTRI XMM0, [RAX], 0001001b  ; EQUAL_EACH WORD
+      !JNZ @b
+      
+      ; RCX will contain the offset from RAX where the first null
+    	; terminating character was found.
+      !SHL RCX, 1               ; Word to Byte
+      !ADD RAX, RCX
+      
+      !.Return:
+      !SUB RAX, [p.p_String]
+      !SHR RAX, 1               ; ByteCounter to Word
+      !.Exit:
+      ProcedureReturn
+                
+    ; **********************************************************************
+    ; CompilerElseIf #PbFwCfg_Module_Compile=#PbFwCfg_Module_Compile_C And #PB_Compiler_Unicode  ; C-Backend
+    ; **********************************************************************
+  
+    ; **********************************************************************
+    CompilerElse                                 ; Classic Version
+    ; **********************************************************************                
+      ProcedureReturn MemoryStringLength(*String)               
+    CompilerEndIf   
+    
+    EnableDebugger   
+  EndProcedure
+  
+  Procedure.i _ToggleStringEndianessF(*String, *outLength.Integer=0)
+  ; ============================================================================
+  ; NAME: ToggleStringEndianessF
+  ; DESC: !PointerVersion! use it as ProtoType ToggleStringEndianessF()
+  ; DESC: Toggles the endianess of a 2Byte Character String between 
+  ; DESC: BigEndian/Motorola <=> LittleEndian/Intel. 
+  ; DESC: Each call changes the Endianess directly in memory.
+  ; VAR(*String) : Pointer to the String
+  ; VAR(*outLength.Integer): Optional a Pointer To an Int To receive the Length
+  ; RET.i : *String 
+  ; ============================================================================
+
+   CompilerSelect #PbFwCfg_Module_Compile
+	    
+    ; **********************************************************************
+    ; CompilerCase #PbFwCfg_Module_Compile_ASM64      ; ASM x64 Version             
+	  ; **********************************************************************    
+               
+    ; **********************************************************************
+    ; CompilerCase #PbFwCfg_Module_Compile_C        ; C-Backend
+    ; **********************************************************************
+
+    ; **********************************************************************
+    CompilerDefault                                 ; Classic Version
+    ; **********************************************************************
+   
+      ; SingleChar Version
+      Protected *pRead.PX::pChar = *String 
+      While *pRead\u 
+        ; Swap *pRead\aa[0], *pRead\aa[1]
+        *pRead\u = PX::BSwap16(*pRead\u)
+        *pRead + 2   ; do not use SizeOf(Character) otherwise you can't use function in older Ascii String Versions of PB
+      Wend
+      
+      If *outLength       ; If Return Length
+        *outLength\i = (*pRead - *String)/SizeOf(Character)
+      EndIf
+      
+      ProcedureReturn *String
+     
+    CompilerEndSelect   
+  EndProcedure
+  ToggleStringEndianessF=@_ToggleStringEndianessF()
+  
+  Procedure.s ToggleStringEndianess(String$, *outLength.Integer=0)
+    _ToggleStringEndianessF(@String$, *outLength)
+    ProcedureReturn String$
+  EndProcedure
+  
   ;- ----------------------------------------------------------------------
   ;- LCase and UCase
   ;- ----------------------------------------------------------------------
@@ -784,15 +941,12 @@ Module FStr
   ; VAR(Char.c) : The Character
   ; RET.c : UCase(Char)
   ; ============================================================================
-   If Char <255
+    If Char <255
       If FlagTable(Char) & #FStr_Flag_Up
         ProcedureReturn Char + 32
-      Else
-        ProcedureReturn Char      
       EndIf      
-    Else
-      ProcedureReturn Char
     EndIf    
+    ProcedureReturn Char    
   EndProcedure
   
   Procedure.c UCaseChar255(Char.c)    
@@ -805,12 +959,9 @@ Module FStr
     If Char <255
       If FlagTable(Char) & #FStr_Flag_Lo
         ProcedureReturn Char - 32
-      Else
-        ProcedureReturn Char      
       EndIf      
-    Else
-      ProcedureReturn Char
-    EndIf    
+    EndIf
+    ProcedureReturn Char    
   EndProcedure
   
   Procedure _LCase255F(*String, *outLength.Integer=0)
@@ -1923,8 +2074,7 @@ Module FStr
       ProcedureReturn
     EndIf
     
-  	While *pRead\c     ; While Not NullChar
-  	  
+  	While *pRead\c     ; While Not NullChar  	  
   	  If *pRead <= 255
   	    If FlagTable(*pRead\c) & Flags
   	      mac_RemoveChar_KeepChar()
@@ -1974,8 +2124,7 @@ Module FStr
       ProcedureReturn
     EndIf
     
-  	While *pRead\c     ; While Not NullChar
-  	  
+  	While *pRead\c     ; While Not NullChar  	  
   	  If *pRead <= 255
   	    If Not(FlagTable(*pRead\c) & Flags)
   	      mac_RemoveChar_KeepChar()
@@ -2062,8 +2211,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 2049
-; FirstLine = 1992
-; Folding = --------
+; CursorPosition = 153
+; FirstLine = 153
+; Folding = ----------
 ; DPIAware
 ; CPU = 5
