@@ -14,6 +14,7 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2025/08/14 S.Maag : added #PbFw_Present constant for easy StandAlone use of Module
 ; 2025/08/12 S.Maag : updated SplitString Array/List functions with DQuote and changed
 ;                     the way of implementation. 
 ; 2025/08/08 S.Maag : added new TextBetween(), TextBetweenList(), TextBetweenArray()
@@ -55,7 +56,11 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
-XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::   FrameWork control Module
+#PbFw_Present = #False
+
+CompilerIf #PbFw_Present
+  XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::   FrameWork control Module
+CompilerEndIf
 
 DeclareModule PX
   ;- ----------------------------------------------------------------------
@@ -1049,7 +1054,10 @@ EndDeclareModule
 
 Module PX
   EnableExplicit
-  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+  
+  CompilerIf #PbFw_Present
+    PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+  CompilerEndIf 
   
   #_MicroBase = 1e6     ;     1.000.000 = 1MHz
   #_NanoBase  = 1e9     ; 1.000.000.000 = 1GHz
@@ -2704,9 +2712,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 634
-; FirstLine = 612
+; CursorPosition = 16
 ; Folding = ----------------------
-; Markers = 1156,2562
+; Markers = 1164,2570
 ; Optimizer
 ; CPU = 5
