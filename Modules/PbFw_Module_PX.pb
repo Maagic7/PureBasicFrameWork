@@ -8,12 +8,15 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2025/01/07
-; VERSION  :  0.53 untested Developer Version
+; VERSION  :  0.54 untested Developer Version
 ; COMPILER :  I hope all versions!
 ; OS       :  all
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2025/09/02 S.Maag : integrated IIF.pbi into PX-Module 
+; 2025/08/14 S.Maag : changed pAny and pChar: removed the doubles \cc \aa..
+;                     because PB support \c if \c[0] is defined. So no need to have double defintions
 ; 2025/08/14 S.Maag : added #PbFw_Present constant for easy StandAlone use of Module
 ; 2025/08/12 S.Maag : updated SplitString Array/List functions with DQuote and changed
 ;                     the way of implementation. 
@@ -80,47 +83,31 @@ DeclareModule PX
   ; Any or Universal Pointer (see PurePasic IDE Common.pb Structrue PTR)
   ; I modified it a little to have both single var access and var array access 
   ; The orignal PTR-Struct only has var array access (a.a[0] ... ).
-  ; \a \b \c ... is the single var access and \aa[0] \bb[0] ... ist the multiple
+  ; \a \b \c ... is the single var access and \a[0] \b[0] ... ist the multiple
   ; access like an Array
   Structure pAny         ; ATTENTION! Only use as Pointer Strukture! Do not define as a normal Var!
-    StructureUnion
-      ; single access
-      a.a       ; ASCII   : 8 Bit unsigned  [0..255] 
-      b.b       ; BYTE    : 8 Bit signed    [-128..127]
-      c.c       ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
-      w.w       ; WORD    : 2 Byte signed   [-32768..32767]
-      u.u       ; UNICODE : 2 Byte unsigned [0..65535]
-      l.l       ; LONG    : 4 Byte signed   [-2147483648..2147483647]
-      f.f       ; FLOAT   : 4 Byte
-      q.q       ; QUAD    : 8 Byte signed   [-9223372036854775808..9223372036854775807]
-      d.d       ; DOUBLE  : 8 Byte float    
-      i.i       ; INTEGER : 4 or 8 Byte INT, depending on System
-      ;*p.pAny   ; Pointer to Any (for C-like **, PointerPointer use) !VERY DANGEROUS!
-      
-      ; multiple access like an Array
-      aa.a[0]   ; ASCII   : 8 Bit unsigned  [0..255] 
-      bb.b[0]   ; BYTE    : 8 Bit signed    [-128..127]
-      cc.c[0]   ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
-      ww.w[0]   ; WORD    : 2 Byte signed   [-32768..32767]
-      uu.u[0]   ; UNICODE : 2 Byte unsigned [0..65535]
-      ll.l[0]   ; LONG    : 4 Byte signed   [-2147483648..2147483647]
-      ff.f[0]   ; FLOAT   : 4 Byte
-      qq.q[0]   ; QUAD    : 8 Byte signed   [-9223372036854775808..9223372036854775807]
-      dd.d[0]   ; DOUBLE  : 8 Byte float    
-      ii.i[0]   ; INTEGER : 4 or 8 Byte INT, depending on System
-      ; *pp.pAny[0]; Pointer to Any (for C-like **, PointerPointer use) !VERY VERY DANGEROUS!
+    StructureUnion      
+      ; multiple and single access like an Array
+      a.a[0]   ; ASCII   : 8 Bit unsigned  [0..255] 
+      b.b[0]   ; BYTE    : 8 Bit signed    [-128..127]
+      c.c[0]   ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
+      w.w[0]   ; WORD    : 2 Byte signed   [-32768..32767]
+      u.u[0]   ; UNICODE : 2 Byte unsigned [0..65535]
+      l.l[0]   ; LONG    : 4 Byte signed   [-2147483648..2147483647]
+      f.f[0]   ; FLOAT   : 4 Byte
+      q.q[0]   ; QUAD    : 8 Byte signed   [-9223372036854775808..9223372036854775807]
+      d.d[0]   ; DOUBLE  : 8 Byte float    
+      i.i[0]   ; INTEGER : 4 or 8 Byte INT, depending on System
+      *p.pAny[0]; Pointer to Any (for C-like **, PointerPointer use) !VERY VERY DANGEROUS!
     EndStructureUnion
   EndStructure
   
   ; An adapted version of pAny especally for character use
   Structure pChar   ; ATTENTION! Only use as Pointer Strukture! Do not define as a normal Var!
     StructureUnion
-      a.a         ; ASCII   : 8 Bit unsigned  [0..255] 
-      c.c         ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
-      u.u         ; UNICODE : 2 Byte unsigned [0..65535]
-      aa.a[0]     ; ASCII   : 8 Bit unsigned  [0..255] 
-      cc.c[0]     ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
-      uu.u[0]     ; UNICODE : 2 Byte unsigned [0..65535]
+      a.a[0]     ; ASCII   : 8 Bit unsigned  [0..255] 
+      c.c[0]     ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
+      u.u[0]     ; UNICODE : 2 Byte unsigned [0..65535]
     EndStructureUnion
   EndStructure 
   
@@ -266,6 +253,19 @@ DeclareModule PX
   ;- ----------------------------------------------------------------------
   ;- Macros for Bit/Byte operations
   ;- ----------------------------------------------------------------------
+  
+  ; this is the absolut correct verion in all cases
+  Macro ToggleBool(value)
+    Bool(value=0)
+  EndMacro
+  
+  ; This the fast version (a simple XOR) but if you start with an even value like 2,4,6..
+  ; the first Toggle delivers #True and it should be #False.
+  ; And in many cases PB needs the Bool statement to accept it as a Bool in the Code
+  ; But especally in C-Backend the XOR is nearly 3x faster. In ASM aprox 1.5x
+  Macro ToggleBoolFast(value)
+    ((value)!1)
+  EndMacro
 
   ; Get the LoByte 
   ; use it : result = GetLoByte(x)
@@ -281,19 +281,19 @@ DeclareModule PX
   ; Get the HiByte
   ; use it : result = GetHiByte(x)
   Macro GetHiByte(WordValue)
-    (((WordValue)>>8) & $FF)
+    (WordValue>>8 & $FF)
   EndMacro  
   
   ; Set the HiByte of a Word based value
   ; use it : result = SetHiByte(x, [0..255])
   Macro SetHiByte(WordValue, NewHiByte)
-    ((WordValue & ~$FF00) | ((NewHiByte & $FF)<<8))  
+    ((NewHiByte<<8 & $FF) | (WordValue & $FF))  
   EndMacro
   
   ; Swaps the 2 Bytes of a 16Bit value
   ; use it : result = BSwap16(x, [0..$FFFF])
   Macro BSwap16(WordValue)
-    ((WordValue & $FF)<<8) + ((WordValue >>8)& $FF)  
+    ((WordValue<<8 | WordValue>>8) & $FFFF)
   EndMacro
   
   ; Get the Bit specified by BitNo from value
@@ -318,7 +318,7 @@ DeclareModule PX
   ; Toggle the Bit specified by BitNo in value
   ; use it : result = ToggleBit(value, [0..31/63])
   Macro ToggleBit(value, BitNo)
-    (value ! 1<<BitNo)  
+    (value!(1<<BitNo))  
   EndMacro
   
   ; Get the Sign Bit (highest BitNo) from value
@@ -342,7 +342,7 @@ DeclareModule PX
  ; Toggle the Sign Bit (highest BitNo) in value
  ; use it : result = ToggleSingBit(value)
   Macro ToggleSingBit(value)
-    (value ! 1<<PX::#PX_MaxBitNo)  
+    (value!(1<<PX::#PX_MaxBitNo))  
   EndMacro
   
   ; Count the no of HiBits in a Byte value
@@ -456,16 +456,17 @@ DeclareModule PX
  
   ; especally to compare FloatingPoint values. But works on all types.
   ; use it: result = IsEqual(v1, v2, delta)
-  ;         result = IsEqual(v1, v2, a-b)             ; use with delta as Expression
+  ;         result = IsEqual(v1, v2, a-b)             ; use with delta as Expression 
   Macro IsEqual(v1, v2, delta)
-    Bool(v1 <= (v2 +delta)) And (v1 >= (v2 -delta))
+    Bool(Abs(v1 - v2) <= delta)
   EndMacro
+  ; Bool(v1 <= (v2 +delta)) And (v1 >= (v2 -delta))
   
   ; (MinValue <= value <= MaxValue)
   ; use it: result = IsInRange(value, MinValue, MaxValue)
   ;         result = IsInRange(value, a-b, a+b)       ; use with MinValue, MaxValue as Expression
   Macro IsInRange(value, MinValue, MaxValue)
-    Bool( (value)>=(MinValue) And (value)<=(MaxValue) )  
+    Bool((value)>=(MinValue) And (value)<=(MaxValue))  
   EndMacro 
   
   ; saves Min and Max values to varMin, varMax
@@ -480,14 +481,47 @@ DeclareModule PX
     EndIf
   EndMacro  
   
+  ;- ----------------------------------------------------------------------
+  ;- Macros for IIF()
+  ;- ----------------------------------------------------------------------
+ 
   ; similar to the VB IIf Function
   ; use it : IIf(varReturn, A>1000, "large", "small")
-  Macro IIf(varReturn, expression, valTrue, valFalse)
-    If Bool(expression)
+  Macro IIF(varReturn, _Expression_, valTrue, valFalse)
+    If Bool(_Expression_)
       varReturn = valTrue
     Else
       varReturn = valFalse  
     EndIf
+  EndMacro
+  
+  ;IIFe without Return -> execute TruePart or FalsePart
+  ; use it: IIF(a=b, c+d, c*d)
+  ;         IIF(a=b, x=1, x=0)
+  Macro IIFe(_Expression_, _TrueExpression_, _FalseExpression_)
+    If _Expression_
+      _TrueExpression_
+    Else
+      _FalseExpression_
+    EndIf   
+  EndMacro
+      
+  ; IIFn with Numeric retrurn 
+  ; use it: numVar = IIF(a=b, 1, 2)
+  Macro IIFn(_Expression_, _TruePart_, _FalsePart_)
+    (Bool(_Expression_) * _TruePart_ + Bool(Not(_Expression_)) * _FalsePart_)    
+  EndMacro
+    
+  ; IIFs with String return from True/False String 
+  ; use it: IIFs(A>1000, large, small)
+  Macro IIFs(_Expression_, _TrueString_, _FalseString_)
+    PeekS(@_TrueString_, -Bool(_Expression_)) + PeekS(@_FalseString_, -Bool(Not(_Expression_)))
+  EndMacro
+  
+ ; IIFsf with String return from a True/False StringField
+  ; use it: IIFsf(A>1000, "large|small")
+  Macro IIFsf(_Expression_, _TrueFalseStrField_, sepStr="|")
+    StringField(_TrueFalseStrField_, 2-Bool(_Expression_), sepStr)
   EndMacro
 
   ;- ----------------------------------------------------------------------
@@ -701,25 +735,25 @@ DeclareModule PX
   ; Check if Char is SPACE or TAB : Case '9', '32'
   ; use it: result = IsSpaceTabChar(MyChar)
   Macro IsSpaceTabChar(CharValue)
-    Bool(CharValue =9 Or CharValue =32)
+    Bool(CharValue=9 Or CharValue=32)
   EndMacro
   
   ; Check if Char is EndOfLineChar LF or CR : Case '10', '13'
   ; use it: result = IsEolChar(MyChar)
   Macro IsEolChar(CharValue)
-    Bool(CharValue =10 Or CharValue =13)
+    Bool(CharValue=10 Or CharValue=13)
   EndMacro  
   
   ; Check if Char is plus '+' or minus '-'
   ; use it: result = IsPlusMinusChar(MyChar)
   Macro IsPlusMinusChar(CharValue)
-    Bool(CharValue ='+' Or CharValue ='-')
+    Bool(CharValue='+' Or CharValue='-')
   EndMacro  
 
   ; Check if Char is multiplication '*' or division '/'
   ; use it: result = IsMulDivChar(MyChar)
   Macro IsMulDivChar(CharValue)
-    Bool(CharValue ='*' Or CharValue ='/')
+    Bool(CharValue='*' Or CharValue='/')
   EndMacro  
   
   ; Check if Char is a letter : Case 'A' To 'Z', 'a' To 'z'
@@ -728,6 +762,18 @@ DeclareModule PX
     Bool( (CharValue >= 'A' And CharValue <= 'Z') Or (CharValue >= 'a' And CharValue <= 'z'))  
   EndMacro
   
+  ; Combines 2 Unicode Chars to a Double Char Value .l
+  ; use it: result = MakeDoubleChar(13,10)  ; for CRLF 
+  Macro MakeDblChar(CharValue1, CharValue2)
+    (CharValue2<<16 | CharValue1)      
+  EndMacro
+  
+  ; Combines 4 Unicode Chars to a Quad Char Value .q
+  ; use it: result = MakeQuadChar('a','b', 'c', 'd')  ; for 'abcd' 
+  Macro MakeQChar(CharValue1, CharValue2, CharValue3, CharValue4)
+    (CharValue4<<48 | CharValue3<<32 | CharValue2<<16 | CharValue1)  
+  EndMacro
+     
   ;- ----------------------------------------------------------------------
   ;- Macros for COLOR operations
   ;- ----------------------------------------------------------------------
@@ -2007,11 +2053,13 @@ Module PX
   ; DESC: Gets the Text between two String elements Left$ and Right$
   ; DESC: as an Array. It can be used to get get the text between '<' '>'
   ; DESC: in html files. And for many other use. 
-  ; VAR(List lstResults()) : The List with the found Strings
+  ; VAR(Array Out.s(1)) : The Array with the found Strings
   ; VAR(*String) : Pointer to String
   ; VAR(Left$) : The left side like "("
   ; VAR(Right$) : The right side like ")"
-  ; VAR(Array Out.s(1)) : The Array with the found Strings
+  ; VAR(ArrayRedimStep) : How may entries are added to the String each ReDim
+  ;                       if you know the exact No of Substrings before, use it here!
+  ;                       this prevents from ReDim.
   ; RET.i : The number of found Strings (it is identical with the ListSize)
   ; ============================================================================
     Protected posL, posR        ; Character postion of found Char 
@@ -2101,7 +2149,7 @@ Module PX
          
     If *Separator
       ; lsep = Len(Separator)
-      While *pSep\cc[lsep]    ; Trick to get length with indexed pChar
+      While *pSep\c[lsep]    ; Trick to get length with indexed pChar
         lsep + 1
       Wend
     EndIf
@@ -2133,15 +2181,15 @@ Module PX
               
             Case '"'  ; DoubleQuote
               ; move *pRead to 2nd " to ignore Text in Quotes
-              *pRead + SizeOf(Character)  ; Char after "
+              INCC(*pRead)  ; Char after "
               While *pRead\c <> '"'
-                *pRead + SizeOf(Character)
                 If *pRead\c = 0
                   Break 2
                 EndIf
+                INCC(*pRead)
               Wend             
           EndSelect
-          *pRead + SizeOf(Character)
+          INCC(*pRead)
         Wend        
       ; ----------------------------------------------------------------------
       Else    ; do not check for Text in Quotes
@@ -2151,7 +2199,7 @@ Module PX
           If *pRead\c = 0    ; Break if EndOfString
             Break 
           EndIf   
-          *pRead + SizeOf(Character)
+          INCC(*pRead)
         Wend
         
       EndIf
@@ -2165,8 +2213,9 @@ Module PX
           xDo = #True
           ; Check if all Characters matching?
           For I = 1 To lsep-1 ; we can start at 2nd char because 1st char is steill checked for equal
-            If *pRead\cc[I] <> *pSep\cc[I]
+            If *pRead\c[I] <> *pSep\c[I]
               xDo = #False  ; Character do not Match -> Separator not found!
+              Break
             EndIf
           Next
         EndIf
@@ -2234,7 +2283,7 @@ Module PX
    
     If *Separator
       ; lsep = Len(Separator)
-      While *pSep\cc[lsep]    ; Trick to get length with indexed pChar
+      While *pSep\c[lsep]    ; Trick to get length with indexed pChar
         lsep + 1
       Wend
     EndIf
@@ -2244,7 +2293,7 @@ Module PX
       Out() = PeekS(*String)
       ProcedureReturn 1
     EndIf
-           
+ 
     Repeat      
       ; ----------------------------------------------------------------------
       If DQuote  ; skip qutoed Text for search Separator -> do not split in quotes
@@ -2257,15 +2306,15 @@ Module PX
               
             Case '"'  ; DoubleQuote
               ; move *pRead to 2nd " to ignore Text in Quotes
-              *pRead + SizeOf(Character)  ; Char after "
+              INCC(*pRead)      ; Char after "
               While *pRead\c <> '"'
-                *pRead + SizeOf(Character)
-                If *pRead\c = 0
+                 If *pRead\c = 0
                   Break 2
                 EndIf
-              Wend             
+               INCC(*pRead)  
+             Wend             
           EndSelect
-          *pRead + SizeOf(Character)
+          INCC(*pRead)
         Wend        
       ; ----------------------------------------------------------------------
       Else    ; do not check for Text in Quotes
@@ -2275,7 +2324,7 @@ Module PX
           If *pRead\c = 0    ; Break if EndOfString
             Break 
           EndIf   
-          *pRead + SizeOf(Character)
+          INCC(*pRead)
         Wend
         
       EndIf
@@ -2289,8 +2338,9 @@ Module PX
           xDo = #True
           ; Check if all Characters matching?
           For I = 1 To lsep-1 ; we can start at 2nd char because 1st char is steill checked for equal
-            If *pRead\cc[I] <> *pSep\cc[I]
+            If *pRead\c[I] <> *pSep\c[I]
               xDo = #False  ; Character do not Match -> Separator not found!
+              Break
             EndIf
           Next
         EndIf
@@ -2661,7 +2711,7 @@ CompilerIf #PB_Compiler_IsMainFile
     
       Select \c
         Case 'a' 
-          If IsSpaceTabChar(\cc[1])  ; following is Space or Tab
+          If IsSpaceTabChar(\c[1])  ; following is Space or Tab
             \c = 'A'
           EndIf
           
@@ -2669,9 +2719,9 @@ CompilerIf #PB_Compiler_IsMainFile
           \c = 't'    ; overwerite 'T' with 't'
           
         Case '7'
-          ; !!! be very carefull with \cc[-x]  \cc[x]. Be sure to point to valid memory!
+          ; !!! be very carefull with \c[-x]  \c[x]. Be sure to point to valid memory!
           If cnt > 1  ; we are at least at 2nd char, so we can go 1 back
-            If \cc[-1] = '9' And \cc[1] = '9' ; previous Char and next Char = '9'
+            If \c[-1] = '9' And \c[1] = '9' ; previous Char and next Char = '9'
               \c = '0'    ; overwrite '7' with '0'
             EndIf
           EndIf
@@ -2708,9 +2758,9 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 1050
-; FirstLine = 1010
-; Folding = ----------------------
-; Markers = 1160,2566
+; CursorPosition = 88
+; FirstLine = 69
+; Folding = -----------------------
+; Markers = 1206,2616
 ; Optimizer
 ; CPU = 5

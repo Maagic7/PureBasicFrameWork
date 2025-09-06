@@ -140,18 +140,21 @@ EndDeclareModule
 Module BIT
   
   EnableExplicit
-  ;- ----------------------------------------------------------------------
-  ;- PbFw Module local configurations
-  ;  ----------------------------------------------------------------------
-  ; This constants must have same Name in all Modules
-  
-  ; ATTENTION: with the PbFw::CONST Macro the PB-IDE Intellisense do not registrate the ConstantName
-  
-  ; #PbFwCfg_Module_CheckPointerException = #True     ; On/Off PoninterExeption for this Module
-  PbFw::CONST(PbFwCfg_Module_CheckPointerException, #True)
-  
-  ; #PbFwCfg_Module_ASM_Enable = #True                ; On/Off Assembler Versions when compling in ASM Backend
-  PbFw::CONST(PbFwCfg_Module_ASM_Enable, #True)
+  CompilerIf Defined(PbFw, #PB_Module)
+    PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+    ;- ----------------------------------------------------------------------
+    ;- PbFw Module local configurations
+    ;  ----------------------------------------------------------------------
+    ; This constants must have same Name in all Modules
+    
+    ; ATTENTION: with the PbFw::CONST Macro the PB-IDE Intellisense do not registrate the ConstantName
+    
+    ; #PbFwCfg_Module_CheckPointerException = #True     ; On/Off PoninterExeption for this Module
+    PbFw::CONST(PbFwCfg_Module_CheckPointerException, #True)
+    
+    ; #PbFwCfg_Module_ASM_Enable = #True                ; On/Off Assembler Versions when compling in ASM Backend
+    PbFw::CONST(PbFwCfg_Module_ASM_Enable, #True)
+  CompilerEndIf 
  
   ; -----------------------------------------------------------------------
       
@@ -267,6 +270,7 @@ Module BIT
     ProcedureReturn cnt
   EndMacro
   
+  ; https://mirror.isoc.org.il/pub/netbsd/misc/joerg/XEN3DOMU/src/src/common/lib/libc/string/popcount64.c.html
   ; Brainstorming: Code fragments from PB Forum
 ;   Procedure.i _Popcount64(x.i)
 ;     x = x - (x >> 1) &  $5555555555555555           
@@ -276,6 +280,14 @@ Module BIT
 ;     x >> 56           ; 64-8
 ;     ProcedureReturn x   
 ;   EndProcedure 
+  
+; unsigned int popcount64(unsigned long long x)
+; {
+;     x = (x & 0x5555555555555555ULL) + ((x >> 1) & 0x5555555555555555ULL);
+;     x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
+;     x = (x & 0x0F0F0F0F0F0F0F0FULL) + ((x >> 4) & 0x0F0F0F0F0F0F0F0FULL);
+;     Return (x * 0x0101010101010101ULL) >> 56;
+; }  
   
 ;   Procedure popcount9(Value.l)
 ;     Protected J.i
@@ -300,6 +312,21 @@ Module BIT
 ;     !add rax, r8
 ;     ProcedureReturn
 ;   EndProcedure
+  
+;   popcount32(uint32_t v)
+; {
+; 	unsigned int c;
+; 	v = v - ((v >> 1) & 0x55555555U);
+; 	v = (v & 0x33333333U) + ((v >> 2) & 0x33333333U);
+; 	v = (v + (v >> 4)) & 0x0f0f0f0fU;
+; 	c = (v * 0x01010101U) >> 24;
+; 	/*
+; 	 * v = (v >> 16) + v;
+; 	 * v = (v >> 8) + v;
+; 	 * c = v & 255;
+; 	 */
+; 	Return c;
+; }
   
   ;- ----------------------------------------------------------------------
   ;- Module Public Functions
@@ -480,8 +507,8 @@ Module BIT
           ; In ASM Backend it's the 2nd best after the ASM Version
           ; In C-Backend it's the best and with the ASM Version it's a head to head race. 
            With *OutBF
-             \q = (val & $1)        + ((val>>1)& $1)<<8 +  ((val>>2)& $1)<<16 + ((val>>3)& $1)<<24 +
-                 ((val>>4)& $1)<<32 + ((val>>5)& $1)<<40 + ((val>>6)& $1)<<48 + ((val>>7)& $1)<<56    
+             \q = (val &1)        + ((val>>1)&1)<<8 +  ((val>>2)&1)<<16 + ((val>>3)&1)<<24 +
+                 ((val>>4)&1)<<32 + ((val>>5)&1)<<40 + ((val>>6)&1)<<48 + ((val>>7)&1)<<56    
           EndWith
         EndIf       
         ProcedureReturn *OutBF
@@ -569,8 +596,8 @@ Module BIT
         
         !TEST  RAX, RAX             ; TEST *OutBF=0 ?
         !JZ @f                      ; JumpIfZero
-          !MOV [RAX], RCX           ; *OutBF\q[0] = RAX - loByte
-          !MOV [RAX+8], R8          ; *OutBF\q]1] = R8  - hiByte      
+          !MOV [RAX], RCX           ; *OutBF\q[0] = RAX : loByte
+          !MOV [RAX+8], R8          ; *OutBF\q]1] = R8  : hiByte      
         !@@:
         ProcedureReturn             ; RAX = *OutBF
          
@@ -580,12 +607,12 @@ Module BIT
         If *OutBF
           With *OutBF
             val = WordVal & $FF        ; lo Byte
-            \q[0] = (val & $1)        + ((val>>1)& $1)<<8  + ((val>>2)& $1)<<16 + ((val>>3)& $1)<<24 +
-                   ((val>>4)& $1)<<32 + ((val>>5)& $1)<<40 + ((val>>6)& $1)<<48 + ((val>>7)& $1)<<56    
+            \q[0] = (val &1)        + ((val>>1)&1)<<8  + ((val>>2)&1)<<16 + ((val>>3)&1)<<24 +
+                   ((val>>4)&1)<<32 + ((val>>5)&1)<<40 + ((val>>6)&1)<<48 + ((val>>7)&1)<<56    
             
             val = (WordVal >> 8) & $FF ; hi Byte
-            \q[1] = (val & $1)        + ((val>>1)& $1)<<8  + ((val>>2)& $1)<<16 + ((val>>3)& $1)<<24 +
-                   ((val>>4)& $1)<<32 + ((val>>5)& $1)<<40 + ((val>>6)& $1)<<48 + ((val>>7)& $1)<<56    
+            \q[1] = (val &1)        + ((val>>1)&1)<<8  + ((val>>2)&1)<<16 + ((val>>3)&1)<<24 +
+                   ((val>>4)&1)<<32 + ((val>>5)&1)<<40 + ((val>>6)&1)<<48 + ((val>>7)&1)<<56    
           EndWith
         EndIf
         ProcedureReturn *OutBF
@@ -677,7 +704,7 @@ Module BIT
       ; first we load the '7' to XMM-Register than Shuffle the '7' to all Bytes of XMM
       ; so we get for the lo 8 Bytes in XMM: (and the same for the 8 hi Bytes!)
       
-      ; Byte value    .. | 07 | 07 | 07 | 07 | 07 | 07 | 07 | 07 | Byte shuffled to all Bytes
+      ; Byte value       | 07 | 07 | 07 | 07 | 07 | 07 | 07 | 07 | Byte shuffled to all Bytes
       ; AND Mask         | 80 | 40 | 20 | 10 | 08 | 04 | 02 | 01 | this filters Bit 7..0
       ; ---------------------------------------------------------
       ; Result           | 00 | 00 | 00 | 00 | 00 | 04 | 02 | 01 | here we get the mask if Bit was 1
@@ -698,7 +725,7 @@ Module BIT
        
       !MOV RAX, [p.v_ShuffleMask]
       !MOVQ XMM4, RAX             ; XMM4 = ShuffleMask
-      !MOVQ XMM0, [lim]           ; XMM0 = [lim]-Mask
+      !MOVQ XMM0, [lim7]          ; XMM0 = [lim7]-Mask
       !PAND XMM4, XMM0            ; limit each Byte in ShuffleMask to 7
       
       !PAND XMM1, XMM2            ; Filter Bit[0..7] from Byte
@@ -726,8 +753,8 @@ Module BIT
       
       ; convert Byte to BitField
       With BF
-        \q= (val & $1)        + ((val>>1)& $1)<<8  + ((val>>2)& $1)<<16 + ((val>>3)& $1)<<24 +
-           ((val>>4)& $1)<<32 + ((val>>5)& $1)<<40 + ((val>>6)& $1)<<48 + ((val>>7)& $1)<<56    
+        \q= (val &1)        + ((val>>1)&1)<<8  + ((val>>2)&1)<<16 + ((val>>3)&1)<<24 +
+           ((val>>4)&1)<<32 + ((val>>5)&1)<<40 + ((val>>6)&1)<<48 + ((val>>7)&1)<<56    
       EndWith       
       
       ; convert BitField with shuffling back to a Byte value
@@ -775,15 +802,15 @@ Module BIT
       ; first we load the '7' to XMM-Register than Shuffle the '7' to all Bytes of XMM
       ; so we get for the lo 8 Bytes in XMM: (and the same for the 8 hi Bytes!)
       
-      ; Byte value    .. | 07 | 07 | 07 | 07 | 07 | 07 | 07 | 07 | Byte shuffled to all Bytes
-      ; AND Mask         | 80 | 40 | 20 | 10 | 08 | 04 | 02 | 01 | this filters Bit 7..0
+      ; Byte value    .. | 0F | 0F | 0F | 0F | 0F | 0F | 0F | 0F | Byte shuffled to all Bytes
+      ; AND Mask      .. | 80 | 40 | 20 | 10 | 08 | 04 | 02 | 01 | this filters Bit 15..0
       ; ---------------------------------------------------------
-      ; Result           | 00 | 00 | 00 | 00 | 00 | 04 | 02 | 01 | here we get the mask if Bit was 1
+      ; Result        .. | 00 | 00 | 00 | 00 | 00 | 04 | 02 | 01 | here we get the mask if Bit was 1
       ; ---------------------------------------------------------    
       ; Compare with Mask| 00 | 00 | 00 | 00 | 00 | FF | FF | FF |
-      ; AND filt         | 01 | 01 | 01 | 01 | 01 | 01 | 01 | 01 |
+      ; AND filt      .. | 01 | 01 | 01 | 01 | 01 | 01 | 01 | 01 |
       ; ---------------------------------------------------------    
-      ; Bool results     | 00 | 00 | 00 | 00 | 00 | 01 | 01 | 01 |  Thats the BitFild.a()
+      ; Bool results  .. | 00 | 00 | 00 | 00 | 00 | 01 | 01 | 01 |  Thats the BitFild.a()
       
       ; for ASM 16Bit Shuffle we have to change the 8 Byte MOVQ to 16 Byte MOVDQU (doubleQuad unaligned)
       !MOVDQU XMM2, [mask]        ; XMM2 = [mask]   ; load 16 Bytes from DataSection
@@ -797,7 +824,7 @@ Module BIT
        
       !MOV RAX, [p.p_ShuffleMask] ; RAX = *ShuffleMask
       !MOVQU XMM4, [RAX]          ; XMM4 = ShuffleMask, 16Bytes
-      !MOVQU XMM0, [lim]          ; XMM0 = [lim]-Mask
+      !MOVQU XMM0, [limF]         ; XMM0 = [limF]-Mask
       !PAND XMM4, XMM0            ; limit each Byte in ShuffleMask to 7
       
       !PAND XMM1, XMM2            ; Filter Bit[0..7] from Byte
@@ -816,7 +843,7 @@ Module BIT
 ;         ; 16 Byte Mask to be prepared for 16 Bit Shuffle too
 ;         !mask:  dq 08040201008040201h   ; mask to filter in each byte 1 Bit higher
 ;         !filt:  dq 00101010101010101h   ; Filter to creat BOOLs with value 1
-;         !lim:   dq 00707070707070707h   ; Limit Mask for ShuffleMask 
+;         !lim:   dq 00F0F0F0F0F0F0F0Fh   ; Limit Mask for ShuffleMask 
 ;       EndDataSection
     
     CompilerElse
@@ -824,31 +851,31 @@ Module BIT
       Protected BF.TBitField16, SH.TBitField16 
       Protected val 
       
-      SH\q[0] = *ShuffleMask\q[0] & $0707070707070707 ; limit all Bytes in the ShuffleMask to 7
-      SH\q[1] = *ShuffleMask\q[1] & $0707070707070707 ; limit all Bytes in the ShuffleMask to 7
+      SH\q[0] = *ShuffleMask\q[0] & $0F0F0F0F0F0F0F0F ; limit all Bytes in the ShuffleMask to F
+      SH\q[1] = *ShuffleMask\q[1] & $0F0F0F0F0F0F0F0F ; limit all Bytes in the ShuffleMask to F
       
       ; convert Byte to BitField
       With BF
            val = WordVal & $FF        ; lo Byte
-            \q[0] = (val & $1)         + ((val>>1)& $1)<<8  + ((val>>2)& $1)<<16 + ((val>>3)& $1)<<24 +
-                    ((val>>4)& $1)<<32 + ((val>>5)& $1)<<40 + ((val>>6)& $1)<<48 + ((val>>7)& $1)<<56    
+            \q[0] = (val &1)         + ((val>>1)&1)<<8  + ((val>>2)&1)<<16 + ((val>>3)&1)<<24 +
+                    ((val>>4)&1)<<32 + ((val>>5)&1)<<40 + ((val>>6)&1)<<48 + ((val>>7)&1)<<56    
             
             val = (WordVal >> 8) & $FF ; hi Byte
-            \q[1] = (val & $1)         + ((val>>1)& $1)<<8  + ((val>>2)& $1)<<16 + ((val>>3)& $1)<<24 +
-                    ((val>>4)& $1)<<32 + ((val>>5)& $1)<<40 + ((val>>6)& $1)<<48 + ((val>>7)& $1)<<56    
+            \q[1] = (val &1)         + ((val>>1)&1)<<8  + ((val>>2)&1)<<16 + ((val>>3)&1)<<24 +
+                    ((val>>4)&1)<<32 + ((val>>5)&1)<<40 + ((val>>6)&1)<<48 + ((val>>7)&1)<<56    
       EndWith       
       
       ; convert BitField with shuffling back to a Byte value
-      With BF        
+      With BF
         val = \a[ SH\a[0] ]     + \a[ SH\a[1] ]<<1  + \a[ SH\a[2] ]<<2   + \a[ SH\a[3] ]<<3 +
               \a[ SH\a[4] ]<<4  + \a[ SH\a[5] ]<<5  + \a[ SH\a[6] ]<<6   + \a[ SH\a[7] ]<<7 +
               \a[ SH\a[8] ]<<8  + \a[ SH\a[9] ]<<9  + \a[ SH\a[10] ]<<10 + \a[ SH\a[11] ]<<11 +
               \a[ SH\a[12] ]<<12+ \a[ SH\a[13] ]<<13+ \a[ SH\a[14] ]<<14 + \a[ SH\a[15] ]<<15             
-      EndWith    
+      EndWith
       
       ProcedureReturn val & $FFFF
       
-    CompilerEndIf    
+    CompilerEndIf 
   EndProcedure
   
   ;- DataSection for BitShuffle8 and BitShuffle16
@@ -858,7 +885,8 @@ Module BIT
     ; 16 Byte Mask to be prepared for 16 Bit Shuffle too
     !mask:  dq 08040201008040201h   ; mask to filter in each byte 1 Bit higher
     !filt:  dq 00101010101010101h   ; Filter to create BOOLs with value 1
-    !lim:   dq 00707070707070707h   ; Limit Mask for ShuffleMask 
+    !lim7:  dq 00707070707070707h   ; Limit Mask 7 for ShuffleMask 
+    !limF:  dq 00F0F0F0F0F0F0F0Fh   ; Limit Mask F for ShuffleMask 
     EndDataSection
   
   CompilerEndIf
@@ -1089,7 +1117,7 @@ Module BIT
         ProcedureReturn
         
       CompilerCase #PbFwCfg_Module_Compile_C
-        !return __builtin_bswap64(v_value) ;
+        !return __builtin_bswap64(v_value);
        
       CompilerDefault     ; Classic Code without ASM or C optimations       
         Protected *Swap.pSwap
@@ -1150,8 +1178,8 @@ Module BIT
         !mov [p.v_high],rdx 
         
       CompilerCase #PbFwCfg_Module_Compile_C
-        !v_high = __builtin_bswap64(v_high) 
-        !v_low  = __builtin_bswap64(v_low)
+        !v_high = __builtin_bswap64(v_high);
+        !v_low  = __builtin_bswap64(v_low);
      
       CompilerDefault     ; Classic Code without ASM or C optimations       
         Protected *Swap.pSwap
@@ -1591,8 +1619,7 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 1463
-; FirstLine = 1460
+; CursorPosition = 1198
 ; Folding = ---------
 ; Optimizer
 ; EnableXP
