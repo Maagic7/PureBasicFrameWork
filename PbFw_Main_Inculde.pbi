@@ -44,7 +44,7 @@ XIncludeFile "Modules\PbFw_Module_Complex.pb"         ; Complex::
 XIncludeFile "Modules\PbFw_Module_CPU.pb"             ; CPU::
 
 ; Purebasic Command extention Module
-XIncludeFile "Modules\PbFw_Module_PB.pb"              ; PB::
+XIncludeFile "Modules\PbFw_Module_PX.pb"              ; PX::
 
 ; FrameWork Control Module
 XIncludeFile "Modules\PbFw_Module_PbFw.pb"            ; PbFw::
@@ -90,7 +90,7 @@ XIncludeFile "Modules\PbFw_Module_STRING.pb"          ; STR::
 
 ; PureBasic Sytem Functions by MK-SOFT; 
 ; it's a kind of PureBasic Extention
-XIncludeFile "Modules\PbFw_Module_PBSystem.pb"        ; PBS::
+XIncludeFile "Modules\PbFw_Module_PbSdk.pb"           ; PbSdk::
 
 ; Module for Roman numerals
 XIncludeFile "Modules\PbFw_Module_Roman.pb"           ; ROM::
@@ -133,8 +133,8 @@ XIncludeFile "Modules\PbFw_Module_Vectord.pb"         ; VECd::
 XIncludeFile "Modules\PbFw_Module_MyToolBarStandard.pb"
 
 
-; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 37
-; FirstLine = 20
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 55
+; FirstLine = 21
 ; Optimizer
 ; CPU = 5
