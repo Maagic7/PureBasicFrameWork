@@ -49,36 +49,30 @@ DeclareModule clsText ; clsText
 EndDeclareModule
 
 Module clsText
+  
   EnableExplicit
-  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+  CompilerIf Defined(PbFw, #PB_Module)
+    PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+  CompilerEndIf 
  
-  Global Dim VTable.a(SizeOf(IClass)-1)   ; create VTable with the Size of the Interface 
+  Global Dim VTable.i(SizeOf(IClass)/SizeOf(Integer)-1) ; create VTable with the Size of the Interface 
   BaseClass::_Inherit_VTable(@VTable())   ; Inherit the Methodes of BaseClass (copy BaseClass::VTable => VTable)
  
-  ; Macro to write MethodeAdress into VTable. Use it after EndProcedure : AsMethode(MethodeName) 
-  Macro AsMethode(MethodeName)
-    PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @MethodeName()) 
-  EndMacro
-  ; use Overwrite if the MethodeName is different from ProcedureName
-  Macro Overwrite(MethodeName, ProcedureName)
-    PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @ProcedureName()) 
-  EndMacro
-
   Procedure.s Text(*This.TThis)
     ProcedureReturn  *This\Text
-  EndProcedure : AsMethode(Text)
-    
+  EndProcedure : OOP::AsMethode(Text)
+  
   Procedure Text_(*This.TThis, NewText.s)
     *This\Text = NewText  
-  EndProcedure : AsMethode(Text_)
+  EndProcedure : OOP::AsMethode(Text_)
   
   Procedure.i Font(*This.TThis)
     ProcedureReturn *This\FontID
-  EndProcedure : AsMethode(Font)
+  EndProcedure : OOP::AsMethode(Font)
 
   Procedure Font_(*This.TThis, NewFontID.i)
     *This\FontID = NewFontID
-  EndProcedure : AsMethode(Font_)
+  EndProcedure : OOP::AsMethode(Font_)
       
   Procedure New() 
   ; ======================================================================
@@ -127,8 +121,9 @@ Define *obj1.clsText::IClass = clsText::New()
 UseModule clsText
 Define *obj2.IClass = New()
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 27
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 52
+; FirstLine = 27
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

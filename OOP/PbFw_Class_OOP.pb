@@ -9,8 +9,8 @@
 ; DESC : have to fill it with the correct Procedure addresses for our
 ; DESC : Methodes.
 ; DESC : For inheritance we have to copy the BasceClass VTable into the
-; DESC : the VTable of the SubClass.
-; DESC : The VTable is handled as an Array of Byte because this can be
+; DESC : the VTable of the Derivate Class.
+; DESC : The VTable is handled as an Array of Bytesw because this can be
 ; DESC : created automatically in the correct size of the Interface.
 ; DESC : The usual Methode of VTable in the DataSection can't be used
 ; DESC : with inheritance, because at design time we do not know the
@@ -55,10 +55,11 @@ DeclareModule OOP
   EndInterface
   
   Structure TThis   ; Structure for the Instance Data
-    ; iUnknown
+    ; iUnknown {
     *VTable     ; Pointer to VirtalMethodeTable (Addresslist of Methodes declared in the Interface)
     cntRef.i    ; Object reference counter
     Mutex.i     ; Object Mutex! Only if object used by different Treads! It shows that the Object is in operation by a Thread!
+    ; }  
   EndStructure
           
   Macro mac_Procedure_Clone()
@@ -74,10 +75,24 @@ DeclareModule OOP
     EndProcedure
   EndMacro
   
-  Declare.i Release(*This.TThis)    ; make Release() Public, so it's possible to call over Interface or direct call
+  ; calculate the number of Pointer entries in the Interface.
+  ; Use this For the size of VTable.(GetNoOfInterfaceEntries(MyInterface)-1)
+  Macro GetNoOfInterfaceEntries(InterfaceName) 
+    SizeOf(InterfaceName)/SizeOf(Integer)
+  EndMacro
   
-  Declare.i _CopyVTable(*Source, *Destination, ByteSize)
+  ; Macro to write MethodeAdress into VTable. Use it after EndProcedure : OOP::AsMethode(MethodeName) 
+  Macro AsMethode(MethodeName)
+    PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @MethodeName()) 
+  EndMacro
   
+  ; use Overwrite if the MethodeName is different from ProcedureName
+  Macro Overwrite(MethodeName, ProcedureName)
+    PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @ProcedureName()) 
+  EndMacro
+
+  Declare.i Release(*This.TThis)    ; make Release() Public, so it's possible to call over Interface or direct call 
+  Declare.i _CopyVTable(*Source, *Destination, ByteSize) 
   Declare.i _Inherit_VTable(*Destination_VTable) 
   ; ======================================================================
   ; NAME: Inherit_VTable 
@@ -93,15 +108,11 @@ EndDeclareModule
 Module OOP
    
   EnableExplicit
-  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+  CompilerIf Defined(PbFw, #PB_Module)
+    PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+  CompilerEndIf 
   
-  Global Dim VTable.a(SizeOf(IClass)-1) ; create VTable with the Size of the Interface 
-
-  ; Macro to write MethodeAdress into VTable. Use it in this way: EndProcedure : AsMethode(MethodeName) 
-  Macro AsMethode(MethodeName)
-    PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @MethodeName()) 
-  EndMacro
-
+  Global Dim VTable(OOP::GetNoOfInterfaceEntries(IClass)-1) ; create VTable with the Size of the Interface 
   ; ======================================================================
   ;  Implement the Methodes of iUnknown
   ; ======================================================================
@@ -219,9 +230,9 @@ Module OOP
   
 EndModule
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 211
-; FirstLine = 65
-; Folding = 9-
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 113
+; FirstLine = 44
+; Folding = 9--
 ; Optimizer
 ; CPU = 5

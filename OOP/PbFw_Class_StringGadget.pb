@@ -57,26 +57,20 @@ DeclareModule clsStringGadget   ; String Gadget
   EndStructure
   
   Declare.i New()
-  Declare.i Inherit_VTable(*Destination_VTable) 
+  Declare.i _Inherit_VTable(*Destination_VTable) 
  
 EndDeclareModule
 
 Module clsStringGadget
-  EnableExplicit
-  PbFw::ListModule(#PB_Compiler_Module)   ; Lists the Module in the ModuleList (for statistics)
- 
-  Global Dim VTable.a(SizeOf(IClass)-1)   ; create VTable with the Size of the Interface 
-  BaseClass::Inherit_VTable(@VTable())    ; Inherit the Methodes of BaseClass (copy BaseClass::VTable => VTable)
- 
-  ; Macro to write MethodeAdress into VTable. Use it after EndProcedure : AsMethode(MethodeName) 
-  Macro AsMethode(MethodeName)
-    PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @MethodeName()) 
-  EndMacro
-  ; use Overwrite if the MethodeName is different from ProcedureName
-  Macro Overwrite(MethodeName, ProcedureName)
-    PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @ProcedureName()) 
-  EndMacro
   
+  EnableExplicit
+  CompilerIf Defined(PbFw, #PB_Module)
+    PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+  CompilerEndIf 
+ 
+  Global Dim VTable.i(OOP::GetNoOfInterfaceEntries(IClass)-1) ; create VTable with the Size of the Interface 
+  BaseClass::_Inherit_VTable(@VTable())   ; Inherit the Methodes of BaseClass (copy BaseClass::VTable => VTable)
+   
   ;- ---------------------------------------------------------------------
   ;- Public Methodes 
   ;- ---------------------------------------------------------------------
@@ -99,13 +93,13 @@ Module clsStringGadget
       EndIf
     EndIf
     ProcedureReturn oldColor
-  EndProcedure : AsMethode(Color_)
+  EndProcedure : OOP::AsMethode(Color_)
 
   Procedure.l Color(*This.TThis, Type =#PB_Gadget_BackColor)           ; Get
     If *This\init
       ProcedureReturn GetGadgetColor(*This\hPB, Type)    
     EndIf
-  EndProcedure : AsMethode(Color)
+  EndProcedure : OOP::AsMethode(Color)
   
    ; MaxInputLength is the Implementation of the StringGadgets Attribute #PB_String_MaximumLength
   Procedure MaxInputLength_(*This.TThis, NewMaxLength)
@@ -119,13 +113,13 @@ Module clsStringGadget
     If *This\init
        SetGadgetAttribute(*This\hPB, #PB_String_MaximumLength, NewMaxLength)
     EndIf    
-  EndProcedure : AsMethode(MaxInputLength_)
+  EndProcedure : OOP::AsMethode(MaxInputLength_)
 
   Procedure.i MaxInputLength(*This.TThis)
      If *This\init
        ProcedureReturn GetGadgetAttribute(*This\hPB, #PB_String_MaximumLength)
      EndIf
-  EndProcedure : AsMethode(MaxInputLength)
+  EndProcedure : OOP::AsMethode(MaxInputLength)
   
   Procedure Text_(*This.TThis, NewText$)
   ; ============================================================================
@@ -138,13 +132,13 @@ Module clsStringGadget
     If *This\init
       SetGadgetText(*This\hPB, NewText$)
     EndIf
-  EndProcedure : AsMethode(Text_)
+  EndProcedure : OOP::AsMethode(Text_)
   
   Procedure.s Text(*This.TThis)
     If *This\init
       ProcedureReturn GetGadgetText(*This\hPB)
     EndIf
-  EndProcedure : AsMethode(Text)
+  EndProcedure : OOP::AsMethode(Text)
   
   Procedure ToolTip_(*This.TThis, NewToolTip$)
   ; ============================================================================
@@ -157,7 +151,7 @@ Module clsStringGadget
     If *This\init
       GadgetToolTip(*This\hPB, NewToolTip$)
     EndIf
-  EndProcedure : AsMethode(Text_)
+  EndProcedure : OOP::AsMethode(ToolTip_)
   
   ;- ---------------------------------------------------------------------
   ;- Public Procedures 
@@ -189,7 +183,7 @@ Module clsStringGadget
     ProcedureReturn *obj
   EndProcedure
   
-  Procedure.i Inherit_VTable(*Destination_VTable) 
+  Procedure.i _Inherit_VTable(*Destination_VTable) 
   ; ======================================================================
   ; NAME: Inherit_VTable 
   ; DESC: This Procedure has to be called from the derivate class to copy
@@ -220,8 +214,9 @@ CompilerIf #PB_Compiler_IsMainFile
   DisableExplicit
 CompilerEndIf
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 60
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 65
+; FirstLine = 21
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

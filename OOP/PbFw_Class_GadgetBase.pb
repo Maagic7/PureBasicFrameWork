@@ -70,7 +70,7 @@ DeclareModule clsGadgetBase ; clsGadgetBase
     
   EndInterface
   
-  Structure TThis Extends OOP::TThis   ; Structure for the Instance Data
+  Structure TThis Extends OOP::TThis   ; Structure for the Instance Data, Extends the BaseClass
     hPB.i         ; PureBasic handle (#Gadget)
     disable.i
     hide.i      
@@ -86,21 +86,15 @@ DeclareModule clsGadgetBase ; clsGadgetBase
 EndDeclareModule
 
 Module clsGadgetBase
+  
   EnableExplicit
-  PbFw::ListModule(#PB_Compiler_Module)   ; Lists the Module in the ModuleList (for statistics)
+  CompilerIf Defined(PbFw, #PB_Module)
+    PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+  CompilerEndIf 
  
-  Global Dim VTable.a(SizeOf(IClass)-1)   ; create VTable with the Size of the Interface 
+  Global Dim VTable(OOP::GetNoOfInterfaceEntries(IClass)-1) ; create VTable with the Size of the Interface 
   BaseClass::_Inherit_VTable(@VTable())    ; Inherit the Methodes of BaseClass (copy BaseClass::VTable => VTable)
- 
-  ; Macro to write MethodeAdress into VTable. Use it after EndProcedure : AsMethode(MethodeName) 
-  Macro AsMethode(MethodeName)
-    PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @MethodeName()) 
-  EndMacro
-  ; use Overwrite if the MethodeName is different from ProcedureName
-  Macro Overwrite(MethodeName, ProcedureName)
-    PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @ProcedureName()) 
-  EndMacro
-    
+     
   ;- ---------------------------------------------------------------------
   ;- Public Methodes 
   ;- ---------------------------------------------------------------------
@@ -117,13 +111,13 @@ Module clsGadgetBase
     If *This\init
       SetGadgetData(*This\hPB, NewDataValue)  
     EndIf   
-  EndProcedure : AsMethode(DataValue_)
+  EndProcedure : OOP::AsMethode(DataValue_)
   
   Procedure.i DataValue(*This.TThis)
     If *This\init      
       ProcedureReturn GetGadgetData(*This\hPB)
     EndIf 
-  EndProcedure : AsMethode(DataValue)
+  EndProcedure : OOP::AsMethode(DataValue)
   
   Procedure Disable_(*This.TThis, disable=#False)
   ; ============================================================================
@@ -145,11 +139,11 @@ Module clsGadgetBase
         ProcedureReturn oldDisable
       EndWith
     EndIf
-  EndProcedure : AsMethode(Disable_)
+  EndProcedure : OOP::AsMethode(Disable_)
   
   Procedure.i Disable(*This.TThis)
      ProcedureReturn *This\disable
-  EndProcedure : AsMethode(Disable)
+  EndProcedure : OOP::AsMethode(Disable)
   
   Procedure Font_(*This.TThis, NewFontID)
   ; ============================================================================
@@ -165,13 +159,13 @@ Module clsGadgetBase
           SetGadgetFont(\hPB, NewFontID)
       EndWith 
     EndIf
-  EndProcedure : AsMethode(Font_)
+  EndProcedure : OOP::AsMethode(Font_)
  
   Procedure.i Font(*This.TThis)
     If *This\init
       GetGadgetFont(*This\hPB)
     EndIf
-  EndProcedure : AsMethode(Font)
+  EndProcedure : OOP::AsMethode(Font)
   
   Procedure Group_(*This.TThis, NewGroup)
   ; ============================================================================
@@ -193,13 +187,13 @@ Module clsGadgetBase
       EndWith
     EndIf   
     ProcedureReturn oldGroup
-  EndProcedure : AsMethode(Group_)
+  EndProcedure : OOP::AsMethode(Group_)
   
   Procedure.i Group(*This.TThis)
     If *This\init      
       ProcedureReturn *This\Group
     EndIf 
-  EndProcedure : AsMethode(Group)
+  EndProcedure : OOP::AsMethode(Group)
 
   Procedure.i Height(*This.TThis, Mode = #PB_Gadget_ActualSize)
   ; ============================================================================
@@ -212,7 +206,7 @@ Module clsGadgetBase
     If *This\init
       ProcedureReturn GadgetHeight(*This\hPB, Mode)
     EndIf
-  EndProcedure : AsMethode(Height)
+  EndProcedure : OOP::AsMethode(Height)
   
   Procedure Hide_(*This.TThis, hide=#False)
   ; ============================================================================
@@ -234,12 +228,11 @@ Module clsGadgetBase
         ProcedureReturn oldhide
       EndWith
     EndIf
-  EndProcedure : AsMethode(Hide_)
+  EndProcedure : OOP::AsMethode(Hide_)
   
   Procedure.i Hide(*This.TThis)     ; Get Hide State
     ProcedureReturn *This\hide
-  EndProcedure : AsMethode(Hide)    
-
+  EndProcedure : OOP::AsMethode(Hide)    
   
   Procedure.i hPB(*This.TThis)     ; PureBasic handle #Gadget
   ; ============================================================================
@@ -251,7 +244,7 @@ Module clsGadgetBase
     If *This\init 
       ProcedureReturn *This\hPB
     EndIf
-  EndProcedure : AsMethode(hPB)
+  EndProcedure : OOP::AsMethode(hPB)
   
   Procedure.i hOS(*This.TThis)     ; Operating System handle # GadgetID
   ; ============================================================================
@@ -263,7 +256,7 @@ Module clsGadgetBase
     If *This\init 
       ProcedureReturn GadgetID(*This\hPB)
     EndIf
-  EndProcedure : AsMethode(hOS)
+  EndProcedure : OOP::AsMethode(hOS)
   
   Procedure Move(*This.TThis, x.i, y.i, Mode = #PB_Absolute)
   ; ============================================================================
@@ -285,7 +278,7 @@ Module clsGadgetBase
         ResizeGadget(\hPB, x, y, #PB_Ignore, #PB_Ignore)
       EndWith           
     EndIf 
-  EndProcedure : AsMethode(Move)      
+  EndProcedure : OOP::AsMethode(Move)
   
   Procedure Resize(*This.TThis, x.i, y.i, width.i, height.i)
   ; ============================================================================
@@ -304,7 +297,7 @@ Module clsGadgetBase
         ResizeGadget(\hPB, x, y, width, height)
       EndWith      
     EndIf 
-  EndProcedure : AsMethode(Resize)
+  EndProcedure : OOP::AsMethode(Resize)
   
   Procedure SetFocus(*This.TThis)
   ; ============================================================================
@@ -329,13 +322,13 @@ Module clsGadgetBase
     If *This\init
       *This\Tag  = NewTag$
     EndIf
-  EndProcedure : AsMethode(Tag_)
+  EndProcedure : OOP::AsMethode(Tag_)
 
   Procedure.s Tag(*This.TThis)
     If *This\init
       ProcedureReturn *This\Tag 
     EndIf 
-  EndProcedure : AsMethode(Tag)
+  EndProcedure : OOP::AsMethode(Tag)
   
   Procedure.i Type(*This.TThis)
   ; ============================================================================
@@ -347,7 +340,7 @@ Module clsGadgetBase
     If *This\init 
       ProcedureReturn GadgetType(*This\hPB)
     EndIf
-  EndProcedure : AsMethode(Type)
+  EndProcedure : OOP::AsMethode(Type)
 
   Procedure.i Width(*This.TThis, Mode = #PB_Gadget_ActualSize)
   ; ============================================================================
@@ -360,7 +353,7 @@ Module clsGadgetBase
     If *This\init
       ProcedureReturn GadgetWidth(*This\hPB, Mode)
     EndIf
-  EndProcedure : AsMethode(Width)
+  EndProcedure : OOP::AsMethode(Width)
 
   Procedure.i X(*This.TThis, Mode = #PB_Gadget_ContainerCoordinate)
   ; ============================================================================
@@ -373,7 +366,7 @@ Module clsGadgetBase
     If *This\init
       ProcedureReturn GadgetX(*This\hPB, Mode)
     EndIf  
-  EndProcedure : AsMethode(X)
+  EndProcedure : OOP::AsMethode(X)
   
   Procedure.i Y(*This.TThis, Mode = #PB_Gadget_ContainerCoordinate)
   ; ============================================================================
@@ -386,7 +379,7 @@ Module clsGadgetBase
     If *This\init
       ProcedureReturn GadgetY(*This\hPB, Mode)
     EndIf 
-  EndProcedure : AsMethode(Y)
+  EndProcedure : OOP::AsMethode(Y)
 
   Procedure.i MyRelease(*This.TThis)
   ; ======================================================================
@@ -407,7 +400,7 @@ Module clsGadgetBase
       EndIf
     EndIf
     
-   EndProcedure : Overwrite(Release, MyRelease)
+   EndProcedure : OOP::Overwrite(Release, MyRelease)
 
   ;- ---------------------------------------------------------------------
   ;- Public Procedures 
@@ -470,8 +463,9 @@ CompilerIf #PB_Compiler_IsMainFile
   DisableExplicit
 CompilerEndIf
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 14
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 89
+; FirstLine = 30
 ; Folding = ------
 ; Optimizer
 ; CPU = 5

@@ -52,19 +52,19 @@ EndDeclareModule
 
 Module clsTemplate
   EnableExplicit
-  PbFw::ListModule(#PB_Compiler_Module)  ; Lists the Module in the ModuleList (for statistics)
+  PbFw::ListModule(#PB_Compiler_Module)   ; Lists the Module in the ModuleList (for statistics)
  
-  Global Dim VTable.a(SizeOf(IClass)-1)   ; create VTable with the Size of the Interface 
-  BaseClass::_Inherit_VTable(@VTable())    ; Inherit the Methodes of BaseClass (copy BaseClass::VTable => VTable)
+  Global Dim VTable(OOP::GetNoOfInterfaceEntries(IClass)-1) ; create VTable with the Size of the Interface 
+  BaseClass::_Inherit_VTable(@VTable())   ; Inherit the Methodes of BaseClass (copy BaseClass::VTable => VTable)
  
-  ; Macro to write MethodeAdress into VTable. Use it after EndProcedure : AsMethode(MethodeName) 
-  Macro AsMethode(MethodeName)
-    PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @MethodeName()) 
-  EndMacro
-  ; use Overwrite if the MethodeName is different from ProcedureName
-  Macro Overwrite(MethodeName, ProcedureName)
-    PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @ProcedureName()) 
-  EndMacro
+;   ; Macro to write MethodeAdress into VTable. Use it after EndProcedure : AsMethode(MethodeName) 
+;   Macro AsMethode(MethodeName)
+;     PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @MethodeName()) 
+;   EndMacro
+;   ; use Overwrite if the MethodeName is different from ProcedureName
+;   Macro Overwrite(MethodeName, ProcedureName)
+;     PokeI(@VTable() + OffsetOf(IClass\MethodeName()), @ProcedureName()) 
+;   EndMacro
   
   ;- ---------------------------------------------------------------------
   ;- Public Methodes 
@@ -72,11 +72,11 @@ Module clsTemplate
 
   Procedure.s Text(*This.TThis)
     ProcedureReturn  *This\Text
-  EndProcedure : AsMethode(Text)
+  EndProcedure : OOP::AsMethode(Text)
     
   Procedure Text_(*This.TThis, NewText.s)
     *This\Text = NewText  
-  EndProcedure : AsMethode(Text_)
+  EndProcedure : OOP::AsMethode(Text_)
   
   ;- ---------------------------------------------------------------------
   ;- Public Procedures 
@@ -118,6 +118,7 @@ Module clsTemplate
   ; RET.i: Bytes copied
   ; ======================================================================
     
+    ; call the _CopyVTable from Module OOP::
     ProcedureReturn OOP::_CopyVTable(@VTable(), *Destination_VTable, SizeOf(IClass))
   EndProcedure
 
@@ -137,9 +138,9 @@ CompilerIf #PB_Compiler_IsMainFile
   DisableExplicit
 CompilerEndIf
 
-; IDE Options = PureBasic 6.12 LTS (Windows - x64)
-; CursorPosition = 76
-; FirstLine = 16
-; Folding = ---
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 72
+; FirstLine = 18
+; Folding = --
 ; Optimizer
 ; CPU = 5

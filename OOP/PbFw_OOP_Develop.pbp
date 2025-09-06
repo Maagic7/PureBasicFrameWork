@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.12 LTS (Windows - x64)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.20 Beta 4 (Windows - x64)">
   <section name="config">
     <options closefiles="1" openmode="0" name="PureBasic Framwork OOP developing"/>
     <comment>internal PbFw Project for developping the OOP Functions</comment>
@@ -8,28 +8,28 @@
   <section name="data">
     <explorer view="..\Modules\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2024-12-24 16:26" user="user1" host="AMD5800X"/>
+    <lastopen date="2025-02-10 11:15" user="user1" host="AMD5800X"/>
   </section>
   <section name="files">
+    <file name="PbFw_Class_clsText.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
+      <fingerprint md5="b1cc4aee86feeae8cbcd9a7d37cc54ee"/>
+    </file>
     <file name="PbFw_Class_StringGadget.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
-      <fingerprint md5="bb1e0b960c652fdd7d9fd36bbd97e6a2"/>
+      <fingerprint md5="8d2cf379af6dbe17f8dbc97e96fb0c7b"/>
     </file>
     <file name="PbFw_Class_GadgetBase.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
-      <fingerprint md5="f7f9754f61e090a826150517aa74204e"/>
+      <fingerprint md5="2e8aee17ca0be88b53684317bfa9a159"/>
     </file>
     <file name="PbFw_Class_OOP.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="+"/>
       <fingerprint md5="3ed0bb5826b248124fdb9438837dae5d"/>
     </file>
     <file name="..\Modules\PbFw_Module_PbFw.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="3ecb7a9345a1ffbecd799fff0c6fdb13"/>
-    </file>
-    <file name="PbFw_Class_clsText.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="4" panelstate="+"/>
-      <fingerprint md5="6c403ce57beb5047f558aa9f9e779285"/>
+      <fingerprint md5="f72ac93802b1d5eb3183f3c9129ce462"/>
     </file>
   </section>
   <section name="targets">
