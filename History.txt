@@ -35,6 +35,15 @@ This variables are prefixed with '_'
 ==================================================
 
 --------------------------------------------------
+2025/07/25  S.Maag
+--------------------------------------------------
+I realized that the Module name Module_PB (PB::) may cause future problems 
+because of using #PB_ as prefix, what is the same as used by the standard 
+PB-Constants. To prevent future name conficts with the PB-Compiler
+I decided to use other Module Name. PX seems to be a good choice.
+So Module PB:: is from now on PX:: (PB-Extention) 
+
+--------------------------------------------------
 2025/02/08  S.Maag
 --------------------------------------------------
 
