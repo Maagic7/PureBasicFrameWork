@@ -7,12 +7,12 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2025-09-06 16:36" user="user1" host="AMD5800X"/>
+    <lastopen date="2026-01-03 13:08" user="user1" host="AMD5800X"/>
   </section>
   <section name="files">
     <file name="Modules\PbFw_Module_Bit.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="cb327bf71a9f388693991c40b7c6ae44"/>
+      <fingerprint md5="51d2bfc642c1ce281d7064bd55a7ba7c"/>
     </file>
     <file name="Modules\PbFw_Module_Buffer.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
@@ -20,23 +20,23 @@
     </file>
     <file name="Modules\PbFw_Module_FileSystem.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="433cbab248bcbb6237864568349195e9"/>
+      <fingerprint md5="8c0009ea483a6c99e8f26b79f73e622e"/>
     </file>
     <file name="Modules\PbFw_Module_Debug.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="5b6e14cdf4ca3225cd5e9baf62361c66"/>
+      <fingerprint md5="2acd689a5793164f869f4612d3442ce9"/>
     </file>
     <file name="Modules\PbFw_Module_Math.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
       <fingerprint md5="802ecd6370a28c3c056371d9ac6ec319"/>
     </file>
     <file name="Modules\PbFw_ASM_Macros.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="eb5b17eb2d5bc8a17c2dd6ee2cfc3005"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="++"/>
+      <fingerprint md5="6ef22e1d103a1eefafa7f1f9d21e2b31"/>
     </file>
     <file name="Modules\PbFw_Module_CodeCreation.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="56164d0542bd44531ab30eea3aa44cc1"/>
+      <fingerprint md5="717a7384898b0165aa265d9d582ce9c2"/>
     </file>
     <file name="Modules\PbFw_Module_DbCodeCreation.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
@@ -44,7 +44,7 @@
     </file>
     <file name="Modules\PbFw_Module_STL.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="1397c3a1dc7fae24bfe8bf1f7b392973"/>
+      <fingerprint md5="f84c6c297de620b3df6d4167c5d56588"/>
     </file>
     <file name="Modules\PbFw_Module_FastString.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
@@ -72,11 +72,11 @@
     </file>
     <file name="Modules\PbFw_Module_CPU.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="7f55e31ff3f040b603b6d5849052cc60"/>
+      <fingerprint md5="b5beb38104be1ee0ed08d46e67b83d37"/>
     </file>
     <file name="Modules\PbFw_Module_Complex.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="560091efe6fdfd14b5164674a8060771"/>
+      <fingerprint md5="561bb640a3a91fe6ae219caae8d0a863"/>
     </file>
     <file name="Modules\PbFw_Module_COLOR.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
@@ -88,11 +88,11 @@
     </file>
     <file name="Modules\PbFw_Module_VECTORf.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="74af2230683c7db85acb00823fa539ad"/>
+      <fingerprint md5="084efd9b0206b1d77feef042010b2cad"/>
     </file>
     <file name="Modules\PbFw_Module_VECTORd.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="c80aa4f3071fdaccfce8bf5edc245520"/>
+      <fingerprint md5="cdb351a8743eefd2716fe38685cbad58"/>
     </file>
     <file name="Modules\PbFw_Module_MyToolBarStandard.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
@@ -116,7 +116,7 @@
     </file>
     <file name="Modules\PbFw_Module_TRIGf.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="edf7238579fcc3c1637f108aa68b9a73"/>
+      <fingerprint md5="06ff45de1ef90a2b05fd56fd3a7b01cb"/>
     </file>
     <file name="Modules\PbFw_Module_Windows.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
@@ -132,7 +132,7 @@
     </file>
     <file name="Modules\PbFw_Module_Float.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="fb31cfe7c06c3e55f32dfb083fdf5115"/>
+      <fingerprint md5="132915daab201fc56c184a8dd7ddf534"/>
     </file>
     <file name="Modules\PbFw_Module_Integer.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
@@ -140,7 +140,7 @@
     </file>
     <file name="Modules\PbFw_Module_OperatingSystem.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="785ace5607637e566225bf865af21805"/>
+      <fingerprint md5="cc45db293296be79d7f848e5bf0935a9"/>
     </file>
     <file name="Modules\PbFw_Module_JulianDate.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
@@ -155,16 +155,20 @@
       <fingerprint md5="750a82d8f2d0b6ce2edb67980240377d"/>
     </file>
     <file name="Modules\PbFw_Module_PbSdk.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="9559621abe899165f41c6c29197f600d"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="4" panelstate="++"/>
+      <fingerprint md5="1898aa39d5a04ec0f77d9d60567a624b"/>
     </file>
     <file name="Modules\PbFw_Module_PX.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
-      <fingerprint md5="6e26f1ab0de08ed9767cf677a7a2827b"/>
+      <fingerprint md5="966e1577b1380d196027f72a550a45c5"/>
     </file>
     <file name="Modules\PbFw_Module_NaturalSort.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
       <fingerprint md5="00809b6622a2346cbbd26ed023a2181b"/>
+    </file>
+    <file name="Modules\PbFw_Module_Hash.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="++"/>
+      <fingerprint md5="7b83033078d7180b27b817f5aa97a48f"/>
     </file>
   </section>
   <section name="targets">
