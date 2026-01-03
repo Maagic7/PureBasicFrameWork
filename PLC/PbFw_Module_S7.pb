@@ -18,7 +18,8 @@
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;; ChangeLog: 
-;{ 2025/02/15 S.Maag: added seperate Buffer for Read/Write 
+;{ 2025/12/29 S.Maag: solved Bug in CheckBuffer calls
+;  2025/02/15 S.Maag: added seperate Buffer For Read/Write 
 ;  2024/12/08 S.Maag: added some functions And reworked some
 ;  
 ;}
@@ -31,9 +32,9 @@
 ;  ----------------------------------------------------------------------
 
 XIncludeFile "..\Modules\PbFw_Module_PbFw.pb"         ; PbFw::    FrameWork control Module
-XIncludeFile "..\Modules\PbFw_Module_PB.pb"           ; PB::      Purebasic Extention Module
-;XIncludeFile "..\Modules\PbFw_Module_Debug.pb"        ; DBG::     Debug Module
-; XIncludeFile "..\Modules\PbFw_Module_Bits.pb"         ; Bits::    Bit Operations
+XIncludeFile "..\Modules\PbFw_Module_PX.pb"           ; PX::      Purebasic Extention Module
+;XIncludeFile "..\Modules\PbFw_Module_Debug.pb"       ; DBG::     Debug Module
+; XIncludeFile "..\Modules\PbFw_Module_Bits.pb"       ; Bits::    Bit Operations
 
 ; XIncludeFile ""
 
@@ -175,7 +176,7 @@ DeclareModule S7
   Structure TS7_String
     LenBuffer.a         ; S7 max String length  = length of the String Buffer
     LenString.a         ; S7 actual length of String
-    sString.s           ; the String 
+    String$             ; the String 
   EndStructure
   
   ; use #BufferMaxByteIdx to cerate the ReadBuffer.a(#BufferMaxByteIdx) for your CPU
@@ -189,30 +190,36 @@ DeclareModule S7
     pbIP.i              ; CPU IP Address in PureBasic Format, created with MakeIPAddress()
     Rack.i              ; S7 CPU-RackNo
     Slot.i              ; S7 Slot No or CPU (for S7300 is always 2)
-    Online.i            ; Connection to CPU1 is Online
-    hClient.i           ; Snap7 Client Handle for CPU1
+    Online.i            ; Connection to CPU is Online
+    hClient.i           ; Snap7 Client Handle for CPU
   EndStructure
-  
+    
   Structure TS7uni    ; an universal S7 variable with union access to the same address
     StructureUnion
       a.a[0]
       u.u[0]
       w.w[0]
+      q.q[0]
       BYTE.a
       WORD.u
+      CHAR.c
       DATE.u
       S5Time.u
       INT.w
       DINT.l
       REAL.f
       TIME.l
-      DWORD.q
       DATE_AND_TIME.q
+      ; --- Don't use the following when you use TSuni as Pointer to a S7_Buffer, because the ByteLength of this
+      ; types are not the same as in S7
+      _qBool.q
+      _qDWORD.q         ; because S7 DWORD is unsigend 32Bit, we use a Quad. To pay attention it's prefixed _q
+      _S7Str.TS7_String   ; maybe Change to TS7_String
     EndStructureUnion
   EndStructure
   
   Structure TS7Buffer
-    *pBuf.TS7uni
+    *pData.TS7uni
     ByteSize.i
   EndStructure
   
@@ -280,7 +287,7 @@ DeclareModule S7
   Declare.s S7TimeToString(TS7_Time.l)
   Declare.s S7DateToString(TS7_DATE.u, Format$="%dd.%mm.%yyyy")
   Declare.q S7_DATE_to_UnixDate(S7_DATE.u)
-  
+ 
   Declare.a ByteToBCD(value.u)
   Declare.a BCDtoByte(bBCD.a)
   
@@ -320,9 +327,11 @@ Module S7
   ;   RET = 0                   ;  if Parameters are not valid
   ; ============================================================================
     
+    ; Debug "Checkbuffer *Buf = " + Str(*Buf)
+    
     If *Buf
       If BytePos >=0 And (BytePos + S7_VarLength <= *Buf\ByteSize -1)
-        ProcedureReturn *Buf\ByteSize + BytePos
+        ProcedureReturn *Buf\pData + BytePos
       EndIf 
     EndIf
     ProcedureReturn  0
@@ -335,7 +344,7 @@ Module S7
       With *hS7
         
         *pBuf = AllocateMemory(ByteSize)
-        \ReadBuf\pBuf = *pBuf
+        \ReadBuf\pData = *pBuf
         If *pBuf
           \ReadBuf\ByteSize = ByteSize
         Else
@@ -343,7 +352,7 @@ Module S7
         EndIf       
         
         *pBuf = AllocateMemory(ByteSize)
-        \WriteBuf\pBuf = *pBuf
+        \WriteBuf\pData = *pBuf
         If *pBuf
           \WriteBuf\ByteSize = ByteSize
         Else
@@ -362,15 +371,15 @@ Module S7
     If *hS7           
       OnErrorGoto(?FreeS7Buffer_Err)    ; to prevent crashing at FreeMemory if a non valid Pointer is passed!
       With *hS7
-        If \ReadBuf\pBuf
-          FreeMemory(\ReadBuf\pBuf)          
-          \ReadBuf\pBuf= 0
+        If \ReadBuf\pData
+          FreeMemory(\ReadBuf\pData)          
+          \ReadBuf\pData= 0
           \ReadBuf\ByteSize = 0
         EndIf  
         
-        If \WriteBuf\pBuf
-          FreeMemory(\WriteBuf\pBuf)          
-          \WriteBuf\pBuf = 0
+        If \WriteBuf\pData
+          FreeMemory(\WriteBuf\pData)          
+          \WriteBuf\pData = 0
           \WriteBuf\ByteSize = 0
         EndIf  
         
@@ -399,7 +408,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected value.i
   
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       If *pVal\a & (1 << (Bit & $07))    ; (Bit & $07) select only the lowest 3 Bits = 0..7 
@@ -423,7 +432,8 @@ Module S7
     
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset 
    
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset)   ; returns the Pointer to the actual Value in Buffer or 0
+    ; Debug "GetByte Ptr = " + Str(*pVal)
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       ProcedureReturn *pVal\BYTE
@@ -444,7 +454,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected value.TS7uni
   
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset, #S7_2Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset, #S7_2Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       value\a[0] = *pVal\a[1]
@@ -465,7 +475,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected value.TS7uni
   
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset, #S7_2Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset, #S7_2Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       value\a[0] = *pVal\a[1]
@@ -488,7 +498,7 @@ Module S7
     Protected *pVal.TS7uni       ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected value.TS7uni     ; PureBasic QUAD, 8Byte, because unsingned 32 bit is not supported
   
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     ; Memory Model S7:  lo,hi
     ; Memory Model PC:  hi,lo
@@ -502,7 +512,7 @@ Module S7
       value\a[3] = *pVal\a[0]
     EndIf
   
-    ProcedureReturn value\DWORD
+    ProcedureReturn value\_qDWORD
   EndProcedure
   
   Procedure.l GetDInt(*hS7.hS7, ByteOffset.i)
@@ -517,7 +527,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected value.TS7uni
   
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       value\a[0] = *pVal\a[3]
@@ -541,7 +551,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected value.TS7uni
   
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7.hS7 + ByteOffset) is valid
       value\a[0] = *pVal\a[3]
@@ -565,7 +575,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected value.TS7uni
   
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset, #S7_2Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset, #S7_2Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       value\a[0] = *pVal\a[1]
@@ -589,7 +599,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected yy.l
    
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset, #S7_8Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset, #S7_8Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
      If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
   
@@ -628,7 +638,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected value.TS7uni
     
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       value\a[0] = *pVal\a[3]
@@ -654,7 +664,7 @@ Module S7
     Protected *Char.pChar
     Protected.s String$
     
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset, #S7_STRING_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset, #S7_STRING_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       
@@ -692,7 +702,7 @@ Module S7
    Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + BytePos
     Protected value.TS7uni
 
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset, #S7_6Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset, #S7_6Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
   
     If *pVal        ; Memory accessed by (*hS7 + BytePos) is valid
       With *S7_PTR
@@ -746,7 +756,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + BytePos
     Protected value.TS7uni
   
-    *pVal = _CheckBuffer(*hS7\ReadBuf\pBuf, ByteOffset, #S7_10Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\ReadBuf, ByteOffset, #S7_10Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed (*hS7 + BytePos) is valid
       With *S7_ANY
@@ -802,7 +812,7 @@ Module S7
   
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
      
-    *pVal = _CheckBuffer(*hS7\WriteBuf\pBuf, ByteOffset)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\WriteBuf\pData, ByteOffset)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       If value 
@@ -826,7 +836,7 @@ Module S7
   ; ============================================================================  
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     
-    *pVal = _CheckBuffer(*hS7\WriteBuf\pBuf, ByteOffset)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\WriteBuf\pData, ByteOffset)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       *pVal\BYTE = value
@@ -848,7 +858,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected *Val.TS7uni = @value
     
-    *pVal = _CheckBuffer(*hS7\WriteBuf\pBuf, ByteOffset, #S7_2Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\WriteBuf\pData, ByteOffset, #S7_2Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       *pVal\a[0] = *Val\a[1]
@@ -870,7 +880,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected *Val.TS7uni = @value
     
-    *pVal = _CheckBuffer(*hS7\WriteBuf\pBuf, ByteOffset, #S7_2Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\WriteBuf\pData, ByteOffset, #S7_2Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       *pVal\a[0] = *Val\a[1]
@@ -893,7 +903,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected *Val.TS7uni = @value
     
-    *pVal = _CheckBuffer(*hS7\WriteBuf\pBuf, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\WriteBuf\pData, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
      
     ; Memory Model S7:  hi,lo   Big Endian
     ; Memory Model PC:  lo,hi   Little Endian
@@ -925,7 +935,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected *Val.TS7uni = @value
   
-    *pVal = _CheckBuffer(*hS7\WriteBuf\pBuf, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\WriteBuf\pData, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
      
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       *pVal\a[0] = *Val\a[3]
@@ -949,7 +959,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected *Val.TS7uni = @value
   
-    *pVal = _CheckBuffer(*hS7\WriteBuf\pBuf, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\WriteBuf\pData, ByteOffset, #S7_4Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
      
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       *pVal\a[0] = *Val\a[3]
@@ -974,7 +984,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected *value.TS7uni = @S7Date
   
-    *pVal = _CheckBuffer(*hS7\WriteBuf\pBuf, ByteOffset, #S7_2Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\WriteBuf\pData, ByteOffset, #S7_2Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       *pVal\a[1] = *value\a[0] 
@@ -992,7 +1002,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
     Protected yy.l
    
-    *pVal = _CheckBuffer(*hS7\WriteBuf\pBuf, ByteOffset, #S7_8Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\WriteBuf\pData, ByteOffset, #S7_8Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       If *DateTime
@@ -1005,7 +1015,7 @@ Module S7
           yy = yy - 2000         
         EndIf 
         
-        *pVal\a[0] = ByteToBCD(yy & FF)
+        *pVal\a[0] = ByteToBCD(yy & $FF)
         *pVal\a[1] = ByteToBCD(*DateTime\Month)
         *pVal\a[2] = ByteToBCD(*DateTime\Day)
         *pVal\a[3] = ByteToBCD(*DateTime\hour)
@@ -1039,7 +1049,7 @@ Module S7
     If lenS7StrBuf > 254 : lenS7StrBuf = 254 : EndIf  
     If lenS7Str > lenS7StrBuf : lenS7Str = lenS7StrBuf : EndIf
    
-    *pVal = _CheckBuffer(*hS7\WriteBuf\pBuf, ByteOffset, lenS7Str+2)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\WriteBuf\pData, ByteOffset, lenS7Str+2)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed by (*hS7 + ByteOffset) is valid
       
@@ -1071,7 +1081,7 @@ Module S7
    Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + BytePos
     Protected value.TS7uni
 
-    *pVal = _CheckBuffer(*hS7\WriteBuf\pBuf, ByteOffset, #S7_6Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\WriteBuf\pData, ByteOffset, #S7_6Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
   
     If *pVal        ; Memory accessed by (*hS7 + BytePos) is valid
       With *S7_PTR
@@ -1107,7 +1117,7 @@ Module S7
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + BytePos
     Protected value.TS7uni
   
-    *pVal = _CheckBuffer(*hS7\WriteBuf\pBuf, ByteOffset, #S7_10Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
+    *pVal = _CheckBuffer(*hS7\WriteBuf\pData, ByteOffset, #S7_10Byte_TYPE)   ; returns the Pointer to the actual Value in Buffer or 0
     
     If *pVal        ; Memory accessed (*hS7 + BytePos) is valid
       With *S7_ANY
@@ -1282,7 +1292,7 @@ Module S7
   EndProcedure
   
   ; TODO! Check for valid BCD or Change to Function from Module Bit
-  Procedure.a ByteToBCD(value.a)
+  Procedure.a ByteToBCD(value.u)
     ProcedureReturn ((value / 10) << 4) | (value % 10)
   EndProcedure 
 
@@ -1312,9 +1322,9 @@ CompilerIf #PB_Compiler_IsMainFile
   DisableExplicit
 CompilerEndIf
 
-; IDE Options = PureBasic 6.20 (Windows - x64)
-; CursorPosition = 23
-; FirstLine = 495
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 683
+; FirstLine = 643
 ; Folding = -------
 ; EnableXP
 ; CPU = 5
