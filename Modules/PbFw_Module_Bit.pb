@@ -344,9 +344,9 @@ Module BIT
         
     ; This should solve the arithmetic Shift problem! Not tested yet!
     If N >= 0
-      ProcedureReturn N ! (N >> 1) ; N XOR ShiftRight(N,1)
+      ProcedureReturn N ! (N >>1) ; N XOR ShiftRight(N,1)
     Else
-      ProcedureReturn N ! ((N>>1) & #_MaskOutSign) ; N XOR ShiftRight(N,1)   
+      ProcedureReturn N ! ((N >>1) & #_MaskOutSign) ; N XOR ShiftRight(N,1)   
     EndIf
     
   EndProcedure
@@ -364,13 +364,13 @@ Module BIT
         
     ; This should solve the arithmetic Shift problem! Not tested yet!
     If mask < 0
-      Mask= (Mask >> 1) & #_MaskOutSign  ;  ShiftRight(Mask, 1)
+      Mask = (Mask >> 1) & #_MaskOutSign  ;  ShiftRight(Mask, 1)
       G ! Mask    ;  G XOR Mask
     EndIf
       
     While Mask 
-      Mask= Mask >> 1   ;  ShiftRight(Mask, 1)
-      G ! Mask    ;  G XOR Mask
+      Mask >> 1       ;  ShiftRight(Mask, 1)
+      G ! Mask        ;  G XOR Mask
     Wend
     ProcedureReturn G
   EndProcedure
@@ -378,7 +378,7 @@ Module BIT
   Procedure.i INTtoBCD(Value)
   ; ============================================================================
   ; NAME: INTtoBCD
-  ; DESC: Converts an INT into BCD 
+  ; DESC: Convert INT to BCD 
   ; DESC: Negative values will be converted as positive, becaus BCD do not
   ; DESC: support sign. Sometimes '$FF' is used as sign but better you
   ; DESC: check the sing by yourself if you need!
@@ -883,6 +883,7 @@ Module BIT
     DataSection
     ; Attention: FASM nees a leading 0 for hex values
     ; 16 Byte Mask to be prepared for 16 Bit Shuffle too
+    ; dq : define quad
     !mask:  dq 08040201008040201h   ; mask to filter in each byte 1 Bit higher
     !filt:  dq 00101010101010101h   ; Filter to create BOOLs with value 1
     !lim7:  dq 00707070707070707h   ; Limit Mask 7 for ShuffleMask 
@@ -1619,7 +1620,8 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 1198
+; CursorPosition = 815
+; FirstLine = 850
 ; Folding = ---------
 ; Optimizer
 ; EnableXP
