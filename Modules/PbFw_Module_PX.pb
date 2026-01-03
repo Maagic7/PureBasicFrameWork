@@ -8,12 +8,18 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2025/01/07
-; VERSION  :  0.54 untested Developer Version
+; VERSION  :  0.55 untested Developer Version
 ; COMPILER :  I hope all versions!
 ; OS       :  all
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2026/03/01 S.Maag : Added GetBackendString() Macro
+; 2025/12/29 S.Maag : Solved Bug with *String calculatoin in TextBetween /List/Array
+; 2025/12/04 S.Maag : Added Epsilon constants #PX_EpsilonF,#PX_EpsilonD
+; 2025/11/28 S.Maag : Added Get/Set -PbDataSectionPtr based on code from PB Forum
+;                     https://www.purebasic.fr/english/viewtopic.php?t=35658
+; 2025/11/26 S.Maag : JoinList() and JoinArray(): changed Parameter Separator$="" to optional
 ; 2025/09/02 S.Maag : integrated IIF.pbi into PX-Module 
 ; 2025/08/14 S.Maag : changed pAny and pChar: removed the doubles \cc \aa..
 ;                     because PB support \c if \c[0] is defined. So no need to have double defintions
@@ -39,7 +45,7 @@
 ; 2025/02/01 S.Maag changed to the new Framework wide Constant name scheme
 ;             #'Module'_ConstantName
 ; 2025/02/01 S.Maag : Moved TSystemColor and the basic Color Macros
-;             form Module Color to Module PB!
+;             frm Module Color to Module PB!
 ; 2025/01/30 S.Maag : integrated the most common Bit functions as Macros!
 ; 2025/01/29 S.Maag : added the RealTimecounter and RealTimeCounter/HighPerformanceTimer
 ;             functions from Module RTC. RTC will be obsolet in the future.
@@ -62,10 +68,20 @@
 ; XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::   FrameWork control Module
 
 DeclareModule PX
+  
   ;- ----------------------------------------------------------------------
   ;- STRUCTURES and CONSTANTS
   ;  ----------------------------------------------------------------------
-    
+  
+  ; Epsilon is the lowest value we must add to 1 to detect (1+Epsilon > 1)
+  ; Epsilon is often needed in algorithms as exit condition.
+  ; See Modul Float how to caclculate this value with a Loop.
+  ; or https://de.wikipedia.org/wiki/IEEE_754
+  ; Single Precision : Mantissa = 23 Bit
+  ; Double Precision : Manitssa = 52 Bit
+  #PX_EpsilonF = 1/(1<<23)  ; 1/2²³    = 0.0000001192092 
+  #PX_EpsilonD = 1/(1<<52)  ; 1/(2^52) = 0.0000000000000002220446049250313080847263336181640625
+                                
   #PX_CharSize = SizeOf(Character)
   #PX_IntSize = SizeOf(Integer)
   ; #TAB    ; exists in PB. But to have same way of access, define it here too
@@ -103,7 +119,7 @@ DeclareModule PX
   EndStructure
   
   ; An adapted version of pAny especally for character use
-  Structure pChar   ; ATTENTION! Only use as Pointer Strukture! Do not define as a normal Var!
+  Structure pChar   ; ATTENTION! Only use as Pointer Structure! Do not define as a normal Var!
     StructureUnion
       a.a[0]     ; ASCII   : 8 Bit unsigned  [0..255] 
       c.c[0]     ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
@@ -291,7 +307,7 @@ DeclareModule PX
   EndMacro
   
   ; Swaps the 2 Bytes of a 16Bit value
-  ; use it : result = BSwap16(x, [0..$FFFF])
+  ; use it : result = BSwap16(x); x=[0..$FFFF])
   Macro BSwap16(WordValue)
     ((WordValue<<8 | WordValue>>8) & $FFFF)
   EndMacro
@@ -518,10 +534,16 @@ DeclareModule PX
     PeekS(@_TrueString_, -Bool(_Expression_)) + PeekS(@_FalseString_, -Bool(Not(_Expression_)))
   EndMacro
   
- ; IIFsf with String return from a True/False StringField
+  ; This idea I found at PB-Forum
+  ; IIFsf with String return from a True/False StringField
   ; use it: IIFsf(A>1000, "large|small")
   Macro IIFsf(_Expression_, _TrueFalseStrField_, sepStr="|")
     StringField(_TrueFalseStrField_, 2-Bool(_Expression_), sepStr)
+  EndMacro
+  
+  ; The GetBackendString is a fork of the IIFsf()
+  Macro GetBackendString()
+    StringField("ASM-Backend|C-Backend", #PB_Compiler_Backend+1 , "|")
   EndMacro
 
   ;- ----------------------------------------------------------------------
@@ -664,7 +686,7 @@ DeclareModule PX
   ; use it: DECC(MyCharPointer, [1..n])
   ;     or  MyNewCharPointer = DECC(MyOldCharPointer, [1..n])
   Macro DECC(ptrChar, cnt=1)
-    ptrChar - cnt*PX::#PX_CharSize 
+    ptrChar - cnt*PX::#PX_CharSize
   EndMacro
 
   ; Increment CharPointer
@@ -1055,6 +1077,9 @@ DeclareModule PX
   ; STRING Functions
   ; -------------------------------------------------- 
   
+  Prototype.s QuoteString(StringToQute$, Quotes.c='"')
+  Global QuoteString.QuoteString
+  
   Prototype.i SetLeft(String$, StringToSet$, Length=#PB_All)
   Global SetLeft.SetLeft
   
@@ -1081,8 +1106,8 @@ DeclareModule PX
   Prototype SplitStringList(List Out.s(), String$, Separator$, DQuote=#False, clrList= #True)
   Global SplitStringList.SplitStringList
     
-  Declare.s JoinArray(Array ary.s(1), Separator$, StartIndex=0, EndIndex=-1, *IOutLen.Integer=0)
-  Declare.s JoinList(List lst.s(), Separator$, *IOutLen.Integer=0)  
+  Declare.s JoinArray(Array ary.s(1), Separator$="", StartIndex=0, EndIndex=-1, *IOutLen.Integer=0)
+  Declare.s JoinList(List lst.s(), Separator$="", *IOutLen.Integer=0)  
   
   Declare.i StringArrayToList(Array aryStr.s(1), List lstStr.s())
   Declare.i StringListToArray(List lstStr.s(), Array aryStr.s(1))
@@ -1091,6 +1116,12 @@ DeclareModule PX
   ; Gadgets
   ; -------------------------------------------------- 
   Declare SetGadgetTextAlign(GadgetNo, AlignType)
+  
+  ; --------------------------------------------------
+  ; Miscellaneous
+  ; -------------------------------------------------- 
+  Declare SetPbDataSectionPtr (*pData) 
+  Declare.i GetPbDataSectionPtr() 
 
 EndDeclareModule
 
@@ -1162,7 +1193,7 @@ Module PX
 
    		; TODO! Check if correct in x32 and x64, because time_t is more or less an unspecified type! 		
       Structure timespec
-        tv_sec.i            
+        tv_sec.i
         tv_nsec.i
       EndStructure     
       
@@ -1672,18 +1703,16 @@ Module PX
   ; ============================================================================
   ; NAME: IntiSytemColorMask
   ; DESC: initialize a TSystemColorMask Structure with the correct management
-  ; DESC: data for the systmens Color order RGBA, ABGR
+  ; DESC: data for the systmens Color order RGBA
+  ; DESC: PB System Color Byte Order is RGBA on all little Endian systems
+  ; DESC: Windows, Linux, MacOS on x86/x64 and ARM
   ; VAR(*SCM.TSystemColorMask): The SystemColorMask variable to initialize
   ; RET.i : *SCM
   ; ============================================================================
     Protected SysCol.TSystemColor                
-    Protected.a rd, gn, bl, al    ; the standard Color oder in Memory
     Protected I, CHval
-    
-    ; first initialize an unique value for each ColorChannel r,g,b,a 
-    rd =$11 : gn =$22 : bl =$33 : al =$44
-    
-    SysCol\col =RGBA(rd,gn,bl,al) ; Create the ColorValue with the unique Channel values
+        
+    SysCol\col =RGBA('R','G','B','A') ; Create the ColorValue with the unique Channel values
     
     If *SCM
       With *SCM
@@ -1691,13 +1720,13 @@ Module PX
         ; compare the value in memory with the unique Channel values
         For I = 0 To 3
           Select SysCol\ch[I] ; Access to Color with ChannelNo [0..3]
-            Case rd           ; unique value for Red channel found
+            Case 'R'          ; value for Red channel found
               \idxRed = I     ; save index for Red
-            Case gn           ; unique value for Green channel found
+            Case 'G'          ; value for Green channel found
               \idxGreen = I   ; save index for Green
-             Case bl          ; unique value for Blue channel found
+            Case 'B'          ; value for Blue channel found
               \idxBlue = I    ; save index for Blue  
-           Case al            ; unique value for Alpha channel found
+            Case 'A'          ; value for Alpha channel found
               \idxAlpha = I   ; save index for Alpha
           EndSelect     
         Next
@@ -1751,7 +1780,7 @@ Module PX
     
     ; Show Error Message for programmer, if the Color Order does not fit together"
     With SysCol
-      If \RGB\R <> rd Or \RGB\G <> gn Or \RGB\B <> bl Or \RGB\A <> al
+      If \RGB\R <> 'R' Or \RGB\G <> 'G' Or \RGB\B <> 'B' Or \RGB\A <> 'A'
         MessageRequester("Purebasic Framework: Error in Modul: " + #PB_Compiler_Module + "/" + #PB_Compiler_Procedure, "The System Color order does not fit with the programmed one in TSystemColor")   
       EndIf
     EndWith
@@ -1760,8 +1789,13 @@ Module PX
   EndProcedure
   
   ;- --------------------------------------------------
-  ;-  STRING Functions
+  ;- STRING Functions
   ;- -------------------------------------------------- 
+  
+  Procedure.s _QuoteString(StringToQuote$, Quotes.c='"')
+    ProcedureReturn Chr(Quotes) + StringToQuote$ + Chr(Quotes)    
+  EndProcedure
+  QuoteString = @_QuoteString() ; Bind ProcedureAddress to Prototype
   
   Procedure.i _SetLeft(*String, *StringToSet, Length=#PB_All)
   ; ============================================================================
@@ -1919,7 +1953,7 @@ Module PX
   ; VAR(Text$): The Columns Text
   ; VAR(ColWidth): The column width in No of characters
   ; VAR(TextAlign): How to align the text in the column #CC_Align{Left/Center/Right})
-  ; RET : -
+  ; RET.s : The fixed spaced String. Use a Monospaced Font to get a Table effect
   ; ============================================================================
     Protected ret.s 
     Protected lTxt = Len(Text$)
@@ -1969,13 +2003,13 @@ Module PX
     
     posL = FindString(Str\s, Left$)   
     If posL
-      *String + posL*SizeOf(Character)                  ; Pointer to Char after Position found
-      *pStr\i = *String + Len(Left$)*SizeOf(Character)  ; New Startposition after Left$
+      *String = *String + posL*SizeOf(Character) + Len(Left$)*SizeOf(Character) - SizeOf(Character) ; Pointer to Char after Position found
+      *pStr\i = *String   ; New Startposition for FindString
       posR = FindString(Str\s, Right$)
       
       If posR
         *pStr\i = 0   ; Unhook String -> delete the Pointer of the String in Str\s
-        ProcedureReturn PeekS(*String, posR)
+        ProcedureReturn PeekS(*String, posR-1)
       EndIf
     EndIf
     
@@ -1991,13 +2025,12 @@ Module PX
   ; ============================================================================
   ; NAME: TextBetweenList
   ; DESC: Gets the Text between two String elements Left$ and Right$
-  ; DESC: as a List. It can be used to get get the text between '<' '>'
+  ; DESC: as a List. It can be used to get get the text between: <Text> or (Text)
   ; DESC: in html files. And for many other use. 
-  ; VAR(List lstResults()) : The List with the found Strings
+  ; VAR(List Out.s()) : The List with the found Strings
   ; VAR(*String) : Pointer to String
   ; VAR(Left$) : The left side like "("
   ; VAR(Right$) : The right side like ")"
-  ; VAR(List Out.s()) : The List with the found Strings
   ; RET.i : The number of found Strings (it is identical with the ListSize)
   ; ============================================================================
     Protected posL, posR        ; Character postion of found Char 
@@ -2022,15 +2055,15 @@ Module PX
     Repeat
       posL = FindString(Str\s, Left$)
       If posL
-        *String + posL*SizeOf(Character)    ; Pointer to Char after Position found
-        *pStr\i = *String + lenBL           ; New Startposition after Left$
+        *String = *String + posL*SizeOf(Character) + lenBL - SizeOf(Character)    ; Pointer to Char after Position found
+        *pStr\i = *String           ; New Startposition after Left$
         posR = FindString(Str\s, Right$)
         
         If posR
           AddElement(Out())
-          Out()=PeekS(*String, posR)
-          *String + posR*SizeOf(Character)  ; Pointer to Char after Position found
-        *pStr\i = *String + lenBR           ; New Startposition after Left$
+          Out()=PeekS(*String, posR-1)
+          *String = *String + posR*SizeOf(Character) + lenBR - SizeOf(Character)  ; Pointer to Char after Position found
+          *pStr\i = *String         ; New Startposition after Right$
         Else
           Break        
         EndIf       
@@ -2039,7 +2072,7 @@ Module PX
       EndIf       
     ForEver
     
-    ; befor leaving the Procedure we have to unhook the Strings, otherwise PB will delete
+    ; befor leaving the Procedure we have to unhook the String, otherwise PB will delete
     ; the original String allocated Memory and the original String Point to non allocated
     ; Memory.
     *pStr\i = 0   ; Unhook String -> delete the Pointer of the String in Str\s   
@@ -2090,8 +2123,8 @@ Module PX
     Repeat
       posL = FindString(Str\s, Left$)
       If posL
-        *String + posL*SizeOf(Character)    ; Pointer to Char after Position found
-        *pStr\i = *String + lenBL           ; New Startposition after Left$
+        *String = *String + posL*SizeOf(Character) + lenBL - SizeOf(Character)    ; Pointer to Char after Position found
+        *pStr\i = *String           ; New Startposition after Left$
         posR = FindString(Str\s, Right$)
         
         If posR
@@ -2099,9 +2132,9 @@ Module PX
             ASize + ArrayRedimStep
             ReDim Out(ASize)
           EndIf            
-          Out(N)=PeekS(*String, posR)
-          *String + posR*SizeOf(Character)  ; Pointer to Char after Position found
-          *pStr\i = *String + lenBR         ; New Startposition after Left$
+          Out(N)=PeekS(*String, posR-1)
+          *String = *String + posR*SizeOf(Character) + lenBR - SizeOf(Character)  ; Pointer to Char after Position found
+          *pStr\i = *String         ; New Startposition after Right$
           N+1
         Else
           Break        
@@ -2366,7 +2399,7 @@ Module PX
   EndProcedure 
   SplitStringList = @_SplitStringList()   ; Bind ProcedureAddress to Prototype
   
-  Procedure.s JoinArray(Array ary.s(1), Separator$, StartIndex=0, EndIndex=-1, *IOutLen.Integer=0)
+  Procedure.s JoinArray(Array ary.s(1), Separator$="", StartIndex=0, EndIndex=-1, *IOutLen.Integer=0)
   ; ============================================================================
   ; NAME: JoinArray
   ; DESC: Join all ArrayElements to a single String
@@ -2434,7 +2467,7 @@ Module PX
     ProcedureReturn ret$
   EndProcedure
   
-  Procedure.s JoinList(List lst.s(), Separator$, *IOutLen.Integer=0)
+  Procedure.s JoinList(List lst.s(), Separator$="", *IOutLen.Integer=0)
   ; ============================================================================
   ; NAME: JoinList
   ; DESC: Join all ListElements to a single String
@@ -2539,9 +2572,9 @@ Module PX
     EndIf    
     ProcedureReturn N
   EndProcedure
-  
+    
   ;- --------------------------------------------------
-  ;-  Gadgets
+  ;- Gadgets
   ;- -------------------------------------------------- 
        
   Procedure SetGadgetTextAlign(GadgetNo, AlignType)
@@ -2550,7 +2583,7 @@ Module PX
   ; DESC: Purebasic do not support Gadget TextAlign after Gadget creation.
   ; DESC: This functions sets the TextAlign for Gadgets at Runtime 
   ; DESC: All OS
-  ; DESC: original from PB-Forum by mk-Soft
+  ; DESC: !!! original from PB-Forum by mk-Soft !!!
   ; VAR(GadgetNo): PB Gadget-No
   ; VAR(AlignType): #PX_AlignLeft, #PX_AlignCenter, #PX_AlignRight 
   ; RET.i : -
@@ -2647,9 +2680,63 @@ Module PX
     CompilerEndSelect
     
   EndProcedure
+  
+  ;- --------------------------------------------------
+  ;- Miscellaneous
+  ;- -------------------------------------------------- 
+  
+  Procedure.i GetPbDataSectionPtr() 
+  ; ============================================================================
+  ; NAME: GetDataSectionPtr
+  ; DESC: Get the PureBasic internal Datasection DataPointer.
+  ; DESC: The PB_DataPointer is the PB internal variable For the DataPointer
+  ; DESC; used by PB's Read command.
+  ; DESC: We can't access the DataPointer directly in PB-Code. It exists 
+  ; DESC: only as variable in the compiled ASM and C-Code.
+  ; RET.i : The actual PB DataSection Pointer
+  ; ============================================================================
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm)
+      CompilerIf (#PB_Compiler_Processor = #PB_Processor_x86)
+        !mov eax, [PB_DataPointer]
+        ProcedureReturn
+      CompilerElse   
+        !mov rax, [PB_DataPointer]
+        ProcedureReturn
+      CompilerEndIf
+    CompilerElse
+      !return pb_datapointer;
+    CompilerEndIf
+  EndProcedure
 
+  ; https://www.purebasic.fr/english/viewtopic.php?t=35658
+  Procedure SetPbDataSectionPtr(*pData) 
+  ; ============================================================================
+  ; NAME: SetDataSectionPtr
+  ; DESC: Set the PureBasic internal Datasection DataPointer.
+  ; DESC: The PB_DataPointer is the PB internal variable For the DataPointer
+  ; DESC; used by PB's Read command.
+  ; DESC: We can't access the DataPointer directly in PB-Code. It exists 
+  ; DESC: only as variable in the compiled ASM and C-Code.
+  ; RET : -
+  ; ============================================================================
+    
+    ; https://www.purebasic.fr/english/viewtopic.php?t=35658
+    
+    CompilerIf (#PB_Compiler_Backend = #PB_Backend_Asm)
+      CompilerIf (#PB_Compiler_Processor = #PB_Processor_x86)
+        !mov eax, [p.p_pData]
+        !mov [PB_DataPointer], eax
+      CompilerElse   
+        !mov rax, [p.p_pData]
+        !mov [PB_DataPointer], rax  
+      CompilerEndIf
+    CompilerElse
+      ; in C we have to use LoChar for all commands
+      !pb_datapointer = (unsigned char *) p_pdata;  
+    CompilerEndIf
+  EndProcedure
+  
 EndModule
-
 
 CompilerIf #PB_Compiler_IsMainFile
  ; ----------------------------------------------------------------------
@@ -2758,9 +2845,9 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 88
-; FirstLine = 69
-; Folding = -----------------------
-; Markers = 1206,2616
+; CursorPosition = 2765
+; FirstLine = 2765
+; Folding = -------------------------
+; Markers = 1237,2649
 ; Optimizer
 ; CPU = 5
