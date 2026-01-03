@@ -16,14 +16,15 @@
 ;
 ; AUTHOR   :  Stefan Maag 
 ; DATE     :  2023/04/28
-; VERSION  :  0.12  untested Brainstorming Version
+; VERSION  :  0.12  !!!under development (Code is still not working)
+;                   missing send/receive functions!!!
 ; COMPILER :  all
 ; OS       :  all
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog: 
-;{ 2025/01/24 S.Maag updated pBuffer Structure and removed \.[0] in the code
+;{ 2025/11/25 S.Maag Switched individual Pointer Structures to AnyPointer PX::pAny 
 ;  2024/09/04 S.Maag added RegisterSet Functions For Modbus Client/Slave
 ;  2024/09/03 S.Maag TCP/RTU GetADU_Header send/receive
 ;}
@@ -707,19 +708,6 @@ Module ModBus
   ; at Request and Response
   #TCP_idx_ADU = 0    ; BufferPostion of Transaction , starts at Byte 0
   #TCP_idx_PDU = #TCP_idx_ADU + 7 ; 7
-
-  Structure pBuffer
-    a.a
-    u.u
-    w.w
-    l.l
-    f.f
-    aa.a[0]
-    uu.u[0]
-    ww.w[0]
-    ll.l[0]
-    ff.f[0]
-  EndStructure
     
   ;- ----------------------------------------------------------------------
   ;- Module Private Functions
@@ -1018,7 +1006,7 @@ Module ModBus
   ; VAR(StartRegister) : The No. of the first Register containing the Float  
   ; RET.f : The Float value 
   ; ============================================================================
-    Protected *Buf.pBuffer
+    Protected *Buf.PX::pAny
     
     With *RS
       *Buf=\HRegs(StartRegister)  
@@ -1035,7 +1023,7 @@ Module ModBus
   ; VAR(Value.f) : The Float value
   ; RET.f : The former Float value 
   ; ============================================================================
-    Protected ret.f, *Buf.pBuffer
+    Protected ret.f, *Buf.PX::pAny
  
     With *RS
       *Buf=\HRegs(StartRegister)  
@@ -1054,7 +1042,7 @@ Module ModBus
   ; VAR(StartRegister) : The No. of the first Register containing the Integer  
   ; RET.l : The signed Integer value 
   ; ============================================================================
-    Protected *Buf.pBuffer
+    Protected *Buf.PX::pAny
     
     With *RS
       *Buf=\HRegs(StartRegister)  
@@ -1071,7 +1059,7 @@ Module ModBus
   ; VAR(Value.l) : The signed Integer value
   ; RET.l : The former signed Integer value 
   ; ============================================================================
-    Protected ret.l, *Buf.pBuffer
+    Protected ret.l, *Buf.PX::pAny
     
     With *RS
       *Buf=\HRegs(StartRegister) 
@@ -1092,7 +1080,7 @@ Module ModBus
   ; RET.l : The unsigned Integer value 
   ; ============================================================================
   ; unsigned Int 32  
-    Protected *Buf.pBuffer
+    Protected *Buf.PX::pAny
     
      With *RS
       *Buf=\HRegs(StartRegister) 
@@ -1109,7 +1097,7 @@ Module ModBus
   ; VAR(Value.q) : The unsigned Integer value
   ; RET.q : The former unsigned Integer value 
   ; ============================================================================
-    Protected ret.q, *Buf.pBuffer
+    Protected ret.q, *Buf.PX::pAny
     
      With *RS
       *Buf=\HRegs(StartRegister) 
@@ -1441,16 +1429,16 @@ Module ModBus
         ; #MODBUS_FC_MASK_WRITE_REGISTER            = 22 
         ; #MODBUS_FC_READ_WRITE_MULTIPLE_REGISTERS  = 23 
         ; #MODBUS_FC_READ_FIFO_QUEUE                = 24 
-         ProcedureReturn #True
+        ProcedureReturn #True
          
-       Case 43    ; Diagnostig Functions 
+      Case 43    ; Diagnostig Functions 
         ; #MODBUS_FC_DIAG_READ_EXCEPTION_STATUS     = 7     ; ModBus RTU only
         ; #MODBUS_FC_DIAG_DIAGNOSTIC                = 8     ; ModBus RTU only
         ; #MODBUS_FC_DIAG_GET_COM_EVENT_COUNTER     = 11    ; ModBus RTU only
         ; #MODBUS_FC_DIAG_GET_COM_EVENT_LOG         = 12    ; ModBus RTU only
         ; #MODBUS_FC_DIAG_REPORT_SERVER_ID          = 17    ; ModBus RTU only : Report SERVER/SLAVE ID what it the same!
         ; #MODBUS_FC_DIAG_READ_DEVICE_ID            = 43
-          ProcedureReturn #True
+        ProcedureReturn #True
        
     EndSelect
     ProcedureReturn #False
@@ -1480,7 +1468,7 @@ Module ModBus
             OutBools(cnt) = Bool(bval &1)
             bval >> 1
             cnt + 1
-            If cnt >= NoOfElements    ; End of valid Received Bits reached
+            If cnt >= NoOfElements    ; End of valid received Bits reached
               Break 2 ; Exit the 2 For Next
             EndIf         
           Next
@@ -1652,7 +1640,7 @@ Module ModBus
   ; RET : TransactionID
   ; ============================================================================
    
-    Protected *pBuf.pBuffer = *Modbus\SendBuffer()
+    Protected *pBuf.PX::pAny = *Modbus\SendBuffer()
     Protected MessageLength
     
     Protected TrID = _SetNewTransactionID(*Modbus)  ; set a New TransactionID *Modbus\TransactionID +1
@@ -1684,12 +1672,12 @@ Module ModBus
       ; WordToBuffer writes the 16Bit Value with ByteSwap
       _WordToBuffer(TrID, *Modbus\SendBuffer(), #TCP_idx_ADU)     ; TransactionID
       _WordToBuffer(0, *Modbus\SendBuffer(), #TCP_idx_ADU +2)     ; Protocol
-      _WordToBuffer(MessageLength, *Modbus\SendBuffer(), #TCP_idx_ADU +4)       ; MessageLenght in Bytes
-      *pBuf\aa[#TCP_idx_ADU+ 6] = \DeviceID & $FF
-      *pBuf\aa[#TCP_idx_PDU] = ModbusFunctionID & $FF
-      _WordToBuffer(StartAddress, *Modbus\SendBuffer(), #TCP_idx_PDU+1)  ; Register, Coil .. Address
+      _WordToBuffer(MessageLength, *Modbus\SendBuffer(), #TCP_idx_ADU +4) ; MessageLenght in Bytes
+      *pBuf\a[#TCP_idx_ADU+ 6] = \DeviceID & $FF
+      *pBuf\a[#TCP_idx_PDU] = ModbusFunctionID & $FF
+      _WordToBuffer(StartAddress, *Modbus\SendBuffer(), #TCP_idx_PDU+1)   ; Register, Coil .. Address
       ; NoOfElements is the first Byte of Data
-      _WordToBuffer(NoOfElements, *Modbus\SendBuffer(), #TCP_idx_PDU+3)  ; Number of elements to read
+      _WordToBuffer(NoOfElements, *Modbus\SendBuffer(), #TCP_idx_PDU+3)   ; Number of elements to read
       
       \Status\LastFunction = ModbusFunctionID
       \Status\BytesToSend = MessageLength  
@@ -1709,7 +1697,7 @@ Module ModBus
   ; RET : TransactionID
   ; ============================================================================
     
-    Protected *pBuf.pBuffer = *Modbus\ReceiveBuffer()   
+    Protected *pBuf.PX::pAny = *Modbus\ReceiveBuffer()   
     Protected TrID 
     
     _ClearReceiveBuffer(*Modbus)
@@ -1831,17 +1819,17 @@ Module ModBus
     
     If MRes = 0
       With *Modbus
-        TrID_rec = _WordFromBuffer(\ReceiveBuffer(), #TCP_idx_ADU) 
+        TrID_rec = _WordFromBuffer(\ReceiveBuffer(), #TCP_idx_ADU)
         
         If TrID_send = TrID_rec
-          _TCP_GetReceivedDataBytes(*Modbus, OutBools())         
+          _TCP_GetReceivedDataBytes(*Modbus, OutBools())
         Else
           ; wrong Transaction ID  
-        EndIf      
-      EndWith  
+        EndIf
+      EndWith
     Else
       
-      ; Error : Nothing returnd! TimeOut  
+      ; Error : Nothing returnd! TimeOut
     EndIf
     
     ProcedureReturn MRes   
@@ -1870,8 +1858,7 @@ Module ModBus
         TrID_rec = _WordFromBuffer(\ReceiveBuffer(), #TCP_idx_ADU) 
         
         If TrID_send = TrID_rec
-          _TCP_GetReceivedDataWords(*Modbus, OutRegisters())
-                    
+          _TCP_GetReceivedDataWords(*Modbus, OutRegisters())                   
         Else
           ; wrong Transaction ID  
         EndIf      
@@ -1907,8 +1894,7 @@ Module ModBus
         TrID_rec = _WordFromBuffer(\ReceiveBuffer(), #TCP_idx_ADU) 
         
         If TrID_send = TrID_rec
-          _TCP_GetReceivedDataWords(*Modbus, OutRegisters())
-                    
+          _TCP_GetReceivedDataWords(*Modbus, OutRegisters())                    
         Else
           ; wrong Transaction ID  
         EndIf      
@@ -2056,8 +2042,8 @@ EndModule
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 38
-; FirstLine = 35
+; CursorPosition = 18
+; FirstLine = 885
 ; Folding = -----------
 ; Optimizer
 ; CPU = 5
