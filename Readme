@@ -3,13 +3,23 @@ It's  mostly in Beta or Brainstorming State
 See comments in Module Code for the actual relase State!
 Do not use any code in your projects until you tested it!
  
-Some Module descriptions
-PbFw_ASM_Macros.pbi : Collection of Assembler optimation Macros					  
+NEW:
+Some Parts of the PLC Library become useable.
+Now the \PLC\PbFw_Module_S7.pb can be used for testing.
+It is a Library for DataType handling of the Siemens S7 PLC's
+S7300/400. Should work for TIA Portal too. But I did not test it
+until now. 
+
+Some Module descriptions of \Modules
+PbFw_ASM_Macros.pbi : Collection of Assembler optimation Macros	
+                      now with many SEE optimation Macros
+					  
 PbFw_Module_Bit     : optimized Bit manipulation functions
 
 PbFw_Module_CodeCreation  : Helper Functions for Creating PB-Code and copy it to ClipBoard
 PbFw_Module_Complex       : Module for Math with complex numbers
 PbFw_Module_CPU           : CPU indentification and Feature Flags
+                            including exact Core Frequency detection
 
 PbFw_Module_DbCodeCreation: DataBase CodeCreation Module
 
@@ -17,7 +27,7 @@ PbFw_Module_FileSystem : File-System Functions
 
 PbFW_Module_PX		: PureBasic Command extention. Add missing commands: 
                       Min, Max,.., ElapsedMicrosenconds/Nanoseconds, Color Macros
-					  SplitString, JoinString, TextBetween
+					  SplitString, JoinString, TextBetween. Advanced String parsing Macros
 
 PbFw_Module_Prime   : fast 64Bit Prime Number Test and Prime Factorisation
                       using Modulo(30) distance for reducing caclculations
