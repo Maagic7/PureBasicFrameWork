@@ -8,7 +8,8 @@ Some Parts of the PLC Library become useable.
 Now the \PLC\PbFw_Module_S7.pb can be used for testing.
 It is a Library for DataType handling of the Siemens S7 PLC's
 S7300/400. Should work for TIA Portal too. But I did not test it
-until now. 
+with TIA until now. But if you want to use the functions with DB read/write
+Buffer you have to be sure that the DB's are not 'optimized'.
 
 Some Module descriptions of \Modules
 PbFw_ASM_Macros.pbi : Collection of Assembler optimation Macros	
