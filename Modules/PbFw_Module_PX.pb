@@ -8,13 +8,18 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2025/01/07
-; VERSION  :  0.55 untested Developer Version
+; VERSION  :  0.56 untested Developer Version
 ; COMPILER :  I hope all versions!
 ; OS       :  all
 ; ===========================================================================
 ; ChangeLog:
 ;{
-; 2026/03/01 S.Maag : Added GetBackendString() Macro
+; 2026/01/05 S.Maag : Major changes in Character Macros. Rename INCC->CInc, DECC->CDec.
+;                     Added more Character Macros for parsing. CMov[Next,Last, BeyondNext, BeyondLast]
+;                     Now the workflow wiht the Intellisense is better because all Character Macros
+;                     start with a C and will be listeted as Block. That's much better!
+;                     Updated INCC and DECC in all PB-Framwork files.
+; 2026/01/03 S.Maag : Added Macros GetBackendString()
 ; 2025/12/29 S.Maag : Solved Bug with *String calculatoin in TextBetween /List/Array
 ; 2025/12/04 S.Maag : Added Epsilon constants #PX_EpsilonF,#PX_EpsilonD
 ; 2025/11/28 S.Maag : Added Get/Set -PbDataSectionPtr based on code from PB Forum
@@ -33,7 +38,7 @@
 ;                     Former Pointer Version had problems with splitting at double
 ;                     characters like "//" or ".."
 ; 2025/08/04 S.Maag : Added Char=247 check to UCaseChar
-; 2025/07/27 S.Maag : added Macro IsLetter(CharValue)
+; 2025/07/27 S.Maag : added Macro IsLetter(_CharValue)
 ; 2025/07/25 S.Maag : changed Module name from PB:: to PX:: because with PB we
 ;            will run into name convention problems with PB-Compiler because 
 ;            of #PB_ use. #PX_ prevents from such problems with comiler definitions.
@@ -104,8 +109,8 @@ DeclareModule PX
   Structure pAny         ; ATTENTION! Only use as Pointer Strukture! Do not define as a normal Var!
     StructureUnion      
       ; multiple and single access like an Array
-      a.a[0]   ; ASCII   : 8 Bit unsigned  [0..255] 
-      b.b[0]   ; BYTE    : 8 Bit signed    [-128..127]
+      a.a[0]   ; ASCII   : 1 Byte unsigned  [0..255] 
+      b.b[0]   ; BYTE    : 1 Byte signed    [-128..127]
       c.c[0]   ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
       w.w[0]   ; WORD    : 2 Byte signed   [-32768..32767]
       u.u[0]   ; UNICODE : 2 Byte unsigned [0..65535]
@@ -121,7 +126,7 @@ DeclareModule PX
   ; An adapted version of pAny especally for character use
   Structure pChar   ; ATTENTION! Only use as Pointer Structure! Do not define as a normal Var!
     StructureUnion
-      a.a[0]     ; ASCII   : 8 Bit unsigned  [0..255] 
+      a.a[0]     ; ASCII   : 1 Byte unsigned  [0..255] 
       c.c[0]     ; CHAR    : 1 Byte for Ascii Chars 2 Bytes for unicode
       u.u[0]     ; UNICODE : 2 Byte unsigned [0..65535]
     EndStructureUnion
@@ -236,9 +241,9 @@ DeclareModule PX
   EndMacro
     
   ; define Constant if not defined yet
-  Macro CONST(ConstName, Value)
+  Macro CONST(ConstName, _value)
     CompilerIf Not Defined(ConstName, #PB_Constant)
-      PX::HashTag#ConstName = Value
+      PX::HashTag#ConstName = _value
     CompilerEndIf
   EndMacro
     
@@ -250,20 +255,20 @@ DeclareModule PX
   ;  -1: FileNotFound
   ;  -2: It is a directory
   ; use it : result = FileExist(FullFileName)
-  Macro FileExist(FullFileName)
-    Bool(FileSize(FullFileName) >= 0)  
+  Macro FileExist(_FullFileName)
+    Bool(FileSize(_FullFileName) >= 0)  
   EndMacro
   
   ; use it : result = DirectoryExist("C:\Windows")
-  Macro DirectoryExist(Directory)
-    Bool(FileSize(Directory) = -2)
+  Macro DirectoryExist(_Directory)
+    Bool(FileSize(_Directory) = -2)
   EndMacro
   
   ; Go one path higher in path hirarchy
   ; use it : result$ = OnePathBack("C:\Windows\System32")   ; => "C:\Windows\"
   ;          result$ = OnePathBack("C:\Windows\System32\")  ; => "C:\Windows\"  
-  Macro OnePathBack(FullPathName)
-    GetPathPart(RTrim(FullPathName, #PS$))
+  Macro OnePathBack(_FullPathName)
+    GetPathPart(RTrim(_FullPathName, #PS$))
   EndMacro
 
   ;- ----------------------------------------------------------------------
@@ -271,100 +276,100 @@ DeclareModule PX
   ;- ----------------------------------------------------------------------
   
   ; this is the absolut correct verion in all cases
-  Macro ToggleBool(value)
-    Bool(value=0)
+  Macro ToggleBool(_value)
+    Bool(_value=0)
   EndMacro
   
   ; This the fast version (a simple XOR) but if you start with an even value like 2,4,6..
   ; the first Toggle delivers #True and it should be #False.
   ; And in many cases PB needs the Bool statement to accept it as a Bool in the Code
   ; But especally in C-Backend the XOR is nearly 3x faster. In ASM aprox 1.5x
-  Macro ToggleBoolFast(value)
-    ((value)!1)
+  Macro ToggleBoolFast(_value)
+    ((_value)!1)
   EndMacro
 
   ; Get the LoByte 
   ; use it : result = GetLoByte(x)
-  Macro GetLoByte(value)
-    (value & $FF)  
+  Macro GetLoByte(_value)
+    (_value & $FF)  
   EndMacro
   
   ; use it : result = SetLoByte(x, [0..255])
-  Macro SetLoByte(value, NewLoByte)
-    ((value & ~$FF) | (NewLoByte & $FF))  
+  Macro SetLoByte(_value, NewLoByte)
+    ((_value & ~$FF) | (NewLoByte & $FF))  
   EndMacro
   
   ; Get the HiByte
   ; use it : result = GetHiByte(x)
-  Macro GetHiByte(WordValue)
-    (WordValue>>8 & $FF)
+  Macro GetHiByte(_WordValue)
+    (_WordValue>>8 & $FF)
   EndMacro  
   
   ; Set the HiByte of a Word based value
   ; use it : result = SetHiByte(x, [0..255])
-  Macro SetHiByte(WordValue, NewHiByte)
-    ((NewHiByte<<8 & $FF) | (WordValue & $FF))  
+  Macro SetHiByte(_WordValue, _NewHiByte)
+    ((_NewHiByte<<8 & $FF) | (_WordValue & $FF))  
   EndMacro
   
   ; Swaps the 2 Bytes of a 16Bit value
   ; use it : result = BSwap16(x); x=[0..$FFFF])
-  Macro BSwap16(WordValue)
-    ((WordValue<<8 | WordValue>>8) & $FFFF)
+  Macro BSwap16(_WordValue)
+    ((_WordValue<<8 | _WordValue>>8) & $FFFF)
   EndMacro
   
   ; Get the Bit specified by BitNo from value
   ; use it : result = GetBit(value, [0..31/63])
-  Macro GetBit(value, BitNo)
-    Bool(value & 1<<BitNo)  
+  Macro GetBit(_value, _BitNo)
+    Bool(_value & 1<< _BitNo)  
   EndMacro
   
   ; Set the Bit specified by BitNo in value
   ; use it : result = SetBit(value, [0..31/63])
-  Macro SetBit(value, BitNo)
-    (value | 1<<BitNo)
+  Macro SetBit(_value, _BitNo)
+    (_value | 1<< _BitNo)
   EndMacro
   
   ; Reset the Bit specified by BitNo in value
   ; value & (Not(1<<BitNo))
   ; use it : result = ResetBit(value, [0..31/63])
-  Macro ResetBit(value, BitNo)
-    (value & ~(1<<BitNo))  
+  Macro ResetBit(_value, _BitNo)
+    (_value & ~(1<< _BitNo))  
   EndMacro
   
   ; Toggle the Bit specified by BitNo in value
   ; use it : result = ToggleBit(value, [0..31/63])
-  Macro ToggleBit(value, BitNo)
-    (value!(1<<BitNo))  
+  Macro ToggleBit(_value, _BitNo)
+    (_value!(1<< _BitNo))  
   EndMacro
   
   ; Get the Sign Bit (highest BitNo) from value
   ; use it : result = GetSignBit(value)
-  Macro GetSignBit(value)
-    Bool(value >> PX::#PX_MaxBitNo)  
+  Macro GetSignBit(_value)
+    Bool(_value >> PX::#PX_MaxBitNo)  
   EndMacro
   
   ; Set the Sign Bit (highest BitNo) in value
   ; use it : result = SetSignBit(value)
-  Macro SetSignBit(value)
-    (value | 1<<PX::#PX_MaxBitNo)
+  Macro SetSignBit(_value)
+    (_value | 1<<PX::#PX_MaxBitNo)
   EndMacro
   
   ; Reset the Sign Bit (highest BitNo) in value
   ; use it : result = ResetSignBit(value)
-  Macro ResetSignBit(value)
-    (value & ~(1<<PX::#PX_MaxBitNo))  
+  Macro ResetSignBit(_value)
+    (_value & ~(1<<PX::#PX_MaxBitNo))  
   EndMacro
   
  ; Toggle the Sign Bit (highest BitNo) in value
  ; use it : result = ToggleSingBit(value)
-  Macro ToggleSingBit(value)
-    (value!(1<<PX::#PX_MaxBitNo))  
+  Macro ToggleSingBit(_value)
+    (_value!(1<<PX::#PX_MaxBitNo))  
   EndMacro
   
   ; Count the no of HiBits in a Byte value
   ; use it : result = BitCountByte(value)
-  Macro BitCountByte(val)
-    (Bool(val&$1)+Bool(val&$2)+Bool(val&$4)+Bool(val&$8)+Bool(val&$10)+Bool(val&$20)+Bool(val&$40)+Bool(val&$80))
+  Macro BitCountByte(_val)
+    (Bool(_val&$1)+Bool(_val&$2)+Bool(_val&$4)+Bool(_val&$8)+Bool(_val&$10)+Bool(_val&$20)+Bool(_val&$40)+Bool(_val&$80))
   EndMacro
 
   ;- ----------------------------------------------------------------------
@@ -373,65 +378,65 @@ DeclareModule PX
   
   ; Get the lowest value from 2 values
   ; use it : result = Min(3,2)
-  Macro Min(v1, v2)
-    (v1*Bool(v1<=v2) + v2*Bool(v1>v2))
+  Macro Min(_v1, _v2)
+    (_v1*Bool(_v1 <= _v2) + _v2*Bool(_v1 > _v2))
   EndMacro
   
   ; Get the highest value from 2 values
   ; use it : result = Max(3,2)
-  Macro Max(v1, v2)
-    (v1*Bool(v1>=v2) + v2*Bool(v1<v2))
+  Macro Max(_v1, _v2)
+    (_v1*Bool(_v1 >= _v2) + _v2*Bool(_v1 < _v2))
   EndMacro
   
   ; Write the lowest value from 2 values to VarResult
   ; use it : MinOf2(VarResult, 3, 2)
-  Macro MinOf2(VarResult, v1, v2)
-    If v1 < v2
-      VarResult = v1
+  Macro MinOf2(_VarResult, _v1, _v2)
+    If _v1 < _v2
+      _VarResult = _v1
     Else
-      VarResult = v2
+      _VarResult = _v2
     EndIf   
   EndMacro
   
   ; Write the highest value from 2 values to VarResult
   ; use it : MaxOf2(VarResult, 3, 2)
-  Macro MaxOf2(VarResult, v1, v2)
-    If v1 > v2
-      VarResult = v1
+  Macro MaxOf2(_VarResult, _v1, _v2)
+    If _v1 > _v2
+      VarResult = _v1
     Else
-      VarResult = v2
+      VarResult = _v2
     EndIf   
   EndMacro
   
   ; Write the lowest value from 3 values to VarResult
   ; use it: MinOf3(VarResult, 3, 2, 1)
-  Macro MinOf3(VarResult, v1, v2, v3)
-  	If v3 < v2
-  		If v3 < v1
-  			VarResult = v3
+  Macro MinOf3(_VarResult, _v1, _v2, _v3)
+  	If _v3 < _v2
+  		If _v3 < _v1
+  			_VarResult = _v3
   		Else
-  			VarResult = v1
+  			_VarResult = _v1
   		EndIf
-  	ElseIf v2 < v1
-  		VarResult = v2
+  	ElseIf _v2 < _v1
+  		_VarResult = _v2
   	Else
-  		VarResult = v1
+  		_VarResult = _v1
   	EndIf
   EndMacro
   
   ; Write the highest value from 3 values to VarResult
   ; use it: MaxOf3(VarResult, 3, 2, 1)
-  Macro MaxOf3(VarResult, v1, v2, v3)
-    If v3 > v2
-  		If v3 > v1
-  			VarResult = v3
+  Macro MaxOf3(_VarResult, _v1, _v2, _v3)
+    If _v3 > _v2
+  		If _v3 > _v1
+  			_VarResult = _v3
   		Else
-  			VarResult = v1
+  			_VarResult = _v1
   		EndIf
-  	ElseIf v2 > v1
-  		VarResult = v2
+  	ElseIf _v2 > _v1
+  		_VarResult = _v2
   	Else
-  		VarResult = v1
+  		_VarResult = _v1
   	EndIf
   EndMacro
   
@@ -440,14 +445,14 @@ DeclareModule PX
   ;        with value: result = MinNull(-5)
   
   ; Attention do not add brakets: '( VarOrValue * Bool(VarOrValue >0) )' -> MinNull(MyVar) will not work
-  Macro MinNull(VarOrValue)
-    VarOrValue * Bool(VarOrValue >0)  
+  Macro MinNull(_VarOrValue)
+    _VarOrValue * Bool(_VarOrValue >0)  
   EndMacro
   
   ; use it: LimitToMin(var, MinValue)
   ;         LimitToMin(var, a+b)            ; use with MinValue as Expression
-  Macro LimitToMin(var, MinValue)
-    If var < (MinValue) : var = (MinValue) : EndIf
+  Macro LimitToMin(_var, _MinValue)
+    If _var < (_MinValue) : _var = _(MinValue) : EndIf
   EndMacro
   
   ; Limit var to MaxValue
@@ -455,8 +460,8 @@ DeclareModule PX
   
   ; use it: LimitToMax(var, MaxValue)
   ;         LimitToMax(var, a+b)            ; use with MaxValue as Expression
-  Macro LimitToMax(var, MaxValue)
-    If var > (MaxValue) : var = (MaxValue) : EndIf
+  Macro LimitToMax(_var, _MaxValue)
+    If _var > (_MaxValue) : _var = (_MaxValue) : EndIf
   EndMacro
   
   ; Limit var to MinValue and MaxValue 
@@ -473,27 +478,27 @@ DeclareModule PX
   ; especally to compare FloatingPoint values. But works on all types.
   ; use it: result = IsEqual(v1, v2, delta)
   ;         result = IsEqual(v1, v2, a-b)             ; use with delta as Expression 
-  Macro IsEqual(v1, v2, delta)
-    Bool(Abs(v1 - v2) <= delta)
+  Macro IsEqual(_v1, _v2, _delta)
+    Bool(Abs(_v1 - _v2) <= _delta)
   EndMacro
   ; Bool(v1 <= (v2 +delta)) And (v1 >= (v2 -delta))
   
   ; (MinValue <= value <= MaxValue)
   ; use it: result = IsInRange(value, MinValue, MaxValue)
   ;         result = IsInRange(value, a-b, a+b)       ; use with MinValue, MaxValue as Expression
-  Macro IsInRange(value, MinValue, MaxValue)
-    Bool((value)>=(MinValue) And (value)<=(MaxValue))  
+  Macro IsInRange(_value, _MinValue, _MaxValue)
+    Bool((_value)>=(_MinValue) And (_value)<=(_MaxValue))  
   EndMacro 
   
   ; saves Min and Max values to varMin, varMax
   ; use it: SaveMinMax(100, varMin, varMax)  ; -> varMin=100, varMax=100
   ;         SaveMinMax(99, varMin, varMax)   ; -> varMin=99 , varMax=100
   ;         SaveMinMax(101, varMin, varMax)  ; -> varMin=99 , varMax=101
-  Macro SaveMinMax (value, varMin, varMax)
-    If value > varMax
-      varMax = value
-    ElseIf value < varMin
-      varMin = value  
+  Macro SaveMinMax (_value, _varMin, _varMax)
+    If _value > _varMax
+      _varMax = _value
+    ElseIf _value < _varMin
+      _varMin = _value  
     EndIf
   EndMacro  
   
@@ -503,42 +508,42 @@ DeclareModule PX
  
   ; similar to the VB IIf Function
   ; use it : IIf(varReturn, A>1000, "large", "small")
-  Macro IIF(varReturn, _Expression_, valTrue, valFalse)
-    If Bool(_Expression_)
-      varReturn = valTrue
+  Macro IIF(_varReturn, _Expression, _valTrue, _valFalse)
+    If Bool(_Expression)
+      _varReturn = _valTrue
     Else
-      varReturn = valFalse  
+      _varReturn = _valFalse  
     EndIf
   EndMacro
   
   ;IIFe without Return -> execute TruePart or FalsePart
   ; use it: IIF(a=b, c+d, c*d)
   ;         IIF(a=b, x=1, x=0)
-  Macro IIFe(_Expression_, _TrueExpression_, _FalseExpression_)
-    If _Expression_
-      _TrueExpression_
+  Macro IIFe(_Expression, _TrueExpression, _FalseExpression)
+    If _Expression
+      _TrueExpression
     Else
-      _FalseExpression_
+      _FalseExpression
     EndIf   
   EndMacro
       
   ; IIFn with Numeric retrurn 
   ; use it: numVar = IIF(a=b, 1, 2)
-  Macro IIFn(_Expression_, _TruePart_, _FalsePart_)
-    (Bool(_Expression_) * _TruePart_ + Bool(Not(_Expression_)) * _FalsePart_)    
+  Macro IIFn(_Expression, _TruePart, _FalsePart)
+    (Bool(_Expression) * _TruePart + Bool(Not(_Expression)) * _FalsePart)    
   EndMacro
     
   ; IIFs with String return from True/False String 
   ; use it: IIFs(A>1000, large, small)
-  Macro IIFs(_Expression_, _TrueString_, _FalseString_)
-    PeekS(@_TrueString_, -Bool(_Expression_)) + PeekS(@_FalseString_, -Bool(Not(_Expression_)))
+  Macro IIFs(_Expression, _TrueString, _FalseString)
+    PeekS(@_TrueString, -Bool(_Expression)) + PeekS(@_FalseString, -Bool(Not(_Expression)))
   EndMacro
   
   ; This idea I found at PB-Forum
   ; IIFsf with String return from a True/False StringField
   ; use it: IIFsf(A>1000, "large|small")
-  Macro IIFsf(_Expression_, _TrueFalseStrField_, sepStr="|")
-    StringField(_TrueFalseStrField_, 2-Bool(_Expression_), sepStr)
+  Macro IIFsf(_Expression, _TrueFalseStrField, _sepStr="|")
+    StringField(_TrueFalseStrField, 2-Bool(_Expression), _sepStr)
   EndMacro
   
   ; The GetBackendString is a fork of the IIFsf()
@@ -554,43 +559,43 @@ DeclareModule PX
   ; It is possible to use expression : y = SQ(3+2)  = 25
   ; use it: result = SQ(value)
   ;         result = SQ(a+b)        ; use with value as Expression
-  Macro SQ(value)
-    ((value)*(value))
+  Macro SQ(_value)
+    ((_value)*(_value))
   EndMacro
   
   ; because PB do not have a cubic function x³
   ; use it: result = CUB(value)
   ;         result = CUB(a+b)       ; use with value as Expression
-  Macro CUB(value)
-    ((value)*(value)*(value))
+  Macro CUB(_value)
+    ((_value)*(_value)*(_value))
   EndMacro
   
   ; Calculate hypothenuse with Pythagoras
   ; use it: C = Hypothenuse(A, B)
-  Macro Hypothenuse(_A_, _B_)
-    Sqr(_A_*_A_ + _B_*_B_)
+  Macro Hypothenuse(_A, _B)
+    Sqr(_A*_A + _B*_B)
   EndMacro
   
   ; Lerp : Blending between A..B from 0..100% with T={0..1}
   ; Be sure to pass FloatingPoint values to the Macro
-  ; _A_ [Float] : Startvalue A 
-  ; _B_ [Float] : Endvalue   B
-  ; _T_ [Float] : Time Value {0..1} = {0..100%}
+  ; _A [Float] : Startvalue A 
+  ; _B [Float] : Endvalue   B
+  ; _T [Float] : Time Value {0..1} = {0..100%}
   ; RET [Float] : Lerped Value V in the Range {ValStart..ValEnd}
   ; use it: V = Lerp(A, B, T)
-  Macro Lerp(_A_, _B_, _T_)    
-    (_B_-_A_) * _T_ + _A_   ; A*(1-T) + B*T
+  Macro Lerp(_A, _B, _T)    
+    (_B-_A) * _T + _A   ; A*(1-T) + B*T
   EndMacro
   
   ; InverseLerp : Get the BlendingTime T{0..1} of the Value V in the Range [A..B]
-  ; _A_ [Float] : Startvalue A 
-  ; _B_ [Float] : Endvalue   B
-  ; _V_ [Float] : Time Value {0..1} = {0..100%}
+  ; _A [Float] : Startvalue A 
+  ; _B [Float] : Endvalue   B
+  ; _V [Float] : Time Value {0..1} = {0..100%}
   ; RET [Float] : Blendig Time T of the Value V {0..1} = {0..100%}
   ;
   ; use it: T = UnLerp(A, B, V)
-  Macro UnLerp(_A_, _B_, _V_)
-    (_V_-_A_)/(_B_-_A_)
+  Macro UnLerp(_A, _B, _V)
+    (_V-_A)/(_B-_A)
   EndMacro
   
   ; Scale : scales a value which is within the Range [inMin..inMax]
@@ -608,8 +613,8 @@ DeclareModule PX
   ; RET : the value scaled to the Output Range [outMin..outMax]
   ;
   ; use it: result = Scale(value, -255, 255, 0, 100)  ; to rescale a Range [-255..255] to [0..100]% 
-  Macro Scale(value, inMin, inMax, outMin, outMax)
-    ((value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin)
+  Macro Scale(_value, _inMin, _inMax, _outMin, _outMax)
+    ((_value - _inMin) * (_outMax - _outMin) / (_inMax - _inMin) + _outMin)
   EndMacro
   
   ;   MIN=-100 MAX=100 VALUE=20 : ret= -20
@@ -617,9 +622,9 @@ DeclareModule PX
   ;                    VALUE=50 : ret=  70 
   
   ; use it: result = InvertRange(value, 0, 100) to change from [0..100] to [100..0]
-  Macro InvertRange(value, RangeMin, RangeMax)
+  Macro InvertRange(_value, _RangeMin, _RangeMax)
     ; ret = Max - Val + Min
-    (RangeMin + RangeMax - value)
+    (_RangeMin + _RangeMax - _value)
   EndMacro    
 
   ;- ----------------------------------------------------------------------
@@ -629,171 +634,280 @@ DeclareModule PX
   ; create a right aligned Hex$ with leading '0'. The stringlength
   ; depends on the function: Word - HexW, Long - HecxL, Quad - HexQ
   ; use it: result$ = HexW(value)
-  Macro HexW(value)
-    RSet(Hex(value, #PB_Word), 4, "0")
+  Macro HexW(_value)
+    RSet(Hex(_value, #PB_Word), 4, "0")
   EndMacro
 
   ; use it: result$ = HexL(value)
-  Macro HexL(value)
-    RSet(Hex(value, #PB_Long), 8, "0")
+  Macro HexL(_value)
+    RSet(Hex(_value, #PB_Long), 8, "0")
   EndMacro
   
   ; use it: result$ = HexQ(value)
-  Macro HexQ(value)
-    RSet(Hex(value, #PB_Quad), 16, "0")
+  Macro HexQ(_value)
+    RSet(Hex(_value, #PB_Quad), 16, "0")
   EndMacro
   
-  ; Bin(value, #PB_Byte) converts only the LoByte to Bin
+  ; Bin(_value, #PB_Byte) converts only the LoByte to Bin
   ; use it: Binary$ = BinB(value)
-  Macro BinB(value)  
-    RSet(Bin(value, #PB_Byte), 8, "0")
+  Macro BinB(_value)  
+    RSet(Bin(_value, #PB_Byte), 8, "0")
   EndMacro
   
   ; use it: Binary$ = BinW(value)
-  Macro BinW(value)
-    BinB(value>>8)+"."+BinB(value)
+  Macro BinW(_value)
+    BinB(_value>>8)+"."+BinB(_value)
   EndMacro
   
   ; use it: Binary$ = BinL(value)
-  Macro BinL(value)
-    BinB(value>>24)+"."+BinB(value>>16)+"."+BinB(value>>8)+"."+BinB(value)
+  Macro BinL(_value)
+    BinB(_value>>24)+"."+BinB(_value>>16)+"."+BinB(_value>>8)+"."+BinB(_value)
   EndMacro
  
   ; use it: Number$ = No2StrI(IntValue, length)
-  Macro No2StrI(IntValue, lenght)
-    RSet(Str(IntValue), lenght)
+  Macro No2StrI(_IntValue, _lenght)
+    RSet(Str(_IntValue), _lenght)
   EndMacro
   
   ; use it: Number$ = No2StrF(IntValue, length, [decimals])
-  Macro No2StrF(floatValue, lenght, decimals=3)
-    RSet(StrF(floatValue, decimals), lenght)
+  Macro No2StrF(_floatValue, _lenght, _decimals=3)
+    RSet(StrF(_floatValue, _decimals), _lenght)
   EndMacro
   
   ; use it: Number$ = No2StrD(IntValue, length, [decimals])
-  Macro No2StrD(doubleValue, lenght, decimals=3)
-    RSet(StrD(doubleValue, decimals), lenght)
+  Macro No2StrD(_doubleValue, _lenght, _decimals=3)
+    RSet(StrD(_doubleValue, _decimals), _lenght)
   EndMacro
  
-
   ;- ----------------------------------------------------------------------
-  ;- Macros for CHAR operations
+  ;- Macros for Chara parsing with pChar
   ;- ----------------------------------------------------------------------
   
-  ; With INCC, DECC for Charpointer operations instead of *MyCharPointer + [1,2], -[1,2]
+  ; With CInc, CDec for Charpointer operations instead of *MyCharPointer + [1,2], -[1,2]
   ; you can do a search for CharPointer operations. You don't have to care about CharSize! 
 
   ; Decrement CharPointer
-  ; use it: DECC(MyCharPointer, [1..n])
-  ;     or  MyNewCharPointer = DECC(MyOldCharPointer, [1..n])
-  Macro DECC(ptrChar, cnt=1)
-    ptrChar - cnt*PX::#PX_CharSize
-  EndMacro
-
-  ; Increment CharPointer
-  ; use it: INCC(MyCharPointer, [1..n])
-  ;     or  MyNewCharPointer = INCC(MyOldCharPointer, [1..n])
-  Macro INCC(ptrChar, cnt=1)
-    ptrChar + cnt*PX::#PX_CharSize
+  ; use it: CDec(MyCharPointer, [1..n])
+  ;     or  MyNewCharPointer = CDec(MyOldCharPointer, [1..n])
+  Macro CDec(_pChar, _cnt=1)
+    _pChar - (_cnt)*PX::#PX_CharSize
   EndMacro
   
+  ; Increment CharPointer
+  ; use it: CInc(MyCharPointer, [1..n])
+  ;     or  MyNewCharPointer = CInc(MyOldCharPointer, [1..n])
+  Macro CInc(_pChar, _cnt=1)
+    _pChar + (_cnt)*PX::#PX_CharSize
+  EndMacro
+  
+  ; Move CharPointer to skip all TAB and SPACE
+  ; use it: CSkipSpaceTab(MyCharPointer) 
+  Macro CSkipSpaceTab(_pChar)
+    While _pChar\c = 32 Or _pChar\c = 9
+      _pChar + PX::#PX_CharSize
+    Wend
+  EndMacro
+ 
+  ; Move CharPointer to Next specified Char
+  ; use it: CMovNext(MyCharPointer, ':')
+  Macro CMovNext(_pChar, _CharValue)
+    While _pChar\c
+      If _pChar\c = _CharValue
+        Break
+      EndIf
+      _pChar + PX::#PX_CharSize 
+    Wend
+  EndMacro
+  
+  ; Move CharPointer to Last specified Char
+  ; use it: CMovLast(MyCharPointer, j, ':')
+  Macro CMovLast(_pChar, _varCnt, _CharValue)
+    _varCnt = 0
+    While _pChar\c[_varCnt]
+      If _pChar\c[_varCnt] = _CharValue
+        _pChar + _varCnt * SizeOf(Character)
+        _varCnt=0
+      EndIf
+      _varCnt+1
+    Wend
+  EndMacro
+  
+  ; Move CharPointer to Next Decimal Char 0..9
+  ; use it: CMovNextDecimal(MyCharPointer, ':')
+  Macro CMovNextDecimal(_pChar)
+    While _pChar\c
+      If _pChar\c >='0' And _pChar\c <='9' 
+        Break
+      EndIf
+      _pChar + PX::#PX_CharSize 
+    Wend
+  EndMacro
+  
+  ; Move CharPointer to Next non Decimal Char : Not[0..9]
+  ; use it: CMovNextNonDecimal(MyCharPointer)
+  Macro CMovNextNonDecimal(_pChar, _CharValue)
+    While _pChar\c
+      If _pChar\c >='0' And _pChar\c <='9'
+        _pChar + PX::#PX_CharSize
+      Else
+        Break
+      EndIf
+    Wend
+  EndMacro
+
+  ; Move CharPointer to 1 Char beyond next specified Char
+  ; use it: CMovBeyondNext(MyCharPointer, j, ':')
+  Macro CMovBeyondNext(_pChar, _varCnt, _CharValue)   
+    _varCnt = 0
+    While _pChar\c[_varCnt]
+      If _pChar\c[_varCnt] = _CharValue
+        _pChar + (_varCnt+1) * SizeOf(Character)
+        Break
+      EndIf
+      _varCnt +1
+    Wend
+  EndMacro
+
+  ; Move CharPointer to 1 Char beyond last specified Char
+  ; use it: CMoveBeyondLast(MyCharPointer, j, ':')
+  Macro CMovBeyondLast(_pChar, _varCnt, _CharValue)   
+    _varCnt = 0
+    While _pChar\c[_varCnt]
+      If _pChar\c[_varCnt] = _CharValue
+        _pChar + (_varCnt+1) * SizeOf(Character)
+        _varCnt=0
+      Else
+        _varCnt +1
+      EndIf
+    Wend
+  EndMacro
+    
+  ; Repleace the next specified Char without moving the Pointer _pChar
+  ; Example replace the next ',' with '.' (for changing to decimal point)
+  ; use it: ReplaceNextChar(MyCharPointer, j, ',', '.')
+  Macro CReplaceNext(_pChar, _varCnt, _searchChar, _replaceChar)
+    _varCnt = 0
+    While _pChar\c[_varCnt]
+      If _pChar\c[_varCnt] = _searchChar
+        _pChar\c[_varCnt] = _replaceChar
+        Break
+      EndIf
+      _varCnt + 1
+    Wend
+  EndMacro
+  
+  Macro CFindNext(_pChar, _varCnt, _searchChar)
+    _varCnt = 0
+    While _pChar\c[_varCnt]
+      If _pChar\c[_varCnt] = _searchChar 
+        Break    
+      EndIf
+      _varCnt +1
+    Wend
+  EndMacro
+  
+  ;- ----------------------------------------------------------------------
+  ;- Macros for CHAR operations
+  ;- ----------------------------------------------------------------------
+
   ; LowerCase a single Char in ASCii Character space, Unicode Chars are not affected!
-  ; use it: result = LCaseChar(CharValue)
+  ; use it: result = LCaseChar(_CharValue)
   ; <<5 = *32 what is the CharDifference between Lo and Up
-  Macro LCaseChar(CharValue)
-    (CharValue + Bool((CharValue>='A' And CharValue<='Z') Or (CharValue>=192 And CharValue<=222))<<5)  
+  Macro LCaseChar(_CharValue)
+    (_CharValue + Bool((_CharValue>='A' And _CharValue<='Z') Or (_CharValue>=192 And _CharValue<=222))<<5)  
   EndMacro
   
   ; UpperCase a single Char in ASCii Character space, Unicode Chars are not affected!
-  ; use it: result = UCaseChar(CharValue)
+  ; use it: result = UCaseChar(_CharValue)
   ; <<5 = *32 what is the CharDifference between Lo and Up
-  Macro UCaseChar(CharValue)
-    (CharValue - Bool((CharValue>='a' And CharValue<='z') Or (CharValue>=224 And CharValue<=254 And CharValue<>247))<<5)  
+  Macro UCaseChar(_CharValue)
+    (_CharValue - Bool((_CharValue>='a' And _CharValue<='z') Or (_CharValue>=224 And _CharValue<=254 And _CharValue<>247))<<5)  
   EndMacro
 
   ; Set a Charater variable to LoChar. It's faster than MyChar = LCaseChar(MyChar)!
   ; ASCii Character space only!
-  ; use it: SetCharLo(CharValue)
-  Macro SetCharLo(varChar)  
-    Select varChar
+  ; use it: SetCharLo(_CharValue)
+  Macro SetCharLo(_varChar)  
+    Select _varChar
       Case 'A' To 'Z'
-        varChar + 32  ; a[97]-A[65]=32       
+        _varChar + 32  ; a[97]-A[65]=32       
       Case 192 To 222   ; 'À'..222
-        varChar + 32  ; 224-192 = 32        
+        _varChar + 32  ; 224-192 = 32        
     EndSelect
   EndMacro
    
   ; Set a Charater variable to UpChar. It's faster than MyChar = UCaseChar(MyChar)
   ; ASCii Character space only!
   ; use it: SetCharUp(MyChar)
-  Macro SetCharUp(varChar)  
-    Select varChar
+  Macro SetCharUp(_varChar)  
+    Select _varChar
       Case 'a' To 'z'
-        varChar - 32  ; a[97]-A[65]=32                
+        _varChar - 32  ; a[97]-A[65]=32                
       Case 247        ; '÷'
       Case 224 To 254   ; 'À'..254
-        varChar - 32  ; 254-222 = 32      
+        _varChar - 32  ; 254-222 = 32      
     EndSelect
   EndMacro 
   
   ; Check if Char is decimal digit : Case '0' To '9'
   ; The Bool is needed to save the result in a var: res=IsDecChar()! Without Bool only 'If IsDecChar()' is possible!
-  ; use it: result = IsDecChar(CharValue)
-  Macro IsDecChar(CharValue)
-    Bool(CharValue >='0' And CharValue <='9')
+  ; use it: result = IsDecChar(_CharValue)
+  Macro IsDecChar(_CharValue)
+    Bool(_CharValue >='0' And _CharValue <='9')
   EndMacro
   
   ; Check if Char is Hex digit : Case '0' To '9', 'A' To 'F'
-  ; use it: result = IsHexChar(CharValue)
-  Macro IsHexChar(CharValue)
-    Bool((CharValue >='0' And CharValue <='9') Or (CharValue >='A' And CharValue <='F'))
+  ; use it: result = IsHexChar(_CharValue)
+  Macro IsHexChar(_CharValue)
+    Bool((_CharValue >='0' And _CharValue <='9') Or (_CharValue >='A' And _CharValue <='F'))
   EndMacro
   
   ; Check if Char is binary digit : Case '0', '1'
   ; use it: result = IsBinChar(MyChar)
-  Macro IsBinChar(CharValue)
-    Bool(CharValue ='0' Or CharValue ='1')
+  Macro IsBinChar(_CharValue)
+    Bool(_CharValue ='0' Or _CharValue ='1')
   EndMacro
   
   ; Check if Char is SPACE or TAB : Case '9', '32'
   ; use it: result = IsSpaceTabChar(MyChar)
-  Macro IsSpaceTabChar(CharValue)
-    Bool(CharValue=9 Or CharValue=32)
+  Macro IsSpaceTabChar(_CharValue)
+    Bool(_CharValue=9 Or _CharValue=32)
   EndMacro
   
   ; Check if Char is EndOfLineChar LF or CR : Case '10', '13'
   ; use it: result = IsEolChar(MyChar)
-  Macro IsEolChar(CharValue)
-    Bool(CharValue=10 Or CharValue=13)
+  Macro IsEolChar(_CharValue)
+    Bool(_CharValue=10 Or _CharValue=13)
   EndMacro  
   
   ; Check if Char is plus '+' or minus '-'
   ; use it: result = IsPlusMinusChar(MyChar)
-  Macro IsPlusMinusChar(CharValue)
-    Bool(CharValue='+' Or CharValue='-')
+  Macro IsPlusMinusChar(_CharValue)
+    Bool(_CharValue='+' Or _CharValue='-')
   EndMacro  
 
   ; Check if Char is multiplication '*' or division '/'
   ; use it: result = IsMulDivChar(MyChar)
-  Macro IsMulDivChar(CharValue)
-    Bool(CharValue='*' Or CharValue='/')
+  Macro IsMulDivChar(_CharValue)
+    Bool(_CharValue='*' Or _CharValue='/')
   EndMacro  
   
   ; Check if Char is a letter : Case 'A' To 'Z', 'a' To 'z'
-  ; use it: result = IsLetter(CharValue)
-  Macro IsLetter(CharValue)
-    Bool( (CharValue >= 'A' And CharValue <= 'Z') Or (CharValue >= 'a' And CharValue <= 'z'))  
+  ; use it: result = IsLetter(_CharValue)
+  Macro IsLetter(_CharValue)
+    Bool( (_CharValue >= 'A' And _CharValue <= 'Z') Or (_CharValue >= 'a' And _CharValue <= 'z'))  
   EndMacro
   
   ; Combines 2 Unicode Chars to a Double Char Value .l
   ; use it: result = MakeDoubleChar(13,10)  ; for CRLF 
-  Macro MakeDblChar(CharValue1, CharValue2)
-    (CharValue2<<16 | CharValue1)      
+  Macro MakeDblChar(_CharValue1, _CharValue2)
+    (_CharValue2<<16 | _CharValue1)      
   EndMacro
   
   ; Combines 4 Unicode Chars to a Quad Char Value .q
   ; use it: result = MakeQuadChar('a','b', 'c', 'd')  ; for 'abcd' 
-  Macro MakeQChar(CharValue1, CharValue2, CharValue3, CharValue4)
-    (CharValue4<<48 | CharValue3<<32 | CharValue2<<16 | CharValue1)  
+  Macro MakeQChar(_CharValue1, _CharValue2, _CharValue3, _CharValue4)
+    (_CharValue4<<48 | _CharValue3<<32 | _CharValue2<<16 | _CharValue1)  
   EndMacro
      
   ;- ----------------------------------------------------------------------
@@ -822,50 +936,50 @@ DeclareModule PX
   
   ; Get Red Channel of ColorValue
   ; use it : result = GetRed(ColorValue) 
-  Macro GetRed(ColorValue)
-    (ColorValue >> PX::_SCM\shRed & $FF) 
+  Macro GetRed(_ColorValue)
+    (_ColorValue >> PX::_SCM\shRed & $FF) 
   EndMacro
   
   ; Set Red Channel with new value
   ; use it : result = SetRed(ColorValue, NewRedValue) 
-  Macro SetRed(ColorValue, NewRed=0)
-    (ColorValue & PX::_SCM\maskRedOff) | ((NewRed) << PX::_SCM\shRed)
+  Macro SetRed(_ColorValue, NewRed=0)
+    (_ColorValue & PX::_SCM\maskRedOff) | ((NewRed) << PX::_SCM\shRed)
   EndMacro
   
   ; Get Green Channel of ColorValue
   ; use it : result = GetGreen(ColorValue) 
-  Macro GetGreen(ColorValue)
-    (ColorValue >> PX::_SCM\shGreen & $FF) 
+  Macro GetGreen(_ColorValue)
+    (_ColorValue >> PX::_SCM\shGreen & $FF) 
   EndMacro
   
   ; Set Green Channel with new value
   ; use it : result = SetGreen(ColorValue, NewGreenValue) 
-  Macro SetGreen(ColorValue, NewGreen=0)
-    (ColorValue & PX::_SCM\maskGreenOff) | ((NewGreen) << PX::_SCM\shGreen)
+  Macro SetGreen(_ColorValue, NewGreen=0)
+    (_ColorValue & PX::_SCM\maskGreenOff) | ((NewGreen) << PX::_SCM\shGreen)
   EndMacro
   
   ; Get Blue Channel of ColorValue
   ; use it : result = GetBlue(ColorValue) 
-  Macro GetBlue(ColorValue)
-    (ColorValue >> PX::_SCM\shBlue & $FF) 
+  Macro GetBlue(_ColorValue)
+    (_ColorValue >> PX::_SCM\shBlue & $FF) 
   EndMacro
   
   ; Set Blue Channel with new value
   ; use it : result = SetBlue(ColorValue, NewBlueValue) 
-  Macro SetBlue(ColorValue, NewBlue=0)
-    (ColorValue & PX::_SCM\maskBlueOff) | ((NewBlue) << PX::_SCM\shBlue)
+  Macro SetBlue(_ColorValue, NewBlue=0)
+    (_ColorValue & PX::_SCM\maskBlueOff) | ((NewBlue) << PX::_SCM\shBlue)
   EndMacro
  
   ; Get Alpha Channel of ColorValue
   ; use it : result = GetBlue(ColorValue) 
-  Macro GetAlpha(ColorValue)
-    (ColorValue >> PX::_SCM\shAlpha & $FF) 
+  Macro GetAlpha(_ColorValue)
+    (_ColorValue >> PX::_SCM\shAlpha & $FF) 
   EndMacro
   
   ; Set Alpha Channel with new value
   ; use it : result = SetAlpha(ColorValue, NewAlphaValue) 
-  Macro SetAlpha(ColorValue, NewAlpha=255)
-    (ColorValue & PX::_SCM\maskAlphaOff) | ((NewAlpha) << PX::_SCM\shAlpha)   
+  Macro SetAlpha(_ColorValue, NewAlpha=255)
+    (_ColorValue & PX::_SCM\maskAlphaOff) | ((NewAlpha) << PX::_SCM\shAlpha)   
   EndMacro
   
   ; Remember: If you use PB's Image drawing functions which use Alpha Channel you
@@ -875,9 +989,9 @@ DeclareModule PX
   
   ; If Alpha = 0 Then Alpha = 255 
   ; use it : SetAlphaIfNull(varColor) 
-  Macro SetAlphaIfNull(varColor)
-    If Not (varColor & PX::_SCM\maskAlpha)
-      varColor = varColor | PX::_SCM\maskAlpha
+  Macro SetAlphaIfNull(_varColor)
+    If Not (_varColor & PX::_SCM\maskAlpha)
+      _varColor = _varColor | PX::_SCM\maskAlpha
     EndIf
   EndMacro
   
@@ -894,18 +1008,18 @@ DeclareModule PX
   EndMacro
   
   ; use it : SaturateColor(MyColorVar)
-  Macro SaturateColor(varColor)
-    If varColor > 255 
-      varColor = 255 
-    ElseIf varColor < 0
-      varColor = 0 
+  Macro SaturateColor(_varColor)
+    If _varColor > 255 
+      _varColor = 255 
+    ElseIf _varColor < 0
+      _varColor = 0 
     EndIf
   EndMacro
 
   ; Limit the Color value to 255
   ; use it : SaturateColorMax(MyColorVar)
-  Macro SaturateColorMax(varColor)
-    If varColor > 255 : varColor = 255 : EndIf
+  Macro SaturateColorMax(_varColor)
+    If _varColor > 255 : _varColor = 255 : EndIf
   EndMacro
   
   ; Blend  RedVal into ColorVar : Alpha [0..255] is the Blending for Red(ColorVar)
@@ -944,22 +1058,22 @@ DeclareModule PX
   ; R = 333  ; factor = 0.333 we use integer multiplikation *1024>>10 
   ; G = 333
   ; B = 333
-  Macro GreyScaleAverage(ColorValue)
-    (Red(ColorValue)341 + Green(ColorValue)341 + Blue(ColorValue)341)>>10)
+  Macro GreyScaleAverage(_ColorValue)
+    (Red(_ColorValue)341 + Green(_ColorValue)341 + Blue(_ColorValue)341)>>10)
   EndMacro
   
   ; R = 299
   ; G = 587
   ; B = 114
-  Macro GreyScaleStandard(ColorValue)
-    (Red(ColorValue)306 + Green(ColorValue)*601 + Blue(ColorValue)117)>>10)
+  Macro GreyScaleStandard(_ColorValue)
+    (Red(_ColorValue)306 + Green(_ColorValue)*601 + Blue(_ColorValue)117)>>10)
   EndMacro
   
   ; R = 309
   ; G = 609
   ; B =  82
-  Macro GreyScaleWeightedLight(ColorValue)
-    (Red(ColorValue)*316 + Green(ColorValue)*624 + Blue(ColorValue)*84)>>10)
+  Macro GreyScaleWeightedLight(_ColorValue)
+    (Red(_ColorValue)*316 + Green(_ColorValue)*624 + Blue(_ColorValue)*84)>>10)
   EndMacro
 
   ;- ----------------------------------------------------------------------
@@ -969,9 +1083,9 @@ DeclareModule PX
   ; AbsI() and AbsQ() solve tha PB's ABS() Problem at C-Backend with 53-Bit only!
   ; In ASM Backend the 80Bit Float unit is used for ABS() what works perfect for 64Bit INT.
   ; In C-Backend a MMX Version is used for ABS(). This is a problem because MMX use only 64Bit Floats
-  ; with a manitassa of 53 Bits. This will cause bugs using ABs() for values >53 Bits!
+  ; with a manitassa of 53 Bits. This will cause bugs using ABS() for values >53 Bits!
   
-  ; This is the optimized Abs Version (translated from Assembler to PB-Code; Soure: Math.asm from Linux Asm Project
+  ; This is the optimized Abs Version (translated from Assembler to PB-Code; Source: Math.asm from Linux Asm Project
   ; X!(X>>63)-(X>>63) ; x64
   ; X!(X>>31)-(X>>31) ; x32
   
@@ -979,12 +1093,12 @@ DeclareModule PX
   ; PB 6.04 on Ryzen 5800 the Macro is nearly same speed as PB's ABS()
   ; ASM BAckend: For 100Mio calls (50% with -X and 50% with +X) :  PB_ABS() = 53ms  AbsI() = 58ms
   CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm
-    Macro AbsI(IntValue)
-      Abs(IntValue)
+    Macro AbsI(_IntValue)
+      Abs(_IntValue)
     EndMacro
   CompilerElse  ; C-Backend
-    Macro AbsI(IntValue)
-      (IntValue ! (IntValue >> PX::#PX_MaxBitNo) - (IntValue >> PX::#PX_MaxBitNo))
+    Macro AbsI(_IntValue)
+      (_IntValue ! (_IntValue >> PX::#PX_MaxBitNo) - (_IntValue >> PX::#PX_MaxBitNo))
     EndMacro
   CompilerEndIf
   
@@ -1088,8 +1202,8 @@ DeclareModule PX
   
   Prototype.i SetRight(String$, StringToSet$, Length=#PB_All)
   Global SetRight.SetRight
-  
-  Prototype.s TextBetween(String$, Left$, Right$)
+    
+  Prototype.s TextBetween(String$, Left$, Right$=#Null$)
   Global TextBetween.TextBetween
   
   Prototype.i TextBetweenList(List Out.s(), String$, Left$, Right$)
@@ -1822,8 +1936,8 @@ Module PX
     While *Source\c                 ; If Source not at EndOfString
       If *Dest\c                    ; If Destination not at EndOfString  
         *Dest\c = *Source\c         ; Destination = Source
-        INCC(*Source)               ; Set Pointer to next char
-        INCC(*Dest)  
+        CInc(*Source)               ; Set Pointer to next char
+        CInc(*Dest)  
         cntChar + 1                 ; count number of characters
         If cntChar >= Length
           Break
@@ -1867,15 +1981,15 @@ Module PX
         If *Dest\c = 0
           ProcedureReturn 0       ; Start-Pos is outside of String
         Else
-          INCC(*Dest)           ; increment CharPointer
+          CInc(*Dest)           ; increment CharPointer
         EndIf
       Next         
        
       While *Source\c                 ; If Source not at EndOfString
         If *Dest\c                    ; If Destination not at EndOfString  
           *Dest\c = *Source\c         ; Destination = Source
-          INCC(*Source)               ; Set Pointer to next char
-          INCC(*Dest)  
+          CInc(*Source)               ; Set Pointer to next char
+          CInc(*Dest)  
           cntChar + 1                 ; count number of characters
           If cntChar >= Length
             Break
@@ -1917,22 +2031,22 @@ Module PX
     While *Source\c
       ; it make sense to step trough the complete String instead of using Len()
       ; because len steps trough the complete String too!
-      INCC(*Source)  
+      CInc(*Source)  
     Wend
-    DECC(*Source) ; set CharPointer from EndOfString to last Character 
+    CDec(*Source) ; set CharPointer from EndOfString to last Character 
     
     ; set DestinationPointer to EndOfString
     While *Dest\c
-      INCC(*Dest)  
+      CInc(*Dest)  
     Wend
-    DECC(*Dest)   ; set CharPointer from EndOfString to last Character 
+    CDec(*Dest)   ; set CharPointer from EndOfString to last Character 
     
     ; copy StringToSet Reverse Right into String
     While *Source >= *StringToSet    
       If *Dest >= *String           ; max. until 1st Character is reached
         *Dest\c = *Source\c         ; Copy Character from Source to Destination
-        DECC(*Source)               ; Set Pointer to previous char
-        DECC(*Dest)  
+        CDec(*Source)               ; Set Pointer to previous char
+        CDec(*Dest)  
         cntChar + 1                 ; count number of characters
         If cntChar >= Length
           Break
@@ -1979,38 +2093,45 @@ Module PX
     ProcedureReturn ret
   EndProcedure
 
-  Procedure.s _TextBetween(*String, Left$, Right$)
+  Procedure.s _TextBetween(*String, Left$, Right$=#Null$)
   ; ============================================================================
   ; NAME: TextBetween
   ; DESC: Gets the Text between the first two String elements Left$ and Right$
   ; DESC: Attention it is an easy version which do not support cascaded between 
   ; DESC: like in brackets "((InBrackets))". TextBetween will deliver "(InBrackets"
   ; VAR(String$) : The String
-  ; VAR(Left$) : The left side like "("
-  ; VAR(Right$) : The right side like ")"
+  ; VAR(Left$) : Left side like "("
+  ; VAR(Right$) : Right side like ")". If Right$=#Null$ -> Return from Left$ until End
   ; RET.s : The Text between Left$ and Right$
   ; ============================================================================
     
-    Protected posL, posR
+    Protected posL, posR, xRight
     Protected Str.String, *pStr.Integer ; for hooking *String into Str.String 
     
-   ; because FindString() do not accept Pointers, we have to hook the 
+    ; because FindString() do not accept Pointers, we have to hook the 
     ; *String and *Separator into a String-Structure, The trick is to overlay
     ; an Integer Structure over the String Structure - this is like StructureUnion
     ; but hand made!
     *pStr = @Str            ; Overlay IntergerStructure on String Structure
-    *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))
+    *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))   
+    xRight = Bool(Right$)   ; Check for Right$=#Null$ to return until EndOfString
     
     posL = FindString(Str\s, Left$)   
     If posL
       *String = *String + posL*SizeOf(Character) + Len(Left$)*SizeOf(Character) - SizeOf(Character) ; Pointer to Char after Position found
       *pStr\i = *String   ; New Startposition for FindString
-      posR = FindString(Str\s, Right$)
       
-      If posR
+      If xRight     
+        posR = FindString(Str\s, Right$)  
+        If posR
+          *pStr\i = 0   ; Unhook String -> delete the Pointer of the String in Str\s
+          ProcedureReturn PeekS(*String, posR-1)
+        EndIf
+      Else    ; Right$ = #Null$ -> Return until EndOfString
         *pStr\i = 0   ; Unhook String -> delete the Pointer of the String in Str\s
-        ProcedureReturn PeekS(*String, posR-1)
-      EndIf
+        ProcedureReturn PeekS(*String) 
+      EndIf     
+      
     EndIf
     
     ; befor leaving the Procedure we have to unhook the Strings, otherwise PB will delete
@@ -2030,11 +2151,11 @@ Module PX
   ; VAR(List Out.s()) : The List with the found Strings
   ; VAR(*String) : Pointer to String
   ; VAR(Left$) : The left side like "("
-  ; VAR(Right$) : The right side like ")"
+  ; VAR(Right$) : Right side like ")"
   ; RET.i : The number of found Strings (it is identical with the ListSize)
   ; ============================================================================
-    Protected posL, posR        ; Character postion of found Char 
-    Protected lenBL, lenBR      ; Bytelength of Left$, Right$ 
+    Protected posL, posR, xRight        ; Character postion of found Char 
+    Protected lenBL, lenBR              ; Bytelength of Left$, Right$ 
     Protected Str.String, *pStr.Integer ; for hooking *String into Str.String 
         
     ClearList(Out())
@@ -2051,6 +2172,7 @@ Module PX
     ; but hand made!
     *pStr = @Str            ; Overlay IntergerStructure on String Structure
     *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))
+    xRight = Bool(Right$)   ; Check for Right$=#Null$ to return until EndOfString
     
     Repeat
       posL = FindString(Str\s, Left$)
@@ -2089,14 +2211,14 @@ Module PX
   ; VAR(Array Out.s(1)) : The Array with the found Strings
   ; VAR(*String) : Pointer to String
   ; VAR(Left$) : The left side like "("
-  ; VAR(Right$) : The right side like ")"
+  ; VAR(Right$) : Right side like ")".
   ; VAR(ArrayRedimStep) : How may entries are added to the String each ReDim
   ;                       if you know the exact No of Substrings before, use it here!
   ;                       this prevents from ReDim.
   ; RET.i : The number of found Strings (it is identical with the ListSize)
   ; ============================================================================
-    Protected posL, posR        ; Character postion of found Char 
-    Protected lenBL, lenBR      ; Bytelength of Left$, Right$ 
+    Protected posL, posR, xRight        ; Character postion of found Char 
+    Protected lenBL, lenBR              ; Bytelength of Left$, Right$ 
     Protected ASize, N
     Protected Str.String, *pStr.Integer ; for hooking *String into Str.String 
         
@@ -2119,6 +2241,7 @@ Module PX
     ; but hand made!
     *pStr = @Str            ; Overlay IntergerStructure on String Structure
     *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))
+    xRight = Bool(Right$)   ; Check for Right$=#Null$ to return until EndOfString
     
     Repeat
       posL = FindString(Str\s, Left$)
@@ -2214,15 +2337,15 @@ Module PX
               
             Case '"'  ; DoubleQuote
               ; move *pRead to 2nd " to ignore Text in Quotes
-              INCC(*pRead)  ; Char after "
+              CInc(*pRead)  ; Char after "
               While *pRead\c <> '"'
                 If *pRead\c = 0
                   Break 2
                 EndIf
-                INCC(*pRead)
+                CInc(*pRead)
               Wend             
           EndSelect
-          INCC(*pRead)
+          CInc(*pRead)
         Wend        
       ; ----------------------------------------------------------------------
       Else    ; do not check for Text in Quotes
@@ -2232,7 +2355,7 @@ Module PX
           If *pRead\c = 0    ; Break if EndOfString
             Break 
           EndIf   
-          INCC(*pRead)
+          CInc(*pRead)
         Wend
         
       EndIf
@@ -2339,15 +2462,15 @@ Module PX
               
             Case '"'  ; DoubleQuote
               ; move *pRead to 2nd " to ignore Text in Quotes
-              INCC(*pRead)      ; Char after "
+              CInc(*pRead)      ; Char after "
               While *pRead\c <> '"'
                  If *pRead\c = 0
                   Break 2
                 EndIf
-               INCC(*pRead)  
+               CInc(*pRead)  
              Wend             
           EndSelect
-          INCC(*pRead)
+          CInc(*pRead)
         Wend        
       ; ----------------------------------------------------------------------
       Else    ; do not check for Text in Quotes
@@ -2357,7 +2480,7 @@ Module PX
           If *pRead\c = 0    ; Break if EndOfString
             Break 
           EndIf   
-          INCC(*pRead)
+          CInc(*pRead)
         Wend
         
       EndIf
@@ -2689,7 +2812,7 @@ Module PX
   ; ============================================================================
   ; NAME: GetDataSectionPtr
   ; DESC: Get the PureBasic internal Datasection DataPointer.
-  ; DESC: The PB_DataPointer is the PB internal variable For the DataPointer
+  ; DESC: The PB_DataPointer is the PB internal variable for the DataPointer
   ; DESC; used by PB's Read command.
   ; DESC: We can't access the DataPointer directly in PB-Code. It exists 
   ; DESC: only as variable in the compiled ASM and C-Code.
@@ -2708,7 +2831,6 @@ Module PX
     CompilerEndIf
   EndProcedure
 
-  ; https://www.purebasic.fr/english/viewtopic.php?t=35658
   Procedure SetPbDataSectionPtr(*pData) 
   ; ============================================================================
   ; NAME: SetDataSectionPtr
@@ -2817,7 +2939,7 @@ CompilerIf #PB_Compiler_IsMainFile
           
       EndSelect
      
-      INCC(*pC)   ; Increment CharPointer
+      CInc(*pC)   ; Increment CharPointer
     Wend
   EndWith
   Debug txt$
@@ -2845,9 +2967,9 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 2765
-; FirstLine = 2765
-; Folding = -------------------------
-; Markers = 1237,2649
+; CursorPosition = 750
+; FirstLine = 706
+; Folding = --------------------------
+; Markers = 1351,2772
 ; Optimizer
 ; CPU = 5
