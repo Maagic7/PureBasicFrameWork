@@ -429,7 +429,7 @@ Module STR      ; Module STRING [STR::]
  	    If *pRead\c <> Char
  	      mac_RemoveChar_KeepChar()
       EndIf           
-      PX::INCC(*pRead)  ; Set Pointer to NextChar
+      PX::CInc(*pRead)  ; Set Pointer to NextChar
     Wend
   	
   	; If *pWrite is not at end of orignal *pRead,
@@ -478,7 +478,7 @@ Module STR      ; Module STRING [STR::]
     ; ----------------------------------------------------------------------
     If xTrim     ; if remove leading Space AND char
       While PX::IsSpaceTabChar(*pRead\c)
-        PX::INCC(*pRead)  ; Set the ReadPositon to next Character
+        PX::CInc(*pRead)  ; Set the ReadPositon to next Character
         cnt +1            ; count removed Characters           
       Wend 
     EndIf  
@@ -494,17 +494,17 @@ Module STR      ; Module STRING [STR::]
         Default             ; keep Char
           mac_RemoveChar_KeepChar()			
       EndSelect
-      PX::INCC(*pRead)      ; Set Pointer to NextChar
+      PX::CInc(*pRead)      ; Set Pointer to NextChar
     Wend
     
     ; ----------------------------------------------------------------------
     ; If xTrim Then !remove characters {Space, TAB} at right
     ; ----------------------------------------------------------------------  
     If xTrim
-      PX::DECC(*pRead)    ; Decrement CharPointer
+      PX::CDec(*pRead)    ; Decrement CharPointer
       While PX::IsSpaceTabChar(*pRead\c)
         *pRead\c = 0      ; Write EndOfString
-        PX::DECC(*pRead)  ; Decrement CharPointer
+        PX::CDec(*pRead)  ; Decrement CharPointer
         cnt +1            ; count removed Characters 
       Wend
     EndIf
@@ -616,7 +616,7 @@ Module STR      ; Module STRING [STR::]
       Else
          Break
       EndIf    
-      PX::INCC(*pRead) ; increment CharPointer
+      PX::CInc(*pRead) ; increment CharPointer
     Wend
     
   	While *pRead\c     ; While Not NullChar
@@ -627,7 +627,7 @@ Module STR      ; Module STRING [STR::]
         ; because we minimze the number of checks to do!
         Case #TAB
           
-          If PX::IsSpaceTabChar(*pRead\cc[1])
+          If PX::IsSpaceTabChar(*pRead\c[1])
             ; if NextChar = 'SPACE or TAB) Then remove   
           Else
             ; if NextChar <> SPACE And NextChar <> TAB   
@@ -637,7 +637,7 @@ Module STR      ; Module STRING [STR::]
             
         Case #STR_CHAR_SPACE
           
-          If *pRead\cc[1] = #STR_CHAR_SPACE        
+          If *pRead\c[1] = #STR_CHAR_SPACE        
            ; if NextChar = SPACE Then remove   
           Else
             mac_RemoveTabsAndDoubleSpace_KeepChar()   ; keep the Char
@@ -648,7 +648,7 @@ Module STR      ; Module STRING [STR::]
          
       EndSelect
       
-      PX::INCC(*pRead)    ; Set Pointer to NextChar 		
+      PX::CInc(*pRead)    ; Set Pointer to NextChar 		
     Wend
   	
   	; If *pWrite is not at end of orignal *String,
@@ -658,7 +658,7 @@ Module STR      ; Module STRING [STR::]
   	EndIf
   	
   	; Remove last Char if it is a SPACE -> RightTrim
-  	PX::DECC(*pWrite)
+  	PX::CDec(*pWrite)
   	If *pWrite\c = #STR_CHAR_SPACE
   		*pWrite\c = 0
  	  EndIf
@@ -769,14 +769,14 @@ Module STR      ; Module STRING [STR::]
       *src = *Buffer  
        
       For I=0 To (Bytes-1)
-        hiNibble =  (*src\aa[I] >> 4)  + '0'  ; Add Ascii-Code of '0'
+        hiNibble =  (*src\a[I] >> 4)  + '0'  ; Add Ascii-Code of '0'
         If hiNibble > '9' : hiNibble  + 7 : EndIf ; If 'A..F', we must add 7 for the correct Ascii-Code
         
-        loNibble =  (*src\aa[I] & $0F) + '0'
+        loNibble =  (*src\a[I] & $0F) + '0'
         If loNibble > '9' : loNibble  + 7 : EndIf
         
-        *dest\cc[I]   = hiNibble         
-        *dest\cc[I+1] = loNibble
+        *dest\c[I]   = hiNibble         
+        *dest\c[I+1] = loNibble
       Next
     
       ProcedureReturn sRet
@@ -806,7 +806,7 @@ Module STR      ; Module STRING [STR::]
       Debug "Bytes : " + Bytes
       
       While Bytes 
-        hiNibble = (*src\cc[I * SizeOf(Character)]) ; read HexChar from String
+        hiNibble = (*src\c[I * SizeOf(Character)]) ; read HexChar from String
          
         If hiNibble           
           If hiNibble >'F'
@@ -821,7 +821,7 @@ Module STR      ; Module STRING [STR::]
           Break   ; leave While          
         EndIf
         
-        loNibble = (*src\cc[I * SizeOf(Character) +1]) 
+        loNibble = (*src\c[I * SizeOf(Character) +1]) 
         ;Debug "hi : " + hiNibble + " / lo : " + Chr(loNibble)
         If loNibble          
           If loNibble >'F'
@@ -836,7 +836,7 @@ Module STR      ; Module STRING [STR::]
           Break  ; leave While
         EndIf
         
-        *dest\aa[I] = (hiNibble << 4) | loNibble         
+        *dest\a[I] = (hiNibble << 4) | loNibble         
         I + 1       ; Increment Position Counter
         Bytes -1    ; Decrement number of Bytes left
       Wend
@@ -910,7 +910,7 @@ Module STR      ; Module STRING [STR::]
             *pStart = *pRead
             Break            
           EndIf                 
-          PX::INCC(*pRead) ; increment CharPointer
+          PX::CInc(*pRead) ; increment CharPointer
         Wend
       EndIf      
       
@@ -932,7 +932,7 @@ Module STR      ; Module STRING [STR::]
             *pEnd = *pRead
             Break
         EndSelect
-        PX::DECC(*pRead) ; decrement CharPointer  
+        PX::CDec(*pRead) ; decrement CharPointer  
         
       Wend
             
@@ -1027,8 +1027,8 @@ Module STR      ; Module STRING [STR::]
       ProcedureReturn 0
     EndIf
     
-    While *pC\cc[I]         ; until end of String
-      Select *pC\cc[I]
+    While *pC\c[I]         ; until end of String
+      Select *pC\c[I]
           
         Case cSeparator         
           If xWordStart
@@ -1161,8 +1161,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 747
-; FirstLine = 673
+; CursorPosition = 934
+; FirstLine = 931
 ; Folding = ------
 ; Optimizer
 ; CPU = 5

@@ -77,7 +77,7 @@ Module Phonetics
   	If *pWrite <> *pRead        ; If  WritePosition <> ReadPosition
   		*pWrite\c = *pRead\c      ; Copy the Character from ReadPosition to WritePosition => compacting the String
   	EndIf
-  	PX::INCC(*pWrite)           ; increment Charpointer -> Set new Write-Position 
+  	PX::CInc(*pWrite)           ; increment Charpointer -> Set new Write-Position 
   EndMacro
   
   ;- ----------------------------------------------------------------------
@@ -164,7 +164,7 @@ Module Phonetics
         ; --------------------------------------------------  
           
         Case 'p'
-          If *pC\cc[1] ='h'   ; 'p' followed by 'h'
+          If *pC\c[1] ='h'   ; 'p' followed by 'h'
             *pPh\c ='3'
           Else                ; if single p, it's same as b
             *pPh\c ='1'  
@@ -173,7 +173,7 @@ Module Phonetics
           
         Case 'd', 't'
           
-          Select *pC\cc[1]    ; check following Char
+          Select *pC\c[1]    ; check following Char
             Case 'c', 's', 'z'
               *pPh\c ='8'     ; d,t followed by c,s,z
             Default
@@ -208,7 +208,7 @@ Module Phonetics
         Case 'ß' ; = 'ss'
           ; 88
           *pPh\c ='8'
-          PX::INCC(*pPh)     ; move one char forward
+          PX::CInc(*pPh)     ; move one char forward
           *pPh\c ='8'         
         ; --------------------------------------------------  
           
@@ -220,7 +220,7 @@ Module Phonetics
           
           If xFirstChar       ; --- 'c' is the first char ---
             
-            Select *pC\cc[1]    ; check following char
+            Select *pC\c[1]    ; check following char
               Case 'a', 'h', 'k', 'l', 'o', 'q', 'r', 'u', 'x'
                 *pPh\c ='4'
               Default
@@ -230,10 +230,10 @@ Module Phonetics
           Else                ; --- 'c' is not the first char ---
             
             ; c after 's', 'z' is always 8
-            If  *pC\cc[-1] = 's' Or *pC\cc[-1] = 'z'
+            If  *pC\c[-1] = 's' Or *pC\c[-1] = 'z'
               *pPh\c ='8'
             Else             
-              Select *pC\cc[1]  ; check following Char
+              Select *pC\c[1]  ; check following Char
                 Case 'a', 'h', 'k', 'o', 'q', 'u', 'x'
                   *pPh\c ='4'
                 Default
@@ -248,13 +248,13 @@ Module Phonetics
           ; X=48 if it is the first Char or not after c,k,q
           ; so first set 48 and correct later if x is after c,k,q
           *pPh\c ='4' 
-          PX::INCC(*pPh)                    ; move one char forward
+          PX::CInc(*pPh)                    ; move one char forward
           *pPh\c ='8'          
           
           If Not xFirstChar
-            Select *pC\cc[-1]               ; check previous Char
+            Select *pC\c[-1]               ; check previous Char
               Case 'c', 'k', 'q'            ; x after c,k,q 
-                PX::DECC(*pPh)              ; move one char back to the 4 
+                PX::CDec(*pPh)              ; move one char back to the 4 
                 *pPh\c ='8'                 ; overwerite the 4 with 8                    
             EndSelect
           EndIf
@@ -271,10 +271,10 @@ Module Phonetics
         ; --------------------------------------------------         
       EndSelect
       
-      PX::INCC(*pC)                 ; Pointer String to Next Char
+      PX::CInc(*pC)                 ; Pointer String to Next Char
       
       If xEncoded                   ; If it was a char to encode
-        PX::INCC(*pPh)              ; Pointer phonetic encoded String To Next Char
+        PX::CInc(*pPh)              ; Pointer phonetic encoded String To Next Char
       EndIf
       
       xFirstChar =#False
@@ -294,7 +294,7 @@ Module Phonetics
       Protected *pWrite.PX::pChar
   
       *pRead = @phon$   ; set the Read Pointer To start of phonetic string
-      PX::INCC(*pRead)  ; set Pointer to 2nd Char -> never remove 1st Char
+      PX::CInc(*pRead)  ; set Pointer to 2nd Char -> never remove 1st Char
       *pWrite = *pRead
             
       ; we start at second char with removing duplicates and '0'
@@ -304,14 +304,14 @@ Module Phonetics
           Case '0'
             ; remove Char
           Default 
-            If *pRead\c = *pRead\cc[-1]   ; identical with previous char
+            If *pRead\c = *pRead\c[-1]   ; identical with previous char
               ; remove Char
             Else
               ; keep Char
               mac_KeepChar()
             EndIf
         EndSelect  
-        PX::INCC(*pRead)      ; increment CharPointer 
+        PX::CInc(*pRead)      ; increment CharPointer 
       Wend
       *pWrite\c = 0   ; Add EndOfString
       ; ----------------------------------------------------------------------
@@ -388,8 +388,8 @@ Module Phonetics
     ; ----------------------------------------------------------------------
     
     *pPh\c = PX::UCaseChar(*pC\c)    ; UCaseChar Macro for ASCII Characters only
-    PX::INCC(*pPh)    ; increment Charpointer
-    PX::INCC(*pC)     ; increment Charpointer
+    PX::CInc(*pPh)    ; increment Charpointer
+    PX::CInc(*pC)     ; increment Charpointer
     cnt + 1           ; Number of valid characters encoded
     
     ; ----------------------------------------------------------------------
@@ -437,16 +437,16 @@ Module Phonetics
       
        
       If xEncoded                     ; If it was a char to encode  
-        If *pPh\c = *pPh\cc[-1]
+        If *pPh\c = *pPh\c[-1]
           ; double digit -> ignor it! Do nothing!
         Else
-          PX::INCC(*pPh)              ; Pointer phonetic encoded String to Next Char
+          PX::CInc(*pPh)              ; Pointer phonetic encoded String to Next Char
           cnt + 1                     ; Count the number of valid encodings and quit if Len(phon$)=4
         EndIf      
       EndIf
       
       If cnt = 4 : Break : EndIf    ; Stop at Len(phon$)=4
-      PX::INCC(*pC)                 ; Pointer String to Next Char
+      PX::CInc(*pC)                 ; Pointer String to Next Char
     Wend
     
     ProcedureReturn phon$
@@ -483,8 +483,8 @@ Module Phonetics
     ; ----------------------------------------------------------------------
     
     *pPh\c = PX::UCaseChar(*pC\c) ;  ; UCaseChar Macro for ASCII Characters only
-    PX::INCC(*pPh)    ; increment Charpointer
-    PX::INCC(*pC)     ; increment Charpointer
+    PX::CInc(*pPh)    ; increment Charpointer
+    PX::CInc(*pC)     ; increment Charpointer
     cnt + 1           ; Number of valid characters encoded
     
     ; ----------------------------------------------------------------------
@@ -510,9 +510,9 @@ Module Phonetics
         ; --------------------------------------------------  
           
         Case 'c'
-          If *pC\cc[1] = 'h'    ; c followed by h = ch  
+          If *pC\c[1] = 'h'    ; c followed by h = ch  
             *pPh\c ='7'         ; 'ch'
-            PX::INCC(*pc)       ; step 1 Char forward because 2 Chars 'ch'
+            PX::CInc(*pc)       ; step 1 Char forward because 2 Chars 'ch'
           Else
             *pPh\c ='2'         ; 'c'
           EndIf
@@ -540,16 +540,16 @@ Module Phonetics
       
        
       If xEncoded                     ; If it was a char to encode  
-        If *pPh\c = *pPh\cc[-1] 
+        If *pPh\c = *pPh\c[-1] 
           ; double digit -> ignor it! Do nothing!
         Else
-          PX::INCC(*pPh)              ; Pointer phonetic encoded String to Next Char
+          PX::CInc(*pPh)              ; Pointer phonetic encoded String to Next Char
           cnt + 1                     ; Count the number of valid encodings and quit if Len(phon$)=4
         EndIf      
       EndIf
       
       If cnt = 4 : Break : EndIf    ; Stop at Len(phon$)=4
-      PX::INCC(*pC)                 ; Pointer String to Next Char
+      PX::CInc(*pC)                 ; Pointer String to Next Char
     Wend
     
     ProcedureReturn phon$
@@ -607,25 +607,25 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; für Silbenphonetik 
-DataSection
-  Data.s "ba", "be", "bi", "bo", "bu", "bai"   ; b, p
-  Data.s "da", "de", "di", "do", "du", "dai"
-  Data.s "ha", "he", "hi", "ho", "hu", "hai"
-  Data.s "fa", "fe", "fi", "fo", "fu", "fai"   ; f, v
-  Data.s "ka", "ke", "ki", "ko", "ku", "kai"   ; k
-  Data.s "la", "le", "li", "lo", "lu", "lai"
-  Data.s "ma", "me", "mi", "mo", "mu", "mai"
-  Data.s "na", "ne", "ni", "no", "nu", "nai"
-  Data.s "sa", "se", "si", "so", "su", "sai" ; s,c,z
-  Data.s "tscha", "tsche", "tschi", "tscho", "tschu"
-  Data.s "schta", "schte", "schti", "schto", "schtu", "schtai"
-  Data.s "scha", "sche", "schi", "scho", "schu", "schai"
-EndDataSection
+; DataSection
+;   Data.s "ba", "be", "bi", "bo", "bu", "bai"   ; b, p
+;   Data.s "da", "de", "di", "do", "du", "dai"
+;   Data.s "ha", "he", "hi", "ho", "hu", "hai"
+;   Data.s "fa", "fe", "fi", "fo", "fu", "fai"   ; f, v
+;   Data.s "ka", "ke", "ki", "ko", "ku", "kai"   ; k
+;   Data.s "la", "le", "li", "lo", "lu", "lai"
+;   Data.s "ma", "me", "mi", "mo", "mu", "mai"
+;   Data.s "na", "ne", "ni", "no", "nu", "nai"
+;   Data.s "sa", "se", "si", "so", "su", "sai" ; s,c,z
+;   Data.s "tscha", "tsche", "tschi", "tscho", "tschu"
+;   Data.s "schta", "schte", "schti", "schto", "schtu", "schtai"
+;   Data.s "scha", "sche", "schi", "scho", "schu", "schai"
+; EndDataSection
 
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 60
-; FirstLine = 34
+; CursorPosition = 250
+; FirstLine = 247
 ; Folding = --
 ; Optimizer
 ; CPU = 5

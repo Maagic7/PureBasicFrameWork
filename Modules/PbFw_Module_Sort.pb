@@ -214,8 +214,8 @@ Module Sort
       ElseIf (Not *A\c) And (Not *B\c)
         ProcedureReturn bias
       EndIf
-   	  PX::INCC(*A)    ; increment CharPointer
-  	  PX::INCC(*B)    ; increment CharPointer
+   	  PX::CInc(*A)    ; increment CharPointer
+  	  PX::CInc(*B)    ; increment CharPointer
    Wend
     
     ProcedureReturn #PB_String_Equal
@@ -252,8 +252,8 @@ Module Sort
         ProcedureReturn #PB_String_Greater
       EndIf
       
-  	  PX::INCC(*A)    ; increment CharPointer
-  	  PX::INCC(*B)    ; increment CharPointer
+  	  PX::CInc(*A)    ; increment CharPointer
+  	  PX::CInc(*B)    ; increment CharPointer
     Wend
     
     ProcedureReturn #PB_String_Equal
@@ -274,12 +274,12 @@ Module Sort
       
       ; Skip Tabs and Spaces at A
       While PX::IsSpaceTabChar(*A\c)
- 	      PX::INCC(*A)    ; increment CharPointer
+ 	      PX::CInc(*A)    ; increment CharPointer
       Wend
       
       ; Skip Tabs and Spaces at B
       While PX::IsSpaceTabChar(*B\c)
- 	      PX::INCC(*B)    ; increment CharPointer
+ 	      PX::CInc(*B)    ; increment CharPointer
       Wend
       
       ; both at EndOfString -> only SPACE and TAB -> Strings are equal!
@@ -312,8 +312,8 @@ Module Sort
   	  ElseIf *A\c > *B\c
   	    ProcedureReturn #PB_String_Greater
   	  EndIf 	  
-  	  PX::INCC(*A)    ; increment CharPointer
-  	  PX::INCC(*B)    ; increment CharPointer
+  	  PX::CInc(*A)    ; increment CharPointer
+  	  PX::CInc(*B)    ; increment CharPointer
   	Wend
   	
   	ProcedureReturn #PB_String_Equal
@@ -402,8 +402,9 @@ CompilerIf #PB_Compiler_IsMainFile
   UseModule Sort
   
 CompilerEndIf
-; IDE Options = PureBasic 6.20 Beta 4 (Windows - x64)
-; CursorPosition = 43
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 217
+; FirstLine = 214
 ; Folding = ---
 ; Optimizer
 ; CPU = 5

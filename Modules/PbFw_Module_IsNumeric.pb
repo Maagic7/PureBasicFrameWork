@@ -136,7 +136,7 @@ Module IsNum
     
     ; Skip Tab and Spaces at beginning    
     While PX::IsSpaceTabChar(*pC\c)
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     Wend
     
     ; ----------------------------------------------------------------------
@@ -156,7 +156,7 @@ Module IsNum
     EndIf      
     
     If xPrefix    
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     EndIf
 
     ; ----------------------------------------------------------------------
@@ -178,7 +178,7 @@ Module IsNum
             Break
            
         EndSelect      
-        PX::INCC(*pC)   ; increment CharPointer : Attention when leaving While with Break Pointer is not incremented
+        PX::CInc(*pC)   ; increment CharPointer : Attention when leaving While with Break Pointer is not incremented
       Wend      
       ; ----------------------------------------------------------------------
       ;  Skip possible SPACEs at the end
@@ -188,7 +188,7 @@ Module IsNum
           If Not PX::IsSpaceTabChar(*pC\c) ; if any other Char follows after the Space, it is not an INT
             xIsBin = #False
           EndIf
-          PX::INCC(*pC)   ; increment CharPointer             
+          PX::CInc(*pC)   ; increment CharPointer             
         Wend      
       EndIf
       
@@ -226,7 +226,7 @@ Module IsNum
         
     ; Skip Tab and Spaces at beginning    
     While PX::IsSpaceTabChar(*pC\c)
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     Wend
     
     ; ----------------------------------------------------------------------
@@ -246,7 +246,7 @@ Module IsNum
     EndIf    
     
     If xPrefix    
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     EndIf
 
     ; ----------------------------------------------------------------------
@@ -267,7 +267,7 @@ Module IsNum
             xIsHex = #False
             Break          
         EndSelect      
-        PX::INCC(*pC)   ; increment CharPointer
+        PX::CInc(*pC)   ; increment CharPointer
       Wend
       
       ; ----------------------------------------------------------------------
@@ -278,7 +278,7 @@ Module IsNum
           If Not PX::IsSpaceTabChar(*pC\c)  ; if any other Char follows after the Space, it is not an INT
             xIsHex = #False
           EndIf
-          PX::INCC(*pC)   ; increment CharPointer
+          PX::CInc(*pC)   ; increment CharPointer
         Wend      
       EndIf
           
@@ -311,7 +311,7 @@ Module IsNum
     
     ; Skip Tab and Spaces at beginning    
     While PX::IsSpaceTabChar(*pC\c)
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     Wend
 
     ; ----------------------------------------------------------------------
@@ -325,7 +325,7 @@ Module IsNum
     EndIf
     
     If xSign    
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     EndIf
    
     ; ----------------------------------------------------------------------
@@ -346,7 +346,7 @@ Module IsNum
           Break
          
      EndSelect      
-     PX::INCC(*pC)   ; increment CharPointer   
+     PX::CInc(*pC)   ; increment CharPointer   
    Wend
    
     ; ----------------------------------------------------------------------
@@ -358,7 +358,7 @@ Module IsNum
           xIsINT = #False
           Break
         EndIf
-        PX::INCC(*pC)   ; increment CharPointer   
+        PX::CInc(*pC)   ; increment CharPointer   
       Wend      
     EndIf
     
@@ -391,7 +391,7 @@ Module IsNum
     
     ; Skip Tab and Spaces at beginning    
     While PX::IsSpaceTabChar(*pC\c)
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     Wend
 
     ; ----------------------------------------------------------------------
@@ -405,7 +405,7 @@ Module IsNum
     EndIf
     
     If xSign    
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     EndIf
     
     ; ----------------------------------------------------------------------
@@ -431,13 +431,13 @@ Module IsNum
           
         Case 'e', 'E'
           ; Check if E follows a '+' or '-'
-          If *pC\cc[1] = '-'
+          If *pC\c[1] = '-'
             xExpNegative = #True
             xExp =#True
-            PX::INCC(*pC)   ; increment CharPointer
-          ElseIf *pC\cc[1] = '+'
+            PX::CInc(*pC)   ; increment CharPointer
+          ElseIf *pC\c[1] = '+'
             xExp =#True
-            PX::INCC(*pC)   ; increment CharPointer
+            PX::CInc(*pC)   ; increment CharPointer
           Else
             xIsFloat =#False
             Break
@@ -447,7 +447,7 @@ Module IsNum
           xIsFloat = #False      ; Is not an Integer
           Break      
      EndSelect      
-     PX::INCC(*pC)   ; increment CharPointer
+     PX::CInc(*pC)   ; increment CharPointer
     Wend   
     ; ----------------------------------------------------------------------
     ;  Parse Exponent
@@ -464,7 +464,7 @@ Module IsNum
             xIsFloat = #False  
             Break
         EndSelect       
-        PX::INCC(*pC)   ; increment CharPointer
+        PX::CInc(*pC)   ; increment CharPointer
       Wend         
     EndIf
     
@@ -481,7 +481,7 @@ Module IsNum
           xIsFloat = #False
           Break
         EndIf
-        PX::INCC(*pC)   ; increment CharPointer      
+        PX::CInc(*pC)   ; increment CharPointer      
       Wend      
     EndIf
     
@@ -516,7 +516,7 @@ Module IsNum
     
     ; Skip Tab and Spaces at beginning    
     While PX::IsSpaceTabChar(*pC\c)
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     Wend
     ; ----------------------------------------------------------------------
     ;  Parse Number
@@ -540,7 +540,7 @@ Module IsNum
           Break
          
      EndSelect      
-     PX::INCC(*pC)   ; increment CharPointer
+     PX::CInc(*pC)   ; increment CharPointer
     Wend
     ; ----------------------------------------------------------------------
     ;  Skip possible SPACEs at the end
@@ -551,7 +551,7 @@ Module IsNum
           IsDate = #False
           Break
         EndIf
-        PX::INCC(*pC)   ; increment CharPointer
+        PX::CInc(*pC)   ; increment CharPointer
       Wend      
     EndIf
     
@@ -586,7 +586,7 @@ Module IsNum
         
     ; Skip Tab and Spaces at beginning    
     While PX::IsSpaceTabChar(*pC\c)
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     Wend
     
     ; ----------------------------------------------------------------------
@@ -600,7 +600,7 @@ Module IsNum
     EndIf
     
     If xSign    
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     EndIf
     
     ; ----------------------------------------------------------------------
@@ -631,7 +631,7 @@ Module IsNum
           Break
          
       EndSelect      
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     Wend   
     ; ----------------------------------------------------------------------
     ;  Skip possible SPACEs at the end
@@ -642,7 +642,7 @@ Module IsNum
           xIsCur = #False
           Break
         EndIf
-        PX::INCC(*pC)   ; increment CharPointer
+        PX::CInc(*pC)   ; increment CharPointer
       Wend      
     EndIf
     
@@ -674,7 +674,7 @@ Module IsNum
     
    ; Skip Tab and Spaces at beginning    
     While PX::IsSpaceTabChar(*pC\c)
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     Wend
     
     ; ----------------------------------------------------------------------
@@ -688,7 +688,7 @@ Module IsNum
     EndIf
     
     If xSign    
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
     EndIf
     
     ; ----------------------------------------------------------------------
@@ -722,21 +722,21 @@ Module IsNum
           Break
          
      EndSelect      
-     PX::INCC(*pC)   ; increment CharPointer
+     PX::CInc(*pC)   ; increment CharPointer
     Wend   
     ; ----------------------------------------------------------------------
     ;  Skip possible SPACEs at the end
     ; ---------------------------------------------------------------------- 
     If xIsPercent And xSpaceAtEnd      ; if we left While with break and have to detect End-Spaces
-      PX::INCC(*pC)   ; increment CharPointer
+      PX::CInc(*pC)   ; increment CharPointer
       If Not xPercentChar       ; % must be detected, we allow 1Space after the Number
         If  *pC\c ='%'   
           xPercentChar =#True   ;'%'found
-          PX::INCC(*pC)   ; increment CharPointer
+          PX::CInc(*pC)   ; increment CharPointer
         EndIf
       EndIf 
       
-      While *pC\cc          ; if all Chars at end are Spaces it is ok 
+      While *pC\c          ; if all Chars at end are Spaces it is ok 
         If Not PX::IsSpaceTabChar(*pC\c) ; if any other Char follows after the Space, it is not valid
           xIsPercent = #False
           Break
@@ -867,7 +867,8 @@ EndModule
     
 CompilerEndIf 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 34
+; CursorPosition = 734
+; FirstLine = 731
 ; Folding = ---
 ; Markers = 99
 ; Optimizer

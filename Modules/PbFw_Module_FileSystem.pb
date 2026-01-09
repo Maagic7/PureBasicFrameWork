@@ -32,7 +32,7 @@
 
 XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 XIncludeFile "PbFw_Module_String.pb"       ; Str::      String Module
-; XIncludeFile ""
+; XIncludeFile "PbFw_Module_FileSystem.pb"  ; FS::       FileSystem Module
 
 DeclareModule FS
   ;- ----------------------------------------------------------------------
@@ -133,8 +133,7 @@ DeclareModule FS
   Declare.s FileToString(FileName.s, CharMode.i = #PB_Default, ReadUnsupportedModeAsASCII=#True)
   Declare.i StringToFile(FileName.s, String$, CharMode = #PB_Default)
   Declare.i FileToStringList(FileName.s, List StringList.s(), xTrim=#False, CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
-  Declare.i StringListToFile(FileName.s, List StringList.s(), CharMode = #PB_Default)
-
+  Declare.i StringListToFile(FileName.s, List StringList.s(), CharMode = #PB_Ascii)
   Declare.i FileToStringMap(FileName.s, Map StringMap.s(), CharMode = #PB_Default, ReadUnsupportedModeAsASCII=#True)
   Declare StringMapToFile(FileName.s, Map StringMap.s(), CharMode = #PB_Default)
   
@@ -827,7 +826,7 @@ Module FS
     ProcedureReturn (ListSize(StringList()))  ; returns the number of Lines
   EndProcedure
   
-  Procedure.i StringListToFile(FileName.s, List StringList.s(), CharMode = #PB_Default)
+  Procedure.i StringListToFile(FileName.s, List StringList.s(), CharMode = #PB_Ascii)
   ; ============================================================================
   ; NAME: StringListToFile
   ; DESC: Saves a StringList() into a File
@@ -947,8 +946,9 @@ CompilerIf #PB_Compiler_IsMainFile
   ; CreatePath("D:\Temp\PureBasic\Test\CreatePath\MyPath\")
   
 CompilerEndIf
-; IDE Options = PureBasic 6.04 LTS (Windows - x86)
-; CursorPosition = 18
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 842
+; FirstLine = 819
 ; Folding = ----
 ; Optimizer
 ; CPU = 5

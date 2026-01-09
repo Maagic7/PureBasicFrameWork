@@ -52,6 +52,8 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
+; XIncludeFile "PbFw_Module_Bit.pb"        ; Bit::      Bit Module
+
 XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::     FrameWork control Module
 XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::      Debug Module
 
@@ -1620,8 +1622,8 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 815
-; FirstLine = 850
+; CursorPosition = 399
+; FirstLine = 364
 ; Folding = ---------
 ; Optimizer
 ; EnableXP
