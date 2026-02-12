@@ -24,7 +24,8 @@
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog: 
-;{ 2025/11/25 S.Maag Switched individual Pointer Structures to AnyPointer PX::pAny 
+;{ 2026/02/07 S.Maag Implemented with ChatGPT _RTU_Send, TCP_WriteSingleCoil, TCP_WriteSingleRegister
+;  2025/11/25 S.Maag Switched individual Pointer Structures To AnyPointer PX::pAny 
 ;  2024/09/04 S.Maag added RegisterSet Functions For Modbus Client/Slave
 ;  2024/09/03 S.Maag TCP/RTU GetADU_Header send/receive
 ;}
@@ -1120,9 +1121,78 @@ Module ModBus
   ;https://www.purebasic.fr/english/viewtopic.php?p=455736#p455736
   
   Procedure.i _RTU_Send(*Modbus.TModbusRTU)
-    Protected ret
+    : ChatGpt
+    Protected MRes
+    Protected SendLen, RecvLen, BytesAvail
+    Protected CRC.u, CRC_rec.u
+    Protected StartTime, NowTime
     
-    ProcedureReturn ret  
+    With *Modbus
+      
+      ; ------------------------------------------------------------------------
+      ; append CRC16 to send buffer
+      ; ------------------------------------------------------------------------
+      
+      CRC = _RTU_CalcCRC(\SendBuffer(), \MessageLength)
+      _WordToBuffer(\SendBuffer(), \MessageLength, CRC)
+      SendLen = \MessageLength + 2
+      
+      ; ------------------------------------------------------------------------
+      ; flush serial input buffer
+      ; ------------------------------------------------------------------------
+      
+      While AvailableSerialPortInput(\Port) > 0
+        ReadSerialPortData(\Port, \ReceiveBuffer(), SizeOf(\ReceiveBuffer()))
+      Wend
+      
+      ; ------------------------------------------------------------------------
+      ; send frame
+      ; ------------------------------------------------------------------------
+      
+      If WriteSerialPortData(\Port, \SendBuffer(), SendLen) <> SendLen
+        ProcedureReturn #MODBUS_EXCEPTION_GATEWAY_PATH
+      EndIf
+      
+      ; ------------------------------------------------------------------------
+      ; receive response
+      ; ------------------------------------------------------------------------
+      
+      RecvLen = 0
+      StartTime = ElapsedMilliseconds()
+      
+      Repeat
+        BytesAvail = AvailableSerialPortInput(\Port)
+        
+        If BytesAvail > 0
+          RecvLen + ReadSerialPortData(\Port, \ReceiveBuffer() + RecvLen, BytesAvail)
+        EndIf
+        
+        NowTime = ElapsedMilliseconds()
+        
+      Until (RecvLen >= \ExpectedLength And \ExpectedLength > 0) Or (NowTime - StartTime > \Timeout)
+      
+      If RecvLen < 5
+        ProcedureReturn #MODBUS_EXCEPTION_GATEWAY_PATH
+      EndIf
+      
+      ; ------------------------------------------------------------------------
+      ; CRC check
+      ; ------------------------------------------------------------------------
+      
+      CRC     = _RTU_CalcCRC(\ReceiveBuffer(), RecvLen - 2)
+      CRC_rec = _WordFromBuffer(\ReceiveBuffer(), RecvLen - 2)
+      
+      If CRC <> CRC_rec
+        ProcedureReturn #MODBUS_EXCEPTION_GATEWAY_PATH
+      EndIf
+      
+      ; success
+      \ReceiveLength = RecvLen
+      MRes = 0
+      
+    EndWith
+    
+    ProcedureReturn MRes
   EndProcedure
     
   Procedure _RTU_ClearSendBuffer(*Modbus.TModbusRTU)   
@@ -1906,39 +1976,88 @@ Module ModBus
       
     ProcedureReturn MRes   
   EndProcedure 
-    
+  
   Procedure.i TCP_WriteSingleCoil(*Modbus.TModbusTCP, Coil, Value)
   ; ============================================================================
   ; NAME: TCP_WriteSingleCoil
   ; DESC: Modbus TCP-WriteSingleCoil
   ; DESC: FunctionCode = 5 : #MODBUS_FC_WRITE_SINGLE_COIL
   ; VAR(*Modbus.TModbusTCP) : Modbus *This Data
-  ; VAR(Coil) : [1..65535]
-  ; VAR(Value): 
+  ; VAR(Coil) : [0..65535]
+  ; VAR(Value) : #True / #False
   ; RET.i : Modbus Result
   ; ============================================================================
     
-    Protected MRes.i   
+    ; ChatCPT
     
-    ProcedureReturn MRes   
+    Protected MRes, TrID_send, TrID_rec, CoilValue.u
+  
+    ; Modbus specification: FF00 = ON, 0000 = OFF
+    If Value
+      CoilValue = $FF00
+    Else
+      CoilValue = $0000
+    EndIf
+    
+    ; build the base ADU and PDU Frame in the Buffer and return the TransactionID
+    TrID_send = _TCP_Build_Request(*Modbus, #MODBUS_FC_WRITE_SINGLE_COIL, Coil, CoilValue)
+          
+    MRes = _TCP_Send(*Modbus)
+    
+    If MRes = 0
+      With *Modbus
+        TrID_rec = _WordFromBuffer(\ReceiveBuffer(), #TCP_idx_ADU)
+        
+        If TrID_send <> TrID_rec
+          ; wrong Transaction ID
+          MRes = #MODBUS_EXCEPTION_GATEWAY_PATH
+        EndIf
+        
+        ; Response must echo Address + Value (optional validation could be added)
+      EndWith  
+    Else
+      ; Error : Nothing returned! Timeout or send error
+    EndIf
+    
+    ProcedureReturn MRes
   EndProcedure
-   
+  
   Procedure.i TCP_WriteSingleRegister(*Modbus.TModbusTCP, Register, Value)
   ; ============================================================================
   ; NAME: TCP_WriteSingleRegister
   ; DESC: Modbus TCP-WriteSingleRegister
   ; DESC: FunctionCode = 6 : #MODBUS_FC_WRITE_SINGLE_REGISTER
   ; VAR(*Modbus.TModbusTCP) : Modbus *This Data
-  ; VAR(Register) : [1..65535]
-  ; VAR(Value) : 
+  ; VAR(Register) : [0..65535]
+  ; VAR(Value) : [0..65535]
   ; RET.i : Modbus Result
   ; ============================================================================
-    
-    Protected MRes.i   
-    
-    ProcedureReturn MRes    
-  EndProcedure
   
+    ; ChatCPT
+    Protected MRes, TrID_send, TrID_rec
+    
+    ; build the base ADU and PDU Frame in the Buffer and return the TransactionID
+    TrID_send = _TCP_Build_Request(*Modbus, #MODBUS_FC_WRITE_SINGLE_REGISTER, Register, Value)
+          
+    MRes = _TCP_Send(*Modbus)
+    
+    If MRes = 0
+      With *Modbus
+        TrID_rec = _WordFromBuffer(\ReceiveBuffer(), #TCP_idx_ADU)
+        
+        If TrID_send <> TrID_rec
+          ; wrong Transaction ID
+          MRes = #MODBUS_EXCEPTION_GATEWAY_PATH
+        EndIf
+        
+        ; Response must echo Register + Value (optional validation)
+      EndWith  
+    Else
+      ; Error : Nothing returned! Timeout or send error
+    EndIf
+    
+    ProcedureReturn MRes
+  EndProcedure
    
   Procedure.i TCP_WriteMultipleCoils(*Modbus.TModbusTCP, StartCoil, NoOfCoils, Array Values.a(1))
   ; ============================================================================
@@ -1952,6 +2071,7 @@ Module ModBus
   ; ============================================================================
     
     Protected MRes.i
+   ; implement code
         
     ProcedureReturn MRes
   EndProcedure
@@ -1959,14 +2079,82 @@ Module ModBus
   Procedure.i TCP_WriteMultipleOutRegisters(*Modbus.TModbusTCP, DeviceID, StartRegister, NoORegisters, Array Values.u(1))
   ; ============================================================================
   ; NAME: TCP_WriteMultipleOutRegisters
-  ; DESC: Modbus TCP-WriteMultipleOutRegisters
-  ; DESC: FunctionCode = 16 : ##MODBUS_FC_WRITE_MULTIPLE_REGISTERS
+  ; DESC: Modbus TCP-WriteMultipleRegisters
+  ; DESC: FunctionCode = 16 : #MODBUS_FC_WRITE_MULTIPLE_REGISTERS
   ; VAR(*Modbus.TModbusTCP) : Modbus *This Data
-  ; VAR(StartRegister) : [1..65535]
+  ; VAR(DeviceID) : Modbus Device ID
+  ; VAR(StartRegister) : [0..65535]
   ; VAR(NoORegisters) : [1..123]
+  ; VAR(Array Values.u()) : Register values
   ; RET.i : Modbus Result
   ; ============================================================================
-       
+    
+    ; ChatGPT
+    Protected MRes, TrID_send, TrID_rec
+    Protected i, ByteCount
+    
+    ; sanity check
+    If NoORegisters < 1 Or NoORegisters > 123
+      ProcedureReturn #MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE
+    EndIf
+    
+    If ArraySize(Values()) < NoORegisters - 1
+      ProcedureReturn #MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE
+    EndIf
+    
+    ByteCount = NoORegisters * 2
+    
+    With *Modbus
+      
+      ; --------------------------------------------------------------------------
+      ; Build MBAP + PDU manually (variable payload)
+      ; --------------------------------------------------------------------------
+      
+      \TransactionID + 1
+      TrID_send = \TransactionID
+      
+      ; MBAP header
+      _WordToBuffer(\SendBuffer(), #TCP_idx_ADU + 0, TrID_send)   ; Transaction ID
+      _WordToBuffer(\SendBuffer(), #TCP_idx_ADU + 2, 0)           ; Protocol ID
+      _WordToBuffer(\SendBuffer(), #TCP_idx_ADU + 4, 7 + ByteCount) ; Length
+      \SendBuffer(#TCP_idx_ADU + 6) = DeviceID
+      
+      ; PDU
+      \SendBuffer(#TCP_idx_PDU + 0) = #MODBUS_FC_WRITE_MULTIPLE_REGISTERS
+      _WordToBuffer(\SendBuffer(), #TCP_idx_PDU + 1, StartRegister)
+      _WordToBuffer(\SendBuffer(), #TCP_idx_PDU + 3, NoORegisters)
+      \SendBuffer(#TCP_idx_PDU + 5) = ByteCount
+      
+      ; register values
+      For i = 0 To NoORegisters - 1
+        _WordToBuffer(\SendBuffer(), #TCP_idx_PDU + 6 + (i * 2), Values(i))
+      Next
+      
+      ; total ADU length
+      \MessageLength = #TCP_idx_PDU + 6 + ByteCount
+      
+    EndWith
+    
+    ; --------------------------------------------------------------------------
+    ; Send + receive
+    ; --------------------------------------------------------------------------
+    
+    MRes = _TCP_Send(*Modbus)
+    
+    If MRes = 0
+      With *Modbus
+        TrID_rec = _WordFromBuffer(\ReceiveBuffer(), #TCP_idx_ADU)
+        
+        If TrID_send <> TrID_rec
+          ; wrong Transaction ID
+          MRes = #MODBUS_EXCEPTION_GATEWAY_PATH
+        EndIf
+      EndWith
+    Else
+      ; Error : Nothing returned! Timeout or send error
+    EndIf
+    
+    ProcedureReturn MRes
   EndProcedure
   
   Procedure.i TCP_ReadExceptionStatus(*Modbus.TModbusTCP)
@@ -1979,6 +2167,7 @@ Module ModBus
   ; ============================================================================
    
     Protected MRes.i    
+   ; implement code
     
     ProcedureReturn MRes 
   EndProcedure
@@ -2041,9 +2230,9 @@ Module ModBus
 EndModule
 
 
-; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 18
-; FirstLine = 885
+; IDE Options = PureBasic 6.30 (Windows - x64)
+; CursorPosition = 2141
+; FirstLine = 2077
 ; Folding = -----------
 ; Optimizer
 ; CPU = 5
