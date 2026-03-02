@@ -20,7 +20,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2022/12/04
-; VERSION  :  0.0  Brainstorming Version
+; VERSION  :  0.50  untested Developer Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -1393,8 +1393,7 @@ Module Spline
 
 EndModule
 ; IDE Options = PureBasic 6.30 (Windows - x64)
-; CursorPosition = 36
-; FirstLine = 51
+; CursorPosition = 22
 ; Folding = ------
 ; Optimizer
 ; CPU = 5
