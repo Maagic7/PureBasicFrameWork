@@ -17,15 +17,11 @@
 ; VERSION  :  0.50  untested developer version  
 ; COMPILER :  PB 6.0 and higher
 ; OS       :  all
-; LICENCE  :  GNU General Public License, version 2 (GPLv2).
-;             original code is licensed under GPL too
-
-;             You may redistribute and/or modify it under the terms of the GPLv2.  
-;             This program is distributed WITHOUT ANY WARRANTY; without even the implied  
-;             warranty of MERCHANTABILITY Or FITNESS For A PARTICULAR PURPOSE.  
-; 
-;             for full license text see:
-;             http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+; LICENCE  :  MIT License see https://opensource.org/license/mit/
+;             or \PbFramWork\MitLicence.txt
+;             The original VB6 code from 2001 from F. Languasco is 
+;             under a free licence without specify a comon licence model
+;             (do what you want on your own response)
 ; ===========================================================================
 ; ChangeLog:
 ;{
@@ -2902,8 +2898,7 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.30 (Windows - x64)
-; CursorPosition = 590
-; FirstLine = 568
+; CursorPosition = 23
 ; Folding = -----
 ; EnableXP
 ; DPIAware
