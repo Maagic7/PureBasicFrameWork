@@ -1024,16 +1024,44 @@ Macro ASM_COL_EXPw(_XMM=XMM0, _XMMH=XMM1)
 EndMacro
 
 Macro ASM_COL_CMPw(_XMM=XMM0)
-  
+  ; XMM0 = [word0 word1 word2 word3 ...]  (16-bit words)
+  ; Pack them back into bytes with saturation
+  !PACKUSWB _XMM, _XMM   ; pack words to bytes with unsigned saturation
+  ; now XMM0 contains compacted 8-bit color channels  
 EndMacro
 
-Macro ASM_COL_EXPf(_XMM=XMM0)
+Macro ASM_COL_EXPf(_XMM=XMM0, _XMMH=XMM1)
+  ; Zero high XMM register for unpacking
+  !PXOR _XMMH, _XMMH           ; XMMH = 0
+  ; Unpack bytes to words
+  !PUNPCKLBW _XMMH, _XMM       ; lower 8 bytes -> 16-bit words
+  ; Unpack words to double words
+  !PUNPCKLWD _XMM, _XMMH       ; lower 4 words -> 32-bit integers
+  ; Convert integers to float
+  !CVTDQ2PS _XMM, _XMM         ; XMM0 now has floats [R G B A] in 0..255
+  ; Scale to 0.0..1.0
   
+  ;TODO: adapt multiplication
+  ; FLOAT_1DIV255.f = 0.00392156862745 ; 1/255
+  !MOVAPS _XMMH, [p._FLOAT_1DIV255] ; load 1.0/255 constant
+  !MULPS _XMM, _XMMH 
 EndMacro
 
-Macro ASM_COL_CMPf(_XMM=XMM0)
-  
+Macro ASM_COL_CMPf(_XMM=XMM0, _XMMH=XMM1)
+  ; Load 255.0 constant
+  ;TODO: adapt multilication
+  !MOVAPS _XMMH, [p._FLOAT_255]   ; XMMH = 255.0
+  ; Multiply floats by 255
+  !MULPS _XMM, _XMMH               ; XMM0 *= 255.0
+  ; Convert floats to 32-bit integers (truncate)
+  !CVTPS2DQ _XMM, _XMM             ; XMM0 = 32-bit ints
+  ; Pack 32-bit integers to 16-bit words
+  !PXOR _XMMH, _XMMH
+  !PACKSSDW _XMM, _XMMH            ; 32-bit -> 16-bit
+  ; Pack 16-bit words to 8-bit bytes
+  !PACKSSWB _XMM, _XMMH            ; 16-bit -> 8-bit
 EndMacro
+
 
 ; ADD with unsigned satration 16x 8 Bit unsigned Byte
 Macro ASM_SIMD_ADDUS_16PB(_vec1, _vec2, _XMMA=XMM0, _XMMB=XMM1, _REGA=RAX, _REGD=RDX)
@@ -1237,7 +1265,7 @@ Macro ASM_Mx_x_Mx_PS()
 EndMacro
 
 ;- ----------------------------------------------------------------------
-;- Matrix PS Packed Word
+;- Matrix PW Packed Word
 ;- ----------------------------------------------------------------------
 
 ; Load a 4x4 Matrix of Packed Words into XMM4..7 lo 64Bit and hi 64Bit 
@@ -1641,9 +1669,9 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 
-; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 209
-; FirstLine = 186
+; IDE Options = PureBasic 6.30 (Windows - x64)
+; CursorPosition = 1289
+; FirstLine = 781
 ; Folding = ------------------
 ; DPIAware
 ; CPU = 5
