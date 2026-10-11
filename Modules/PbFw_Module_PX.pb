@@ -8,12 +8,16 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2025/01/07
-; VERSION  :  0.56 untested Developer Version
+; VERSION  :  0.57 untested Developer Version
 ; COMPILER :  I hope all versions!
 ; OS       :  all
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2026/08/17 S.Maag : fixed BSwap16 MaskOut Error: Wrong shift commands for the 2 bytes!
+; 2026/02/07 S.Maag : fixed Macro BSwap16(_WordValue): Mask out irrelevant Bits because
+;                     of PB's arithmetic shift
+; 2026/01/16 S.Maag : TextBetween[Array/List]: additional Parameters MinLength, Append
 ; 2026/01/05 S.Maag : Major changes in Character Macros. Rename INCC->CInc, DECC->CDec.
 ;                     Added more Character Macros for parsing. CMov[Next,Last, BeyondNext, BeyondLast]
 ;                     Now the workflow wiht the Intellisense is better because all Character Macros
@@ -95,6 +99,14 @@ DeclareModule PX
   
   #PX_MaxBitNo = (SizeOf(Integer)*8-1)    ; 63 for x64 and 31 for x32
   
+  CompilerIf #PB_Compiler_64Bit
+    #MaxInt = 9223372036854775807
+    #MinInt = -9223372036854775808 
+  CompilerElse
+    #MaxInt = 2147483647
+    #MinInt = -2147483648 
+  CompilerEndIf
+
   Enumeration ePXTextAlign
     #PX_AlignLeft
     #PX_AlignCenter
@@ -102,10 +114,6 @@ DeclareModule PX
   EndEnumeration
   
   ; Any or Universal Pointer (see PurePasic IDE Common.pb Structrue PTR)
-  ; I modified it a little to have both single var access and var array access 
-  ; The orignal PTR-Struct only has var array access (a.a[0] ... ).
-  ; \a \b \c ... is the single var access and \a[0] \b[0] ... ist the multiple
-  ; access like an Array
   Structure pAny         ; ATTENTION! Only use as Pointer Strukture! Do not define as a normal Var!
     StructureUnion      
       ; multiple and single access like an Array
@@ -313,8 +321,9 @@ DeclareModule PX
   
   ; Swaps the 2 Bytes of a 16Bit value
   ; use it : result = BSwap16(x); x=[0..$FFFF])
+  ; because of Arithmetic right Shift we need to Mask out irrelevant Bits
   Macro BSwap16(_WordValue)
-    ((_WordValue<<8 | _WordValue>>8) & $FFFF)
+    ((_WordValue & $FF00)>>8 | (_WordValue & $FF ) <<8)
   EndMacro
   
   ; Get the Bit specified by BitNo from value
@@ -378,66 +387,64 @@ DeclareModule PX
   
   ; Get the lowest value from 2 values
   ; use it : result = Min(3,2)
+    ;(_v1*Bool(_v1<=_v2) + _v2*Bool(_v1>_v2))
   Macro Min(_v1, _v2)
-    (_v1*Bool(_v1 <= _v2) + _v2*Bool(_v1 > _v2))
+    (Bool(_v1<_v2)*_v1 + Bool(_v1<_v2)!1 *_v2)
   EndMacro
   
   ; Get the highest value from 2 values
   ; use it : result = Max(3,2)
+  ;(_v1*Bool(_v1 >= _v2) + _v2*Bool(_v1 < _v2))
   Macro Max(_v1, _v2)
-    (_v1*Bool(_v1 >= _v2) + _v2*Bool(_v1 < _v2))
+     (Bool(_v1>_v2)*_v1 + Bool(_v1>_v2)!1 *_v2)
   EndMacro
   
   ; Write the lowest value from 2 values to VarResult
   ; use it : MinOf2(VarResult, 3, 2)
   Macro MinOf2(_VarResult, _v1, _v2)
-    If _v1 < _v2
-      _VarResult = _v1
-    Else
-      _VarResult = _v2
-    EndIf   
+    _VarResult = _v1
+    If _VarResult > _v2 : _VarResult = _v2 : EndIf
   EndMacro
   
   ; Write the highest value from 2 values to VarResult
   ; use it : MaxOf2(VarResult, 3, 2)
   Macro MaxOf2(_VarResult, _v1, _v2)
-    If _v1 > _v2
-      VarResult = _v1
-    Else
-      VarResult = _v2
-    EndIf   
+    _VarResult = _v1
+    If _VarResult < _v2 : _VarResult = _v2 : EndIf
   EndMacro
   
   ; Write the lowest value from 3 values to VarResult
   ; use it: MinOf3(VarResult, 3, 2, 1)
   Macro MinOf3(_VarResult, _v1, _v2, _v3)
-  	If _v3 < _v2
-  		If _v3 < _v1
-  			_VarResult = _v3
-  		Else
-  			_VarResult = _v1
-  		EndIf
-  	ElseIf _v2 < _v1
-  		_VarResult = _v2
-  	Else
-  		_VarResult = _v1
-  	EndIf
+    _VarResult = _v1
+    If _VarResult > _v2 : _VarResult = _v2 : EndIf
+    If _VarResult > _v3 : _VarResult = _v3 : EndIf
   EndMacro
   
   ; Write the highest value from 3 values to VarResult
   ; use it: MaxOf3(VarResult, 3, 2, 1)
   Macro MaxOf3(_VarResult, _v1, _v2, _v3)
-    If _v3 > _v2
-  		If _v3 > _v1
-  			_VarResult = _v3
-  		Else
-  			_VarResult = _v1
-  		EndIf
-  	ElseIf _v2 > _v1
-  		_VarResult = _v2
-  	Else
-  		_VarResult = _v1
-  	EndIf
+    _VarResult = _v1
+    If _VarResult < _v2 : _VarResult = _v2 : EndIf
+    If _VarResult < _v3 : _VarResult = _v3 : EndIf
+  EndMacro
+  
+  ; Write the lowest value from 4 values to VarResult
+  ; use it: MinOf4(VarResult, 4, 3, 2, 1)
+  Macro MinOf4(_VarResult, _v1, _v2, _v3, _v4)
+    _VarResult = _v1
+    If _VarResult > _v2 : _VarResult = _v2 : EndIf
+    If _VarResult > _v3 : _VarResult = _v3 : EndIf
+    If _VarResult > _v4 : _VarResult = _v4 : EndIf
+  EndMacro
+  
+  ; Write the highest value from 3 values to VarResult
+  ; use it: MaxOf4(VarResult, 4, 3, 2, 1)
+  Macro MaxOf4(_VarResult, _v1, _v2, _v3, _v4)
+    _VarResult = _v1
+    If _VarResult < _v2 : _VarResult = _v2 : EndIf
+    If _VarResult < _v3 : _VarResult = _v3 : EndIf
+    If _VarResult < _v4 : _VarResult = _v4 : EndIf
   EndMacro
   
   ; Return the value limited to min 0 or Limit a var to min 0
@@ -446,7 +453,7 @@ DeclareModule PX
   
   ; Attention do not add brakets: '( VarOrValue * Bool(VarOrValue >0) )' -> MinNull(MyVar) will not work
   Macro MinNull(_VarOrValue)
-    _VarOrValue * Bool(_VarOrValue >0)  
+    Bool(_VarOrValue >0)*_VarOrValue  
   EndMacro
   
   ; use it: LimitToMin(var, MinValue)
@@ -680,7 +687,7 @@ DeclareModule PX
   EndMacro
  
   ;- ----------------------------------------------------------------------
-  ;- Macros for Chara parsing with pChar
+  ;- Macros for pChar, parsing Strings 
   ;- ----------------------------------------------------------------------
   
   ; With CInc, CDec for Charpointer operations instead of *MyCharPointer + [1,2], -[1,2]
@@ -699,7 +706,7 @@ DeclareModule PX
   Macro CInc(_pChar, _cnt=1)
     _pChar + (_cnt)*PX::#PX_CharSize
   EndMacro
-  
+   
   ; Move CharPointer to skip all TAB and SPACE
   ; use it: CSkipSpaceTab(MyCharPointer) 
   Macro CSkipSpaceTab(_pChar)
@@ -707,7 +714,7 @@ DeclareModule PX
       _pChar + PX::#PX_CharSize
     Wend
   EndMacro
- 
+  
   ; Move CharPointer to Next specified Char
   ; use it: CMovNext(MyCharPointer, ':')
   Macro CMovNext(_pChar, _CharValue)
@@ -719,16 +726,15 @@ DeclareModule PX
     Wend
   EndMacro
   
-  ; Move CharPointer to Last specified Char
-  ; use it: CMovLast(MyCharPointer, j, ':')
-  Macro CMovLast(_pChar, _varCnt, _CharValue)
-    _varCnt = 0
-    While _pChar\c[_varCnt]
-      If _pChar\c[_varCnt] = _CharValue
-        _pChar + _varCnt * SizeOf(Character)
-        _varCnt=0
+  ; Move CharPointer To Next specified Char
+  ; use it: CMovBeyondNext(MyCharPointer, ':')
+  Macro CMovBeyondNext(_pChar, _CharValue)
+    While _pChar\c
+      If _pChar\c = _CharValue
+        _pChar + PX::#PX_CharSize 
+        Break
       EndIf
-      _varCnt+1
+      _pChar + PX::#PX_CharSize 
     Wend
   EndMacro
   
@@ -754,30 +760,43 @@ DeclareModule PX
       EndIf
     Wend
   EndMacro
-
-  ; Move CharPointer to 1 Char beyond next specified Char
+ 
+  ; Move CharPointerIndex to Last specified Char
+  ; use it: CMovILast(MyCharPointer, j, ':')
+  Macro CMovILast(_pChar, _I, _CharValue)
+    _I = 0
+    While _pChar\c[_I]
+      If _pChar\c[_I] = _CharValue
+        _pChar + _I * SizeOf(Character)
+        _I=0
+      EndIf
+      _I+1
+    Wend
+  EndMacro
+  
+  ; Move CharPointerIndex to 1 Char beyond next specified Char
   ; use it: CMovBeyondNext(MyCharPointer, j, ':')
-  Macro CMovBeyondNext(_pChar, _varCnt, _CharValue)   
-    _varCnt = 0
-    While _pChar\c[_varCnt]
-      If _pChar\c[_varCnt] = _CharValue
-        _pChar + (_varCnt+1) * SizeOf(Character)
+  Macro CMovIBeyondNext(_pChar, _I, _CharValue)   
+    _I = 0
+    While _pChar\c[_I]
+      If _pChar\c[_I] = _CharValue
+        _pChar + (_I+1) * SizeOf(Character)
         Break
       EndIf
-      _varCnt +1
+      _I +1
     Wend
   EndMacro
 
-  ; Move CharPointer to 1 Char beyond last specified Char
+  ; Move CharPointerIndex to 1 Char beyond last specified Char
   ; use it: CMoveBeyondLast(MyCharPointer, j, ':')
-  Macro CMovBeyondLast(_pChar, _varCnt, _CharValue)   
-    _varCnt = 0
-    While _pChar\c[_varCnt]
-      If _pChar\c[_varCnt] = _CharValue
-        _pChar + (_varCnt+1) * SizeOf(Character)
-        _varCnt=0
+  Macro CMovIBeyondLast(_pChar, _I, _CharValue)   
+    _I = 0
+    While _pChar\c[_I]
+      If _pChar\c[_I] = _CharValue
+        _pChar + (_I+1) * SizeOf(Character)
+        _I=0
       Else
-        _varCnt +1
+        _I +1
       EndIf
     Wend
   EndMacro
@@ -785,24 +804,24 @@ DeclareModule PX
   ; Repleace the next specified Char without moving the Pointer _pChar
   ; Example replace the next ',' with '.' (for changing to decimal point)
   ; use it: ReplaceNextChar(MyCharPointer, j, ',', '.')
-  Macro CReplaceNext(_pChar, _varCnt, _searchChar, _replaceChar)
-    _varCnt = 0
-    While _pChar\c[_varCnt]
-      If _pChar\c[_varCnt] = _searchChar
-        _pChar\c[_varCnt] = _replaceChar
+  Macro CReplaceNext(_pChar, _I, _searchChar, _replaceChar)
+    _I = 0
+    While _pChar\c[_I]
+      If _pChar\c[_I] = _searchChar
+        _pChar\c[_I] = _replaceChar
         Break
       EndIf
-      _varCnt + 1
+      _I + 1
     Wend
   EndMacro
   
-  Macro CFindNext(_pChar, _varCnt, _searchChar)
-    _varCnt = 0
-    While _pChar\c[_varCnt]
-      If _pChar\c[_varCnt] = _searchChar 
+  Macro CFindNext(_pChar, _I, _searchChar)
+    _I = 0
+    While _pChar\c[_I]
+      If _pChar\c[_I] = _searchChar 
         Break    
       EndIf
-      _varCnt +1
+      _I +1
     Wend
   EndMacro
   
@@ -814,7 +833,7 @@ DeclareModule PX
   ; use it: result = LCaseChar(_CharValue)
   ; <<5 = *32 what is the CharDifference between Lo and Up
   Macro LCaseChar(_CharValue)
-    (_CharValue + Bool((_CharValue>='A' And _CharValue<='Z') Or (_CharValue>=192 And _CharValue<=222))<<5)  
+    (_CharValue + Bool((_CharValue>='A' And _CharValue<='Z') Or (_CharValue>=192 And _CharValue<=222))<<5)
   EndMacro
   
   ; UpperCase a single Char in ASCii Character space, Unicode Chars are not affected!
@@ -823,7 +842,7 @@ DeclareModule PX
   Macro UCaseChar(_CharValue)
     (_CharValue - Bool((_CharValue>='a' And _CharValue<='z') Or (_CharValue>=224 And _CharValue<=254 And _CharValue<>247))<<5)  
   EndMacro
-
+  
   ; Set a Charater variable to LoChar. It's faster than MyChar = LCaseChar(MyChar)!
   ; ASCii Character space only!
   ; use it: SetCharLo(_CharValue)
@@ -1188,6 +1207,13 @@ DeclareModule PX
   Declare.i RTCget(*RTCstruct.TRTC)     ; Get a copy of the internal TimerStrucure with actual values
   
   ; --------------------------------------------------
+  ; Min/Max for Integers
+  ; -------------------------------------------------- 
+  
+  Declare Max4i(a, b, c=#MinInt, d=#MinInt) 
+  Declare Min4i(a, b, c=#MaxInt, d=#MaxInt)
+
+  ; --------------------------------------------------
   ; STRING Functions
   ; -------------------------------------------------- 
   
@@ -1206,12 +1232,12 @@ DeclareModule PX
   Prototype.s TextBetween(String$, Left$, Right$=#Null$)
   Global TextBetween.TextBetween
   
-  Prototype.i TextBetweenList(List Out.s(), String$, Left$, Right$)
+  Prototype.i TextBetweenList(List Out.s(), String$, Left$, Right$, MinLength=1, Append=#False)
   Global TextBetweenList.TextBetweenList
   
   Declare.s ColumnText(Text$, ColWidth=12, TextAlign=#PX_AlignCenter)
 
-  Prototype.i TextBetweenArray(Array Out.s(1), String$, Left$, Right$, ArrayRedimStep=10)
+  Prototype.i TextBetweenArray(Array Out.s(1), String$, Left$, Right$, MinLength=1, ArrayRedimStep=10)
   Global TextBetweenArray.TextBetweenArray
 
   Prototype SplitStringArray(Array Out.s(1), String$, Separator$, DQuote=#False, ArrayRedimStep=10)
@@ -1810,6 +1836,114 @@ Module PX
   EndProcedure
   
   ;- ----------------------------------------------------------------------
+  ;-  MinMax
+  ;- ----------------------------------------------------------------------
+  
+  Procedure Min4i(a, b, c=#MaxInt, d=#MaxInt)
+  ; ============================================================================
+  ; NAME: Min4i
+  ; DESC: Function to get Minimum of 4 Integer values
+  ; DESC: Use the function instead of the Macro MinOf4(), if you use it
+  ; DESC: as nested Call. Macors quickly become to complex!
+  ; VAR(a, b, c, d): The 4 values
+  ; RET.i : The Minimum
+  ; ============================================================================
+   
+    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm
+      
+      CompilerIf #PB_Compiler_64Bit
+        !MOV RAX, [p.v_a]     ; RAX = a
+        !CMP RAX, [p.v_b]     
+        !JL @f                ; If a>b
+          !MOV RAX, [p.v_b]   ; a=b
+        !@@:      
+        !CMP RAX, [p.v_c]     ; If a>c
+        !JL @f
+          !MOV RAX, [p.v_c]   ; a = c
+        !@@:         
+        !CMP RAX, [p.v_d]     ; a>d
+        !JL @f
+          !MOV RAX, [p.v_d]   ; a=d
+        !@@:           
+      CompilerElse
+        !MOV EAX, [p.v_a]     ; EAX = a
+        !CMP EAX, [p.v_b]     
+        !JL @f                ; If a>b
+          !MOV EAX, [p.v_b]   ; a=b
+        !@@:      
+        !CMP EAX, [p.v_c]     ; If a>c
+        !JL @f
+          !MOV EAX, [p.v_c]   ; a = c
+        !@@:         
+        !CMP EAX, [p.v_d]     ; a>d
+        !JL @f
+          !MOV EAX, [p.v_d]   ; a=d
+        !@@:
+      CompilerEndIf
+      ProcedureReturn      ; Return EAX/RAX
+     
+    CompilerElse
+      
+      If a > b : a = b : EndIf
+      If a > c : a = c : EndIf
+      If a > d : a = d : EndIf
+      ProcedureReturn a    
+    CompilerEndIf   
+  EndProcedure
+  
+  Procedure Max4i(a, b, c=#MinInt, d=#MinInt)
+  ; ============================================================================
+  ; NAME: Max4i
+  ; DESC: Function to get Maximum of 4 Integer values
+  ; DESC: Use the function instead of the Macro MaxOf4(), if you use it
+  ; DESC: as nested Call. Macors quickly become to complex!
+  ; VAR(a, b, c, d): The 4 values
+  ; RET.i : The Maximum
+  ; ============================================================================
+    
+    CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm
+      
+      CompilerIf #PB_Compiler_64Bit
+        !MOV RAX, [p.v_a]     ; RAX = a
+        !CMP RAX, [p.v_b]     
+        !JG @f                ; If a<b
+          !MOV RAX, [p.v_b]   ; a=b
+        !@@:      
+        !CMP RAX, [p.v_c]     ; If a<c
+        !JG @f
+          !MOV RAX, [p.v_c]   ; a = c
+        !@@:         
+        !CMP RAX, [p.v_d]     ; a<d
+        !JG @f
+          !MOV RAX, [p.v_d]   ; a=d
+        !@@:            
+      CompilerElse
+        !MOV EAX, [p.v_a]     ; EAX = a
+        !CMP EAX, [p.v_b]     
+        !JG @f                ; If a<b
+          !MOV EAX, [p.v_b]   ; a=b
+        !@@:      
+        !CMP EAX, [p.v_c]     ; If a<c
+        !JG @f
+          !MOV EAX, [p.v_c]   ; a = c
+        !@@:         
+        !CMP EAX, [p.v_d]     ; a<d
+        !JG @f
+          !MOV EAX, [p.v_d]   ; a=d
+        !@@:
+      CompilerEndIf
+      ProcedureReturn      ; Return EAX/RAX
+     
+    CompilerElse
+      
+      If a > b : a = b : EndIf
+      If a > c : a = c : EndIf
+      If a > d : a = d : EndIf
+      ProcedureReturn a     
+    CompilerEndIf   
+  EndProcedure
+  
+  ;- ----------------------------------------------------------------------
   ;-  Implementation of Color Functions
   ;- ----------------------------------------------------------------------
   
@@ -2142,7 +2276,7 @@ Module PX
   EndProcedure
   TextBetween=@_TextBetween()
   
-  Procedure.i _TextBetweenList(List Out.s(), *String, Left$, Right$)
+  Procedure.i _TextBetweenList(List Out.s(), *String, Left$, Right$, MinLength=1, Append=#False)
   ; ============================================================================
   ; NAME: TextBetweenList
   ; DESC: Gets the Text between two String elements Left$ and Right$
@@ -2152,13 +2286,27 @@ Module PX
   ; VAR(*String) : Pointer to String
   ; VAR(Left$) : The left side like "("
   ; VAR(Right$) : Right side like ")"
+  ; VAR(MinLength) : Minimum length of found Strings 
+  ; VAR(Append) : #False=Clear the List first, #True: do not clear list -> append new entries
   ; RET.i : The number of found Strings (it is identical with the ListSize)
   ; ============================================================================
-    Protected posL, posR, xRight        ; Character postion of found Char 
+    
+    ; 2026/01/16 added Parameters MinLength and Append because of Search Text in Quotes
+    ; in Codefiles. I do not want to get emty Strings or just 1 character.
+    ; The append parameter is necessary to search in a list of Strings.
+    ; This happens when searching in Codefiles loaded to a List. Searching for
+    ; Text in Quotes is a problem if there is just 1 single additional Quote. 
+    ; This will break the complete search result if the search is done in the complete file.
+    ; If the file is loaded line by line to a list. A single Quote breaks only 1 line!
+    
+    Protected posL, posR                ; Character postion of found Char 
     Protected lenBL, lenBR              ; Bytelength of Left$, Right$ 
     Protected Str.String, *pStr.Integer ; for hooking *String into Str.String 
-        
-    ClearList(Out())
+    
+    If Not Append
+      ClearList(Out())
+    EndIf
+    
     lenBL = Len(Left$) * SizeOf(Character)
     lenBR = Len(Right$) * SizeOf(Character)
     
@@ -2172,7 +2320,6 @@ Module PX
     ; but hand made!
     *pStr = @Str            ; Overlay IntergerStructure on String Structure
     *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))
-    xRight = Bool(Right$)   ; Check for Right$=#Null$ to return until EndOfString
     
     Repeat
       posL = FindString(Str\s, Left$)
@@ -2181,9 +2328,11 @@ Module PX
         *pStr\i = *String           ; New Startposition after Left$
         posR = FindString(Str\s, Right$)
         
-        If posR
-          AddElement(Out())
-          Out()=PeekS(*String, posR-1)
+        If posR > 0
+          If (posR -1) >= MinLength
+            AddElement(Out())
+            Out()=PeekS(*String, posR-1)
+          EndIf
           *String = *String + posR*SizeOf(Character) + lenBR - SizeOf(Character)  ; Pointer to Char after Position found
           *pStr\i = *String         ; New Startposition after Right$
         Else
@@ -2202,7 +2351,7 @@ Module PX
   EndProcedure
   TextBetweenList=@_TextBetweenList()
   
-  Procedure.i _TextBetweenArray(Array Out.s(1), *String, Left$, Right$, ArrayRedimStep=10)
+  Procedure.i _TextBetweenArray(Array Out.s(1), *String, Left$, Right$, MinLength=1, ArrayRedimStep=10)
   ; ============================================================================
   ; NAME: TextBetweenList
   ; DESC: Gets the Text between two String elements Left$ and Right$
@@ -2212,6 +2361,7 @@ Module PX
   ; VAR(*String) : Pointer to String
   ; VAR(Left$) : The left side like "("
   ; VAR(Right$) : Right side like ")".
+  ; VAR(MinLength) :  Minimum length of found Strings
   ; VAR(ArrayRedimStep) : How may entries are added to the String each ReDim
   ;                       if you know the exact No of Substrings before, use it here!
   ;                       this prevents from ReDim.
@@ -2251,14 +2401,16 @@ Module PX
         posR = FindString(Str\s, Right$)
         
         If posR
-          If ASize < N
-            ASize + ArrayRedimStep
-            ReDim Out(ASize)
-          EndIf            
-          Out(N)=PeekS(*String, posR-1)
+          If (posR -1) >= MinLength
+            If ASize < N
+              ASize + ArrayRedimStep
+              ReDim Out(ASize)
+            EndIf            
+            N+1
+            Out(N)=PeekS(*String, posR-1)
+          EndIf
           *String = *String + posR*SizeOf(Character) + lenBR - SizeOf(Character)  ; Pointer to Char after Position found
           *pStr\i = *String         ; New Startposition after Right$
-          N+1
         Else
           Break        
         EndIf       
@@ -2966,10 +3118,9 @@ CompilerEndIf
 
 
 
-; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 750
-; FirstLine = 706
-; Folding = --------------------------
-; Markers = 1351,2772
+; IDE Options = PureBasic 6.41 (Windows - x64)
+; CursorPosition = 28
+; Folding = ----------------------------
+; Markers = 1377,2924
 ; Optimizer
 ; CPU = 5
