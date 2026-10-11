@@ -9,15 +9,15 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2020/10/17
-; VERSION  :  0.1 untested Developer Version
+; VERSION  :  0.11 untested Developer Version
 ; COMPILER :  PureBasic 6.0
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ; ChangeLog:
-;{ 2025/02/08 S.Maag some reworks done
-;   
+;{ 2025/12/14 S.Maag added ImagePixelFormat check
+;  2025/02/08 S.Maag some reworks done 
 ;                  
 ;}
 ;{ TODO:
@@ -42,8 +42,20 @@ DeclareModule IMG
   #IMG_GreyScale_Standard = 0
   #IMG_GreyScale_Average = 1
   #IMG_GreyScale_WeightedLight = 2
+   
+  ;  Pixel Formats                             |    ByteOrder in   |
+  ;                                            | Memory | Register |
+  ; -------------------------------------------|--------|----------|
+  ; #PB_PixelFormat_24Bits_RGB  ; 3 Byte/Pixel |  RGB   |  BGR     |  8
+  ; #PB_PixelFormat_24Bits_BGR  ; 3 Byte/Pixel |  BGR   |  RGB     | 16
+  ; #PB_PixelFormat_32Bits_RGB  ; 4 Byte/Pixel |  RGBA  |  ABGR    | 32
+  ; #PB_PixelFormat_32Bits_BGR  ; 4 Byte/Pixel |  BGRA  |  ARGB    | 64
+  ; ----------------------------------------------------------------
   
-  Enumeration PbFw_IMG_Dither                 ; DitherMethode
+  #IMG_RGB = #PB_PixelFormat_24Bits_RGB + #PB_PixelFormat_32Bits_RGB
+  #IMG_BGR = #PB_PixelFormat_24Bits_BGR + #PB_PixelFormat_32Bits_BGR
+  
+  Enumeration PbFw_IMG_Dither            ; DitherMethode
     #IMG_Dither_No                       ; 0 = no dither
     #IMG_Dither_SierraLite               ; 1 = Sierra Lite (error diffusion)
     #IMG_Dither_ShiauFan                 ; 2 = Shiau-Fan (error diffusion)
@@ -330,7 +342,8 @@ Module IMG
   ; RET : #TRUE if sucseed; #FALSE if not
   ; ======================================================================
     Protected *pPix.PX::TSystemColor  ; Pointer to actual Pixel/Color
-    Protected.i X, Y, BytesPerPixel       ; X,Y Pixel position
+    Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position
+    Protected.i idxR, idxB            ; Index for Red and Blue 0,2
     Protected.i r,g,b
     Protected.i xRET = #True
     
@@ -344,6 +357,12 @@ Module IMG
     PX::LimitToMinMax(AddBrightBlue, -255, 255)
       
     If *pBuffer And *ImageInfo   ; if we have valid Pointers
+      
+      If *ImageInfo\imgPixelFormat & #IMG_RGB
+        idxB = 2
+      Else
+        idxR = 2
+      EndIf
       
       BytesPerPixel = *ImageInfo\imgDepth >>3     
       ; We need 2 Loops for Pixel manipulation because a line in the Buffer() may contain
@@ -430,8 +449,9 @@ Module IMG
   ; RET : #TRUE if sucseed; #FALSE if not
   ; ======================================================================
     
-    Protected *pPix.PX::TSystemColor  ; Pointer to actual Pixel/Color in SystemColorOrder
-    Protected.i X, Y, I, BytesPerPixel      ; X,Y Pixel position
+    Protected *pPix.PX::TSystemColor    ; Pointer to actual Pixel/Color in SystemColorOrder
+    Protected.i X, Y, I, BytesPerPixel  ; X,Y Pixel position
+    Protected.i idxR, idxB              ; Index for Red and Blue 0,2
     Protected.i r, g, b
     Protected.i xRET = #True
     Protected memf.f
@@ -465,6 +485,13 @@ Module IMG
     Next
     
     If *pBuffer And *ImageInfo   ; if we have valid Pointers   
+      
+      If *ImageInfo\imgPixelFormat & #IMG_RGB
+        idxB = 2
+      Else
+        idxR = 2
+      EndIf
+      
       BytesPerPixel =  *ImageInfo\imgDepth >>3     
       ; We need 2 Loops for Pixel manipulation because a line in the Buffer() may contain
       ; fill Bytes. We might get a problem if we use FOR P = *pBuffer To EndOfBuffer
@@ -534,6 +561,7 @@ Module IMG
     Protected *pPix.PX::TSystemColor  ; Pointer to actual Pixel/Color
     Protected.i GreyCol               ; the grey color value
     Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position
+    Protected.i idxR, idxB            ; Index for Red and Blue 0,2
     Protected.i fR, fG, fB  ; WeightFactors for RED, GREEN, BLUE Channel
     Protected.i xRET = #True
        
@@ -562,7 +590,14 @@ Module IMG
     EndSelect
          
     If *pBuffer And *ImageInfo   ; if we have valid Pointers
-      BytesPerPixel = *ImageInfo\imgDepth >>3                              
+      BytesPerPixel = *ImageInfo\imgDepth >>3           
+      
+      If *ImageInfo\imgPixelFormat & #IMG_RGB
+        idxB = 2
+      Else
+        idxR = 2
+      EndIf
+        
       ; We need 2 Loops for Pixel manipulation because a line in the Buffer() may contain
       ; fill Bytes. We might get a problem if we use FOR P = *pBuffer To EndOfBuffer
       ; if there is maybe 1 fill Byte at the end of each line. This byte will shift the colors
@@ -572,7 +607,7 @@ Module IMG
         
         For X = 0 To (*ImageInfo\imgWidth -1)    ; process all Pixels in a line
           With *pPix
-            GreyCol = (\RGB\R * fr + \RGB\G * fG + \RGB\B * fB) >>10
+            GreyCol = (\ch[idxR] * fr + \RGB\G * fG + \ch[idxB] * fB) >>10
             \RGB\R = GreyCol
             \RGB\G = GreyCol
             \RGB\B = GreyCol
@@ -692,18 +727,24 @@ Module IMG
     Protected.i X, Y, BytesPerPixel       ; X,Y Pixel position
     Protected.i ChNo, xRET = #True
     
-    Select Channel  ; only allow #Red, #Green, #Blue
-      Case #Red
-        ChNo = PX::_SCM\idxRed
-      Case #Green
-        ChNo = PX::_SCM\idxGreen
-      Case #Blue
-        ChNo = PX::_SCM\idxBlue
-      Default
-        ProcedureReturn #False
-    EndSelect
+    If Channel = #Green
+      ChNo = 1
+    ElseIf (*ImageInfo\imgPixelFormat & #IMG_RGB)
+      If Channel = #Red
+        ChNo = 0
+      Else
+        ChNo = 2
+      EndIf
+    Else
+      If Channel = #Red
+        ChNo = 2
+      Else
+        ChNo = 0
+      EndIf       
+    EndIf
                  
     If *pBuffer And *ImageInfo   ; if we have valid Pointers
+            
       BytesPerPixel = *ImageInfo\imgDepth >>3     
       ; We need 2 Loops for Pixel manipulation because a line in the Buffer() may contain
       ; fill Bytes. We might get a problem if we use FOR P = *pBuffer To EndOfBuffer
@@ -778,12 +819,12 @@ Module IMG
       For Y = 0 To (*ImageInfo\imgHeight -1)
         *pPix = *pBuffer + *ImageInfo\imgBufferPitch * Y 
         
-        For X = 0 To (*ImageInfo\imgWidth -1)    ; process all Pixels in a line
+        For X = 0 To (*ImageInfo\imgWidth -1)   ; process all Pixels in a line
           With *pPix               
             \RGB\R = 255- \RGB\R
             \RGB\G = 255- \RGB\G
             \RGB\B = 255- \RGB\B              
-            *pPix = *pPix + 3    ; Next Pixel
+            *pPix = *pPix + BytesPerPixel       ; Next Pixel
           EndWith  
         Next  
       Next
@@ -819,16 +860,21 @@ Module IMG
     Protected.i X, Y, BytesPerPixel   ; X,Y Pixel position
     Protected.i ChNo, xRET = #True
     
-    Select Channel  ; only allow #Red, #Green, #Blue
-      Case #Red
-        ChNo = PX::_SCM\idxRed
-      Case #Green
-        ChNo = PX::_SCM\idxGreen
-      Case #Blue
-        ChNo = PX::_SCM\idxBlue
-      Default
-        ProcedureReturn #False
-    EndSelect
+    If Channel = #Green
+      ChNo = 1
+    ElseIf (*ImageInfo\imgPixelFormat & #IMG_RGB)
+      If Channel = #Red
+        ChNo = 0
+      Else
+        ChNo = 2
+      EndIf
+    Else
+      If Channel = #Red
+        ChNo = 2
+      Else
+        ChNo = 0
+      EndIf       
+    EndIf
                  
     If *pBuffer And *ImageInfo   ; if we have valid Pointers
       BytesPerPixel = *ImageInfo\imgDepth >>3              
@@ -1423,8 +1469,8 @@ CompilerIf #PB_Compiler_IsMainFile
   
 CompilerEndIf
 ; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 936
-; FirstLine = 909
+; CursorPosition = 539
+; FirstLine = 497
 ; Folding = -----
 ; Optimizer
 ; CPU = 5
