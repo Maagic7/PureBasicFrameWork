@@ -9,7 +9,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2021/04/02
-; VERSION  :  0.54  Developer Version
+; VERSION  :  0.56  Developer Version
 ; COMPILER :  PB 6.0 and higher
 ; OS       :  all
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -17,6 +17,9 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2026/10/10  S.Maag: Documentation Bugs in some functions
+; 2026/01/10  S.Maag: Bitrotate bug with negativ values in PB classic. Corrected sign bit if value<0  
+; 2026/01/09  S.Maag: added and tested CntLeaingZeros[32,64] CntTrailingZeros[32,64]
 ; 2025/06/29  S.Maag: some small changes
 ; 2025/02/06  S.Maag: added BitCountINT
 ; 2025/01/30  S.Maag: solved Bug in ASMx32 BSWAP_Mem64()! Swap of Lo-Hi DWORD was missing!
@@ -137,6 +140,11 @@ DeclareModule BIT
   Declare.q ROL64(value.q, cnt.i = 1)
   Declare.q ROR64(value.q, cnt.i = 1)  
   
+  Declare.i CntTrailingZeros32(n.l)   ; LSB Zeros
+  Declare.i CntLeadingZeros32(n.l)    ; MSB Zeros
+  Declare.i CntTrailingZeros64(n.q)   ; LSB Zeros
+  Declare.i CntLeadingZeros64(n.q)    ; MSB Zeros
+
 EndDeclareModule
 
 Module BIT
@@ -200,10 +208,13 @@ Module BIT
   ;- Module Private Functions
   ;- ----------------------------------------------------------------------
   
+  ; Sign Mask Out for arithmetic shift right negative values
+  #_MaskOutSign32 = $7FFFFFFF 
+  #_MaskOutSign64 = $7FFFFFFFFFFFFFFF
   CompilerIf #PB_Compiler_32Bit
-    #_MaskOutSign = $7FFFFFFF
+    #_MaskOutSign = #_MaskOutSign32
   CompilerElse
-    #_MaskOutSign = $7FFFFFFFFFFFFFFF   
+    #_MaskOutSign = #_MaskOutSign64   
   CompilerEndIf
   
   Structure pSwap ; Pointer Structure for swapping
@@ -858,13 +869,13 @@ Module BIT
       
       ; convert Byte to BitField
       With BF
-           val = WordVal & $FF        ; lo Byte
-            \q[0] = (val &1)         + ((val>>1)&1)<<8  + ((val>>2)&1)<<16 + ((val>>3)&1)<<24 +
-                    ((val>>4)&1)<<32 + ((val>>5)&1)<<40 + ((val>>6)&1)<<48 + ((val>>7)&1)<<56    
-            
-            val = (WordVal >> 8) & $FF ; hi Byte
-            \q[1] = (val &1)         + ((val>>1)&1)<<8  + ((val>>2)&1)<<16 + ((val>>3)&1)<<24 +
-                    ((val>>4)&1)<<32 + ((val>>5)&1)<<40 + ((val>>6)&1)<<48 + ((val>>7)&1)<<56    
+        val = WordVal & $FF        ; lo Byte
+        \q[0] = (val &1)         + ((val>>1)&1)<<8  + ((val>>2)&1)<<16 + ((val>>3)&1)<<24 +
+                ((val>>4)&1)<<32 + ((val>>5)&1)<<40 + ((val>>6)&1)<<48 + ((val>>7)&1)<<56    
+        
+        val = (WordVal >> 8) & $FF ; hi Byte
+        \q[1] = (val &1)         + ((val>>1)&1)<<8  + ((val>>2)&1)<<16 + ((val>>3)&1)<<24 +
+                ((val>>4)&1)<<32 + ((val>>5)&1)<<40 + ((val>>6)&1)<<48 + ((val>>7)&1)<<56    
       EndWith       
       
       ; convert BitField with shuffling back to a Byte value
@@ -897,7 +908,7 @@ Module BIT
   Procedure.i BitCount16 (value.u)
   ; ======================================================================
   ;  NAME: BitCount16
-  ;  DESC: Counts the number of Hi bits in a 16 Bit value
+  ;  DESC: Count the number of Hi bits in a 16 Bit value
   ;  RET.i:  Number of Hi Bits
   ; ====================================================================== 
     
@@ -918,7 +929,7 @@ Module BIT
       CompilerCase #PbFwCfg_Module_Compile_C
         ; mac_BitCount16(value)
         ; __builtin_popcountl(long number);
-        !return __builtin_popcountl(v_value & $FFFF);
+        !return __builtin_popcountl(v_value);
         
       CompilerDefault     ; Classic Code without ASM or C optimations       
         mac_BitCount16(value)
@@ -929,7 +940,7 @@ Module BIT
   Procedure.i BitCount32 (value.l)
   ; ======================================================================
   ;  NAME: BitCount32
-  ;  DESC: Counts the number of Hi bits in a 32 Bit value
+  ;  DESC: Count the number of Hi bits in a 32 Bit value
   ;  RET.i: Number of Hi Bits 
   ; ====================================================================== 
          
@@ -950,6 +961,7 @@ Module BIT
         ; mac_BitCount32(value)
         ; __builtin_popcountl(long number);
         !return __builtin_popcountl(v_value);
+        
       CompilerDefault     ; Classic Code without ASM or C optimations       
         mac_BitCount32(value)
         
@@ -959,7 +971,7 @@ Module BIT
   Procedure.i BitCount64 (value.q)
   ; ======================================================================
   ;  NAME: BitCount64
-  ;  DESC: Counts the number of Hi bits in a 64 Bit value
+  ;  DESC: Count the number of Hi bits in a 64 Bit value
   ;  RET.i: Number of Hi Bits
   ; ======================================================================     
     
@@ -993,7 +1005,7 @@ Module BIT
   Procedure.i BitCountINT (value.i)
   ; ======================================================================
   ;  NAME: BitCountINT
-  ;  DESC: Counts the number of Hi bits in an INT 32/64 Bit 
+  ;  DESC: Count the number of Hi bits in an INT 32/64 Bit 
   ;  RET.i: Number of Hi Bits
   ; ======================================================================     
     
@@ -1049,8 +1061,7 @@ Module BIT
      
     CompilerCase #PbFwCfg_Module_Compile_C
       !return __builtin_bswap16(v_value);
-      ProcedureReturn
-      
+       
     CompilerDefault     ; Classic Code without ASM or C optimations       
       Protected *Swap.pSwap
       *Swap = @value
@@ -1099,9 +1110,8 @@ Module BIT
   ;  NAME: BSWAP64
   ;  DESC: LittleEndian<=>BigEndian conversion for 64Bit values
   ;  DESC: Swaps the Bytes of a 64 Bit value
-  ;  DESC: direct in memory.
-  ;  VAR(*Mem): Pointer to the value
-  ;  RET:  -
+  ;  VAR(value.q): The 64Bit Value
+  ;  RET.q: ByteSwapped Value
   ; ======================================================================   
     
     CompilerSelect #PbFwCfg_Module_Compile
@@ -1338,7 +1348,7 @@ Module BIT
         
     CompilerEndSelect  
   EndProcedure
-  
+    
   Procedure.l ROL32(value.l, cnt.i = 1)
   ; ======================================================================
   ;  NAME: ROL32
@@ -1362,11 +1372,15 @@ Module BIT
         !rol eax, cl                ; Rotate use only the lo 8 Bits of C-Register
         ProcedureReturn
         
-      CompilerCase #PbFwCfg_Module_Compile_C
-        ProcedureReturn (value << cnt) | (value >> (32-cnt))
-       
+      ;CompilerCase #PbFwCfg_Module_Compile_C
+        
       CompilerDefault     ; Classic Code without ASM or C optimations       
-        ProcedureReturn (value << cnt) | (value >> (32-cnt))
+        If value < 0
+          ; because of PB's arithmetic shift we have to correct the sign Bit
+          ProcedureReturn  (value << cnt) | ((value>>1 &#_MaskOutSign32) >> (31-cnt))
+        Else
+          ProcedureReturn  (value << cnt) | (value >> (32-cnt))
+        EndIf 
         
     CompilerEndSelect
   EndProcedure
@@ -1394,12 +1408,16 @@ Module BIT
         !ror eax, cl                ; Rotate use only the lo 8 Bits of C-Register
         ProcedureReturn
         
-      CompilerCase #PbFwCfg_Module_Compile_C
-        ProcedureReturn  (value >> cnt) | (value << (32-cnt))
-       
-      CompilerDefault     ; Classic Code without ASM or C optimations       
-        ProcedureReturn  (value >> cnt) | (value << (32-cnt))
+      ; CompilerCase #PbFwCfg_Module_Compile_C
         
+      CompilerDefault     ; Classic Code without ASM or C optimations       
+        If value < 0
+          ; because of PB's arithmetic shift we have to correct the sign Bit
+          ProcedureReturn ((value>>1 &#_MaskOutSign32) >> (cnt-1)) | (value << (32-cnt)) 
+        Else  
+          ProcedureReturn  (value >> cnt) | (value << (32-cnt))
+        EndIf
+       
     CompilerEndSelect
   EndProcedure
   
@@ -1423,14 +1441,25 @@ Module BIT
         !rol rax, cl
         ProcedureReturn
      
-      CompilerCase #PbFwCfg_Module_Compile_C
-        ProcedureReturn (value << cnt) | (value >> (64-cnt))
-        
+      ; CompilerCase #PbFwCfg_Module_Compile_C
+         
       CompilerDefault  ; Classic Code without ASM or C optimations       
-        ProcedureReturn (value << cnt) | (value >> (64-cnt))
+        If value < 0
+          ; because of PB's arithmetic shift we have to correct the sign Bit
+          ProcedureReturn  (value << cnt) | ((value>>1 &#_MaskOutSign64) >> (63-cnt))
+        Else
+          ProcedureReturn  (value << cnt) | (value >> (64-cnt))
+        EndIf 
          
     CompilerEndSelect
   EndProcedure
+  
+;   !unsigned long long rol64_c(unsigned long long v, int n) {
+;   !    n = n & 63U;
+;   !    if (n)
+;   !        v = (v << n) | (v >> (64-n));
+;   !    return v; }
+;   !   bitXg_rol64 = &rol64_c; 
   
   Procedure.q ROR64(value.q, cnt.i = 1)
   ; ======================================================================
@@ -1452,39 +1481,175 @@ Module BIT
         !ror rax, cl
         ProcedureReturn
      
-      CompilerCase #PbFwCfg_Module_Compile_C
-        ProcedureReturn  (value >> cnt) | (value << (64-cnt))
-       
+      ;CompilerCase #PbFwCfg_Module_Compile_C
+        
       CompilerDefault     ; Classic Code without ASM or C optimations       
-        ProcedureReturn  (value >> cnt) | (value << (64-cnt))
+        If value < 0
+          ; because of PB's arithmetic shift we have to correct the sign Bit
+          ProcedureReturn  ((value>>1 &#_MaskOutSign64) >> (cnt-1)) | (value << (64-cnt)) 
+        Else  
+          ProcedureReturn  (value >> cnt) | (value << (64-cnt))
+        EndIf
         
     CompilerEndSelect
   EndProcedure
   
-  ;- ----------------------------------------------------------------------
-;- MSB LSB - not ready  
-  Procedure.i MSB(x.i)
-    ; Number of most significant bit: [0..63]
-    !MOV RAX, [p.v_x]
-    !BSR RAX, RAX
-    ProcedureReturn
+;   !unsigned long long ror64_c(unsigned long long v, int n) {
+;   !    n = n & 63U;
+;   !    if (n)
+;   !        v = (v >> n) | (v << (64-n));
+;   !    return v; }
+;   !   bitXg_ror64 = &ror64_c; 
+
+  ; __builtin_clz(unsigned int x)        : Returns the number of leading 0-bits in x, starting at the 
+  ; __builtin_clzll(unsigned long long)  : most significant bit position. If x is 0, the result is undefined
+  
+  ; __builtin_ctz(unsigned int x)        : Returns the number of trailing 0-bits in x, starting at the
+  ; __builtin_ctzll(unsigned long long)  : least significant bit position. If x is 0, the result is undefined.
+  
+  Procedure.i CntLeadingZeros32(n.l)
+  ; ======================================================================
+  ;  NAME: CntLeadingZeros32
+  ;  DESC: Count the leading Zeros of a 32 Bit value (most significant)
+  ;  VAR(n.l): the value
+  ;  RET.i: No of leading zeros (if n=0 result is not valid and return 0)
+  ; ====================================================================== 
+    
+    CompilerSelect #PbFwCfg_Module_Compile
+       
+      CompilerCase #PbFwCfg_Module_Compile_ASM32
+        !MOV EAX, [p.v_n]
+        !BSR EAX, EAX
+        !Neg EAX
+        !Add EAX , 31
+        ProcedureReturn 
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM64
+        !XOR RAX, RAX
+        !MOV EAX, [p.v_n]
+        !BSR RAX, RAX
+        !Neg RAX
+        !Add RAX , 31
+        ProcedureReturn 
+        
+      CompilerCase #PbFwCfg_Module_Compile_C
+        ; Debug "C"
+        !return __builtin_clz(v_n); 
+        
+      CompilerDefault
+        Protected I
+        If n
+          While n >0
+            n<<1
+            I+1  
+          Wend
+        EndIf
+        ProcedureReturn I  
+        
+    CompilerEndSelect        
   EndProcedure
   
-  Procedure.i LSB(x.i)
-    ; Number of least significant bit: [0..63]
-    !MOV RAX, [p.v_x]
-    !BSF RAX, RAX
-    ProcedureReturn
+  Procedure.i CntTrailingZeros32(n.l)
+  ; ======================================================================
+  ;  NAME: CntTrailingZeros32
+  ;  DESC: Count the trailing Zeros of a 32 Bit value (least significant)
+  ;  VAR(n.l): the value
+  ;  RET.i: No of trailing zeros (if n=0 result is not valid and return 0)
+  ; ====================================================================== 
+   
+    CompilerSelect #PbFwCfg_Module_Compile
+       
+      CompilerCase #PbFwCfg_Module_Compile_ASM32
+        !MOV EAX, [p.v_n]
+        !BSF EAX, EAX
+        ProcedureReturn 
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM64
+        !XOR RAX, RAX
+        !MOV EAX, DWORD[p.v_n]
+        !BSF RAX, RAX
+        ProcedureReturn 
+        
+      CompilerCase #PbFwCfg_Module_Compile_C
+        !return __builtin_ctz(v_n);
+        
+      CompilerDefault
+        Protected I  
+        If n
+          While Not (n&1)  
+            n>>1
+            I+1  
+          Wend
+        EndIf
+        ProcedureReturn I
+        
+    CompilerEndSelect  
+  EndProcedure 
+  
+  Procedure.i CntLeadingZeros64(n.q)
+  ; ======================================================================
+  ;  NAME: CntLeadingZeros64
+  ;  DESC: Count the leading Zeros of a 64 Bit value (most significant)
+  ;  VAR(n.q): the value
+  ;  RET.i: No of leading zeros (if n=0 result is not valid and return 0)
+  ; ====================================================================== 
+    
+    CompilerSelect #PbFwCfg_Module_Compile
+       
+      CompilerCase #PbFwCfg_Module_Compile_ASM64
+        !MOV RAX, [p.v_n]
+        !BSR RAX, RAX
+        !Neg RAX
+        !Add RAX , 63
+        ProcedureReturn 
+        
+      CompilerCase #PbFwCfg_Module_Compile_C
+        ;Debug "C"
+        !return __builtin_clzll(v_n); 
+        
+      CompilerDefault        
+        Protected I
+        If n
+          While n >0
+            n<<1
+            I+1  
+          Wend
+        EndIf
+        ProcedureReturn I  
+        
+    CompilerEndSelect        
   EndProcedure
-
-;   Debug MSB(0)
-;   Debug MSB(1)
-;   Debug MSB(2)
-;   Debug MSB(3)
-;   Debug MSB(4)
-;   Debug MSB(8)
-;   Debug MSB(16)
-
+  
+  Procedure.i CntTrailingZeros64(n.q)
+  ; ======================================================================
+  ;  NAME: CntTrailingZeros64
+  ;  DESC: Count the trailing Zeros of a 64 Bit value (least significant)
+  ;  VAR(n.q): the value
+  ;  RET.i: No of trailing zeros (if n=0 result is not valid and return 0)
+  ; ====================================================================== 
+   
+    CompilerSelect #PbFwCfg_Module_Compile
+       
+      CompilerCase #PbFwCfg_Module_Compile_ASM64
+        !MOV RAX, [p.v_n]
+        !BSF RAX, RAX
+        ProcedureReturn 
+        
+      CompilerCase #PbFwCfg_Module_Compile_C
+        !return __builtin_ctzll(v_n);
+        
+      CompilerDefault
+        Protected I  
+        If n
+          While Not (n&1)  
+            n>>1
+            I+1  
+          Wend
+        EndIf
+        ProcedureReturn I  
+    CompilerEndSelect  
+  EndProcedure
+  
 EndModule
 
 CompilerIf #PB_Compiler_IsMainFile    
@@ -1621,10 +1786,10 @@ CompilerIf #PB_Compiler_IsMainFile
   
 CompilerEndIf
 
-; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 399
-; FirstLine = 364
+; IDE Options = PureBasic 6.41 (Windows - x64)
+; CursorPosition = 19
 ; Folding = ---------
 ; Optimizer
 ; EnableXP
 ; CPU = 5
+; Compiler = PureBasic 6.21 - C Backend (Windows - x64)
