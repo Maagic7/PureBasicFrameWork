@@ -4,6 +4,14 @@ A highly optimized, modular, and cross-platform development framework for PureBa
 
 Designed for industrial-grade applications, real-time automation tools, and high-performance engineering engines, PbFw provides a clean, fully decoupled architectural pattern that encapsulates complex low-level operations into independent, thread-safe service modules.
 
+> [!WARNING]
+> ### ⚠️ CRITICAL WARNING & DISCLAIMER
+> * **UNDER CONSTRUCTION:** This framework is actively being developed and is currently in a developer-beta state.
+> * **UNTESTED & BETA:** Ranks of code may contain bugs, calculation errors, or architectural shifts. It is **NOT** production-ready!
+> * **KNOW YOUR CODE:** Do not inject this framework into software unless you fully understand low-level pointer arithmetic, thread synchronizations, and hardware-specific SIMD/ASM operations.
+> * **TEST INDEPENDENTLY:** You are strictly required to run your own benchmarks and validation tests. The authors assume no liability for data loss or system crashes.
+> * **INTERNAL DOCUMENTATION:** For detailed implementation notes, structural constraints, and history notes, always inspect the extensive documentation headers located directly inside each source file.
+
 ## 🏛️ Repository & Folder Structure
 
 The PureBasicFrameWork is systematically organized into distinct top-level directories to separate core logic from industrial implementations and UI applications:
