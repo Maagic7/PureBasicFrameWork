@@ -34,7 +34,7 @@ The Library is embeded in the PureBasicFrameWork
 
 ## Project File Layout
 *   `DSP_main.pb`: Main application GUI orchestrator, thread coordinator, and event loop.
-*   `DSP_Core.pb`: Core mathematical DSP algorithm library containing filters, transformations, and dynamics.
+*   `PbFw_Module_DSP.pb`: Core mathematical DSP algorithm library containing filters, transformations, and dynamics.
 *   `DSP_AudioIO.pb`: Virtual background hardware stream and audio thread simulator.
 *   `Dsp_Draw.pb`: Hardware-accelerated VectorDrawing engine rendering the live Oscilloscope and Logarithmic Frequenz-Analyzer spectrum.
 
