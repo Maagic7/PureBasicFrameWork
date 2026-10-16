@@ -34,8 +34,6 @@ Turn PureBasic into a powerful real-time audio workstation running on a high-pri
 ### 🗣️ Phonetics & Linguistic Text Analysis
 Advanced sound-matching, fuzzy text querying, and human-friendly sequence ordering:
 *   **Phonetic Encoders:** Full native string-pointer execution of phonetic encodings including **Soundex (EN/DE variants)** and **Cologne Phonetics** (*Kölner Phonetik*) to compare and identify similar-sounding words or names regardless of spelling.
-*   **Fuzzy Search Mechanics:** Integrated algorithmic text distance calculators (Levenshtein, Jaro-Winkler) to detect keyboard typos and drive responsive search autofills.
-*   **Natural Sorting:** Human-friendly sorting routines (`NaturalSort`) that intelligently arrange mixed alphanumeric files (e.g., sorting "File 2" before "File 10").
 
 ### 🎛️ Low-Level Bit, Byte & SPS/PLC Manipulation
 Industrial bitwise utilities optimized via multi-backend compiler targets (Classic, ASM32, ASM64, and C-Backend Builtins):
