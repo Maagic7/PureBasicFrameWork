@@ -19,6 +19,11 @@ The PureBasicFrameWork is systematically organized into distinct top-level direc
 
 The framework stands out by injecting native, high-performance features rarely found inside procedural dialects. Here are the core technological pillars:
 
+### ⚡ PX Core Extensions & Pointer-Optimized Performance
+The foundation layer injecting optimized macro patterns and pointer-operations into the PB workspace:
+*   **Universal Pointers (`pAny` / `pChar`):** C-like memory matrices providing raw, non-converting concurrent datatype mapping on memory boundaries.
+*   **Inline Logic Branches:** High-speed logical macro selectors (`IIFn`, `IIFs`, `IIFsf`) that completely remove standard `If/Else` evaluation penalties inside speed-critical loops.
+
 ### 🎵 Real-Time Audio & Digital Signal Processing (NEW!)
 Turn PureBasic into a powerful real-time audio workstation running on a high-priority background execution thread (`DSP_AudioIO`):
 *   **Studio-Grade DSP Chains:** In-place block processing for 12 window functions, full parametric IIR filters, and professional dynamics processors (Compressor, Expander, Look-Ahead Brickwall Limiter, and Noise Gate with Hold timers).
@@ -48,19 +53,7 @@ Processor state monitoring and architecture verification:
 *   **Feature-Flag Auditing:** Dynamic validation of over 90 CPU instruction flag extensions (SSE4.2, AVX2, AES-NI, BMI2, AVX-512) via automated lookup registers.
 *   **Silicon Profiling:** Readouts for stepping IDs, core topology maps (`GetActiveCoreNo`), hypervisor layers (VMware, VirtualBox, Hyper-V detection), and hardware execution time-stamp counters (`ReadTimeStampCounter`).
 
-### ⚡ PX Core Extensions & Pointer-Optimized Performance
-The foundation layer injecting optimized macro patterns and pointer-operations into the PB workspace:
-*   **Universal Pointers (`pAny` / `pChar`):** C-like memory matrices providing raw, non-converting concurrent datatype mapping on memory boundaries.
-*   **Inline Logic Branches:** High-speed logical macro selectors (`IIFn`, `IIFs`, `IIFsf`) that completely remove standard `If/Else` evaluation penalties inside speed-critical loops.
-
 ---
-
-## 🛠️ Low-Level Performance Design Patterns
-
-To maintain a consistent, hyper-fast execution speed across all modules, the PureBasicFrameWork strictly implements these optimization frameworks:
-1.  **Loop Unswitching:** Innermost loops are completely stripped of conditional evaluations (`Select/Case`). The compiler evaluates branching exactly once before entering the loop, eliminating CPU branch mispredictions.
-2.  **In-Register Local Caching:** Memory structure locations and pointer targets are mirrored into local register variables (`Protected`) inside active loops to eliminate RAM bus latency.
-3.  **Zero Runtime Divisions:** Scaling fractions, frequencies, and limits are inverted into multiplication constants outside processing loops, trading slow CPU division cycles for blistering-fast multiplications.
 
 ## 🚀 Requirements & Getting Started
 
