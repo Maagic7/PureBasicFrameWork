@@ -24,7 +24,7 @@ The foundation layer injecting optimized macro patterns and pointer-operations i
 *   **Universal Pointers (`pAny` / `pChar`):** C-like memory matrices providing raw, non-converting concurrent datatype mapping on memory boundaries.
 *   **Inline Logic Branches:** High-speed logical macro selectors (`IIFn`, `IIFs`, `IIFsf`) that completely remove standard `If/Else` evaluation penalties inside speed-critical loops.
 
-### 🎵 Real-Time Audio & Digital Signal Processing (NEW!)
+### 🎵 Real-Time Audio & Digital Signal Processing (NEW! Beta State) see Section Demo/DSP
 Turn PureBasic into a powerful real-time audio workstation running on a high-priority background execution thread (`DSP::`):
 *   **Studio-Grade DSP Chains:** In-place block processing for 12 window functions, full parametric IIR filters, and professional dynamics processors (Compressor, Expander, Look-Ahead Brickwall Limiter, and Noise Gate with Hold timers).
 *   **Modulation & Time Domains:** Continuous fractional sub-sample delay paths, LFO-driven Chorus/Flanger modulators, and low-latency Time-Domain Pitch Shifting.
