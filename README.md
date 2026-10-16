@@ -2,7 +2,7 @@
 
 A highly optimized, modular, and cross-platform development framework for PureBasic 6.00+.
 
-Designed for industrial-grade applications, real-time automation tools, and high-performance engineering engines, PbFw provides a clean, fully decoupled architectural pattern that encapsulates complex low-level operations into independent, thread-safe service modules.
+Designed for industrial-grade applications, real-time automation tools, and high-performance engineering engines, PbFw provides a clean, fully decoupled architectural pattern that encapsulates complex low-level operations into independent, service modules.
 
 > [!WARNING]
 > ### ⚠️ CRITICAL WARNING & DISCLAIMER
