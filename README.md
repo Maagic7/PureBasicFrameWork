@@ -59,5 +59,5 @@ Industrial bitwise utilities optimized via multi-backend compiler targets (Class
 ### 💻 Hardware Architecture & CPU Diagnostics
 Processor state monitoring and architecture verification:
 *   **Feature-Flag Auditing:** Dynamic validation of over 90 CPU instruction flag extensions (SSE4.2, AVX2, AES-NI, BMI2, AVX-512) via automated lookup registers.
-*   **Silicon Profiling:** Readouts for stepping IDs, core topology maps (`GetActiveCoreNo`), hypervisor layers (VMware, VirtualBox, Hyper-V detection), and hardware execution time-stamp counters (`ReadTimeStampCounter`).
+*   **Silicon Profiling:** Readouts for stepping IDs, core topology maps (`GetActiveCoreNo`), and hardware execution time-stamp counters (`ReadTimeStampCounter`).
 
