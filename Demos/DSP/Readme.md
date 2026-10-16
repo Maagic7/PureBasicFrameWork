@@ -1,4 +1,4 @@
-# Demo for Moudle DSP:: 
+# Demo for Module DSP:: 
 A modular,  Signal Processing (DSP) and Audio Library written entirely in native PureBasic. 
 This project implements a full suite of studio-grade audio effects, real-time visualizers, 
 and signal processors running on an autonomous virtual hardware stream.
