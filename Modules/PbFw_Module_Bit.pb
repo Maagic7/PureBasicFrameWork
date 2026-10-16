@@ -107,6 +107,10 @@ DeclareModule BIT
   EndStructure   
   
   ; DECLARE public Functions
+  
+  ; ----------------------------------------------------------------------
+  ; Endode / Decode
+  ; ----------------------------------------------------------------------
 
   Declare.i GrayEncode(N.i)
   Declare.i GrayDecode(G.i)
@@ -370,7 +374,7 @@ Module BIT
 ; }
   
   ;- ----------------------------------------------------------------------
-  ;- Module Public Functions
+  ;- Module Public
   ;- ----------------------------------------------------------------------
   
   Procedure.i GrayEncode(N.i)
@@ -2023,7 +2027,8 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.41 (Windows - x64)
-; CursorPosition = 11
+; CursorPosition = 1721
+; FirstLine = 1688
 ; Folding = -----------
 ; Optimizer
 ; EnableXP
