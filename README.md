@@ -24,6 +24,13 @@ The foundation layer injecting optimized macro patterns and pointer-operations i
 *   **Universal Pointers (`pAny` / `pChar`):** C-like memory matrices providing raw, non-converting concurrent datatype mapping on memory boundaries.
 *   **Inline Logic Branches:** High-speed logical macro selectors (`IIFn`, `IIFs`, `IIFsf`) that completely remove standard `If/Else` evaluation penalties inside speed-critical loops.
 
+### 🏎️ SIMD SSE Hardware-Vector Mathematics & Register Optimization
+A production-grade collection of low-latency Assembler Macros leveraging x86/x64 Intel & AMD SIMD (Single Instruction Multiple Data) SSE extensions for blazing-fast multidimensional vector arithmetic:
+*   **Structure-Agnostic SIMD Pipes:** High-speed vector macro slots (such as `ASM_SIMD_ADD_4PS` or `ASM_SIMD_MUL_4PD`) that process 2D/4D float and double arrays simultaneously. Backed by an intelligent auto-detect algorithm (`ASM_LD_REG_VecPtr`), the preprocessor determines compile-time memory addresses (`LEA` vs `MOV`) regardless of user structure names.
+*   **3D Engineering Cross & Dot Products:** Hardcoded math accelerators like `ASM_CrossProduct_4PS` and `ASM_DotProduct_4PS`. These squeeze advanced 3D mechanics (e.g., cross products, geometric distances, and Pythagoras lengths) down to pure register shuffles (`SHUFPS`, `HADDPS`), discarding high-latency procedural loops entirely.
+*   **Volatile Register Sandboxing:** Safety utilities (`ASM_PUSH_XMM_6to9`, `ASM_PUSH_R12to15`) engineered to back up non-volatile CPU states onto the localized stack before executing critical vector operations. This guarantees total application stability inside or outside PureBasic procedures.
+*   **Double-Packed Complex Math (`2PD`):** Specialized SIMD macro instructions operating on 2 packed doubles (`ASM_SIMD_ADD_2PD`, `ASM_VecLength_2PD`). This provides the underlying speed-turbo for high-fidelity audio streams, fast coordinate calculations, and complex frequency number matrices.
+
 ### 🎵 Digital Signal Processing
 Turn PureBasic into a powerful real-time audio workstation running on a high-priority background execution thread (`DSP::`):
 *   **Studio-Grade DSP Chains:** In-place block processing for 12 window functions, full parametric IIR filters, and professional dynamics processors (Compressor, Expander, Look-Ahead Brickwall Limiter, and Noise Gate with Hold timers).
