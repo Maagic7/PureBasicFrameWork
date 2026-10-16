@@ -8,19 +8,20 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2025/01/07
-; VERSION  :  0.57 untested Developer Version
+; VERSION  :  0.58 untested Developer Version
 ; COMPILER :  I hope all versions!
 ; OS       :  all
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2026/10/15 S.Maag : Added Macros for Memory operations
 ; 2026/08/17 S.Maag : fixed BSwap16 MaskOut Error: Wrong shift commands for the 2 bytes!
 ; 2026/02/07 S.Maag : fixed Macro BSwap16(_WordValue): Mask out irrelevant Bits because
 ;                     of PB's arithmetic shift
 ; 2026/01/16 S.Maag : TextBetween[Array/List]: additional Parameters MinLength, Append
 ; 2026/01/05 S.Maag : Major changes in Character Macros. Rename INCC->CInc, DECC->CDec.
 ;                     Added more Character Macros for parsing. CMov[Next,Last, BeyondNext, BeyondLast]
-;                     Now the workflow wiht the Intellisense is better because all Character Macros
+;                     Now the workflow with the Intellisense is better because all Character Macros
 ;                     start with a C and will be listeted as Block. That's much better!
 ;                     Updated INCC and DECC in all PB-Framwork files.
 ; 2026/01/03 S.Maag : Added Macros GetBackendString()
@@ -45,7 +46,7 @@
 ; 2025/07/27 S.Maag : added Macro IsLetter(_CharValue)
 ; 2025/07/25 S.Maag : changed Module name from PB:: to PX:: because with PB we
 ;            will run into name convention problems with PB-Compiler because 
-;            of #PB_ use. #PX_ prevents from such problems with comiler definitions.
+;            of #PB_ use. #PX_ prevents from such problems with compiler definitions.
 
 ;            moved SetMid form String Module STR:: to PX::
 ;            added Stringfunctions: SetLeft(), SetMid(), SetRight()
@@ -92,13 +93,14 @@ DeclareModule PX
   #PX_EpsilonD = 1/(1<<52)  ; 1/(2^52) = 0.0000000000000002220446049250313080847263336181640625
                                 
   #PX_CharSize = SizeOf(Character)
-  #PX_IntSize = SizeOf(Integer)
+  #PX_IntSize  = SizeOf(Integer)
   ; #TAB    ; exists in PB. But to have same way of access, define it here too
   #PX_TAB = #TAB   ; #TAB = 9
   #PX_SPACE = 32
   
   #PX_MaxBitNo = (SizeOf(Integer)*8-1)    ; 63 for x64 and 31 for x32
-  
+  #PX_MaskOutSign = ~(1<<#PX_MaxBitNo)
+
   CompilerIf #PB_Compiler_64Bit
     #MaxInt = 9223372036854775807
     #MinInt = -9223372036854775808 
@@ -726,7 +728,7 @@ DeclareModule PX
     Wend
   EndMacro
   
-  ; Move CharPointer To Next specified Char
+  ; Move CharPointer beyond Next specified Char
   ; use it: CMovBeyondNext(MyCharPointer, ':')
   Macro CMovBeyondNext(_pChar, _CharValue)
     While _pChar\c
@@ -1094,7 +1096,30 @@ DeclareModule PX
   Macro GreyScaleWeightedLight(_ColorValue)
     (Red(_ColorValue)*316 + Green(_ColorValue)*624 + Blue(_ColorValue)*84)>>10)
   EndMacro
-
+  
+  ;- ----------------------------------------------------------------------
+  ;- Macros for Memory operations
+  ;- ----------------------------------------------------------------------
+  
+  Global MemPageSize     = MemoryStatus(#PB_System_PageSize)  ; SystemPageSize = 4096 on x64
+  Global MemPageShift    = Int(Log(MemPageSize-1)/Log(2)) +1  ; Bits used for ByteAdress
+  
+  Global MemPageMask     = ~(MemPageSize-1)     ; Mask to get the PagePart
+  Global MemPageByteMask = MemPageSize-1        ; Mask to get the BytePart
+  Global MemPageNoMask   = ~(MemPageByteMask<<(#PX_MaxBitNo-MemPageShift))  ; Mask to Clear High Bits in Shifted PageAddress
+  
+  Macro MemIsSamePage(_ptr1, _ptr2)
+    Bool((_ptr1 & PX::MemPageMask)=(_ptr2 & PX::MemPageMask))
+  EndMacro
+  
+  Macro MemPageNo(_ptr)
+    ((_ptr >> PX::MemPageShift)&PX::MemPageNoMask)
+  EndMacro
+  
+  Macro MemPageByteAddress(_ptr)
+    (_ptr & PX::MemPageByteMask)
+  EndMacro
+  
   ;- ----------------------------------------------------------------------
   ;- Abs() Macros to solve C-Backend 53-Bit-Abs() Problem
   ;- ----------------------------------------------------------------------
@@ -3119,8 +3144,9 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.41 (Windows - x64)
-; CursorPosition = 28
+; CursorPosition = 3075
+; FirstLine = 305
 ; Folding = ----------------------------
-; Markers = 1377,2924
+; Markers = 1402,2949
 ; Optimizer
 ; CPU = 5

@@ -11,8 +11,8 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2023/01/01
-; VERSION  :  0.5 Develper Version
-; COMPILER :  PureBasic 6.0
+; VERSION  :  0.51 Develper Version
+; COMPILER :  PureBasic 6.0 and higher
 ; OS       :  Windows
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -20,6 +20,7 @@
 ; ===========================================================================
 ;{ ChangeLog: 
 
+;  2026/10/16 S.Maag : added MemoryPage validation! Added PeekS to solve Stringlength at >=PB6.40
 ;  2026/10/10 S.Maag : added 'Desktop and Windwos' section. Added ScreenShot section
 ;}
 ;{ TODO:
@@ -68,6 +69,9 @@ DeclareModule Win
   Declare.i GetOwnMemoryUsageEx(*outResult.ProcessMemoryResult)
   Declare.i GetWindowProcessMemoryUsageEx(hWnd.i, *outResult.ProcessMemoryResult)
   
+  Declare.i IsValidMem(*mem, xWriteAccess.i=#False)
+  Declare.i IsValidMemRange(*mem, NoOfBytes.i=SizeOf(Integer), xWriteAccess.i=#False)
+
   ; ----------------------------------------------------------------------
   ;  Desktop and Windows
   ; ---------------------------------------------------------------------
@@ -82,8 +86,11 @@ DeclareModule Win
   Declare.i GetWindowClientRect(hWnd.i, *outRect.RECT)
   Declare.i GetWindowScreenRect(hWnd.i, *outRect.RECT)
   
-  Declare.i GetWindowFromPoint(x.l, y.l)
-  Declare.l GetColorFromPoint(x.l, y.l)
+  Declare.i GetAbsoluteMousePos(*outPt.POINT)
+  Declare.l GetColorFromPoint(*pt.POINT)
+  Declare.i GetWindowFromPoint(*pt.POINT)
+  Declare.s GetWindowTitel(hWnd.i)
+  Declare.s GetWindowClassName(hWnd.i)  
   
   Declare.i ClientToScreenPoint(hWnd.i, *pt.POINT)
   Declare.i ScreenToClientPoint(hWnd.i, *pt.POINT)
@@ -276,7 +283,7 @@ Module Win
     ProcedureReturn memex\ullAvailPageFile
   EndProcedure
   
-    Procedure.q GetOwnMemoryUsage()
+  Procedure.q GetOwnMemoryUsage()
   ; ============================================================================
   ; NAME: GetOwnMemoryUsage
   ; DESC: Retrieves the current physical memory (RAM) usage of this program in bytes.
@@ -349,9 +356,11 @@ Module Win
   ; ============================================================================
     Protected pmc.PROCESS_MEMORY_COUNTERS
     Protected hProcess.i
-    Protected result.q
+    Protected result.i
     
-    If *outResult = 0 : ProcedureReturn #False : EndIf
+    If *outResult = 0
+      ProcedureReturn #False
+    EndIf
     
     hProcess = GetCurrentProcess_()
     If hProcess
@@ -402,7 +411,91 @@ Module Win
     
     ProcedureReturn result
   EndProcedure
-
+  
+  ; #MEM_COMMIT = $1000
+  ; Structure MEMORY_BASIC_INFORMATION
+  ;   *BaseAddress
+  ;   *AllocationBase
+  ;   AllocationProtect.l
+  ;   RegionSize.i
+  ;   State.l
+  ;   Protect.l
+  ;   Type.l
+  ; EndStructure
+  
+  #_MEM_PROTECTED = #PAGE_NOACCESS | #PAGE_GUARD
+  #_MEM_WRITEABLE = #PAGE_READWRITE | #PAGE_WRITECOPY | #PAGE_EXECUTE_READWRITE | #PAGE_EXECUTE_WRITECOPY
+    
+  Procedure.i IsValidMem(*mem, xWriteAccess.i=#False)
+  ; ============================================================================
+  ; NAME: IsValidMem
+  ; DESC: Prüft, ob ein Pointer im virtuellen Adressraum der eigenen App liegt
+  ;       und ob darauf lesend (oder optional schreibend) zugegriffen werden darf.
+  ; VAR: *mem - Die zu prüfende Speicheradresse
+  ;        xWriteAccess - #True, wenn auch Schreibrechte geprüft werden sollen
+  ; RET.i: #True (1) wenn gültig, sonst #False (0)
+  ; ============================================================================
+    Protected mbi.MEMORY_BASIC_INFORMATION
+    
+    ; Null-Pointer direkt ausschließen
+    If Not *mem : ProcedureReturn #False : EndIf
+    
+    ; VirtualQuery fragt den Status der Speicherseite ab, in der der Pointer liegt
+    If VirtualQuery_(*mem, @mbi, SizeOf(MEMORY_BASIC_INFORMATION)) = 0
+      ProcedureReturn #False ; Fehler beim API-Aufruf -> Ungültige Adresse
+    EndIf
+    
+    ; 1. Der Speicherbereich MUSS "committed" (zugewiesen) sein
+    If mbi\State <> #MEM_COMMIT
+      ProcedureReturn #False
+    EndIf
+    
+    ; 2. Schutzrechte (ProtectionFlags) analysieren
+    ; Schließe "No Access" und "Guard Pages" (wichtig für Stack-Enden) grundsätzlich aus
+    If (mbi\Protect & #_MEM_PROTECTED)
+      ProcedureReturn #False
+    EndIf
+    
+    ; 3. Falls Schreibzugriff verlangt wird, explizit auf Schreibrechte prüfen
+    If xWriteAccess
+      If (mbi\Protect & #_MEM_WRITEABLE)
+        ProcedureReturn #True
+      Else
+        ProcedureReturn #False
+      EndIf
+    EndIf
+    
+    ; Wenn wir hier landen und xWriteAccess=#False war, ist der Speicher zumindest lesbar
+    ProcedureReturn #True
+  EndProcedure
+  
+  Procedure.i IsValidMemRange(*mem, NoOfBytes.i=SizeOf(Integer), xWriteAccess.i=#False)
+  ; ============================================================================
+  ; NAME: IsValidPointerEx
+  ; DESC: Prüft den Start- und optional den Endpointer eines Speicherbereichs.
+  ; VAR: *mem   - Die Startadresse
+  ;        Length     - Länge des Bereichs in Bytes (Standard: 1 Byte)
+  ;        xWriteAccess- #True, wenn auch Schreibrechte geprüft werden sollen
+  ; RET.i: #True (1) wenn der gesamte Bereich gültig ist, sonst #False (0)
+  ; ============================================================================
+    
+    ; 1. Startpointer prüfen (nutzt die bestehende VirtualQuery-Logik)
+    If Not IsValidMem(*mem, xWriteAccess)
+      ProcedureReturn #False
+    EndIf
+    
+    ; 2. Falls eine Länge angegeben wurde, auch den Endpointer prüfen
+    If NoOfBytes > SizeOf(Integer)
+      Protected *pMemEnd = *mem + (Length - 1)
+      
+      If Not IsValidMem(*pMemEnd, xWriteAccess)
+        ProcedureReturn #False
+      EndIf
+    EndIf
+    
+    ProcedureReturn #True
+  EndProcedure
+  
   ;- ----------------------------------------------------------------------
   ;-  Desktop and Windows
   ;- ---------------------------------------------------------------------
@@ -507,7 +600,7 @@ Module Win
   ; NAME: GetWindowClientRect
   ; DESC: Returns the coordinates of the client rectangle
   ; DESC: The inner bound of the Window
-  ; VAR(*outRect.RECT)
+  ; VAR(*outRect.RECT): Pointer to the POINT structure to receive coordinates
   ; RET.i: #True on success
   ; ============================================================================
    If hWnd And *outRect
@@ -521,7 +614,7 @@ Module Win
   ; NAME: GetWindowScreenRect
   ; DESC: Returns the coordinates of the outer rectangle
   ; DESC: The outer bound of the Window
-  ; VAR(*outRect.RECT)
+  ; VAR(*outRect.RECT): Pointer to the POINT structure to receive coordinates
   ; RET.i: #True on success
   ; ============================================================================
     If hWnd And *outRect
@@ -530,39 +623,95 @@ Module Win
     ProcedureReturn #False
   EndProcedure
   
-  Procedure.i GetWindowFromPoint(x.l, y.l)
+  Procedure.i GetAbsoluteMousePos(*outPt.POINT)
   ; ============================================================================
-  ; NAME: GetWindowFromPoint
-  ; DESC: Returns the Window Handle of the Window containing the specified  
-  ; DESC: Point on the Screen/Desktop
-  ; VAR(x.l): The x coordinate of the Point or Mouse
-  ; VAR(y.l): The y coordinate of the Point or Mouse    
-  ; RET.i: hWnd
+  ; NAME: GetAbsoluteMousePos
+  ; DESC: Get the absolut Mouse position on the full virtual Screen
+  ; VAR(*outPt.POINT): Pointer to POINT Structure to receive the Mouse position
+  ; RET.l: #True on success
   ; ============================================================================
-    Protected pt.POINT  ; POINT is predefined x.l : y.l
-    pt\x = x
-    pt\y = y
-    ProcedureReturn WindowFromPoint_(pt)
-  EndProcedure
-  
-  Procedure.l GetColorFromPoint(x.l, y.l)
+    If *outPt
+      ProcedureReturn GetCursorPos_(*outPt)
+    EndIf
+    ProcedureReturn #False
+  EndProcedure  
+
+  Procedure.l GetColorFromPoint(*pt.POINT)
   ; ============================================================================
   ; NAME: GetColorFromPoint
   ; DESC: Returns color of the specified Point on the Screen/Desktop
-  ; VAR(x.l): The x coordinate of the Point or Mouse
-  ; VAR(y.l): The y coordinate of the Point or Mouse    
+  ; VAR(*pt.POINT): Pointer to POINT Structure *pt\x. *pt\y
   ; RET.l: The RGB Color
   ; ============================================================================
     Protected hdc, color.l
     
-    hdc = GetDC_(0)       ; Device Context (DC) of Desktop (0 = Desktop)
-    
-    If hdc
-      color = GetPixel_(hdc, x, y)    ; The Color of the Pixel at x,y
-      ReleaseDC_(0, hdc)              ; Release the DeviceContext
+    If pt
+      hdc = GetDC_(0)       ; Device Context (DC) of Desktop (0 = Desktop)
+      
+      If hdc
+        color = GetPixel_(hdc, *pt\x, *pt\y)    ; The Color of the Pixel at x,y
+        ReleaseDC_(0, hdc)              ; Release the DeviceContext
+      EndIf
     EndIf
-    
+  
     ProcedureReturn color
+  EndProcedure
+    
+  Procedure.i GetWindowFromPoint(*pt.POINT)
+  ; ============================================================================
+  ; NAME: GetWindowFromPoint
+  ; DESC: Returns the Window Handle of the Window containing the specified  
+  ; DESC: Point on the Screen/Desktop
+  ; VAR(*pt.POINT): Pointer to the POINT structure *pt\x. *pt\y
+  ; RET.i: hWnd or 0
+  ; ============================================================================
+    Protected *ptQ.Quad ; Pointer to get a Quad by value
+    If *pt
+      *ptQ = *pt  ; to get POINT as QUAD Value
+      ; API WindowFromPoint(ByVal POINT) 
+      ProcedureReturn WindowFromPoint_(*ptQ\q)
+    EndIf
+    ProcedureReturn 0
+  EndProcedure
+  
+  Procedure.s GetWindowTitel(hWnd.i)
+  ; ============================================================================
+  ; NAME: GetWindowTitel
+  ; DESC: Retrieves the title text of the specified window.
+  ; RET.s: The window title string (empty string if failed).
+  ; ============================================================================
+    Protected length.l
+    Protected title.s
+    
+    If hWnd
+      ; Length of the window Titel +1 for the Null
+      length = GetWindowTextLength_(hWnd) + 1
+      
+      If length > 1
+        ; String-Buffer
+        title = Space(length)
+        ; Copy Titel to the String-Buffer
+        GetWindowText_(hWnd, @title, length)
+        ProcedureReturn PeekS(@title) ; PeekS needed for new StringLib >=PB6.40
+      EndIf
+    EndIf
+    ProcedureReturn ""
+  EndProcedure
+  
+  Procedure.s GetWindowClassName(hWnd.i)
+  ; ============================================================================
+  ; NAME: GetWindowClassName
+  ; DESC: Retrieves the internal Win32 class name of the specified window.
+  ; RET.s: The class name string (empty string if failed).
+  ; ============================================================================
+    Protected className.s = Space(256) 
+    
+    If hWnd
+      If GetClassName_(hWnd, @className, 256)
+        ProcedureReturn PeekS(@className) ; PeekS needed for new Stringlib >=PB6.40
+      EndIf
+    EndIf
+    ProcedureReturn #Null$
   EndProcedure
   
   Procedure.i ClientToScreenPoint(hWnd.i, *pt.POINT)
@@ -652,60 +801,7 @@ Module Win
     EndIf
     ProcedureReturn #False
   EndProcedure
-  
-  Procedure.s GetWindowName(hWnd.i)
-  ; ============================================================================
-  ; NAME: GetWindowName
-  ; DESC: Retrieves the title text of the specified window.
-  ; RET.s: The window title string (empty string if failed).
-  ; ============================================================================
-    Protected length.l
-    Protected title.s
     
-    If hWnd
-      ; Length of the window Titel +1 for the Null
-      length = GetWindowTextLength_(hWnd) + 1
-      
-      If length > 1
-        ; String-Buffer
-        title = Space(length)
-        ; Copy Titel to the String-Buffer
-        GetWindowText_(hWnd, @title, length)
-        ProcedureReturn title
-      EndIf
-    EndIf
-    ProcedureReturn ""
-  EndProcedure
-  
-  Procedure.s GetWindowClassName(hWnd.i)
-  ; ============================================================================
-  ; NAME: GetWindowClassName
-  ; DESC: Retrieves the internal Win32 class name of the specified window.
-  ; RET.s: The class name string (empty string if failed).
-  ; ============================================================================
-    Protected className.s = Space(256) ; 256 Zeichen reichen für Win32-Klassennamen dicke aus
-    
-    If hWnd
-      If GetClassName_(hWnd, @className, 256)
-        ProcedureReturn className
-      EndIf
-    EndIf
-    ProcedureReturn #Null$
-  EndProcedure
-
-  Procedure GetAbsoluteMousePos(*outPt.POINT)
-  ; ============================================================================
-  ; NAME: GetAbsoluteMousePos
-  ; DESC: Get the absolut Mouse position on the full virtual Screen
-  ; VAR(*outPt.POINT): Pointer to POINT Structure to receive the Mouse position
-  ; RET.l: #True on success
-  ; ============================================================================
-    If *outPt
-      ProcedureReturn GetCursorPos_(*outPt)
-    EndIf
-    ProcedureReturn #False
-  EndProcedure  
-  
   Procedure.i DrawSelectionRect(*rect.RECT)
   ; ============================================================================
   ; NAME: DrawSelectionRect
@@ -1347,8 +1443,9 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.41 (Windows - x64)
-; CursorPosition = 359
-; Folding = ---------
+; CursorPosition = 35
+; FirstLine = 15
+; Folding = ----------
 ; Optimizer
 ; Executable = ..\..\WinKey.exe
 ; CPU = 5
