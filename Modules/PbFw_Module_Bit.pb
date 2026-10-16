@@ -9,7 +9,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2021/04/02
-; VERSION  :  0.56  Developer Version
+; VERSION  :  0.60  Developer Version
 ; COMPILER :  PB 6.0 and higher
 ; OS       :  all
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -17,6 +17,7 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2026/10/16  S.Maag: Added Bitreverse Functions
 ; 2026/10/10  S.Maag: Documentation Bugs in some functions
 ; 2026/01/10  S.Maag: Bitrotate bug with negativ values in PB classic. Corrected sign bit if value<0  
 ; 2026/01/09  S.Maag: added and tested CntLeaingZeros[32,64] CntTrailingZeros[32,64]
@@ -113,19 +114,24 @@ DeclareModule BIT
   Declare.i BCDtoINT(BCD, Sign=#False)
   Declare.i INTtoBCD(Value)
   Declare.i IsBCD(BCD)
+  
+  ; ----------------------------------------------------------------------
+  ; Bit field 
+  ; ----------------------------------------------------------------------
 
   Declare.i ByteToBitField(*OutBF.TBitField8, Byte.a)
   Declare.a BitFieldToByte(*BF.TBitField8)
   Declare.i WordToBitField(*OutBF.TBitField16, Word.u)
   Declare.u BitFieldToWord(*BF.TBitField16)
+  
   Declare.a BitShuffle8(ByteVal.a, ShuffleMask.q)
   Declare.u BitShuffle16(WordVal.u, *ShuffleMask.TBitField16)
 
-  Declare.i BitCount16 (value.u)  
-  Declare.i BitCount32 (value.l)
-  Declare.i BitCount64 (value.q)
-  Declare.i BitCountINT (value.i)
- 
+   
+  ; ----------------------------------------------------------------------
+  ; Byte Swaps
+  ; ----------------------------------------------------------------------
+
   Declare.u BSWAP16(Value.u)
   Declare.l BSWAP32(Value.l)
   Declare.q BSWAP64(Value.q)
@@ -135,16 +141,38 @@ DeclareModule BIT
   Declare BSWAP_Mem32(*Mem)
   Declare BSWAP_Mem64(*Mem)
   
+  ; ----------------------------------------------------------------------
+  ; Bit rotations
+  ; ----------------------------------------------------------------------
+
   Declare.l ROL32(value.l, cnt.i = 1)
   Declare.l ROR32(value.l, cnt.i = 1)
   Declare.q ROL64(value.q, cnt.i = 1)
   Declare.q ROR64(value.q, cnt.i = 1)  
   
+  ; ----------------------------------------------------------------------
+  ; Bit Counts
+  ; ----------------------------------------------------------------------
+  
+  Declare.i BitCount16 (value.u)  
+  Declare.i BitCount32 (value.l)
+  Declare.i BitCount64 (value.q)
+  Declare.i BitCountINT (value.i)
+  
   Declare.i CntTrailingZeros32(n.l)   ; LSB Zeros
   Declare.i CntLeadingZeros32(n.l)    ; MSB Zeros
   Declare.i CntTrailingZeros64(n.q)   ; LSB Zeros
   Declare.i CntLeadingZeros64(n.q)    ; MSB Zeros
+  
+  ; ----------------------------------------------------------------------
+  ; Bit reverse
+  ; ----------------------------------------------------------------------
 
+  Declare.a BitReverse8(x.a)
+  Declare.w BitReverse16(x.w)
+  Declare.l BitReverse32(x.l)
+  Declare.q BitReverse64(x.q)
+  
 EndDeclareModule
 
 Module BIT
@@ -478,6 +506,10 @@ Module BIT
     
     ProcedureReturn ret     ; valid BCD 8 Bit is not set so Byte < 8    
   EndProcedure
+  
+  ;- ----------------------------------------------------------------------
+  ;- Bit field
+  ;- ----------------------------------------------------------------------
 
   Procedure.i ByteToBitField(*OutBF.TBitField8, ByteVal.a)
   ; ============================================================================
@@ -905,136 +937,9 @@ Module BIT
   
   CompilerEndIf
   
-  Procedure.i BitCount16 (value.u)
-  ; ======================================================================
-  ;  NAME: BitCount16
-  ;  DESC: Count the number of Hi bits in a 16 Bit value
-  ;  RET.i:  Number of Hi Bits
-  ; ====================================================================== 
-    
-    CompilerSelect #PbFwCfg_Module_Compile
-       ; popcnt was introduced with the Intel MMX Extention, at AMD from K10 on! 
-      CompilerCase #PbFwCfg_Module_Compile_ASM32
-        !xor    eax, eax
-        !mov    ax, word [p.v_value]
-        !popcnt ax, ax
-        ProcedureReturn
-     
-      CompilerCase #PbFwCfg_Module_Compile_ASM64
-        !xor    rax, rax
-        !mov    ax, word [p.v_value]
-        !popcnt ax, ax
-        ProcedureReturn       
-        
-      CompilerCase #PbFwCfg_Module_Compile_C
-        ; mac_BitCount16(value)
-        ; __builtin_popcountl(long number);
-        !return __builtin_popcountl(v_value);
-        
-      CompilerDefault     ; Classic Code without ASM or C optimations       
-        mac_BitCount16(value)
-        
-    CompilerEndSelect   
-  EndProcedure
-  
-  Procedure.i BitCount32 (value.l)
-  ; ======================================================================
-  ;  NAME: BitCount32
-  ;  DESC: Count the number of Hi bits in a 32 Bit value
-  ;  RET.i: Number of Hi Bits 
-  ; ====================================================================== 
-         
-    CompilerSelect #PbFwCfg_Module_Compile
-      ; popcnt was introduced with the Intel MMX Extention, at AMD from K10 on!         
-      CompilerCase #PbFwCfg_Module_Compile_ASM32
-        !mov    eax, dword [p.v_value]
-        !popcnt eax, eax
-       ProcedureReturn
-       
-      CompilerCase #PbFwCfg_Module_Compile_ASM64
-        !xor    rax, rax
-        !mov    eax, dword [p.v_value]
-        !popcnt eax, eax
-       ProcedureReturn
-           
-      CompilerCase #PbFwCfg_Module_Compile_C
-        ; mac_BitCount32(value)
-        ; __builtin_popcountl(long number);
-        !return __builtin_popcountl(v_value);
-        
-      CompilerDefault     ; Classic Code without ASM or C optimations       
-        mac_BitCount32(value)
-        
-    CompilerEndSelect
-  EndProcedure
-  
-  Procedure.i BitCount64 (value.q)
-  ; ======================================================================
-  ;  NAME: BitCount64
-  ;  DESC: Count the number of Hi bits in a 64 Bit value
-  ;  RET.i: Number of Hi Bits
-  ; ======================================================================     
-    
-    CompilerSelect #PbFwCfg_Module_Compile
-       ; popcnt was introduced with the Intel MMX Extention, at AMD from K10 on!   
-      CompilerCase #PbFwCfg_Module_Compile_ASM32  ; at x32 programms we must do 2x32Bit POPCNT and ADD
-        !lea ecx, [p.v_value]
-        !mov edx, dword [ecx]         ; load hi 32 Bits to EDX-Register
-        !mov eax, dword [ecx +4]      ; load lo 32 Bits to EAX-Register
-        !popcnt edx, edx              ; count Hi-Bits in EDX
-        !popcnt eax, eax              ; count Hi-Bits in EAX
-        !add eax, edx                 ; Add the 2 values
-        ProcedureReturn
-        
-      CompilerCase #PbFwCfg_Module_Compile_ASM64
-        !mov rax, qword [p.v_value]
-        !popcnt rax, rax
-        ProcedureReturn
-               
-      CompilerCase #PbFwCfg_Module_Compile_C
-        ; mac_BitCount64(value)
-        ;__builtin_popcountll(long long number)
-        !retrun __builtin_popcountll(v_value)  
-        
-      CompilerDefault     ; Classic Code without ASM or C optimations       
-        mac_BitCount64(value)
-        
-    CompilerEndSelect
-  EndProcedure
-  
-  Procedure.i BitCountINT (value.i)
-  ; ======================================================================
-  ;  NAME: BitCountINT
-  ;  DESC: Count the number of Hi bits in an INT 32/64 Bit 
-  ;  RET.i: Number of Hi Bits
-  ; ======================================================================     
-    
-    CompilerSelect #PbFwCfg_Module_Compile
-       ; popcnt was introduced with the Intel MMX Extention, at AMD from K10 on!   
-      CompilerCase #PbFwCfg_Module_Compile_ASM32  ; at x32 programms we must do 2x32Bit POPCNT and ADD
-        !mov    eax, dword [p.v_value]
-        !popcnt eax, eax
-        ProcedureReturn
-        
-      CompilerCase #PbFwCfg_Module_Compile_ASM64
-        !mov rax, qword [p.v_value]
-        !popcnt rax, rax
-        ProcedureReturn
-               
-      CompilerCase #PbFwCfg_Module_Compile_C
-        ; mac_BitCount64(value)
-        ;__builtin_popcountll(long long number)
-        !retrun __builtin_popcountll(v_value)  
-        
-      CompilerDefault     ; Classic Code without ASM or C optimations       
-         CompilerIf SizeOf(Integer) = 8
-          mac_BitCount64(value)
-        CompilerElse
-          mac_BitCount32(value)
-        CompilerEndIf
-       
-    CompilerEndSelect
-  EndProcedure
+  ;- ----------------------------------------------------------------------
+  ;- Byte Swaps
+  ;- ----------------------------------------------------------------------
 
   Procedure.u BSWAP16(value.u)
   ; ======================================================================
@@ -1348,7 +1253,11 @@ Module BIT
         
     CompilerEndSelect  
   EndProcedure
-    
+  
+  ;- ----------------------------------------------------------------------
+  ;- Bite rotation
+  ;- ----------------------------------------------------------------------
+
   Procedure.l ROL32(value.l, cnt.i = 1)
   ; ======================================================================
   ;  NAME: ROL32
@@ -1493,20 +1402,142 @@ Module BIT
         
     CompilerEndSelect
   EndProcedure
+    
+  ;- ----------------------------------------------------------------------
+  ;- Bit Counts
+  ;- ----------------------------------------------------------------------
   
-;   !unsigned long long ror64_c(unsigned long long v, int n) {
-;   !    n = n & 63U;
-;   !    if (n)
-;   !        v = (v >> n) | (v << (64-n));
-;   !    return v; }
-;   !   bitXg_ror64 = &ror64_c; 
+  Procedure.i BitCount16 (value.u)
+  ; ======================================================================
+  ;  NAME: BitCount16
+  ;  DESC: Count the number of Hi bits in a 16 Bit value
+  ;  RET.i:  Number of Hi Bits
+  ; ====================================================================== 
+    
+    CompilerSelect #PbFwCfg_Module_Compile
+       ; popcnt was introduced with the Intel MMX Extention, at AMD from K10 on! 
+      CompilerCase #PbFwCfg_Module_Compile_ASM32
+        !xor    eax, eax
+        !mov    ax, word [p.v_value]
+        !popcnt ax, ax
+        ProcedureReturn
+     
+      CompilerCase #PbFwCfg_Module_Compile_ASM64
+        !xor    rax, rax
+        !mov    ax, word [p.v_value]
+        !popcnt ax, ax
+        ProcedureReturn       
+        
+      CompilerCase #PbFwCfg_Module_Compile_C
+        ; mac_BitCount16(value)
+        ; __builtin_popcountl(long number);
+        !return __builtin_popcountl(v_value);
+        
+      CompilerDefault     ; Classic Code without ASM or C optimations       
+        mac_BitCount16(value)
+        
+    CompilerEndSelect   
+  EndProcedure
+  
+  Procedure.i BitCount32 (value.l)
+  ; ======================================================================
+  ;  NAME: BitCount32
+  ;  DESC: Count the number of Hi bits in a 32 Bit value
+  ;  RET.i: Number of Hi Bits 
+  ; ====================================================================== 
+         
+    CompilerSelect #PbFwCfg_Module_Compile
+      ; popcnt was introduced with the Intel MMX Extention, at AMD from K10 on!         
+      CompilerCase #PbFwCfg_Module_Compile_ASM32
+        !mov    eax, dword [p.v_value]
+        !popcnt eax, eax
+       ProcedureReturn
+       
+      CompilerCase #PbFwCfg_Module_Compile_ASM64
+        !xor    rax, rax
+        !mov    eax, dword [p.v_value]
+        !popcnt eax, eax
+       ProcedureReturn
+           
+      CompilerCase #PbFwCfg_Module_Compile_C
+        ; mac_BitCount32(value)
+        ; __builtin_popcountl(long number);
+        !return __builtin_popcountl(v_value);
+        
+      CompilerDefault     ; Classic Code without ASM or C optimations       
+        mac_BitCount32(value)
+        
+    CompilerEndSelect
+  EndProcedure
+  
+  Procedure.i BitCount64 (value.q)
+  ; ======================================================================
+  ;  NAME: BitCount64
+  ;  DESC: Count the number of Hi bits in a 64 Bit value
+  ;  RET.i: Number of Hi Bits
+  ; ======================================================================     
+    
+    CompilerSelect #PbFwCfg_Module_Compile
+       ; popcnt was introduced with the Intel MMX Extention, at AMD from K10 on!   
+      CompilerCase #PbFwCfg_Module_Compile_ASM32  ; at x32 programms we must do 2x32Bit POPCNT and ADD
+        !lea ecx, [p.v_value]
+        !mov edx, dword [ecx]         ; load hi 32 Bits to EDX-Register
+        !mov eax, dword [ecx +4]      ; load lo 32 Bits to EAX-Register
+        !popcnt edx, edx              ; count Hi-Bits in EDX
+        !popcnt eax, eax              ; count Hi-Bits in EAX
+        !add eax, edx                 ; Add the 2 values
+        ProcedureReturn
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM64
+        !mov rax, qword [p.v_value]
+        !popcnt rax, rax
+        ProcedureReturn
+               
+      CompilerCase #PbFwCfg_Module_Compile_C
+        ; mac_BitCount64(value)
+        ;__builtin_popcountll(long long number)
+        !retrun __builtin_popcountll(v_value)  
+        
+      CompilerDefault     ; Classic Code without ASM or C optimations       
+        mac_BitCount64(value)
+        
+    CompilerEndSelect
+  EndProcedure
+  
+  Procedure.i BitCountINT (value.i)
+  ; ======================================================================
+  ;  NAME: BitCountINT
+  ;  DESC: Count the number of Hi bits in an INT 32/64 Bit 
+  ;  RET.i: Number of Hi Bits
+  ; ======================================================================     
+    
+    CompilerSelect #PbFwCfg_Module_Compile
+       ; popcnt was introduced with the Intel MMX Extention, at AMD from K10 on!   
+      CompilerCase #PbFwCfg_Module_Compile_ASM32  ; at x32 programms we must do 2x32Bit POPCNT and ADD
+        !mov    eax, dword [p.v_value]
+        !popcnt eax, eax
+        ProcedureReturn
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM64
+        !mov rax, qword [p.v_value]
+        !popcnt rax, rax
+        ProcedureReturn
+               
+      CompilerCase #PbFwCfg_Module_Compile_C
+        ; mac_BitCount64(value)
+        ;__builtin_popcountll(long long number)
+        !retrun __builtin_popcountll(v_value)  
+        
+      CompilerDefault     ; Classic Code without ASM or C optimations       
+         CompilerIf SizeOf(Integer) = 8
+          mac_BitCount64(value)
+        CompilerElse
+          mac_BitCount32(value)
+        CompilerEndIf
+       
+    CompilerEndSelect
+  EndProcedure
 
-  ; __builtin_clz(unsigned int x)        : Returns the number of leading 0-bits in x, starting at the 
-  ; __builtin_clzll(unsigned long long)  : most significant bit position. If x is 0, the result is undefined
-  
-  ; __builtin_ctz(unsigned int x)        : Returns the number of trailing 0-bits in x, starting at the
-  ; __builtin_ctzll(unsigned long long)  : least significant bit position. If x is 0, the result is undefined.
-  
   Procedure.i CntLeadingZeros32(n.l)
   ; ======================================================================
   ;  NAME: CntLeadingZeros32
@@ -1650,6 +1681,211 @@ Module BIT
     CompilerEndSelect  
   EndProcedure
   
+  ;   !unsigned long long ror64_c(unsigned long long v, int n) {
+;   !    n = n & 63U;
+;   !    if (n)
+;   !        v = (v >> n) | (v << (64-n));
+;   !    return v; }
+;   !   bitXg_ror64 = &ror64_c; 
+
+  ; __builtin_clz(unsigned int x)        : Returns the number of leading 0-bits in x, starting at the 
+  ; __builtin_clzll(unsigned long long)  : most significant bit position. If x is 0, the result is undefined
+  
+  ; __builtin_ctz(unsigned int x)        : Returns the number of trailing 0-bits in x, starting at the
+  ; __builtin_ctzll(unsigned long long)  : least significant bit position. If x is 0, the result is undefined.
+ 
+  ;- ----------------------------------------------------------------------
+  ;- Bit Reverse
+  ;- ----------------------------------------------------------------------
+  
+  Procedure.a BitReverse8(x.a)
+  ; ======================================================================
+  ;  NAME: BitReverse8
+  ;  DESC: Reverse the Bits in a 8 Bit Value
+  ;  VAR(x.a): the value
+  ;  RET.a: The Bit reversed value
+  ; ====================================================================== 
+    
+    CompilerIf #PB_Compiler_Backend = #PB_Backend_C
+      Protected.a ret
+      ;  Bit-Reversal algorithm
+      ! unsigned char x = v_x;
+      ! x = ((x >> 1) & 0x55) | ((x & 0x55) << 1);
+      ! x = ((x >> 2) & 0x33) | ((x & 0x33) << 2);
+      ! v_ret = (x >> 4) | (x << 4);
+      ProcedureReturn ret
+      
+    CompilerElse
+      ;  Bit-Reversal algorithm
+      ! movzx eax, byte [p.v_x]
+      ! mov edx, eax
+      ! shr edx, 1
+      ! and edx, 0x55
+      ! and eax, 0x55
+      ! shl eax, 1
+      ! or  eax, edx
+      ! mov edx, eax
+      ! shr edx, 2
+      ! and edx, 0x33
+      ! and eax, 0x33
+      ! shl eax, 2
+      ! or  eax, edx
+      ! ror al, 4    ; Rotiert die oberen und unteren 4 Bits (Nibbles) aneinander vorbei
+      ! mov [p.v_ret], al
+      ProcedureReturn  
+    CompilerEndIf
+  
+  EndProcedure  
+ 
+  Procedure.w BitReverse16(x.w)
+  ; ======================================================================
+  ;  NAME: BitReverse16
+  ;  DESC: Reverse the Bits in a 16 Bit Value
+  ;  VAR(x.w): the value
+  ;  RET.w: The Bit reversed value
+  ; ====================================================================== 
+     
+    CompilerIf #PB_Compiler_Backend = #PB_Backend_C
+      Protected.w ret
+      ;  Bit-Reversal algorithm      ! unsigned short x = v_x;
+      ! x = ((x >> 1) & 0x5555) | ((x & 0x5555) << 1);
+      ! x = ((x >> 2) & 0x3333) | ((x & 0x3333) << 2);
+      ! x = ((x >> 4) & 0x0F0F) | ((x & 0x0F0F) << 4);
+      ! v_ret = (x >> 8) | (x << 8);
+      ProcedureReturn ret
+      
+    CompilerElse
+      ;  Bit-Reversal algorithm
+      ! movzx eax, word [p.v_x]
+      ! mov edx, eax
+      ! shr edx, 1
+      ! and edx, 0x5555
+      ! and eax, 0x5555
+      ! shl eax, 1
+      ! or  eax, edx
+      ! mov edx, eax
+      ! shr edx, 2
+      ! and edx, 0x3333
+      ! and eax, 0x3333
+      ! shl eax, 2
+      ! or  eax, edx
+      ! mov edx, eax
+      ! shr edx, 4
+      ! and edx, 0x0F0F
+      ! and eax, 0x0F0F
+      ! shl eax, 4
+      ! or  eax, edx
+      ! xchg al, ah  ; Vertauscht High- und Low-Byte direkt im Register
+      ProcedureReturn
+    CompilerEndIf
+    
+  EndProcedure
+    
+  Procedure.l BitReverse32(x.l)
+  ; ======================================================================
+  ;  NAME: BitReverse32
+  ;  DESC: Reverse the Bits in a 32 Bit Value
+  ;  VAR(x.l): the value
+  ;  RET.l: The Bit reversed value
+  ; ====================================================================== 
+    
+    CompilerIf #PB_Compiler_Backend = #PB_Backend_C
+      Protected.l ret
+      ;  Bit-Reversal algorithm
+      ! unsigned int x = v_x;
+      ! x = ((x >> 1) & 0x55555555) | ((x & 0x55555555) << 1);
+      ! x = ((x >> 2) & 0x33333333) | ((x & 0x33333333) << 2);
+      ! x = ((x >> 4) & 0x0F0F0F0F) | ((x & 0x0F0F0F0F) << 4);
+      ! x = ((x >> 8) & 0x00FF00FF) | ((x & 0x00FF00FF) << 8);
+      ! v_ret = (x >> 16) | (x << 16);
+      ProcedureReturn ret
+  
+    CompilerElse
+      ;  Bit-Reversal algorithm
+      ! mov eax, [p.v_x]
+      ! mov edx, eax
+      ! shr edx, 1
+      ! and edx, 0x55555555
+      ! and eax, 0x55555555
+      ! shl eax, 1
+      ! or  eax, edx
+      ! mov edx, eax
+      ! shr edx, 2
+      ! and edx, 0x33333333
+      ! and eax, 0x33333333
+      ! shl eax, 2
+      ! or  eax, edx
+      ! mov edx, eax
+      ! shr edx, 4
+      ! and edx, 0x0F0F0F0F
+      ! and eax, 0x0F0F0F0F
+      ! shl eax, 4
+      ! or  eax, edx
+      ! bswap eax
+      ProcedureReturn
+    CompilerEndIf
+  
+  EndProcedure
+  
+  Procedure.q BitReverse64(x.q)
+  ; ======================================================================
+  ;  NAME: BitReverse64
+  ;  DESC: Reverse the Bits in a 64 Bit Value
+  ;  VAR(x.q): the value
+  ;  RET.q: The Bit reversed value
+  ; ====================================================================== 
+    
+    CompilerIf #PB_Compiler_Backend = #PB_Backend_C
+      Protected.q ret
+      ;  Bit-Reversal algorithm
+      ! unsigned long long x = v_x;
+      ! x = ((x >> 1)  & 0x5555555555555555ULL) | ((x & 0x5555555555555555ULL) << 1);
+      ! x = ((x >> 2)  & 0x3333333333333333ULL) | ((x & 0x3333333333333333ULL) << 2);
+      ! x = ((x >> 4)  & 0x0F0F0F0F0F0F0F0FULL) | ((x & 0x0F0F0F0F0F0F0F0FULL) << 4);
+      ! x = ((x >> 8)  & 0x00FF00FF00FF00FFULL) | ((x & 0x00FF00FF00FF00FFULL) << 8);
+      ! x = ((x >> 16) & 0x0000FFFF0000FFFFULL) | ((x & 0x0000FFFF0000FFFFULL) << 16);
+      ! v_ret = (x >> 32) | (x << 32);
+      ProcedureReturn ret
+     
+    CompilerElse
+      
+      CompilerIf #PB_Compiler_Processor = #PB_Processor_x64
+        ! mov rax, [p.v_x]
+        ! mov rdx, rax
+        ! shr rdx, 1
+        ! mov rcx, 0x5555555555555555
+        ! and rdx, rcx
+        ! and rax, rcx
+        ! shl rax, 1
+        ! or  rax, rdx
+        ! mov rdx, rax
+        ! shr rdx, 2
+        ! mov rcx, 0x3333333333333333
+        ! and rdx, rcx
+        ! and rax, rcx
+        ! shl rax, 2
+        ! or  rax, rdx
+        ! mov rdx, rax
+        ! shr rdx, 4
+        ! mov rcx, 0x0F0F0F0F0F0F0F0F
+        ! and rdx, rcx
+        ! and rax, rcx
+        ! shl rax, 4
+        ! or  rax, rdx
+        ! bswap rax
+        ProcedureReturn
+       
+      CompilerElse
+        ; Fallback for 32-Bit ASM-Compiler
+        Protected.q ret
+        Protected.l hi = (X >> 32) & $FFFFFFFF
+        Protected.l lo = X & $FFFFFFFF
+        ret = (BitReverse32(lo) << 32) | (BitReverse32(hi) & $FFFFFFFF)
+        ProcedureReturn ret
+      CompilerEndIf
+    CompilerEndIf
+  EndProcedure
+  
 EndModule
 
 CompilerIf #PB_Compiler_IsMainFile    
@@ -1787,9 +2023,8 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.41 (Windows - x64)
-; CursorPosition = 382
-; FirstLine = 366
-; Folding = ---------
+; CursorPosition = 11
+; Folding = -----------
 ; Optimizer
 ; EnableXP
 ; CPU = 5
