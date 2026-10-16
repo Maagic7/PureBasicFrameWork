@@ -53,26 +53,3 @@ Processor state monitoring and architecture verification:
 *   **Feature-Flag Auditing:** Dynamic validation of over 90 CPU instruction flag extensions (SSE4.2, AVX2, AES-NI, BMI2, AVX-512) via automated lookup registers.
 *   **Silicon Profiling:** Readouts for stepping IDs, core topology maps (`GetActiveCoreNo`), hypervisor layers (VMware, VirtualBox, Hyper-V detection), and hardware execution time-stamp counters (`ReadTimeStampCounter`).
 
----
-
-## 🚀 Requirements & Getting Started
-
-*   **Compiler Prerequisite:** Every application utilizing this framework **MUST** have the **"Create thread-safe executable"** flag enabled in the PureBasic IDE Compiler Options!
-*   **Precision Standard:** Mathematical and signal processing chains are universally designed in Double (.d) precision.
-*   **Platform Scope:** Cross-platform natively (Windows, macOS, Linux).
-
-To initialize the module map inside your workspace, simply pull the main include file:
-
-```purebasic
-; Pull the central backbone include
-XIncludeFile "Modules/PbFw_Main_Inculde.pbi"
-
-; The framework services are now fully initialized and accessible!
-Main::InitializeApplication()
-```
-
-## 🤝 Contributing
-Contributions are highly welcome! Whether you want to add industrial PLC protocols, expand the class templates inside the OOP layer, optimize string streams with custom assembly, or build audio blocks inside the real-time DSP Studio, feel free to open a Pull Request.
-
----
-Maintained by Maagic7 and co-authored with support from Google Gemini. Licensed under the MIT License.
