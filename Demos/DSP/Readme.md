@@ -1,5 +1,7 @@
-# PureBasic High-Performance Audio DSP Studio
-A modular, highly optimized Digital Signal Processing (DSP) and Audio Framework written entirely in native PureBasic. This project implements a full suite of studio-grade audio effects, real-time visualizers, and signal processors running on an autonomous virtual hardware stream.
+# Demo for Moudle DSP:: 
+A modular,  Signal Processing (DSP) and Audio Library written entirely in native PureBasic. 
+This project implements a full suite of studio-grade audio effects, real-time visualizers, 
+and signal processors running on an autonomous virtual hardware stream.
 
 Attentenion: This is the first Beta Demo for the DSP Library
 Only for Experts and Developers
@@ -24,17 +26,17 @@ The library has been engineered from the ground up for critical real-time execut
 *   Thread-Safe Encapsulation: Built following a strict modular architecture. The application state is owned exclusively by the central coordinator (`Main::`), while critical rendering domains are synchronized using mutual exclusions (`Mutex`).
 
 ## Architecture & Requirements
-The framework is fully compatible with the modular structure of the Maagic7 PureBasicFrameWork.
+The Library is embeded in the PureBasicFrameWork
 *   Language version: PureBasic 6.00+
 *   Floating Point Precision: Double (.d)
 *   Operating System: Cross-platform (Windows, macOS, Linux)
 *   Compiler Requirement: **Thread-Safe** option must be enabled in the Compiler Options!
 
 ## Project File Layout
-*   `dsp_main.pb`: Main application GUI orchestrator, thread coordinator, and event loop.
-*   `DSP_Core.pbi`: Core mathematical DSP algorithm library containing filters, transformations, and dynamics.
-*   `DSP_AudioIO.pbi`: Virtual background hardware stream and audio thread simulator.
-*   `DspDrw.pbi`: Hardware-accelerated VectorDrawing engine rendering the live Oscilloscope and Logarithmic Frequenz-Analyzer spectrum.
+*   `DSP_main.pb`: Main application GUI orchestrator, thread coordinator, and event loop.
+*   `DSP_Core.pb`: Core mathematical DSP algorithm library containing filters, transformations, and dynamics.
+*   `DSP_AudioIO.pb`: Virtual background hardware stream and audio thread simulator.
+*   `Dsp_Draw.pb`: Hardware-accelerated VectorDrawing engine rendering the live Oscilloscope and Logarithmic Frequenz-Analyzer spectrum.
 
 ---
 Co-authored with support from Google Gemini. Licensed under the MIT License.
