@@ -64,6 +64,10 @@ Module Ohm
     Tcoeff_D.d        ; Temperature coefficient of density
   EndStructure
   
+  Macro mac_Omega(Frequency)
+    (#PI * Frequency * 2)  ; 2*Pi*f
+  EndMacro
+
   ; Debug #PB_Compiler_EnumerationValue 
   Global Dim MaterialProperty.TMaterialProperty(#PB_Compiler_EnumerationValue-1)
   
@@ -151,44 +155,68 @@ Module Ohm
   Procedure.i Z_Parallel(*Out.Complex::TComplex, *Z1.Complex::TComplex, *Z2.Complex::TComplex)
   ; ============================================================================
   ; NAME: 
-  ; DESC: 
+  ; DESC: Calculate the parallel combination of complex impedances Z1 And Z2
   ; VAR(): 
   ; RET.i: *Out
   ; ============================================================================
-    
+  ;
+   
+    ; ChatGPT
+    ; Calculate the product of Z1 and Z2
+    *Out\re = (*Z1\re * *Z2\re + *Z1\im * *Z2\im) / (*Z1\re + *Z2\re)
+    *Out\im = (*Z1\im * *Z2\re - *Z1\re * *Z2\im) / (*Z1\re + *Z2\re)
+
     ProcedureReturn *Out
   EndProcedure
   
   Procedure.i Z_Serial(*Out.Complex::TComplex, *Z1.Complex::TComplex, *Z2.Complex::TComplex)
   ; ============================================================================
   ; NAME: 
-  ; DESC: 
+  ; DESC: Calculate the serial combination of complex impedances Z1 and Z2
   ; VAR() : 
   ; RET.i: *Out
   ; ============================================================================
-   
+    
+    ; ChatGPT
+    ; Z_serial = Z1 + Z2
+
+    *Out\re = *Z1\re + *Z2\re
+    *Out\im = *Z1\im + *Z2\im
+
     ProcedureReturn *Out
   EndProcedure
 
-  Procedure.i Z_Capacitor(*Out.Complex::TComplex, Capacity_uF.d)
+  Procedure.i Z_Capacitor(*Out.Complex::TComplex, Capacity_uF.d, Frequency_Hz.d)
   ; ============================================================================
   ; NAME: 
   ; DESC: 
   ; VAR() : 
   ; RET.i: *Out
   ; ============================================================================
-    
+    ; Calculate the impedance of a capacitor
+    ; Z_capacitor = -j / (2 * PI * f * C)
+
+    *Out\re = 0.0
+    *Out\im = -1.0 / (2.0 * #PI * Frequency_Hz * Capacity_uF * 1e-6) ; Convert Capacity_uF to Farads
+
     ProcedureReturn *Out
   EndProcedure
   
-  Procedure.i Z_Coil(*Out.Complex::TComplex, L.d)
+  Procedure.i Z_Coil(*Out.Complex::TComplex, Inductance_uH.d, Frequency_Hz.d)
  ; ============================================================================
   ; NAME: 
   ; DESC: 
   ; VAR(L) :  Inductivity [H]
   ; RET.i: *Out
   ; ============================================================================
-    
+    ; Calculate the impedance of a coil
+    ; Z_coil = j * 2 * PI * f * L
+
+    ; Const j.d = Sqr(-1) ; Imaginary unit
+
+    *Out\re = 0.0
+    *Out\im = 2.0 * #PI * Frequency_Hz * Inductance_uH * 1e-6 ; Convert Inductance_uH to Henrys
+
     ProcedureReturn *Out
   EndProcedure
   
@@ -227,15 +255,76 @@ Module Ohm
   ; 26	  0,4049	0,129	  138	    0,14
   ; 27	  0,3606	0,102	  174	    -
   ; 28	  0,3211	0,081	  220	    0,09
+  
+  Procedure.d AWGtoSqureMM(AWG.d)
+    
+    ; https://de.wikipedia.org/wiki/American_Wire_Gauge  Protected.d D
+    Protected.d D
+    ; E = (36.0 - AWG) /39
+    D= 0.127 * Pow(92.0, (36.0 - AWG) /39)
+    
+    ProcedureReturn D*D * #PI/4
+  EndProcedure
 
-  Procedure.d AWG_to_SquareMM(AWG.i)
+  Procedure.d Cable_AWG_to_mm2(AWG.i)
   ; ============================================================================
-  ; NAME: AWG American Wire Gauge to mm²
-  ; DESC: Converts cable wire square in AWG to mm²
-  ; VAR(AWG.i) : AWG value
-  ; RET.d : Wire cross section [mm²]
+  ; NAME: Cable_AWG_to_mm2
+  ; DESC: Converts the AWG cable to mm² Cable
+  ; VAR(AWG.i) : Cable AWG value
+  ; RET.d : Use Cable with wire cross section [mm²]
   ; ============================================================================
-   
+    Protected *ptr.Double
+    
+    If AWG => 1 And  AWG <= 26
+      *ptr = ?AWGtoMM         ; Pointer to the conversion Table start
+      *ptr = *ptr + (AWG-1) * SizeOf(Double)  ; Pointer to Entry
+      ProcedureReturn *ptr\d
+    Else
+      ProcedureReturn 0  
+    EndIf
+    
+    DataSection
+     AWGtoMM:
+     ; cable mm² : AWG : exact mm²
+      Data.d 50   ; 1  : 42,41
+      Data.d 35   ; 2  : 33,63
+      Data.d 35   ; 3  : 26,67
+      Data.d 25   ; 4  : 21,15
+      Data.d 16   ; 5  : 16,77
+      
+      Data.d 16   ; 6  : 13,30
+      Data.d 10   ; 7  : 10,55 
+      Data.d 10   ; 8  : 8,366
+      Data.d 6    ; 9  : 6,634
+      Data.d 6    ; 10 : 5,261
+      
+      Data.d 6    ; 11 : 4,172
+      Data.d 4    ; 12 : 3,309
+      Data.d 2.5  ; 13 : 2,624
+      Data.d 2.5  ; 14 : 2,081
+      Data.d 2.5  ; 15 : 1,650
+            
+      Data.d 1.5  ; 16 : 1,309
+      Data.d 1.0  ; 17 : 1,038
+      Data.d 1.0  ; 18 : 0,8230
+      Data.d 0.75 ; 19 : 0,6527
+      Data.d 0.75 ; 20 : 0,5176
+      
+      Data.d 0.5  ; 21 : 0,4105
+      Data.d 0.34 ; 22 : 0,3255
+      Data.d 0.25 ; 23 : 0,2582 
+      Data.d 0.25 ; 24 : 0,2047
+      Data.d 0.25 ; 25 : 0,1624
+      
+      Data.d 0.14 ; 26 : 0,1288
+    EndDataSection
+    
+  EndProcedure
+  
+  ; From ChatGPT
+  Procedure.i mm2_to_AWG(mm2.f)
+  ; Convert square millimeters (mm²) to American Wire Gauge (AWG)
+
   EndProcedure
   
   Procedure.i SquareMM_to_AWG(A_mm.d)
@@ -247,7 +336,10 @@ Module Ohm
   ; ============================================================================
     
   EndProcedure
- 
+  
+  #Resistivity_Cu = 0.00000168
+  #Resistivity_Al = 0.00000282
+
   Procedure.d GetWireSquare(R.d, Length_m.d, Material=#PbFw_Ohm_Material_CU)
   ; ============================================================================
   ; NAME: GetWireSquare
@@ -258,7 +350,19 @@ Module Ohm
   ; VAR(Material=#PbFw_Ohm_Material_CU): the wire material
   ; RET.d : Wire cross section [mm²]
   ; ============================================================================
-  
+     Protected Resistivity.d
+    ; Chat GPT Code
+    
+    ; Select the resistivity based on the provided material
+    Select Material
+      Case #PbFw_Ohm_Material_Cu: Resistivity = #Resistivity_Cu
+      Case #PbFw_Ohm_Material_Al: Resistivity = #Resistivity_Al
+      Default: Resistivity = 0.0 ; Invalid material
+    EndSelect
+
+    ; Calculate wire cross-sectional area using the formula
+    ProcedureReturn (Resistivity * Length_m) / R
+
   EndProcedure
    
   Procedure.d GetWireResistance(L_m.d, A_mm2.d, Material=#PbFw_Ohm_Material_CU)
@@ -271,9 +375,27 @@ Module Ohm
   ; RET.d : Wire Resistance [Ohm]
   ; ============================================================================
     
+    ; Chat GPT Code
+    ; Constants for resistivity (in Ohm * mm² / m)
+    Protected Resistivity.d
+    
+;     #Resistivity_Cu.d = 0.00000168
+;     #Resistivity_Al.d = 0.00000282
+;     #Resistivity_Fe.d = 0.000005
+;     #Resistivity_Constantan.d = 0.00049
+  
+    ; Select the resistivity based on the provided material
+    Select Material
+      Case #PbFw_Ohm_Material_Cu: Resistivity = #Resistivity_Cu
+      Case #PbFw_Ohm_Material_Al: Resistivity = #Resistivity_Al
+      Default: Resistivity = 0.0 ; Invalid material
+    EndSelect
+
+    ; Calculate wire resistance using the formula
+    ProcedureReturn (Resistivity * L_m) / A_mm2
   EndProcedure
   
-  Procedure.d GetWireLengthFromResistance(R.d, A_mm.d, Material=#PbFw_Ohm_Material_CU)
+  Procedure.d GetWireLengthFromResistance(R.d, A_mm2.d, Material=#PbFw_Ohm_Material_CU)
   ; ============================================================================
   ; NAME: GetWireLengthFromResistance
   ; DESC: Calculates the wire length form a given resistance an sectinal Area
@@ -282,7 +404,25 @@ Module Ohm
   ; VAR(Material=#PbFw_Ohm_Material_CU): the wire material
   ; RET.d : Wire Length [m]
   ; ============================================================================
-   
+    
+    ; Chat GPT Code
+    Protected Resistivity.d
+    
+;     #Resistivity_Cu.d = 0.00000168
+;     #Resistivity_Al.d = 0.00000282
+;     #Resistivity_Fe.d = 0.000005
+;     #Resistivity_Constantan.d = 0.00049
+    
+    ; Select the resistivity based on the provided material
+    Select Material
+      Case #PbFw_Ohm_Material_Cu: Resistivity = #Resistivity_Cu
+      Case #PbFw_Ohm_Material_Al: Resistivity = #Resistivity_Al
+      Default: Resistivity = 0.0 ; Invalid material
+    EndSelect
+
+    ; Calculate wire length using the formula
+    ProcedureReturn (R * A_mm2) / Resistivity
+
   EndProcedure
   
   
@@ -296,11 +436,12 @@ Module Ohm
   Procedure Init()
     
     ; Datas at 20°C
+    ; TODO! Werte nochmals im Elektro Tabellenbuch nachsehen, da widersprüchlie Angaben im Web  
     
     ; Copper
     With MaterialProperty(#PbFw_Ohm_Material_Cu)
       \Density = 8.92         ; [kg/dm³]=[g/cm³]
-      \Resistance =  0.01786  ; Ohm * mm² / m
+      \Resistance =  0.0169   ; Ohm * mm² / m
       \Tcoeff_D = 16.5e-6     ; 1/K
       \Tcoeff_R = 0.0039      ; 1/K;
     EndWith
@@ -308,7 +449,7 @@ Module Ohm
     ; Aluminium
     With MaterialProperty(#PbFw_Ohm_Material_Al)
       \Density = 2.7          ; [kg/dm³]=[g/cm³]
-      \Resistance = 0.0278    ; Ohm * mm² / m
+      \Resistance = 0.0265    ; Ohm * mm² / m
       \Tcoeff_D = 23.1e-6     ; 1/K
       \Tcoeff_R = 0.0036      ; 1/K
     EndWith
@@ -350,9 +491,9 @@ CompilerEndIf
 
 
 
-; IDE Options = PureBasic 6.02 LTS (Windows - x64)
-; CursorPosition = 199
-; FirstLine = 126
-; Folding = ----
+; IDE Options = PureBasic 6.04 LTS (Windows - x64)
+; CursorPosition = 327
+; FirstLine = 406
+; Folding = -----
 ; Optimizer
 ; CPU = 5
