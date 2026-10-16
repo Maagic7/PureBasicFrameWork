@@ -1,6 +1,9 @@
 # PureBasic High-Performance Audio DSP Studio
-
 A modular, highly optimized Digital Signal Processing (DSP) and Audio Framework written entirely in native PureBasic. This project implements a full suite of studio-grade audio effects, real-time visualizers, and signal processors running on an autonomous virtual hardware stream.
+
+Attententio: This is the first Beta Demo for the DSP Library
+Only for Experts and Developers
+
 
 ## Core Features
 *   Autonomous Audio Engine: Simulates a real-time hardware callback stream using a dedicated high-priority background thread with zero external DLL dependencies.
