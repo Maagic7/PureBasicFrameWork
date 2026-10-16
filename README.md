@@ -25,7 +25,7 @@ The foundation layer injecting optimized macro patterns and pointer-operations i
 *   **Inline Logic Branches:** High-speed logical macro selectors (`IIFn`, `IIFs`, `IIFsf`) that completely remove standard `If/Else` evaluation penalties inside speed-critical loops.
 
 ### 🎵 Real-Time Audio & Digital Signal Processing (NEW!)
-Turn PureBasic into a powerful real-time audio workstation running on a high-priority background execution thread (`DSP_AudioIO`):
+Turn PureBasic into a powerful real-time audio workstation running on a high-priority background execution thread (`DSP::`):
 *   **Studio-Grade DSP Chains:** In-place block processing for 12 window functions, full parametric IIR filters, and professional dynamics processors (Compressor, Expander, Look-Ahead Brickwall Limiter, and Noise Gate with Hold timers).
 *   **Modulation & Time Domains:** Continuous fractional sub-sample delay paths, LFO-driven Chorus/Flanger modulators, and low-latency Time-Domain Pitch Shifting.
 *   **Acoustic Convolution Reverb:** Fast frequency-domain convolution using an optimized Overlap-Add FFT method to process massive room impulse response structures effortlessly.
