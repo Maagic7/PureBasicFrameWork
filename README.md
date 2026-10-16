@@ -31,11 +31,6 @@ Turn PureBasic into a powerful real-time audio workstation running on a high-pri
 *   **Acoustic Convolution Reverb:** Fast frequency-domain convolution using an optimized Overlap-Add FFT method to process massive room impulse response structures effortlessly.
 *   **Signal Analysis & Metering:** Microsecond-accurate Peak & RMS level calculators (dBFS), Crest Factor evaluation (dynamic density tracking), real-time monophonic Pitch Detection (Autocorrelation), and TPDF Dithering for 16-Bit exports.
 
-### 🎨 Modern Visualizations & Drawing Engines
-Hardware-accelerated, studio-quality graphical interfaces utilizing modern graphic layers:
-*   **Echtzeit-Scopes:** Smooth, hardware-accelerated `VectorDrawing` panels providing sub-pixel anti-aliased live Oscilloscopes and professional Logarithmic Frequency Analyzers (20 Hz to 20 kHz).
-*   **High-Fidelity Rendering:** Low-level acceleration frameworks for rendering complex vector curves, multi-matrix color alignments, and raw SVG vectors directly onto native UI nodes.
-
 ### 🗣️ Phonetics & Linguistic Text Analysis
 Advanced sound-matching, fuzzy text querying, and human-friendly sequence ordering:
 *   **Phonetic Encoders:** Full native string-pointer execution of phonetic encodings including **Soundex (EN/DE variants)** and **Cologne Phonetics** (*Kölner Phonetik*) to compare and identify similar-sounding words or names regardless of spelling.
