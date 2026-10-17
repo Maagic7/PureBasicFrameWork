@@ -47,31 +47,31 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
- XIncludeFile "../Modules/PbFw_Module_PX.pb"           ; PX::     Purebasic Extention Module
- XIncludeFile "../Modules/PbFw_Module_PbFw.pb"         ; PbFw::   FrameWork control Module
- XIncludeFile "../Modules/PbFw_Module_Debug.pb"        ; DBG::    Debug Module
+; XIncludeFile "../Modules/PbFw_Module_PX.pb"           ; PX::     Purebasic Extention Module
+; XIncludeFile "../Modules/PbFw_Module_PbFw.pb"         ; PbFw::   FrameWork control Module
+; XIncludeFile "../Modules/PbFw_Module_Debug.pb"        ; DBG::    Debug Module
 
 DeclareModule AudioIO
   EnableExplicit
 
   ;- --- PROTOTYPES ---
   ; Callback signature for rendering audio to the output stream (Soundcard)
-  Prototype Proto_OutputCallback(*Buffer, Length)
+  Prototype protoPlayCallback(*Buffer, Length)
   
   ; Callback signature for receiving audio from the input stream (Microphone)
-  Prototype Proto_InputCallback(*Buffer, Length)
+  Prototype protoRecordCallback(*Buffer, Length)
 
   ;- --- PUBLIC FUNCTIONS ---
   ; Initializes the audio format configuration
   Declare.i Init(SampleRate = 44100, Channels.w = 2, Bits.w = 16)
   
   ; Starts the output audio stream and registers the DSP render callback
-  Declare.i StartOutput(*OutCallback)
-  Declare   StopOutput()
+  Declare.i SartPlay(*procPlayCallback)
+  Declare   StopPlay()
   
   ; Starts the input audio stream and registers the DSP recording callback
-  Declare.i StartInput(*InCallback)
-  Declare   StopInput()
+  Declare.i StartRecord(*procRecordCallback)
+  Declare   StopRecord()
   
   ; Safely stops all streams, unregisters headers, and releases allocated memory
   Declare   Release()
@@ -107,21 +107,23 @@ Module AudioIO
   Global hWaveOut.i = 0
   Global hWaveIn.i  = 0
   
-  Global Dim outHeader.WAVEHDR(#NUM_BUFFERS - 1)
-  Global Dim outBuffer.i(#NUM_BUFFERS - 1)
+  ; we use double Buffering for continous Streaming
+  Global Dim outHeader.WAVEHDR(#NUM_BUFFERS - 1)    ; Header for Buffer(0..1)
+  Global Dim outBufferPtr.i(#NUM_BUFFERS - 1)       ; Pointer to Buffer(0..1)
   
-  Global Dim inHeader.WAVEHDR(#NUM_BUFFERS - 1)
-  Global Dim inBuffer.i(#NUM_BUFFERS - 1)
+  ; we use double Buffering for continous Streaming
+  Global Dim inHeader.WAVEHDR(#NUM_BUFFERS - 1)     ; Header for Buffer(0.1)
+  Global Dim inBufferPtr.i(#NUM_BUFFERS - 1)        ; Pointer to Buffer(0..1)
   
   Global glWaveFormat.WAVEFORMATEX
   Global glBufferSize = 0
   
-  Global fnOutCallback.Proto_OutputCallback = 0
-  Global fnInCallback.Proto_InputCallback   = 0
+  Global procPlayCallback.protoPlayCallback = 0
+  Global procRecordCallback.protoRecordCallback   = 0
   
-  Global isOutRunning.b = #False
-  Global isInRunning.b  = #False
-  Global mutex.i        = 0
+  Global isOutRunning = #False
+  Global isInRunning  = #False
+  Global mutex        = 0
 
   ;- --- PRIVATE C-CALLBACKS ---
   
@@ -144,9 +146,9 @@ Module AudioIO
     ; #WOM_DONE indicates that Windows finished playing a buffer and needs new data
     If uMsg = #WOM_DONE And isOutRunning = #True
       LockMutex(mutex)
-      If fnOutCallback
+      If procPlayCallback
         ; Fetch new samples from the DSP library callback
-        fnOutCallback(*hdr\lpData, *hdr\dwBufferLength)
+        procPlayCallback(*hdr\lpData, *hdr\dwBufferLength)
       Else
         ; Fill with silence if no callback is registered
         FillMemory(*hdr\lpData, *hdr\dwBufferLength, 0)
@@ -177,9 +179,9 @@ Module AudioIO
     ; #WIM_DATA indicates that Windows filled a buffer with microphone data
     If uMsg = #WIM_DATA And isInRunning = #True
       LockMutex(mutex)
-      If fnInCallback
+      If procRecordCallback
         ; Forward the recorded buffer directly to the DSP library
-        fnInCallback(*hdr\lpData, *hdr\dwBytesRecorded)
+        procRecordCallback(*hdr\lpData, *hdr\dwBytesRecorded)
       EndIf
       
       ; Re-queue the empty buffer back to the recording hardware
@@ -223,18 +225,18 @@ Module AudioIO
     ProcedureReturn #True
   EndProcedure
 
-  Procedure.i StartOutput(*OutCallback)
+  Procedure.i SartPlay(*procPlayCallback)
   ; ============================================================================
-  ; NAME: StartOutput
+  ; NAME: SartPlay
   ; DESC: Opens the native Windows playback device, prepares the double-buffers,
   ; DESC: fills them with initial audio data, and starts the output stream.
-  ; VAR(*OutCallback): Pointer to the external DSP function used to render audio samples.
+  ; VAR(*procPlayCallback): Pointer to the external DSP function used to render audio samples.
   ; RET: #True if the output stream successfully started, #False otherwise.
   ; ============================================================================
     Protected I
     
     If isOutRunning : ProcedureReturn #False : EndIf
-    fnOutCallback = *OutCallback
+    procPlayCallback = *procPlayCallback
     
     ; 1. Open Output Device using the C Callback Function convention
     If waveOutOpen_(@hWaveOut, #WAVE_MAPPER, @glWaveFormat, @waveOutProc(), 0, #CALLBACK_FUNCTION) <> #MMSYSERR_NOERROR
@@ -245,15 +247,15 @@ Module AudioIO
     
     ; 2. Allocate, prepare, and pre-fill streaming buffers
     For I = 0 To #NUM_BUFFERS - 1
-      outBuffer(I) = AllocateMemory(glBufferSize)
+      outBufferPtr(I) = AllocateMemory(glBufferSize)
       
-      If fnOutCallback
-        fnOutCallback(outBuffer(I), glBufferSize)
+      If procPlayCallback
+        procPlayCallback(outBufferPtr(I), glBufferSize)
       Else
-        FillMemory(outBuffer(I), glBufferSize, 0)
+        FillMemory(outBufferPtr(I), glBufferSize, 0)
       EndIf
       
-      outHeader(I)\lpData         = outBuffer(I)
+      outHeader(I)\lpData         = outBufferPtr(I)
       outHeader(I)\dwBufferLength = glBufferSize
       outHeader(I)\dwFlags        = 0
       
@@ -264,10 +266,10 @@ Module AudioIO
     ProcedureReturn #True
   EndProcedure
 
-  Procedure StopOutput()
+  Procedure StopPlay()
   ; ============================================================================
-  ; NAME: StopOutput
-  ; DESC: Gracefully stops audio playback, flushes the Windows hardware queue,
+  ; NAME: StopPlay
+  ; DESC: Stops audio playback, flushes the Windows hardware queue,
   ; DESC: unprepares all output headers, and releases allocated buffer memory.
   ; RET: None.
   ; ============================================================================
@@ -281,9 +283,9 @@ Module AudioIO
     ; Clean up headers and memory
     For I = 0 To #NUM_BUFFERS - 1
       waveOutUnprepareHeader_(hWaveOut, @outHeader(I), SizeOf(WAVEHDR))
-      If outBuffer(I)
-        FreeMemory(outBuffer(I))
-        outBuffer(I) = 0
+      If outBufferPtr(I)
+        FreeMemory(outBufferPtr(I))
+        outBufferPtr(I) = 0
       EndIf
     Next
     
@@ -292,18 +294,18 @@ Module AudioIO
     UnlockMutex(mutex)
   EndProcedure
 
-  Procedure.i StartInput(*InCallback)
+  Procedure.i StartRecord(*procRecordCallback)
   ; ============================================================================
-  ; NAME: StartInput
+  ; NAME: StartRecord
   ; DESC: Opens the native Windows recording device, allocates raw capture buffers,
   ; DESC: queues them up to the hardware, and engages the audio capture clock.
-  ; VAR(*InCallback): Pointer to the external DSP function that processes recorded data.
+  ; VAR(+procRecordCallback): Pointer to the external DSP function that processes recorded data.
   ; RET: #True if the input recording stream successfully started, #False otherwise.
   ; ============================================================================
     Protected I
     
     If isInRunning : ProcedureReturn #False : EndIf
-    fnInCallback = *InCallback
+    procRecordCallback = *procRecordCallback
     
     ; 1. Open Input Device using the C Callback Function convention
     If waveInOpen_(@hWaveIn, #WAVE_MAPPER, @glWaveFormat, @waveInProc(), 0, #CALLBACK_FUNCTION) <> #MMSYSERR_NOERROR
@@ -314,9 +316,9 @@ Module AudioIO
     
     ; 2. Allocate, prepare, and queue raw recording buffers
     For i = 0 To #NUM_BUFFERS - 1
-      inBuffer(i) = AllocateMemory(glBufferSize)
+      inBufferPtr(i) = AllocateMemory(glBufferSize)
       
-      inHeader(i)\lpData         = inBuffer(i)
+      inHeader(i)\lpData         = inBufferPtr(i)
       inHeader(i)\dwBufferLength = glBufferSize
       inHeader(i)\dwFlags        = 0
       
@@ -330,9 +332,9 @@ Module AudioIO
     ProcedureReturn #True
   EndProcedure
 
-  Procedure StopInput()
+  Procedure StopRecord()
   ; ============================================================================
-  ; NAME: StopInput
+  ; NAME: StopRecord
   ; DESC: Safely terminates the hardware recording clock, flushes internal queues,
   ; DESC: clears input headers, and frees all allocated recording memory.
   ; RET: None.
@@ -348,9 +350,9 @@ Module AudioIO
     ; Clean up headers and memory
     For I = 0 To #NUM_BUFFERS - 1
       waveInUnprepareHeader_(hWaveIn, @inHeader(I), SizeOf(WAVEHDR))
-      If inBuffer(I)
-        FreeMemory(inBuffer(I))
-        inBuffer(I) = 0
+      If inBufferPtr(I)
+        FreeMemory(inBufferPtr(I))
+        inBufferPtr(I) = 0
       EndIf
     Next
     
@@ -366,8 +368,8 @@ Module AudioIO
   ; DESC: all active hardware buffers, and destroys the thread-synchronization mutex.
   ; RET: None.
   ; ============================================================================
-    StopOutput()
-    StopInput()
+    StopPlay()
+    StopRecord()
     If mutex
       FreeMutex(mutex)
       mutex = 0
@@ -462,7 +464,7 @@ CompilerIf #PB_Compiler_IsMainFile
   If AudioIO::Init(44100, 2, 16)
     
     ; 2. Pass our DSP function pointer to the output stream
-    If AudioIO::StartOutput(@Play_Callback())
+    If AudioIO::SartPlay(@Play_Callback())
       
       ; 3. Create a simple window to keep the application and thread alive
       OpenWindow(0, 0, 0, 360, 120, "AudioIO Stereo Test", #PB_Window_SystemMenu | #PB_Window_ScreenCentered)
@@ -491,8 +493,8 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.41 (Windows - x64)
-; CursorPosition = 458
-; FirstLine = 404
+; CursorPosition = 329
+; FirstLine = 378
 ; Folding = ---
 ; DPIAware
 ; CPU = 5
