@@ -7,12 +7,12 @@
   <section name="data">
     <explorer view="..\..\Modules\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2026-10-16 18:44" user="user1" host="AMD5800X"/>
+    <lastopen date="2026-10-17 16:00" user="user1" host="AMD5800X"/>
   </section>
   <section name="files">
     <file name="DSP_Main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="+"/>
-      <fingerprint md5="209e08e387795deec05c89ef3d50bdbe"/>
+      <fingerprint md5="0247d76de214b252dc2fbf084e478ad2"/>
     </file>
     <file name="DSP_DRAW.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="+"/>
@@ -30,10 +30,6 @@
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
       <fingerprint md5="2acd689a5793164f869f4612d3442ce9"/>
     </file>
-    <file name="..\..\Modules\PbFw_Module_DSP.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="4" panelstate="++"/>
-      <fingerprint md5="09fa724dede52c0b96d82c7dcbb7793a"/>
-    </file>
     <file name="..\..\Modules\PbFw_Module_PbFw.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
       <fingerprint md5="1cffdd71f47d2f167e96f43a92516d7e"/>
@@ -41,6 +37,10 @@
     <file name="..\..\Modules\PbFw_Module_PX.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
       <fingerprint md5="466ec14d9d4c9ad3a0fce98e26c68de4"/>
+    </file>
+    <file name="..\..\Audio\PbFw_Module_DSP.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="d0e4b3b14883640b44f63e95bc7afea3"/>
     </file>
   </section>
   <section name="targets">

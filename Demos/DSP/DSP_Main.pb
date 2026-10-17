@@ -11,7 +11,7 @@
 ; Co-authored by Google Gemini.
 ; ===========================================================================
 
-XIncludeFile "..\..\Modules\PbFw_Module_DSP.pb"
+XIncludeFile "..\..\Audio\PbFw_Module_DSP.pb"
 
 ; Main Parameter Modul
 DeclareModule Main
@@ -341,7 +341,7 @@ Repeat
 Until Event = #PB_Event_CloseWindow
 
 ; IDE Options = PureBasic 6.41 (Windows - x64)
-; CursorPosition = 9
+; CursorPosition = 29
 ; Folding = --
 ; DPIAware
 ; CPU = 5

@@ -6,7 +6,7 @@
 ; Co-authored by Google Gemini.
 ; ===========================================================================
 
-XIncludeFile "..\..\Modules\PbFw_Module_DSP.pb"
+XIncludeFile "..\..\Audio\PbFw_Module_DSP.pb"
 
 DeclareModule DSP_AudioIO
   EnableExplicit
@@ -157,7 +157,8 @@ EndProcedure
 EndModule
 
 ; IDE Options = PureBasic 6.41 (Windows - x64)
-; CursorPosition = 15
+; CursorPosition = 8
+; FirstLine = 4
 ; Folding = --
 ; DPIAware
 ; CPU = 5
