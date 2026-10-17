@@ -1,10 +1,8 @@
-# Demo for Module DSP:: 
+# Audio and Digital Signal Processing DSP:: 
 A modular,  Signal Processing (DSP) and Audio Library written entirely in native PureBasic. 
 This project implements a full suite of studio-grade audio effects, real-time visualizers, 
 and signal processors running on an autonomous virtual hardware stream.
 
-Attentenion: This is the first Beta Demo for the DSP Library
-Only for Experts and Developers
 
 
 ## Core Features
