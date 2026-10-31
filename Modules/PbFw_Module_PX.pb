@@ -3144,8 +3144,8 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.41 (Windows - x64)
-; CursorPosition = 3075
-; FirstLine = 305
+; CursorPosition = 2429
+; FirstLine = 2374
 ; Folding = ----------------------------
 ; Markers = 1402,2949
 ; Optimizer

@@ -52,9 +52,12 @@
 ; SOFTWARE.
 ;} ===========================================================================
 
+; XIncludeFile "PbFw_Module_PbSdk.pb"        ; PbSdk::    PureBasic SDK
+
 ;- ----------------------------------------------------------------------
 ;- Include Files
 ;  ----------------------------------------------------------------------
+
 XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
 
 DeclareModule PbSdk
@@ -79,9 +82,17 @@ DeclareModule PbSdk
   Declare MouseOver()
   
   ; Map ; 
-  Prototype MapHash(Key$, CaseSensitive=#True)
-  Global MapHash.MapHash
+  Prototype Map_Hash(*Str)
+  Global Map_Hash.Map_Hash
   
+  Prototype Map_HashCaseInsensitive(*Str)
+  Global Map_HashCaseInsensitive.Map_HashCaseInsensitive
+  
+  Prototype Map_FindNumericMapElement(*PB_Map, intKey)
+  Global Map_FindNumericMapElement.Map_FindNumericMapElement
+  
+  Prototype AddNumericMapElement(*PB_Map, intKey);
+  Global AddNumericMapElement.AddNumericMapElement
 EndDeclareModule
 
 ; ---------------------------------------------------------------------------------------
@@ -118,7 +129,8 @@ Module PbSdk
       ; Map.h
       PB_Map_Hash(*Str)
       PB_Map_HashCaseInsensitive(*Str)
-      PB_FindNumericMapElement(*PB_Map, intKey);
+      PB_FindNumericMapElement(*PB_Map, intKey)
+      PB_AddNumericMapElement(*PB_Map, intKey);
     EndImport
     
   CompilerElse
@@ -133,15 +145,21 @@ Module PbSdk
       PB_Image_Objects.i
       PB_Font_Objects.i
       
-      ; Map SDK
+      ; Map.h
       PB_Map_Hash(*Str)
       PB_Map_HashCaseInsensitive(*Str)
       PB_FindNumericMapElement(*PB_Map, intKey);
+      PB_AddNumericMapElement(*PB_Map, intKey);
     EndImport
     
   CompilerEndIf
   
-   CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+  Map_Hash = @PB_Map_Hash()
+  Map_HashCaseInsensitive = @PB_Map_HashCaseInsensitive()
+  Map_FindNumericMapElement = @PB_FindNumericMapElement()
+  AddNumericMapElement = @PB_AddNumericMapElement()
+ 
+  CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
     ; PB Internal Structure Gadget MacOS
     Structure sdkGadget
       *gadget
@@ -150,13 +168,8 @@ Module PbSdk
       UserData.i
       Window.i
       Type.i
-      Flags.i
-      
-      ; Map SDK
-      PB_Map_Hash(*Str)
-      PB_Map_HashCaseInsensitive(*Str)
-      PB_FindNumericMapElement(*PB_Map, intKey);
-    EndStructure
+      Flags.i     
+     EndStructure
   CompilerEndIf
   
   ; ---------------------------------------------------------------------------------------
@@ -460,22 +473,7 @@ Module PbSdk
     ProcedureReturn handle
   EndProcedure
   
-  Procedure _MapHash(*KeyStr, CaseSensitve=#True)
-  ; ============================================================================
-  ; NAME: _MapHash
-  ; DESC: Calculate the Map's Hash for a KeyString
-  ; VAR(*KeyStr): Pointer to the KeyString
-  ; VAR(CaseSensitive): #True: Casesensitive Hash, #False: Caseinsensitive Hash
-  ; RET.i : The Map Hash value
-  ; ============================================================================    
-    If CaseSensitve
-      ProcedureReturn PB_Map_Hash(*KeyStr)
-    Else
-      ProcedureReturn PB_Map_HashCaseInsensitive(*KeyStr)  
-    EndIf    
-  EndProcedure
-  MapHash=@_MapHash()
-
+ 
   ; ---------------------------------------------------------------------------
   
   ;- End Of Module
@@ -607,10 +605,10 @@ CompilerIf #PB_Compiler_IsMainFile
     ForEver  
   EndIf
 CompilerEndIf
-; IDE Options = PureBasic 6.20 (Windows - x64)
-; CursorPosition = 44
-; FirstLine = 366
-; Folding = ----
+; IDE Options = PureBasic 6.41 (Windows - x64)
+; CursorPosition = 371
+; FirstLine = 342
+; Folding = 0---
 ; Optimizer
 ; Executable = SystemTest.exe
 ; CPU = 5
