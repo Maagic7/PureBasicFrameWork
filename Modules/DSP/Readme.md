@@ -20,7 +20,6 @@ The library has been engineered from the ground up for critical real-time execut
 *   Loop Unswitching: Conditional branches (`Select/Case` blocks) are checked exactly once per block execution, completely bypassing them inside innermost loops to eliminate CPU branch mispredictions.
 *   In-Register Local Caching: Array structures and pointer metrics are fetched into local registers (`Protected` variables) inside loops to eliminate structural pointer overhead and memory bus latency.
 *   Zero Variable Divisions: Normalization values and fractions are pre-calculated as inverse constants outside the loops, substituting slow divisions with high-speed CPU multiplications.
-*   Thread-Safe Encapsulation: Built following a strict modular architecture. The application state is owned exclusively by the central coordinator (`Main::`), while critical rendering domains are synchronized using mutual exclusions (`Mutex`).
 
 ## Architecture & Requirements
 The Library is embeded in the PureBasicFrameWork
