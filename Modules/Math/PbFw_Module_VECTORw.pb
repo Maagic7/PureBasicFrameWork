@@ -1,0 +1,1978 @@
+﻿; ===========================================================================
+; FILE : PbFw_Module_VECTORw.pb
+; NAME : PureBasic Framework : Module VECTORw [VECw::]
+; DESC : Word Integer Vector Library
+; DESC : using the  SSE Registers, to speed up vector operations
+; ===========================================================================
+;
+; AUTHOR   :  Stefan Maag
+; DATE     :  2025/11/11
+; VERSION  :  0.1 Brainstorming Version
+; COMPILER :  PureBasic 6.0+
+;
+; LICENCE  :  MIT License see https://opensource.org/license/mit/
+;             or \PbFramWork\MitLicence.txt
+; ===========================================================================
+;{ ChangeLog: 
+; 2025/11/15 S.Maag : created from copy of VECTORf
+;} 
+;{ TODO:
+; Implement all the SSE optimations for the C-Backend on x86
+; propably by using the C intrinsic Macros
+;}
+; ===========================================================================
+
+;- ----------------------------------------------------------------------
+;- Include Files
+;  ----------------------------------------------------------------------
+XIncludeFile "PbFw_Module_PbFw.pb"         ; PbFw::     FrameWork control Module
+XIncludeFile "PbFw_Module_Debug.pb"        ; DBG::      Debug Module
+
+;- ----------------------------------------------------------------------
+;- Declare Module
+;- ----------------------------------------------------------------------
+
+DeclareModule VECf 
+  
+  EnableExplicit
+   
+  ; ----------------------------------------------------------------------
+  ;- STRUCTURES and CONSTANTS
+  ;- ----------------------------------------------------------------------
+    
+  ; Vector ist immer aus 4 Elementen, sonst macht das keinen Sinn
+  ; die Unterscheidung Vector3, Vector4 bringt nur Nachteile statt Vorteile
+  ; Man braucht neben den x,y,z,w Kooridnaten noch die Möglichkeit des
+  ; indizierten Zugriffs das dürfte für Matrix-Operationen besser sein!
+  Structure TPoint2D Align 4    ; to be sure it will be 4Byte Aligned at x64
+    X.w          
+    Y.w          
+  EndStructure
+  
+  #VEC_X = 0
+  #VEC_Y = 1
+  #VEC_Z = 2
+  #VEC_W = 3
+ 
+  Structure TVector Align 4 ; Single precicion Vector [16 Bytes / 128 Bit]
+    StructureUnion
+      v.w[0]                ; virutal Array  v[0]=x, v[1]=y, v[2]=z, v[3]=w
+      Pt2D.TPoint2D[0]
+    EndStructureUnion
+    x.w
+    y.w
+    z.w
+    w.w
+  EndStructure 
+  
+  Debug "SyzeOf(VECf::TVector) = " + SizeOf(TVector)
+  
+  ; we need this construction of a Matrix because in common C and Pascal Code 
+  ; it's in this way
+  ; ------------------
+  ; m11  m12  m13  m14
+  ; m21  m22  m23  m24
+  ; m31  m32  m33  m34
+  ; m41  m42  m43  m44
+  ; ------------------
+  ; This is the C-Definition of a TMatrix3D
+  ;         struct
+  ;             float m11;
+  ;             float m12;
+  ;             float m13;
+  ;             float m21;
+  ;             float m22;
+  ;             float m23;
+  ;             float m31;
+  ;             float m32;
+  ;             float m33;
+  
+  
+  ; Single precicion Matrix
+  Structure TMatrix Align 4    ; to be sure it will be 4Byte Aligned at x64 
+    StructureUnion
+      v.TVector[0]        ; Vector interpretation of the Matrix Structure
+      Pt2D.TPoint2D[0]    ; Point interpretation of the Matrix Structure
+    EndStructureUnion
+    m11.w : m12.w : m13.w : m14.w    
+    m21.w : m22.w : m23.w : m24.w
+    m31.w : m32.w : m33.w : m34.w   
+    m41.w : m42.w : m43.w : m44.w
+  EndStructure
+    
+  Macro mac_SetVector(Vec, _X, _Y, _Z, _W)
+    Vec\x = _X
+    Vec\y = _Y
+    Vec\z = _Z
+    Vec\w = _W
+  EndMacro
+
+  Macro mac_ClearVector(Vec)
+    Vec\x = 0
+    Vec\y = 0
+    Vec\z = 0
+    Vec\w = 0   
+  EndMacro
+  
+  Macro mac_ClearMatrix(Matrix)
+    ClearVector(Matrix\v[0])
+    ClearVector(Matrix\v[1])
+    ClearVector(Matrix\v[2])  
+    ClearVector(Matrix\v[3])
+  EndMacro
+  
+  Macro mac_Debug_Vector(Vec)
+    Debug "X= " + Vec\X + "  :  Y=" + Vec\y + "  :  Z= " + Vec\Z + "  :  W=" + Vec\W
+  EndMacro
+    
+  ; Declare Vector Functions
+  Declare.i Vector_Add(*OUT.TVector, *IN1.TVector, *IN2.TVector)
+  Declare.i Vector_SUB(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
+  Declare.i Vector_Mul(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
+  Declare.i Vector_Div(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
+  Declare.i Vector_Min(*OutTVector, *IN1.TVector, *IN2.TVector)
+  Declare.i Vector_Max(*OutTVector, *IN1.TVector, *IN2.TVector)
+  Declare.i Vector_Swap(*OUT.TVector, *IN.Tvector)
+  Declare.i Vector_Copy(*OUT.TVector, *IN.TVector)
+  Declare.i Vector_Set(*Out.TVector, X.w=0.0, Y.w=0.0, Z.w=0.0, W.w=0.0)
+  Declare.w Vector_Length(*IN.TVector)
+  
+  Declare.i Vector_Normalize(*InOut.TVector)
+  Declare.w Vector_Scalar(*IN1.TVector, *IN2.TVector)
+  Declare.i Vector_Scale(*OUT.TVector, *IN.TVector, Factor.w)
+  Declare.i Vector_CrossProduct(*OUT.TVector, *IN1.TVector, *IN2.TVector)
+  Declare.i Vector_Lerp(*OUT.TVector, *A.TVector, *B.TVector, T.w)
+  Declare.w Vector_InverseLerp(*A.TVector, *B.TVector, *V.TVector, XYZW.i=#VEC_X)
+  Declare.i Vector_Remap(*OUT.TVector, *IN.TVector, *inMin.TVector, *inMax.TVector, *outMin.TVector, *outMax.TVector, xRemapW=#False)
+  
+  ; Declare Matrix Functions
+  Declare.i SetMatrixIdentity(*Matrix.TMatrix) ; EinheitsMatrix
+  Declare.i SetMatrixTranslation(*Matrix.TMatrix, dX.w, dY.w, dZ.w)
+	Declare.i SetMatrixRotX(*Matrix.TMatrix, Angle.w)
+	Declare.i SetMatrixRotY(*Matrix.TMatrix, Angle.w)
+  Declare.i SetMatrixRotZ(*Matrix.TMatrix, Angle.w)
+	Declare.i SetMatrixRotXYZ(*Matrix.TMatrix, AngleX.w, AngleY.w, AngleZ.w)
+  Declare.i SetMatrixRotAxis(*Matrix.TMatrix, *vecUnit.TVector, Angle.w)
+	
+  Declare.i Vector_X_Matrix(*OUT.TVector, *IN.TVector, *Matrix.TMatrix)
+  Declare.i Matrix_X_Matrix(*OUT.TMatrix, *M1.TMatrix, *M2.TMatrix)
+  
+  ; Declare Auxiliary Functions
+  Declare.w MinOf3(Value1.w, Value2.w, Value3.w=1.0e100)
+  Declare.w MaxOf3(Value1.w, Value2.w, Value3.w=-1.0e100)
+  
+EndDeclareModule
+  
+Module VECf
+ 
+  EnableExplicit
+  
+  IncludeFile "PbFw_ASM_Macros.pbi"       ; Standard Assembler Macros
+  
+  ;- ----------------------------------------------------------------------
+  ;- PbFw Module local configurations
+  ;  ----------------------------------------------------------------------
+  ; This constants must have same Name in all Modules
+  
+  ; ATTENTION: with the PbFw::CONST Macro the PB-IDE Intellisense do not registrate the ConstantName
+  
+  ; #PbFwCfg_Module_CheckPointerException = #True     ; On/Off PoninterExeption for this Module
+  PbFw::CONST(PbFwCfg_Module_CheckPointerException, #True)
+  
+  ;#PbFwCfg_Module_ASM_Enable = #True                ; On/Off Assembler Versions when compling in ASM Backend
+  PbFw::CONST(PbFwCfg_Module_ASM_Enable, #True)
+ 
+  ; -----------------------------------------------------------------------
+      
+  ; ************************************************************************
+  ; PbFw::mac_CompilerModeSettting      ; using Macro for CompilerSetting is a problem for the IDE
+  ; so better use the MacroCode directly
+  ; Do not change! Must be changed globaly in PbFw:: and then copied to each Module
+  Enumeration
+    #PbFwCfg_Module_Compile_Classic                 ; use Classic PB Code
+    #PbFwCfg_Module_Compile_ASM32                   ; x32 Bit Assembler
+    #PbFwCfg_Module_Compile_ASM64                   ; x64 Bit Assembler
+    #PbFwCfg_Module_Compile_C                       ; use optimations for C-Backend
+  EndEnumeration
+  
+  CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm And #PbFwCfg_Module_ASM_Enable And PbFw::#PbFwCfg_Global_ASM_Enable 
+    ; A S M   B A C K E N D
+    CompilerIf #PB_Compiler_32Bit
+      #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_ASM32     
+    ; **********  64 BIT  **********
+    CompilerElseIf #PB_Compiler_64Bit
+      #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_ASM64     
+    ; **********  Classic Code  **********
+    CompilerElse
+      #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_Classic     
+    CompilerEndIf
+      
+  CompilerElseIf  #PB_Compiler_Backend = #PB_Backend_C
+    ;  C - B A C K E N D
+     #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_C     
+  CompilerElse
+    Debug "Classic" 
+    ;  To force Classic Code Compilation
+    #PbFwCfg_Module_Compile = #PbFwCfg_Module_Compile_Classic     
+  CompilerEndIf 
+  ; ************************************************************************
+  ;Debug "PbFwCfg_Module_Compile = " + #PbFwCfg_Module_Compile
+  
+  ; ----------------------------------------------------------------------
+  
+  PbFw::ListModule(#PB_Compiler_Module)   ; Lists the Module in the ModuleList (for statistics)
+  
+  
+  ;- ----------------------------------------------------------------------
+  ;- Module Private
+  ;- ----------------------------------------------------------------------
+        
+
+; TEMPLATE Compiler Select SSE
+;     CompilerSelect PbFw::#PbfW_SE_MMX_Type
+;         
+;       CompilerCase PbFw::#PbfW_SSE_x64          ; 64 Bit-Version
+;         
+;       CompilerCase PbFw::#PbfW_SSE_x32          ; 32 Bit Version
+;         
+;       CompilerCase PbFw::#PbfW_SSE_C_Backend    ; for the C-Backend
+;         
+;       CompilerDefault                           ; Classic Version
+;         
+;     CompilerEndSelect  
+  
+  ;  ----------------------------------------------------------------------
+  ;- Assembler Macros : MMX/SSE optimized routines
+  ;- ----------------------------------------------------------------------
+  
+  ; Assembler Macros for single precicion Vector calculations
+  ; using 128Bit SSE-Registers
+  
+  ; After sone testing I found a methode, to use same ASM-Code for
+  ; x32 and x64. The trick is to use the 3 possible Registers as Paramter.
+  
+  ; The Macro has always the same structure, for x32/x64. We hvae to change
+  ; only the Register-Parameters! So call:
+  ; MacroName(EAX, EDX, ECX) for x32
+  ; MacroName(RAX, RDX, RCX) for x64
+      
+  Macro ASM_Vector_Add(REGA, REGD, REGC)
+    ;Vector_Add(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
+      !MOV     REGA, [p.p_IN1]    ; Move Data-Pointer 1 to rax,eax
+    	!MOV     REGD, [p.p_IN2]    ; Move Data-Pointer 2 to rdx,edx
+      !MOVUPS  XMM0, [REGA]       ; Move 16 Byte from Data 1 to XMM0 Register
+      !MOVUPS  XMM1, [REGD]       ; Move 16 Byte from Data 2 to XMM1 Register
+      !ADDPS   XMM1, XMM0         ; Add 4 packed single precision Float
+      !MOV     REGA, [p.p_OUT]    ; Move Data-Pointer of Result to rax,eax
+      !MOVUPS  [REGA], XMM1       ; Move the 16-Byte Result to our Result Data
+  EndMacro
+    
+  Macro ASM_Vector_SUB(REGA, REGD, REGC) 
+    ;Vector_SUB(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
+      !MOV     REGA, [p.p_IN2]
+    	!MOV     REGD, [p.p_IN1]
+      !MOVUPS  XMM0, [REGA]
+      !MOVUPS  XMM1, [REGD]
+      !SUBPS   XMM1, XMM0
+      !MOV     REGA, [p.p_OUT]
+      !MOVUPS  [REGA], XMM1
+  EndMacro
+  
+  Macro ASM_Vector_Mul (REGA, REGD, REGC) 
+    ;Vector_Mul(*OUT.TVector, *IN1.TVector, *IN2.TVector)
+      !MOV     REGA, [p.p_IN1]
+    	!MOV     REGD, [p.p_IN2]
+      !MOVUPS  XMM0, [REGA]
+      !MOVUPS  XMM1, [REGD]
+      !MULPS   XMM1, XMM0
+      !MOV     REGA, [p.p_OUT]
+      !MOVUPS  [REGA], XMM1
+   EndMacro
+   
+  Macro ASM_Vector_Div (REGA, REGD, REGC) 
+    ;Vector_Div(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
+      !MOV     REGA, [p.p_IN1]
+    	!MOV     REGD, [p.p_IN2]
+      !MOVUPS  XMM0, [REGA]
+      !MOVUPS  XMM1, [REGD]
+      !DIVPS   XMM0, XMM1
+      !MOV     REGA, [p.p_OUT]
+      !MOVUPS  [REGA], XMM0  
+  EndMacro 
+
+  Macro ASM_Vector_Min(REGA, REGD, REGC) 
+    ;Vector_Min(*OutTVector, *IN1.TVector, *IN2.TVector)
+      !MOV    REGA, [p.p_OUT]
+			!MOV    REGC, [p.p_IN1]
+			!MOV    REGD, [p.p_IN2]
+			!MOVUPS XMM0, [REGC]    ; IN1
+			!MOVUPS XMM1, [REGD]    ; IN2
+			!MINPS  XMM0, XMM1
+			!MOVUPS [REGA], XMM0    
+  EndMacro
+  
+  Macro ASM_Vector_Max(REGA, REGD, REGC) 
+    ;Vector_Max(*OutTVector, *IN1.TVector, *IN2.TVector)
+      !MOV    REGA, [p.p_OUT]
+			!MOV    REGC, [p.p_IN1]
+			!MOV    REGD, [p.p_IN2]
+			!MOVUPS XMM0, [REGC]    ; IN1
+			!MOVUPS XMM1, [REGD]    ; IN2
+			!MAXPS  XMM0, XMM1
+			!MOVUPS [REGA], XMM0    
+  EndMacro
+  
+  Macro ASM_Vector_MinMax(REGA, REGD, REGC) 
+    ;Vector_MinMax(*IOmin.TVector, *IOmax.TVector, *IN.TVector)
+      !MOV    REGA, [p.p_IOmin]
+			!MOV    REGC, [p.p_IOmax]
+			!MOV    REGD, [p.p_IN]
+			
+			!MOVUPS XMM0, [REGA]    ; IOmin
+			!MOVUPS XMM2, [REGC]    ; IOmax
+			
+			!MOVUPS XMM1, [REGD]    ; IN
+			
+			!MINPS  XMM0, XMM1      ; Minimum to XMM0
+			!MAXPS  XMM2, XMM1      ; Maximum to XMM2
+			
+			!MOVUPS [REGA], XMM0    ; Min
+			!MOV    REGA, [p.p_IOmax]
+			!MOVUPS [REGA], XMM2    ; Max				
+  EndMacro
+
+  Macro ASM_Vector_Swap (REGA, REGD, REGC) 
+    ;Vector_Swap(*OUT.TVector, *IN.Tvector)
+      !MOV     REGA, [p.p_IN]
+      !MOVUPS  XMM0, [REGA]
+      !PSHUFD  XMM1,XMM0, $1B   ; 00011011b = $1b = [0,1,2,3]=[00b,01b,10b,11b]  (SSE: PSHUFD => AVX: Vpermpd)
+      !MOV     REGA, [p.p_OUT]
+      !MOVUPS  [REGA], XMM1
+  EndMacro
+  
+  Macro ASM_Vector_Scale (REGA, REGD, REGC) 
+    ;Vector_Scale(*OUT.TVector, *IN.TVector, Factor.f)
+      !MOVSS   XMM0, [p.v_Factor]
+      !PSHUFD  XMM0, XMM0, $00    ; Shuffle Factor to all 4 sections
+      !MOV     REGA, [p.p_IN] 
+      !MOVUPS  XMM1, [REGA]        ; load Vector
+      !MULPS   XMM1, XMM0
+      !MOV     REGA, [p.p_OUT] 
+      !MOVUPS  [REGA], XMM1
+  EndMacro
+  
+  Macro ASM_Vector_CrossProduct (REGA, REGD, REGC) 
+    ;Vector_CrossProduct(*OUT.TVector, *IN1.TVector, *IN2.TVector)
+ 			!MOV    REGA, [p.p_OUT]
+			!MOV    REGC, [p.p_IN1]
+			!MOV    REGD, [p.p_IN2]
+			!MOVUPS XMM0, [REGC]
+			!MOVUPS XMM1, [REGD]
+			!MOVAPS XMM2, XMM0
+			!MOVAPS XMM3, XMM1
+			!SHUFPS XMM0, XMM0, 11001001b ; 3-0-2-1
+			!SHUFPS XMM1, XMM1, 11010010b ; 3-1-0-2
+			!SHUFPS XMM2, XMM2, 11010010b 
+			!SHUFPS XMM3, XMM3, 11001001b 
+			!MULPS  XMM0, XMM1
+			!MULPS  XMM2, XMM3
+			!SUBPS  XMM0, XMM2
+			!MOVUPS [REGA], XMM0
+  EndMacro
+  
+  Macro ASM_Vector_Lerp (REGA, REGD, REGC) 
+    ;Vector_Lerp(*OUT.TVector, *A.TVector, *A.TVector, T.f)
+    ; ret = A + (B-A) * T
+    ; XMM0 = OUT  XMM1 = A  XMM2 = B
+ 			!MOV    REGC, [p.p_A]
+			!MOV    REGD, [p.p_A]
+      !MOVUPS  XMM2, [REGD]   ; A
+      !MOVUPS  XMM1, [REGC]   ; B
+      
+      !MOVSS  XMM0, DWORD [p.v_T]     ; Load Timing Value
+      !PSHUFD XMM0, XMM0, 00000000b   ; Shuffle T to all 4 32-Bit SubRegisters 
+      
+      !SUBPS  XMM2, XMM1      ; B-A -> XMM2
+      !ADDPS  XMM2, XMM1      ; A + (B-A) -> XMM2
+      !MULPS  XMM0, XMM2      ; T* (...)  
+   		!MOV    REGA, [p.p_OUT]
+      !MOVUPS [REGA], XMM0   
+  EndMacro
+  
+  Macro ASM_Vector_Remap(REGA, REGD, REGC)
+    ; Vector_Remap(*OUT.TVector, *IN.TVector, *inMin.TVector, *inMax.TVector, *outMin.TVector, *outMax.TVector, xRemapW=#False)    
+    ; Out = (outMax - outMin)/(inMax - inMin) * (IN - inMin) + outMin
+    
+ 			!MOV    REGC, [p.p_outMin]
+			!MOV    REGD, [p.p_outMax]
+			
+			!MOVUPS  XMM0, [REGD]   ; outMax
+      !MOVUPS  XMM1, [REGC]   ; outMin      
+      !SUBPS XMM0, XMM1       ; XMM0 = (outMax - outMin)
+      
+ 			!MOV    REGC, [p.p_inMin]
+			!MOV    REGD, [p.p_inMax]
+			!MOVUPS  XMM2, [REGD]   ; inMax
+      !MOVUPS  XMM3, [REGC]   ; inMin
+      !SUBPS XMM2, XMM3       ; XMM2 = (inMax - inMin)
+      !DIVPS XMM0, XMM2       ; XMM0 = XMM0/XMM2 = (outMax - outMin)/(inMax - inMin)
+      
+ 			!MOV    REGD, [p.p_IN]
+ 			!MOVUPS  XMM2, [REGC]   ; IN
+ 			!SUBPS XMM2, XMM3       ; XMM2 = (IN-inMin)
+ 			!MULPS XMM0, XMM2       ; XMM0 = (outMax - outMin)/(inMax - inMin) * (IN-inMin)
+ 			!ADDPS XMM0, XMM1       ; Add outMIn
+ 			
+   		!MOV    REGA, [p.p_OUT]       ; RAX = Pointer *OUT
+   		!MOVUPS [REGA], XMM0          ; OUT = Result
+   		
+   		!MOV REGC, [p.v_xRemapW]      
+   		!CMP REGC, 0                            ; xRemapW=0 ?
+    	!CMOVZ [REGA + 12], DWORD[REGD +12]     ;  OUT\w = IN\w  ; 3x4 Byte Offet; CMOVZ MoveIfZero  
+   EndMacro
+  
+    
+  Macro ASM_Vector_X_Matrix(REGA, REGD, REGC) 
+   ;Vector_X_Matrix(*OUT.TVector, *IN.TVector, *Matrix.TMatrix)
+  	  ; translated from the FreePascal Wiki at https://wiki.freepascal.org/SSE/de	  
+      !MOV     REGD,  [p.p_IN]      ; load Adress of IN.VEctor
+      !MOV     REGA,  [p.p_Matrix]  ; load Adress of Matrix
+      !MOVUPS  XMM2, [REGD]
+        
+      ; we use Shuffle command and vertical Add instead of horizontal Add, because Shuffle it's faster 
+      ; Line 0
+      !PSHUFD  XMM0, XMM2, 00000000b
+      !MOVUPS  XMM3, [REGA + $00]
+      !MULPS   XMM0, XMM3
+      
+      ; Line 1
+      !PSHUFD  XMM1, XMM2, 01010101b
+      !MOVUPS  XMM3, [REGA + $10]
+      !MULPS   XMM1, XMM3
+      !ADDPS   XMM0, XMM1
+      
+      ; Line 2
+      !PSHUFD  XMM1, XMM2, 10101010b
+      !MOVUPS  XMM3, [REGA + $20]
+      !MULPS   XMM1, XMM3
+      !ADDPS   XMM0, XMM1
+      
+      ; Line 3
+      !PSHUFD  XMM1, XMM2, 11111111b
+      !MOVUPS  XMM3, [REGA + $30]         
+      !MULPS   XMM1, XMM3
+      !ADDPS   XMM0, XMM1
+      
+      ; Return Result
+      !MOV     REGA, [p.p_OUT] 
+      !MOVUPS  [REGA], XMM0   
+   EndMacro
+    
+  Macro ASM_Matrix_X_Matrix(REGA, REGD, REGC)     
+    EnableASM
+    ;Procedure Matrix_X_Matrix(*OUT.TMatrix, *M1.TMatrix, *M2.TMatrix)
+    
+    ; ATTENTION: The Pointer *OUT must be at RAX/EAX
+    ; because this is the Return Value
+    ; be shure to call the ASM_Matrix_X_Matrix(RAX, RDX, RCX) 
+    ; do not swicht the Registers, otherwise you will get wrong Return Value
+    
+ 
+      ; ----------------------------------------------------------------------
+      ; 1st PUSH the XMM-Register 6..7 to Stack because it's nonVolatile
+      ASM_PUSH_XMM_4to5(REGC)     ; normaly volatile so Macro is emtpy
+      ASM_PUSH_XMM_6to7(REGC)     ; Macro from "PbFw_ASM_Macros.pbi"
+      ; ----------------------------------------------------------------------
+      	      
+      ; translated from the FreePascal Wiki at https://wiki.freepascal.org/SSE/de	  
+			!MOV     REGD, [p.p_M1]
+      !MOVUPS  XMM3, [REGD + $00]      ; M1\m11..14
+      !MOVUPS  XMM4, [REGD + $10]      ; M1\m21..24
+      !MOVUPS  XMM5, [REGD + $20]      ; M1\m31..34
+      !MOVUPS  XMM6, [REGD + $30]      ; M1\m41..44
+       
+      ; Spalte 0
+ 			!MOV     REGD, [p.p_M2]          ; M2\m11..14
+      !MOVUPS  XMM2, [REGD + $00]
+      !PSHUFD  XMM0, XMM2, 00000000b
+      !MULPS   XMM0, XMM3              ; (M1\m11..14) * M2.m11
+       
+      !PSHUFD  XMM1, XMM2, 01010101b
+      !MULPS   XMM1, XMM4              ; (M1\m21..24) * M2.m12
+      !ADDPS   XMM0, XMM1
+      
+      !PSHUFD  XMM1, XMM2, 10101010b
+      !MULPS   XMM1, XMM5              ; (M1\m31..34) * M2.m13
+      !ADDPS   XMM0, XMM1
+
+      !PSHUFD  XMM1, XMM2, 11111111b
+      !MULPS   XMM1, XMM6              ; (M1\m41..44) * M2.m14
+      !ADDPS   XMM0, XMM1
+
+  		!MOV     REGA, [p.p_OUT]         ; OUT\m11..14
+      !MOVUPS  [REGA + $00], XMM0
+
+      ; Spalte 1
+      !MOVUPS  XMM2, [REGD + $10]      ; M2\m21..24
+      !PSHUFD  XMM0, XMM2, 00000000b
+      !MULPS   XMM0, XMM3              ; (M1\m11..14) * M2.m21
+
+      !PSHUFD  XMM1, XMM2, 01010101b
+      !MULPS   XMM1, XMM4              ; (M1\m21..24) * M2.m23
+      !ADDPS   XMM0, XMM1
+
+      !PSHUFD  XMM1, XMM2, 10101010b
+      !MULPS   XMM1, XMM5              ; (M1\m31..34) * M2.m23
+      !ADDPS   XMM0, XMM1
+
+      !PSHUFD  XMM1, XMM2, 11111111b
+      !MULPS   XMM1, XMM6              ; (M1\m41..44) * M2.m24
+      !ADDPS   XMM0, XMM1
+
+      !MOVUPS  [REGA + $10], XMM0      ; OUT\m21..24
+
+      ; Spalte 2
+      !MOVUPS  XMM2, [REGD + $20]      ; M2\m31..34
+
+      !PSHUFD  XMM0, XMM2, 00000000b
+      !MULPS   XMM0, XMM3
+
+      !PSHUFD  XMM1, XMM2, 01010101b
+      !MULPS   XMM1, XMM4
+      !ADDPS   XMM0, XMM1
+
+      !PSHUFD  XMM1, XMM2, 10101010b
+      !MULPS   XMM1, XMM5
+      !ADDPS   XMM0, XMM1
+
+      !PSHUFD  XMM1, XMM2, 11111111b
+      !MULPS   XMM1, XMM6
+      !ADDPS   XMM0, XMM1
+
+      !MOVUPS  [REGA + $20], XMM0      ; OUT\m31..34
+
+      ; Spalte 3
+      !MOVUPS  XMM2, [REGD + $30]      ; M2\m41..44
+
+      !PSHUFD  XMM0, XMM2, 00000000b
+      !MULPS   XMM0, XMM3
+
+      !PSHUFD  XMM1, XMM2, 01010101b
+      !MULPS   XMM1, XMM4
+      !ADDPS   XMM0, XMM1
+
+      !PSHUFD  XMM1, XMM2, 10101010b
+      !MULPS   XMM1, XMM5
+      !ADDPS   XMM0, XMM1
+
+      !PSHUFD  XMM1, XMM2, 11111111b
+      !MULPS   XMM1, XMM6
+      !ADDPS   XMM0, XMM1
+
+      !MOVUPS [REGA + $30], XMM0       ; OUT\m41..44
+       
+      ; ----------------------------------------------------------------------
+      ; now resotre XMM-Register 6..7
+      ASM_POP_XMM_4to5(REGC)    ; normaly volatile -> Empty Macro
+      ASM_POP_XMM_6to7(REGC)    ; nonVolatil
+      ; ----------------------------------------------------------------------
+      DisableASM 
+  EndMacro
+  
+  ;- ----------------------------------------------------------------------
+  ;- Classic Macros
+  ;- ----------------------------------------------------------------------
+  
+  ; Macros for Classic Versions without SSE
+  Macro mac_Vector_ADD(OUT, IN1, IN2)
+    OUT\x= IN1\x + IN2\x   
+    OUT\y= IN1\y + IN2\y   
+    OUT\z= IN1\z + IN2\z   
+    OUT\w= IN1\w + IN2\w   
+  EndMacro
+  
+  Macro mac_Vector_SUB(OUT, IN1, IN2)
+    OUT\x= IN1\x - IN2\x   
+    OUT\y= IN1\y - IN2\y   
+    OUT\z= IN1\z - IN2\z   
+    OUT\w= IN1\w - IN2\w     
+  EndMacro
+  
+  Macro mac_Vector_MUL(OUT, IN1, IN2)
+    OUT\x= IN1\x * IN2\x   
+    OUT\y= IN1\y * IN2\y   
+    OUT\z= IN1\z * IN2\z   
+    OUT\w= IN1\w * IN2\w     
+  EndMacro
+  
+  Macro mac_Vector_DIV(OUT, IN1, IN2)
+    OUT\x= IN1\x / IN2\x   
+    OUT\y= IN1\y / IN2\y   
+    OUT\z= IN1\z / IN2\z   
+    OUT\w= IN1\w / IN2\w     
+  EndMacro
+  
+  Macro mac_Vector_Min(OUT, IN1, IN2)
+	  
+	  If IN1\X < IN2\X
+	    OUT\X = IN1\X
+	  Else
+      OUT\X = IN2\X
+    EndIf
+    
+	  If IN1\Y < IN2\Y
+	    OUT\Y = IN1\Y
+	  Else
+      OUT\Y = IN2\Y
+    EndIf
+    
+ 	  If IN1\Z < IN2\Z
+	    OUT\Z = IN1\Z
+	  Else
+      OUT\Z = IN2\Z
+    EndIf
+    
+    If IN1\W < IN2\W
+	    OUT\W = IN1\W
+	  Else
+      OUT\W = IN2\W
+    EndIf
+  EndMacro
+  
+	Macro mac_Vector_Max(OUT, IN1, IN2)  
+	  If IN1\X > IN2\X
+	    OUT\X = IN1\X
+	  Else
+      OUT\X = IN2\X
+    EndIf   
+    
+	  If IN1\Y > IN2\Y
+	    OUT\Y = IN1\Y
+	  Else
+      OUT\Y = IN2\Y
+    EndIf    
+    
+ 	  If IN1\Z > IN2\Z
+	    OUT\Z = IN1\Z
+	  Else
+      OUT\Z = IN2\Z
+    EndIf    
+    
+    If IN1\W > IN2\W
+	    OUT\W = IN1\W
+	  Else
+      OUT\W = IN2\W
+    EndIf
+  EndMacro
+    
+  Macro mac_Vector_Scale(OUT, IN, Factor)
+    OUT\x= IN\x * Factor   
+    OUT\y= IN\y * Factor   
+    OUT\z= IN\z * Factor    
+    OUT\w= IN\w ; * Factor     
+  EndMacro
+  
+  Macro mac_Vector_CrossProduct(OUT, IN1, IN2)
+ 		Out\X = IN1\Y * IN2\Z - IN1\Z * IN2\Y
+		Out\Y = IN1\Z * IN2\X - IN1\X * IN2\Z
+		Out\Z = IN1\X * IN2\Y - IN1\Y * IN2\X
+		Out\W = 0
+	EndMacro
+	
+	Macro mac_Lerp(ValStart, ValEnd, T)   
+  ; ============================================================================
+  ; NAME: Lerp
+  ; DESC: Blending between ValStart..ValEnd from 0..100% with T={0..1}
+  ; DESC: 
+  ; VAR(ValStart): Startvalue A 
+  ; VAR(ValEnd)  : Endvalue   B 
+  ; VAR(T) : Time Value {0..1} = {0..100%}
+  ; RET : Lerped Value in the Range {ValStart..ValEnd}
+  ; ============================================================================
+	  
+	 ; For Lerp we have to call the Macro for each Coordinate X,Y,Z,[W]
+
+    ValStart + (ValEnd-ValStart) * T   ; A*(1-T) + B*T
+  EndMacro
+	
+  Macro mac_Remap(val, inMin, inMax, outMin, outMax)
+  ; ============================================================================
+  ; NAME: Remap
+  ; DESC: Scales a value what is in the 
+  ; DESC: Range {inMin..inMax} ro a new Range {outMin..outMax}
+  ; DESC: 
+  ; DESC:                       (outMax - outMinOut)
+  ; DESC: ret = (val - inMin) ------------------------  + outMin
+  ; DESC:                         (inMax - inMin) 
+  ; DESC: 
+  ; VAR(val) : Pointer to Return-Vector VECf::TVector
+  ; VAR(inMin) : Input Range Minimum
+  ; VAR(inMax) : Input Range Maximum
+  ; VAR(outMin): Output Range Minimum
+  ; VAR(outMax): Output Range Maximum
+  ; RET : the Value val scaled to the Output Range
+  ; ============================================================================
+    
+    ; For Remap we have to call the Macro for each Coordinate X,Y,Z,[W]
+    (outMax - outMin)/(inMax - inMin) * (val - inMin) + outMin
+  EndMacro
+  
+	Macro mac_Vector_X_Matrix(OUT, IN, Matrix)
+ 	  ; 3D
+; 	  OUT\x = IN\x * Matrix\m11 + IN\y * Matrix\m12 + IN\z * Matrix\m13
+; 	  OUT\y = IN\x * Matrix\m21 + IN\y * Matrix\m22 + IN\z * Matrix\m23
+;     OUT\z = IN\x * Matrix\m31 + IN\y * Matrix\m32 + IN\z * Matrix\m33
+	  
+	  ; 4D
+	  OUT\x = IN\x * Matrix\m11 + IN\y * Matrix\m12 + IN\z * Matrix\m13 + IN\w * Matrix\m14
+	  OUT\y = IN\x * Matrix\m21 + IN\y * Matrix\m22 + IN\z * Matrix\m23 + IN\w * Matrix\m24
+    OUT\z = IN\x * Matrix\m31 + IN\y * Matrix\m32 + IN\z * Matrix\m33 + IN\w * Matrix\m34
+    OUT\w = IN\x * Matrix\m41 + IN\y * Matrix\m42 + IN\z * Matrix\m43 + IN\w * Matrix\m44	  
+	EndMacro
+	
+	Macro mac_Matrix_X_Matrix(OUT, A, B)   
+	  
+    OUT\m11 = A\m11 * B\m11 + A\m12 * B\m21 + A\m13 * B\m31 + A\m14 * B\m41  
+  	OUT\m12 = A\m11 * B\m12 + A\m12 * B\m22 + A\m13 * B\m32 + A\m14 * B\m42
+  	OUT\m13 = A\m11 * B\m13 + A\m12 * B\m23 + A\m13 * B\m33 + A\m14 * B\m43
+  	OUT\m14 = A\m11 * B\m14 + A\m12 * B\m24 + A\m13 * B\m34 + A\m14 * B\m44
+  	                                                         
+  	OUT\m21 = A\m21 * B\m11 + A\m22 * B\m21 + A\m23 * B\m31 + A\m24 * B\m41
+  	OUT\m22 = A\m21 * B\m12 + A\m22 * B\m22 + A\m23 * B\m32 + A\m24 * B\m42
+  	OUT\m23 = A\m21 * B\m13 + A\m22 * B\m23 + A\m23 * B\m33 + A\m24 * B\m43
+  	OUT\m24 = A\m21 * B\m14 + A\m22 * B\m24 + A\m23 * B\m34 + A\m24 * B\m44
+                                                             
+  	OUT\m31 = A\m31 * B\m11 + A\m32 * B\m21 + A\m33 * B\m31 + A\m34 * B\m41
+  	OUT\m32 = A\m31 * B\m12 + A\m32 * B\m22 + A\m33 * B\m32 + A\m34 * B\m42
+  	OUT\m33 = A\m31 * B\m13 + A\m32 * B\m23 + A\m33 * B\m33 + A\m34 * B\m43
+  	OUT\m34 = A\m31 * B\m14 + A\m32 * B\m24 + A\m33 * B\m34 + A\m34 * B\m44
+                                                             
+  	OUT\m41 = A\m41 * B\m11 + A\m42 * B\m21 + A\m43 * B\m31 + A\m44 * B\m41
+  	OUT\m42 = A\m41 * B\m12 + A\m42 * B\m22 + A\m43 * B\m32 + A\m44 * B\m42
+  	OUT\m43 = A\m41 * B\m13 + A\m42 * B\m23 + A\m43 * B\m33 + A\m44 * B\m43
+  	OUT\m44 = A\m41 * B\m14 + A\m42 * B\m24 + A\m43 * B\m34 + A\m44 * B\m44
+        	
+  EndMacro
+    
+  ;- ======================================================================
+  ;- Module Public Functions
+  ;- ======================================================================
+  
+  ;  ----------------------------------------------------------------------
+  ;- Vector-Functions
+  ;-  ----------------------------------------------------------------------
+
+  Procedure.i Vector_Add(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
+  ; ============================================================================
+  ; NAME: Vector_ADD
+  ; DESC: Add to Vectors Out = IN1 + IN2
+  ; VAR(*OUT.TVector) : Pointer to Return-Vector VECf::TVector
+  ; VAR(*IN1.TVector) : Pointer to IN1-Vector VECf::TVector
+  ; VAR(*IN2.TVector) : Pointer to IN2-Vector VECf::TVector    
+  ; RET.i : *OUT
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)    ; Check Pointer Exception
+  
+    CompilerSelect #PbFwCfg_Module_Compile
+      
+      CompilerCase #PbFwCfg_Module_Compile_ASM64        ; 64 Bit-Version        
+        ASM_Vector_Add(RAX, RDX, RCX)         ; for x64 we use RAX,RDX,RCX
+        ProcedureReturn ; RAX
+               
+      CompilerCase #PbFwCfg_Module_Compile_ASM32        ; 32 Bit Version
+        ASM_Vector_Add(EAX, EDX, ECX)         ; for x32 we use Registers EAX,EDX,ECX
+        ProcedureReturn ; EAX
+      
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
+        mac_Vector_ADD(*OUT, *IN1, *IN2)    
+        ProcedureReturn *OUT
+
+      CompilerDefault             ; Classic Version
+        mac_Vector_ADD(*OUT, *IN1, *IN2)     
+        ProcedureReturn *OUT
+
+    CompilerEndSelect  
+  EndProcedure
+  
+  Procedure.i Vector_Sub(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
+  ; ============================================================================
+  ; NAME: Vector_SUB
+  ; DESC: SUBtract to Vectors Out = IN1 - IN2
+  ; VAR(*OUT.TVector) : Pointer to Return-Vector VECf::TVector
+  ; VAR(*IN1.TVector) : Pointer to IN1-Vector VECf::TVector
+  ; VAR(*IN1.TVector) : Pointer to IN1-Vector VECf::TVector    
+  ; RET.i : *OUT
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)    ; Check Pointer Exception
+
+     CompilerSelect #PbFwCfg_Module_Compile
+          
+      CompilerCase #PbFwCfg_Module_Compile_ASM64        ; 64 Bit-Version
+        ASM_Vector_SUB(RAX, RDX, RCX)         ; for x64 we use RAX,RDX,RCX
+        ProcedureReturn ; RAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM32        ; 32 Bit Version
+        ASM_Vector_SUB(EAX, EDX, ECX)         ; for x32 we use Registers EAX,EDX,ECX
+        ProcedureReturn ; EAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
+        mac_Vector_SUB(*OUT, *IN1, *IN2)        
+        ProcedureReturn *OUT
+
+      CompilerDefault             ; Classic Version
+        mac_Vector_SUB(*OUT, *IN1, *IN2)     
+        ProcedureReturn *OUT
+
+    CompilerEndSelect  
+  EndProcedure
+  
+  Procedure.i Vector_Mul(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
+  ; ============================================================================
+  ; NAME: Vector_Mul
+  ; DESC: Multiply to Vectors Out = IN1 * IN2
+  ; VAR(*OUT.TVector) : Pointer to Return-Vector VECf::TVector
+  ; VAR(*IN1.TVector) : Pointer to IN1-Vector VECf::TVector
+  ; VAR(*IN1.TVector) : Pointer to IN1-Vector VECf::TVector    
+  ; RET.i : *OUT
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)    ; Check Pointer Exception
+
+    CompilerSelect #PbFwCfg_Module_Compile
+      
+      CompilerCase #PbFwCfg_Module_Compile_ASM64        ; 64 Bit-Version
+        ASM_Vector_Mul(RAX, RDX, RCX)         ; for x64 we use RAX,RDX,RCX
+        ProcedureReturn ; RAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM32        ; 32 Bit Version
+        ASM_Vector_Mul(EAX, EDX, ECX)         ; for x32 we use Registers EAX,EDX,ECX
+        ProcedureReturn ; EAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_C  ; for the C-Backend
+         mac_Vector_MUL(*OUT, *IN1, *IN2)        
+         ProcedureReturn *OUT 
+
+      CompilerDefault             ; Classic Version
+        mac_Vector_MUL(*OUT, *IN1, *IN2)        
+        ProcedureReturn *OUT 
+
+    CompilerEndSelect  
+  EndProcedure
+  
+  Procedure.i Vector_Div(*OUT.TVector, *IN1.TVector, *IN2.TVector) 
+  ; ============================================================================
+  ; NAME: Vector_Mul
+  ; DESC: Divide to Vectors Out = IN1 / IN2
+  ; VAR(*OUT.TVector) : Pointer to Return-Vector VECf::TVector
+  ; VAR(*IN1.TVector) : Pointer to IN1-Vector VECf::TVector
+  ; VAR(*IN1.TVector) : Pointer to IN1-Vector VECf::TVector    
+  ; RET.i : *OUT
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)    ; Check Pointer Exception
+
+    CompilerSelect #PbFwCfg_Module_Compile
+   
+      CompilerCase #PbFwCfg_Module_Compile_ASM64       ; 64 Bit-Version
+        ASM_Vector_Div(RAX, RDX, RCX) ; for x64 we use RAX,RDX,RCX
+        ProcedureReturn ; RAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM32       ; 32 Bit Version
+        ASM_Vector_Div(EAX, EDX, ECX) ; for x32 we use Registers EAX,EDX,ECX
+        ProcedureReturn ; EAX
+       
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
+        mac_Vector_DIV(*OUT, *IN1, *IN2)        
+        ProcedureReturn *OUT
+
+      CompilerDefault             ; Classic Versio  
+        mac_Vector_DIV(*OUT, *IN1, *IN2)        
+        ProcedureReturn *OUT
+     
+    CompilerEndSelect  
+   EndProcedure
+   
+  Procedure.i Vector_Min(*OUT.TVector, *IN1.TVector, *IN2.TVector)
+  ; ============================================================================
+  ; NAME: Vector_Min
+  ; DESC: Calculates the minimum coordiantes of 2 Vectors and return it in a
+  ; DESC: Vector
+  ; VAR(*OUT.TVector) : Pointer to Vector which receives the Min-Coordinates (x,y,z,w)
+  ; VAR(*IN1.TVector) : Pointer to IN1-Vector VECf::TVector
+  ; VAR(*IN2.TVector) : Pointer to IN1-Vector VECf::TVector
+  ; RET.i : *OUT
+  ; ============================================================================
+    ; Das Krezprodukt ergbigt einen zu den beiden Vectoren senkrechten Vector
+    
+    DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)    ; Check Pointer Exception
+
+    CompilerSelect #PbFwCfg_Module_Compile
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM64             ; 64 Bit-Version
+        ASM_Vector_Min(RAX, RDX, RCX)       ; for x64 we use RAX,RDX,RCX
+ 			  ProcedureReturn ; RAX
+ 			   			
+      CompilerCase #PbFwCfg_Module_Compile_ASM32             ; 32 Bit Version
+        ASM_Vector_Min(EAX, EDX, ECX)       ; for x32 we use Registers EAX,EDX,ECX
+  			ProcedureReturn ; EAX
+  			
+      CompilerCase #PbFwCfg_Module_Compile_C       ; for the C-Backend
+        mac_Vector_Min(*OUT, *IN1, *IN2)       
+        ProcedureReturn *OUT
+
+      CompilerDefault                       ; Classic Version
+        mac_Vector_Min(*OUT, *IN1, *IN2)       
+        ProcedureReturn *OUT
+
+    CompilerEndSelect     
+  EndProcedure
+  
+  Procedure.i Vector_Max(*OUT.TVector, *IN1.TVector, *IN2.TVector)
+  ; ============================================================================
+  ; NAME: Vector_Max
+  ; DESC: Calculates the maximum coordiantes of 2 Vectors and return it in a
+  ; DESC: Vector
+  ; VAR(*OUT.TVector) : Pointer to Vector which receives the Max-Coordinates (x,y,z,w)
+  ; VAR(*IN1.TVector) : Pointer to IN1-Vector VECf::TVector
+  ; VAR(*IN2.TVector) : Pointer to IN1-Vector VECf::TVector
+  ; RET.i : *OUT
+  ; ============================================================================
+    ; Das Krezprodukt ergbigt einen zu den beiden Vectoren senkrechten Vector
+    
+    DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)    ; Check Pointer Exception
+
+    CompilerSelect #PbFwCfg_Module_Compile
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM64             ; 64 Bit-Version
+        ASM_Vector_Min(RAX, RDX, RCX)       ; for x64 we use RAX,RDX,RCX
+ 			  ProcedureReturn ; RAX
+  			
+      CompilerCase #PbFwCfg_Module_Compile_ASM32             ; 32 Bit Version
+        ASM_Vector_Min(EAX, EDX, ECX)       ; for x32 we use Registers EAX,EDX,ECX
+  			ProcedureReturn ; EAX
+  			
+      CompilerCase #PbFwCfg_Module_Compile_C       ; for the C-Backend
+        mac_Vector_Min(*OUT, *IN1, *IN2)       
+        ProcedureReturn *OUT
+
+      CompilerDefault                       ; Classic Version
+        mac_Vector_Max(*OUT, *IN1, *IN2)       
+        ProcedureReturn *OUT
+
+    CompilerEndSelect     
+  EndProcedure
+  
+  ; ----------------------------------------------------------------------------------------------------
+  ; H O W  T O  S H U F F L E  ?  (reorder Elements!)
+  ; ----------------------------------------------------------------------------------------------------
+  ; XMM-Register      [ HH | HL | LH | LL ]  HH,HL,LH,LL are the 4 values
+  ; Position-Index    [  3 |  2 |  1 |  0 ]  The Position Index, we need for Shuffle-Command, Position Index ix coded in 2-Bits
+  ; Swap Position     [  0 |  1 |  2 |  3 ]  0-LL is on highest position than 1-LH, 2-HL, 3-HH
+  ; Bit-Coded Mask    [ 00 | 01 | 10 | 11 ]  so our Shuffle-Mask is 00011011-Binary = $1B Hex
+  ; ----------------------------------------------------------------------------------------------------
+  ; In SSE it is !PSHUFD Command in AVX is VPERMPD
+  
+  ; A Shuffle description video on Youtube: https://www.youtube.com/watch?v=MOb9SZOdcXk
+
+  Procedure.i Vector_Swap(*OUT.TVector, *IN.Tvector)
+  ; ============================================================================
+  ; NAME: Vector_Swap
+  ; DESC: Swaps the postion of the Vector coordinates
+  ; DESC: OUT(X) = IN(W)
+  ; DESC: OUT(Y) = IN(Z)
+  ; DESC: OUT(Z) = IN(Y)
+  ; DESC: OUT(W) = IN(X)
+  ; VAR(*OUT.TVector) : Pointer to Return-Vector VECf::TVector
+  ; VAR(*IN1.TVector) : Pointer to IN1-Vector VECf::TVector
+  ; RET.i : *OUT
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer2(*OUT, *IN)    ; Check Pointer Exception
+
+    CompilerSelect #PbFwCfg_Module_Compile
+      
+      CompilerCase #PbFwCfg_Module_Compile_ASM64   ; 64 Bit-Version
+        ASM_Vector_Swap(RAX, RDX, RCX) ; for x64 we use RAX,RDX,RCX
+        ProcedureReturn ; RAX
+       
+      CompilerCase #PbFwCfg_Module_Compile_ASM32   ; 32 Bit Version
+        ASM_Vector_Swap(EAX, EDX, ECX) ; for x32 we use Registers EAX,EDX,ECX
+        ProcedureReturn ; EAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
+        *OUT\x = *IN\w
+        *OUT\y = *IN\z
+        *OUT\y = *IN\y
+        *OUT\w = *IN\x      
+        ProcedureReturn *OUT
+
+      CompilerDefault             ; Classic Version
+        *OUT\x = *IN\w
+        *OUT\y = *IN\z
+        *OUT\y = *IN\y
+        *OUT\w = *IN\x
+        ProcedureReturn *OUT
+
+    CompilerEndSelect     
+   EndProcedure
+  
+  Procedure.i Vector_Copy(*OUT.TVector, *IN.TVector)
+  ; ============================================================================
+  ; NAME: Vector_Copy
+  ; DESC: Copies Vector OUT = IN
+  ; DESC: we need this Copy-Function because PureBasic can't copy the
+  ; DESC: DataPart of a Pointer directly. *OUT = *IN just copys the pointer
+  ; DESC: not the Datas
+  ; VAR(*OUT): Pointer to Return-Vector VECf::TVector
+  ; VAR(*IN) : Pointer to IN1-Vector VECf::TVector
+  ; RET.i : *OUT
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer2(*OUT, *IN)    ; Check Pointer Exception
+    
+    CompilerSelect #PbFwCfg_Module_Compile
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM64       ; 64 Bit-Version
+        !MOV RAX, [p.p_OUT]
+        !MOV RDX, [p.p_IN]
+        !MOVLPS XMM0, [RDX]           ; IN Lo-64
+        !MOVHPS XMM0, [RDX+8]         ; IN Hi-64
+        !MOVLPS [RAX], XMM0           ; Out Lo-64
+        !MOVHPS [RAX+8], XMM0         ; Out Hi 64
+        ProcedureReturn     ; RAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM32     ; 32 Bit Version
+        !MOV EAX, [p.p_OUT]
+        !MOV EDX, [p.p_IN]
+        !MOVLPS XMM0, [EDX]           ; IN Lo-64
+        !MOVHPS XMM0, [EDX+8]         ; IN Hi-64
+        !MOVLPS [EAX], XMM0           ; Out Lo-64
+        !MOVHPS [EAX+8], XMM0         ; Out Hi 64
+        ProcedureReturn     ; EAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
+        CopyMemory(*IN, *OUT, SizeOf(TVector))
+        ProcedureReturn *OUT
+        
+      CompilerDefault                   ; Classic Version
+        CopyMemory(*IN, *OUT, SizeOf(TVector))
+        ProcedureReturn *OUT
+
+    CompilerEndSelect       
+  EndProcedure
+  
+  Procedure.i Vector_Set(*OUT.TVector, X.w=0.0, Y.w=0.0, Z.w=0.0, W.w=0.0)
+  ; ============================================================================
+  ; NAME: Vector_Set
+  ; DESC: Sets the Vector coordinates
+  ; VAR(*OUT.TVector): Pointer to Return-Vector VECf::TVector
+  ; VAR(X.f) : The X-value
+  ; VAR(Y.f) : The Y-value
+  ; VAR(Z.f) : The Z-value
+  ; VAR(W.f) : The W-value
+  ; RET.i : *OUT
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer(*OUT)    ; Check Pointer Exception
+    
+    CompilerSelect #PbFwCfg_Module_Compile
+      ; using MMX-Register to copy 4xFloat directly from Stack to destination
+      ; AMD Code Optimation Guide: for unaligned Data, 2x 64Bit Moves are better
+      ; MOVLPS and MOVHPS do not clear upper Bits of the Register
+      ; MOVLPS = 2 Cyles! MOVUPS on 128Bit = 4 Cycles; MOVLPS + MOVHPS are proceeded
+      ; parallel, so the to commands MOVLPS + MOVHPS together need 2 Cycles
+       
+     CompilerCase #PbFwCfg_Module_Compile_ASM64     ; 64 Bit-Version
+       ; at x64 an 8-Byte-Align is used, so we can not copy the complete Vector
+       ; directly from the Stack. We have to use 4 seperate operations!
+      With *OUT
+        \X = X
+        \Y = Y
+        \Z = Z
+        \W = W
+      EndWith
+;       Debug "VectorSet-Pointers"    ; 8-Byte-Align for 4 Byte Values
+;       Debug @X
+;       Debug @Y
+;       Debug @Z
+              
+      CompilerCase #PbFwCfg_Module_Compile_ASM32     ; 32 Bit Version
+        !LEA EDX, [p.v_X]
+        !MOV EAX, [p.p_OUT]
+        ;!MOVUPS XMM0, [EDX]          ; AMD Code Optimation Guide page 214:
+        !MOVLPS XMM0, [EDX]           ; "for unaligned Data, 2 64 Bit Moves
+        !MOVHPS XMM0, [EDX+8]         ; are faster"
+         ;!MOVUPS [EAX], XMM0
+        !MOVLPS [EAX],   XMM0
+        !MOVHPS [EAX+8], XMM0
+        ProcedureReturn   ; EAX
+       
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
+        With *OUT
+          \X = X
+      	  \Y = Y
+      	  \Z = Z
+      	  \W = W
+    	  EndWith
+    	  ProcedureReturn *Out
+        
+      CompilerDefault                   ; Classic Version
+         With *OUT
+          \X = X
+      	  \Y = Y
+      	  \Z = Z
+      	  \W = W
+    	  EndWith
+    	  ProcedureReturn *Out
+       
+    CompilerEndSelect  
+  
+  EndProcedure
+  
+  Procedure.w Vector_Length(*IN.TVector)
+  ; ============================================================================
+  ; NAME: Vector_Length
+  ; DESC: Calculates the Vector Length L=SQRT(x² + y² + z²) 
+  ; VAR(*IN.TVector): Pointer to the Vector VECf::TVector
+  ; RET.f :  The Vector length
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer(*IN)    ; Check Pointer Exception
+
+    ProcedureReturn Sqr( *IN\X * *IN\X + *IN\Y * *IN\Y + *IN\Z * *IN\Z )
+  EndProcedure 
+  
+  Procedure.i Vector_Normalize(*InOut.TVector)
+  ; ============================================================================
+  ; NAME: Vector_Normalize
+  ; DESC: Normalize a Vector to Length=1
+  ; VAR(*InOut.TVector): Pointer to the Vector VECf::TVector
+  ; RET.f :  The Vector length
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer(*InOut)    ; Check if Pointers is 0
+
+    Protected Length.w = Vector_Length(*InOut)
+  	If Length
+  		Length = 1.0 / Length
+  		*InOut\X * Length
+  		*InOut\Y * Length
+  		*InOut\Z * Length
+  	EndIf
+  	ProcedureReturn *InOut
+  EndProcedure
+  
+  Procedure.w Vector_Scalar(*IN1.TVector, *IN2.TVector)
+  ; ============================================================================
+  ; NAME: Vector_Scalar
+  ; DESC: Calculates the Scalar Product of 2 Vectors
+  ; DESC: S = v1(x) * v2(x) + v1(y) * v2(y) + v1(z) * v2(z)
+  ; VAR(*IN1) : Pointer to IN1-Vector VECf::TVector
+  ; VAR(*IN1) : Pointer to IN1-Vector VECf::TVector    
+  ; RET.f :  The Scalar Product
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer2(*IN1, *IN2)    ; Check Pointer Exception
+
+    ProcedureReturn *IN1\X * *IN2\X + *IN1\Y * *IN2\Y + *IN1\Z * *IN2\Z
+  EndProcedure
+
+  Procedure.i Vector_Scale(*OUT.TVector, *IN.TVector, Factor.w)
+  ; ============================================================================
+  ; NAME: Vector_Scale
+  ; DESC: Scales a Vector with a Factor V() * Factor
+  ; VAR(*OUT.TVector): Pointer To Return-Vector VECf::TVector
+  ; VAR(*IN.TVector) : Pointer to IN1-Vector VECf::TVector
+  ; VAR(Factor.f): The scaling factor
+  ; RET.i : *OUT
+  ; ============================================================================
+   
+    DBG::mac_CheckPointer2(*OUT, *IN)     ; Check Pointer Exception
+
+    CompilerSelect #PbFwCfg_Module_Compile
+      
+      CompilerCase #PbFwCfg_Module_Compile_ASM64    ; 64 Bit-Version       
+        ASM_Vector_Scale(RAX, RDX, RCX)   ; for x64 we use RAX,RDX,RCX
+        ProcedureReturn ; RAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM32    ; 32 Bit Version
+        ASM_Vector_Scale(EAX, EDX, ECX)   ; for x32 we use Registers EAX,EDX,ECX
+        ProcedureReturn ; EAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
+        mac_Vector_Scale(*OUT, *IN, Factor)        
+        ProcedureReturn *OUT
+
+      CompilerDefault                     ; Classic Version
+        mac_Vector_Scale(*OUT, *IN, Factor)        
+        ProcedureReturn *OUT
+
+    CompilerEndSelect   
+  EndProcedure
+  
+  Procedure.i Vector_CrossProduct(*OUT.TVector, *IN1.TVector, *IN2.TVector)
+  ; ============================================================================
+  ; NAME: VectorCrossProduct
+  ; DESC: Calculates the Vector-Cross-Product
+  ; VAR(*OUT.TVector): Pointer to Return-Vector VECf::TVector
+  ; VAR(*IN1.TVector) : Pointer to IN1-Vector VECf::TVector
+  ; VAR(*IN2.TVector) : Pointer to IN2-Vector VECf::TVector
+  ; RET.i : *OUT
+  ; ============================================================================
+   ; Das Krezprodukt ergbigt einen zu den beiden Vectoren senkrechten Vector        
+     
+    DBG::mac_CheckPointer3(*OUT, *IN1, *IN2)      ; Check Pointer Exception
+    
+    CompilerSelect #PbFwCfg_Module_Compile
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM64            ; 64 Bit-Version
+        ASM_Vector_CrossProduct(RAX, RDX, RCX)    ; for x64 we use RAX,RDX,RCX
+ 			  ProcedureReturn ; RAX
+  			
+      CompilerCase #PbFwCfg_Module_Compile_ASM32            ; 32 Bit Version
+        ASM_Vector_CrossProduct(EAX, EDX, ECX)    ; for x32 we use Registers EAX,EDX,ECX
+  			ProcedureReturn ; EAX
+  			
+      CompilerCase #PbFwCfg_Module_Compile_C      ; for the C-Backend
+        mac_Vector_CrossProduct(*Out, *IN1, *IN2)       
+        ProcedureReturn *OUT
+
+      CompilerDefault                             ; Classic Version
+        mac_Vector_CrossProduct(*Out, *IN1, *IN2)       
+        ProcedureReturn *OUT
+
+    CompilerEndSelect    
+  EndProcedure
+  
+  Procedure Vector_Lerp(*OUT.TVector, *A.TVector, *B.TVector, T.w)
+  ; ============================================================================
+  ; NAME: Vector_Lerp
+  ; DESC: Blending from IN1 to IN2 from 0..100% with T={0..1}
+  ; DESC: This can be used for straight moving in a 3D Space form Point IN1 to IN2
+  ; DESC: according to the Time Value T
+  ; VAR(*A.TVector): Start Vector  (from)
+  ; VAR(*B.TVector): End Vector    (to)
+  ; VAR(T) : Time Value {0..1} = {0..100%}
+  ; VAR(xLerpW): #False = do not Lerp \w Coordinate, #True = Lerp \w 
+  ; RET : Lerped Vector in the Range {IN1..IN2}
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer3(*OUT, *A, *B)     ; Check Pointer Exception
+
+    CompilerSelect #PbFwCfg_Module_Compile
+      
+      CompilerCase #PbFwCfg_Module_Compile_ASM64    ; 64 Bit-Version              
+        ASM_Vector_Lerp(RAX, RDX, RCX)    ; for x64 we use RAX,RDX,RCX
+        ; maybe here we must save EAX, to not overwrite during following If
+        ProcedureReturn ; RAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM32    ; 32 Bit Version        
+        ASM_Vector_Lerp(EAX, EDX, ECX)    ; for x32 we use Registers EAX,EDX,ECX
+        ; maybe here we must save EAX, to not overwrite during following If
+       ProcedureReturn ; EAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
+        *OUT\x = mac_Lerp(*A\x, *B\x, T)        
+        *OUT\y = mac_Lerp(*A\y, *B\y, T)        
+        *OUT\z = mac_Lerp(*A\x, *B\z, T)        
+        *OUT\w = mac_Lerp(*A\w, *B\w, T)   
+        ProcedureReturn *OUT
+
+      CompilerDefault                     ; Classic Version
+        *OUT\x = mac_Lerp(*A\x, *B\x, T)        
+        *OUT\y = mac_Lerp(*A\y, *B\y, T)        
+        *OUT\z = mac_Lerp(*A\x, *B\z, T)        
+        *OUT\w = mac_Lerp(*A\w, *B\w, T)   
+        ProcedureReturn *OUT
+
+    CompilerEndSelect   
+  
+  EndProcedure
+  
+  Procedure.w Vector_InverseLerp(*A.TVector, *B.TVector, *V.TVector, XYZW.i=#VEC_X)
+  ; ============================================================================
+  ; NAME: Vector_InverseLerp
+  ; DESC: Get the BlendingTime T{0..1} of the Value V in the Range 
+  ; DESC: This can be used to get Back the Time Position of the Vector in the Range {A..B}
+  ; DESC: or you can interpret this as Postion in % between A and B
+  ; VAR(*A.TVector): Start Vector  (from)
+  ; VAR(*B.TVector): End Vector    (to)
+  ; VAR(*V.TVector): Vector to calculate Time for
+  ; VAR(XYZW.i): Index fo Vector Coordinate to use for the calculation. 
+  ;              use {X,Y,Z,W}={0,1,2,3} Default=#VEC_X
+  ; RET.d : Time Value {0..1} = {0..100%}
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer3(*A, *B, *V)     ; Check Pointer Exception
+    Protected ret.w
+    
+    Select XYZW
+      Case #VEC_Y
+        ret= (*V\x - *A\x) / (*B\x - *A\x)
+        
+      Case #VEC_Y
+        ret= (*V\y - *A\y) / (*B\y - *A\y)
+        
+      Case #VEC_Z
+        ret= (*V\z - *A\z) / (*B\z - *A\z)
+        
+      Case #VEC_W
+        ret= (*V\w- *A\w) / (*B\w - *A\w)
+        
+      Default   ; any Other Value -> use X-Coordinate
+        ret= (*V\x - *A\x) / (*B\x - *A\x)
+    EndSelect
+    ProcedureReturn ret
+  EndProcedure
+  
+  Procedure.i Vector_Remap(*OUT.TVector, *IN.TVector, *inMin.TVector, *inMax.TVector, *outMin.TVector, *outMax.TVector, xRemapW=#False)
+  ; ============================================================================
+  ; NAME: Vector_Remap
+  ; DESC: Scales a value what is in the 
+  ; DESC: Range {inMin..inMax} ro a new Range {outMin..outMax}
+  ; DESC: 
+  ; DESC:                       (outMax - outMinOut)
+  ; DESC: ret = (val - inMin) ------------------------  + outMin
+  ; DESC:                         (inMax - inMin) 
+  ; DESC: 
+  ; DESC: This calculation is done for X,Y,Z, W only, if xRemapW=#TRUE
+  ; VAR(*Out.TVector): Pointer to ReturnValue
+  ; VAR(*IN.TVector) : in Value Vector
+  ; VAR(*inMin.TVector) : Input Range Minimum
+  ; VAR(*inMax.TVector) : Input Range Maximum
+  ; VAR(*outMin.TVector): Output Range Minimum
+  ; VAR(*outMax.TVector): Output Range Maximum
+  ; VAR(xRemapW): #False = don't remap Vector\W; #True = remap Vector\W too
+  ; RET : *OUT
+  ; ============================================================================
+    
+    DBG::mac_CheckPointer3(*OUT, *IN, *inMin)         ; Check Pointer Exception
+    DBG::mac_CheckPointer3(*inMax, *outMin, *outMax)  ; Check Pointer Exception
+
+    CompilerSelect #PbFwCfg_Module_Compile
+      
+      CompilerCase #PbFwCfg_Module_Compile_ASM64      ; 64 Bit-Version             
+        ASM_Vector_Remap(RAX, RDX, RCX)     ; for x64 we use RAX,RDX,RCX
+        ProcedureReturn ; RAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM32      ; 32 Bit Version        
+        ASM_Vector_Remap(EAX, EDX, ECX)     ; for x32 we use Registers EAX,EDX,ECX
+        ProcedureReturn ; EAX
+        
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend
+        *OUT\x = mac_Remap(*IN\x, *inMin\x, *inMax\x, *outMin\x, *outMax\x)        
+        *OUT\x = mac_Remap(*IN\y, *inMin\y, *inMax\y, *outMin\y, *outMax\y)        
+        *OUT\x = mac_Remap(*IN\z, *inMin\z, *inMax\z, *outMin\z, *outMax\z)
+        
+        If xRemapW
+          *OUT\x = mac_Remap(*IN\w, *inMin\w, *inMax\w, *outMin\w, *outMax\w)        
+        EndIf        
+        
+        ProcedureReturn *OUT
+
+      CompilerDefault                       ; Classic Version
+        *OUT\x = mac_Remap(*IN\x, *inMin\x, *inMax\x, *outMin\x, *outMax\x)        
+        *OUT\x = mac_Remap(*IN\y, *inMin\y, *inMax\y, *outMin\y, *outMax\y)        
+        *OUT\x = mac_Remap(*IN\z, *inMin\z, *inMax\z, *outMin\z, *outMax\z)
+        
+        If xRemapW
+          *OUT\x = mac_Remap(*IN\w, *inMin\w, *inMax\w, *outMin\w, *outMax\w)        
+        EndIf
+        
+        ProcedureReturn *OUT
+
+    CompilerEndSelect   
+  
+  EndProcedure
+
+  ;- ----------------------------------------------------------------------
+  ;- Matrix-Functions
+  ;- ----------------------------------------------------------------------
+  
+  ;  As Matrix notation  |   As Vector notation
+  ; ------------------------------------------------------
+  ; m11  m12  m13  m14   |   [0]\x  [0]\y  [0]\z  [0]\w 
+  ; m21  m22  m23  m24   |   [1]\x  [1]\y  [1]\z  [1]\w
+  ; m31  m32  m33  m34   |   [2]\x  [2]\y  [2]\z  [2]\w
+  ; m41  m42  m43  m44   |   [3]\x  [3]\y  [3]\z  [3]\w
+  ; -----------------------------------------------------
+  ; m11 == Matrix\v[0]\x  m12 == Matrix\v[0]\y ...
+
+  Procedure.i SetMatrixIdentity(*Matrix.TMatrix) ; EinheitsMatrix
+  ; ============================================================================
+  ; NAME: SetMatrixIdentity
+  ; DESC: Set the Indentity Matrix
+  ; DESC: returns a STL-Solid Structure which conatains all the Triangles.
+  ; VAR(*Matrix) : Pointer to VECf::TMatrix
+  ; RET.i : *Matrix
+  ; ============================================================================
+    
+    ; 3D-Identity Matrix (Einheitsmatrix)
+    ; |1   0   0   0 | 
+    ; |0   1   0   0 | 
+    ; |0   0   1   0 | 
+    ; |0   0   0   1 | 
+    
+    DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
+
+    mac_SetVector(*Matrix\v[0], 1, 0, 0, 0) ; (X ,Y, Z, W)
+	  mac_SetVector(*Matrix\v[1], 0, 1, 0, 0)
+	  mac_SetVector(*Matrix\v[2], 0, 0, 1, 0)
+	  mac_SetVector(*Matrix\v[3], 0, 0, 0, 1) 
+	  
+	  ProcedureReturn *Matrix
+  EndProcedure
+
+  Procedure.i SetMatrixTranslation(*Matrix.TMatrix, dX.w, dY.w, dZ.w)
+  ; ============================================================================
+  ; NAME: SetMatrixTranslation
+  ; DESC: Set the Matrix for Translation operation dX, dY, dZ
+  ; DESC: Translation is a Movement with (dX,dY,dZ)
+  ; VAR(*Matrix.TMatrix) : Pointer to VECf::TMatrix
+  ; VAR(dX) : Delta X (Move in X direction)
+  ; VAR(dY) : Delta Y (Move in Y direction)
+  ; VAR(dZ) : Delta Z (Move in Z direction)
+  ; RET.i : *Matrix
+  ; ============================================================================
+    
+    ; 3D-Translation (Verschiebung)
+    ; |1   0   0   dx | 
+    ; |0   1   0   dy | 
+    ; |0   0   1   dz | 
+    ; |0   0   0    1 | 
+
+    DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
+    
+    mac_SetVector(*Matrix\v[0],  1,  0,  0,  dX) ; (X ,Y, Z, W)
+  	mac_SetVector(*Matrix\v[1],  0,  1,  0,  dY)
+  	mac_SetVector(*Matrix\v[2],  0,  0,  1,  dZ)
+  	mac_SetVector(*Matrix\v[3],  0,  0,  0,  1)
+  	
+	  ProcedureReturn *Matrix
+  EndProcedure
+  
+  Procedure SetMatrixScale(*Matrix.TMatrix, Sx.w, Sy.w, Sz.w)
+  ; ============================================================================
+  ; NAME: SetMatrixScale
+  ; DESC: Set the Matrix for Scaling (Zoom)
+  ; VAR(*Matrix.TMatrix) : Pointer to VECf::TMatrix
+  ; VAR(Sx.f) : Scale factor X
+  ; VAR(Sy.f) : Scale factor Y
+  ; VAR(Sz.f) : Scale factor Z 
+  ; RET.i : *Matrix
+  ; ============================================================================
+    ; 3D-Scaling (Zoom)
+    ; |Sx   0    0   0 | 
+    ; |0   Sy    0   0 | 
+    ; |0    0   Sz   0 | 
+    ; |0    0    0   1 | 
+    
+    DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
+    
+    mac_SetVector(*Matrix\v[0], Sx,   0,   0,  0) ; (X ,Y, Z, W)
+	  mac_SetVector(*Matrix\v[1],  0,  Sy,   0,  0)
+	  mac_SetVector(*Matrix\v[2],  0,   0,  Sz,  0)
+	  mac_SetVector(*Matrix\v[3],  0,   0,   0,  1)
+	  
+	  ProcedureReturn *Matrix
+  EndProcedure
+  
+	Procedure.i SetMatrixRotX(*Matrix.TMatrix, Angle.w)
+  ; ============================================================================
+  ; NAME: SetMatrixRotX
+  ; DESC: Set the Matrix for Rotation arround X-Axis
+  ; VAR(*Matrix.TMatrix) : Pointer to VECf::TMatrix
+	; VAR(Angle.f) : Angle in Radian (use Radain() to convert Degree to Radian
+  ; RET.i : *Matrix
+  ; ============================================================================
+	  
+	  Protected s.w=Sin(Angle)
+	  Protected c.w=Cos(Angle)
+	  
+    ; Rotation X
+    ; | 1     0      0    0 | 
+    ; | 0    cos   -sin   0 | 
+    ; | 0    sin    cos   0 | 
+    ; | 0     0      0    1 | 
+ 	
+    DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
+    
+    mac_SetVector(*Matrix\v[0],  1,  0,   0,  0) ; (X ,Y, Z, W)
+  	mac_SetVector(*Matrix\v[1],  0,  c,  -s,  0)
+  	mac_SetVector(*Matrix\v[2],  0,  s,   c,  0)
+  	mac_SetVector(*Matrix\v[3],  0,  0,   0,  1)   
+ 
+	  ProcedureReturn *Matrix
+  EndProcedure
+	  
+  Procedure.i SetMatrixRotY(*Matrix.TMatrix, Angle.w)
+  ; ============================================================================
+  ; NAME: SetMatrixRotY
+  ; DESC: Set the Matrix for Rotation arround Y-Axis
+  ; VAR(*Matrix.TMatrix) : Pointer to VECf::TMatrix
+	; VAR(Angle.f) : Angle in Radian (use Radain() to convert Degree to Radian
+  ; RET.i : *Matrix
+  ; ============================================================================
+    
+    Protected s.w=Sin(Angle)
+	  Protected c.w=Cos(Angle)
+	  
+    ; Rotation Y
+    ; | cos   0    sin   0 | 
+    ; |  0    1     0    0 | 
+    ; |-sin   0    cos   0 |
+    ; |  0    0     0    1 | 
+	  
+    DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
+    
+    mac_SetVector(*Matrix\v[0],   c, 0,  s, 0) ; (X ,Y, Z, W)
+	  mac_SetVector(*Matrix\v[1],   0, 1,  0, 0)
+	  mac_SetVector(*Matrix\v[2],  -s, 0,  c, 0)
+	  mac_SetVector(*Matrix\v[3],   0, 0,  0, 1)   
+  
+	  ProcedureReturn *Matrix
+  EndProcedure
+  
+  Procedure.i SetMatrixRotZ(*Matrix.TMatrix, Angle.w)
+  ; ============================================================================
+  ; NAME: SetMatrixRotZ
+  ; DESC: Set the Matrix for Rotation arround Z-Axis
+  ; VAR(*Matrix.TMatrix) : Pointer to VECf::TMatrix
+	; VAR(Angle.f) : Angle in Radian (use Radain() to convert Degree to Radian
+  ; RET.i : *Matrix
+  ; ============================================================================
+    
+    Protected s.w=Sin(Angle)
+	  Protected c.w=Cos(Angle)
+	  
+    ; Rotation Z
+    ; |cos   -sin   0   0 | 
+    ; |sin    cos   0   0 |  
+    ; | 0      0    1   0 | 
+    ; | 0      0    0   1 | 
+  	
+    DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
+    
+    mac_SetVector(*Matrix\v[0],  c, -s,  0,  0) ; (X ,Y, Z, W)
+	  mac_SetVector(*Matrix\v[1],  s,  c,  0,  0)
+	  mac_SetVector(*Matrix\v[2],  0,  0,  1,  0)
+	  mac_SetVector(*Matrix\v[3],  0,  0,  0,  1)   
+	  
+	  ProcedureReturn *Matrix
+	EndProcedure
+	
+	Procedure.i SetMatrixRotXYZ(*Matrix.TMatrix, AngleX.w, AngleY.w, AngleZ.w)
+  ; ============================================================================
+  ; NAME: SetMatrixRotXYZ
+  ; DESC: Set the Matrix for Rotation arround all 3-Axis
+  ; VAR(*Matrix.TMatrix) : Pointer to VECf::TMatrix
+  ; VAR(AngleX.f) : Angle X in Radian (use Radain() to convert Degree to Radian
+  ; VAR(AngleY.f) : Angle Y in Radian (use Radain() to convert Degree to Radian
+  ; VAR(AngleZ.f) : Angle Z in Radian (use Radain() to convert Degree to Radian   
+  ; RET.i : *Matrix
+  ; ============================================================================
+    
+    ; compared with DirecDraw3D::_Draw3D_Orientation! It's same - seems o.k.!
+    ; Rotation YX                                XYZ
+    ; | cX     0     sY      0 |  cYcZ          -cYsZ           sY      0
+    ; | sXsY  cX   -sXcY     0 |  sXsYcZ+cXsZ   -sXsYsZ-cXsZ   -sXcY    0
+    ; |-cXsY  sX    cXcY     0 | -cXsYcZ+sXsZ    cXsYsZ-sXcZ    cXcY    0
+    ; | 0      0     0       1 |  0              0              0       1
+    
+    DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
+
+    
+    Protected.w sX, sY, sZ 
+    Protected.w cX, cY, cZ
+      
+    sX=Sin(AngleX) : cX=Cos(AngleX)
+    sY=Sin(AngleY) : cY=Cos(AngleY)
+    sZ=Sin(AngleZ) : cZ=Cos(AngleZ)
+      
+    With *Matrix         
+      \m11= cY*cZ               : \m12= -cY*sZ              :  \m13= sY       : \m14= 0
+      \m21= sX*sY*cZ + cX*sZ    : \m22= -sX*sY*sZ - cX*sZ   :  \M23= -sX*cY   : \m24= 0
+      \m31= sX*sZ - cX*sY*cZ    : \m32= cX*sY*sZ  - sX*cZ   :  \m33= cX*cY    : \m34= 0
+      \m41= 0                   : \m42= 0                   :  \m43= 0        : \m44= 1  
+    EndWith 
+
+    ProcedureReturn *Matrix
+  EndProcedure
+
+  Procedure.i SetMatrixRotXYZ_old(*Matrix.TMatrix, AngleX.w, AngleY.w, AngleZ.w)
+  ; ============================================================================
+  ; NAME: SetMatrixRotXYZ
+  ; DESC: Set the Matrix for Rotation arround all 3-Axis
+  ; VAR(*Matrix.TMatrix) : Pointer to VECf::TMatrix
+  ; VAR(AngleX.f) : Angle X in Radian (use Radain() to convert Degree to Radian
+  ; VAR(AngleY.f) : Angle Y in Radian (use Radain() to convert Degree to Radian
+  ; VAR(AngleZ.f) : Angle Z in Radian (use Radain() to convert Degree to Radian   
+  ; RET.i : *Matrix
+  ; ============================================================================
+    
+    ; hand gerechnetes Ergebins! noch überprüfen!
+    ; Rotation YX                                XYZ
+    ; | cX     0     sY      0 |  cYcZ          -cYsZ           sY      0
+    ; | sXsY  cX   -sXcY     0 |  sXsYcZ+cXsZ   -sXsYsZ-cXsZ   -sXcY    0
+    ; |-cXsY  sX    cXcY     0 | -cXsYcZ+sXsZ    cXsYsZ-sXcZ    cXcY    0
+    ; | 0      0     0       1 |  0              0              0       1
+    
+    DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
+ 
+    Protected m1.TMatrix, m2.TMatrix, m3.TMatrix
+        
+    SetMatrixRotX(m1, AngleX)
+    SetMatrixRotY(m2, AngleY)
+    
+    Matrix_X_Matrix(m3, m1, m2)       ; XY-Matirx
+
+    SetMatrixRotZ(m1, AngleZ)         ; m1 = Z-matrix
+    
+    Matrix_X_Matrix(*Matrix, m1, m3)  ; OUT = Z-Matrix * XY-Matrix
+    
+    ProcedureReturn *Matrix
+  EndProcedure
+    
+  Procedure.i SetMatrixRotAxis(*Matrix.TMatrix, *vecUnit.TVector, Angle.w)
+  ; ============================================================================
+  ; NAME: SetMatrixRotAxis
+  ; DESC: Set the Matrix for Rotation arround an Axis
+  ; VAR(*Matrix.TMatrix) : Pointer to VECf::TMatrix
+  ; VAR(*vecUnit.TVector) : unit Vector of the Axis
+  ; VAR(AngleZ) : Angle in Radian (use Radain() to convert Degree to Radian   
+  ; RET.i : *Matrix
+  ; ============================================================================
+    
+    ; https://de.wikipedia.org/wiki/Drehmatrix
+    ; https://www.geogebra.org/m/pbzkpnwg
+    
+    ; Rotation arround an Axis - AxisUnitVector[x, y, z]
+    
+    ; | x²(1-cos)+cos       x*y(1-cos)-z*sin    x*z(1-cos)+y*sin     0 |
+    ; | x*y(1-cos)+z*sin    y²(1-cos)+cos       y*z(1-cos)-x*sin     0 |  
+    ; | x*z(1-cos)-y*sin    y*z(1-cos)+x*sin    z²(1-cos)+cos        0 |
+    ; | 0                   0                   0                    1 |  
+    
+    DBG::mac_CheckPointer(*Matrix)      ; Check Pointer Exception
+    
+    Protected.w s, c, c1
+    Protected.w xx_c1, yy_c1 , zz_c1, xy_c1, xz_c1, yz_c1, xsA, ysA, zsA
+      
+    s=Sin(Angle)
+    c=Cos(Angle) 
+    c1=1-c    
+     
+    With *vecUnit
+      xx_c1= \x * \x * c1     ; x²(1-cos)
+      yy_c1= \y * \y * c1     ; y²(1-cos)
+      zz_c1= \z * \z * c1     ; z²(1-cos)
+      
+      xy_c1 = \x * \y * c1    ; xy(1-cos)
+      xz_c1 = \x * \z * c1    ; xz(1-cos)
+      yz_c1 = \y * \z * c1    ; xz(1-cos)
+      
+      xsA = \x * s            ; x*sin
+      ysA = \y * s            ; y*sin
+      zsA = \z * s            ; z*sin
+    EndWith
+    
+    With *Matrix         
+     ;\m11= x*x*c1 + c      : \m12= y*x*c1 - z*sA   :  \m13= z*x*c1 + y*sA  : \m14= 0
+      \m11 = xx_c1 + c      : \m12= xy_c1 - zsA     :  \m13= xz_c1 + ysA    : \m14= 0
+      
+     ;\m21= x*y*c1 + z*sA   : \m22= y*y*c1 + c      :  \M23= z*y*c1 - x*sA  : \m24= 0
+      \m21= xy_c1 + zsA     : \m22= yy_c1 + c       :  \M23= yz_c1 - xsA    : \m24= 0
+      
+     ;\m31= x*z*c1 - y*sA   : \m32= y*z*c1 + c      :  \m33= z*z*c1 + c     : \m34= 0
+      \m31= xz_c1 - ysA     : \m32= yz_c1 + c       :  \m33= zz_c1 + c      : \m34= 0
+      
+      \m41= 0               : \m42= 0               :  \m43= 0              : \m44= 1  
+    EndWith 
+
+    ProcedureReturn *Matrix
+  EndProcedure
+
+  Procedure.i Vector_X_Matrix(*OUT.TVector, *IN.TVector, *Matrix.TMatrix)
+  ; ============================================================================
+  ; NAME: Vector_X_Matrix
+  ; DESC: Caluclate the Vector-Matrix-Product  V()xM()
+  ; VAR(*OUT.TVector) : Pointer to Return-Vector VECf::TVector
+  ; VAR(*IN.TVector) : Pointer to a VECf::TVector
+  ; VAR(*Matrix.TMatrix) : Pointer to a VECf::TMatrix
+	; VAR(Angle.f) : Angle in Radian (use Radain() to convert Degree to Radian
+  ; RET.i : *Matrix
+  ; ============================================================================
+   
+    DBG::mac_CheckPointer3(*OUT, *IN, *Matrix)      ; Check Pointer Exception
+    
+    CompilerSelect #PbFwCfg_Module_Compile
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM64             ; 64 Bit-Version
+       ASM_Vector_X_Matrix(RAX, RDX, RCX)  ; for x64 we use RAX,RDX,RCX
+       ProcedureReturn ; RAX
+                 
+  		CompilerCase #PbFwCfg_Module_Compile_ASM32             ; 32 Bit Version
+        ASM_Vector_X_Matrix(EAX, EDX, ECX) ; for x32 we use Registers EAX,EDX,ECX
+        ProcedureReturn ; EAX
+  		  
+;   		  mac_Vector_X_Matrix(*OUT, *IN, *Matrix)
+;         ProcedureReturn *OUT
+
+      CompilerCase #PbFwCfg_Module_Compile_C   ; for the C-Backend  
+        mac_Vector_X_Matrix(*OUT, *IN, *Matrix)
+        ProcedureReturn *OUT
+
+      CompilerDefault                   ; Classic Version
+        mac_Vector_X_Matrix(*OUT, *IN, *Matrix)
+        ProcedureReturn *OUT
+
+    CompilerEndSelect       
+  EndProcedure
+  
+  Procedure.i Matrix_X_Matrix(*OUT.TMatrix, *M1.TMatrix, *M2.TMatrix)
+  ; ============================================================================
+  ; NAME: Matrix_X_Matrix
+  ; DESC: Caluclate the Matrix-Matrix-Product  M() x M()
+  ; DESC: ATTENTION: *OUT must be different from *M1, *M2
+  ; DESC:    Matrix_X_Matrix(myInOut, myInOut, myIN) will cause wrong results!
+  ; VAR(*OUT.TMatrix): Pointer to Return-Matrix VECf::TMatrix
+  ; VAR(*M1.TMatrix): Pointer to IN1 Matrix a VECf::TMatrix
+  ; VAR(*M2.TMatrix): Pointer to IN2 Matrix a VECf::TMatrix
+  ; RET.i : *OUT
+  ; ============================================================================
+        
+    DBG::mac_CheckPointer3(*OUT, *M1, *M2)      ; Check Pointer Exception
+    
+    CompilerSelect #PbFwCfg_Module_Compile
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM64     ; 64 Bit-Version
+          ASM_Matrix_X_Matrix(RAX, RDX, RCX)  ; for x64 we use RAX,RDX,RCX
+          ProcedureReturn  ; RAX
+         
+;          mac_Matrix_X_Matrix(*OUT, *M1, *M2) 
+;          ProcedureReturn *OUT
+        
+      CompilerCase #PbFwCfg_Module_Compile_ASM32     ; 32 Bit Version
+         ASM_Matrix_X_Matrix(EAX, EDX, ECX) ; for x32 we use Registers EAX,EDX,ECX
+         ProcedureReturn  ; EAX
+         
+;         mac_Matrix_X_Matrix(*OUT, *M1, *M2) 
+;         ProcedureReturn *OUT
+        
+      CompilerCase #PbFwCfg_Module_Compile_C     ; for the C-Backend
+        mac_Matrix_X_Matrix(*OUT, *M1, *M2) 
+        ProcedureReturn *OUT
+
+      CompilerDefault                   ; Classic Version
+        mac_Matrix_X_Matrix(*OUT, *M1, *M2) 
+        ProcedureReturn *OUT
+
+    CompilerEndSelect          
+   EndProcedure
+
+  ;- ----------------------------------------------------------------------
+  ;- Auxiliary Functions
+  ;-  ----------------------------------------------------------------------
+
+  Procedure.w MinOf3(Value1.w, Value2.w, Value3.w=1.0e100)
+  ; ============================================================================
+  ; NAME: MinOf3
+  ; DESC: Calculates the Minimum of 3 Values
+  ; VAR(Value1.f) : Value 1
+  ; VAR(Value2.f) : Value 2
+  ; VAR(Value3.f) : Value 3
+  ; RET.f : Min(Value1, Value2, Value3)
+  ; ============================================================================
+  	
+  	If Value3 < Value2
+  		If Value3 < Value1
+  			ProcedureReturn Value3
+  		Else
+  			ProcedureReturn Value1
+  		EndIf
+  	ElseIf Value2 < Value1
+  		ProcedureReturn Value2
+  	Else
+  		ProcedureReturn Value1
+  	EndIf
+  	
+  EndProcedure
+ 
+  Procedure.w MaxOf3(Value1.w, Value2.w, Value3.w=-1.0e100)
+  ; ============================================================================
+  ; NAME: MaxOf3
+  ; DESC: Calculates the Maximum of 3 Values
+  ; VAR(Value1.f) : Value 1
+  ; VAR(Value2.f) : Value 2
+  ; VAR(Value3.f) : Value 3
+  ; RET.f : Max(Value1, Value2, Value3)
+  ; ============================================================================
+  	
+  	If Value3 > Value2
+  		If Value3 > Value1
+  			ProcedureReturn Value3
+  		Else
+  			ProcedureReturn Value1
+  		EndIf
+  	ElseIf Value2 > Value1
+  		ProcedureReturn Value2
+  	Else
+  		ProcedureReturn Value1
+  	EndIf
+  	
+  EndProcedure
+     
+EndModule
+
+CompilerIf #PB_Compiler_IsMainFile    
+  ;- ----------------------------------------------------------------------
+  ;- TEST-CODE
+  ;- ----------------------------------------------------------------------
+
+  EnableExplicit
+  UseModule VECf
+  
+  ; ----------------------------------------------------------------------
+  ;  Define Variables
+  ; ----------------------------------------------------------------------
+  Global.TVector sA, sB, sC    ; single Vectors
+  
+  Global.i tim1, tim2, tim2, tim3 ; Timer to get execution time
+
+  ; ----------------------------------------------------------------------
+  ;  Macros
+  ; ----------------------------------------------------------------------
+  Macro mac_Debug_Result(Res, In1, In2)
+    Debug "Result   :  Input"
+    Debug "X= " + Res\x  + #TAB$ + " :  " + In1\x + #TAB$ + " :  " + In2\x
+    Debug "Y= " + Res\y  + #TAB$ + " :  " + In1\y + #TAB$ + " :  " + In2\y
+    Debug "Z= " + Res\z  + #TAB$ + " :  " + In1\z + #TAB$ + " :  " + In2\z
+    Debug "W= " + Res\w  + #TAB$ + " :  " + In1\w + #TAB$ + " :  " + In2\w
+    Debug ""
+  EndMacro
+  
+   Macro mac_Debug_AB(A,B)
+    Debug " A         :    B"
+    Debug "X= " + A\x  + #TAB$ + " :  " + B\x
+    Debug "Y= " + A\y  + #TAB$ + " :  " + B\y
+    Debug "Z= " + A\z  + #TAB$ + " :  " + B\z
+    Debug "W= " + A\w  + #TAB$ + " :  " + B\w
+    Debug ""
+  EndMacro
+
+  ; Macro to set our Vectors sA, sB, dA, dB to the basic values
+  Macro SetVectorBasicValues()
+    ; set the single Vectors
+    ;mac_SetVector(sA,  1, 2, 3, 4)
+    Vector_Set(sA, 11,12,13,4)
+    Debug "Vector_Set : 1,2,3,4"
+    mac_Debug_Vector(sA)
+    mac_SetVector(sB, 10,20,30,40)  
+  EndMacro
+   
+  ; ----------------------------------------------------------------------
+  ;  Test Procedures
+  ; ----------------------------------------------------------------------
+
+  Procedure Test_VectorAdd()  
+    Debug "----------------------------------------"
+    Debug "Vetor_Add()"    
+    Vector_Add(sC, sA , sB)
+    mac_Debug_Result(sC, sA, sB)
+  EndProcedure
+  
+  Procedure Test_VectorSUB()  
+    Debug "----------------------------------------"
+    Debug "Vetor_SUB()"   
+    Vector_SUB(sC, sA , sB)
+    mac_Debug_Result(sC, sA, sB)
+  EndProcedure
+ 
+  Procedure Test_VectorMul()  
+    Debug "----------------------------------------"
+    Debug "Vetor_Mul()"   
+    Vector_Mul(sC, sA , sB)
+    mac_Debug_Result(sC, sA, sB)
+  EndProcedure
+
+  Procedure Test_VectorDiv()  
+    Debug "----------------------------------------"
+    Debug "Vetor_Div()"   
+    Vector_Div(sC, sA , sB)
+    mac_Debug_Result(sC, sA, sB)
+   EndProcedure
+  
+  Procedure Test_VectorSwap()  
+    Debug "----------------------------------------"
+    Debug "Vetor_Swap()"   
+    Vector_Swap(sC, sA)
+    mac_Debug_Result(sC, sA, sA)
+  EndProcedure
+  
+  Procedure Test_VectorScale()  
+    Debug "----------------------------------------"
+    Debug "Vetor_Scale(*2.5)"   
+    
+    Vector_Scale(sC, sA, 2.5)
+    mac_Debug_Result(sC, sA, sA)
+  EndProcedure
+
+  Procedure Test_VectorCrossProduct()  
+    Debug "----------------------------------------"
+    Debug "Vector_CrossProduct()"
+    mac_SetVector(sA, 2, -1, 5 ,0)
+    mac_SetVector(sB, 6, 7, 2 , 0)
+    ; correct Result = (-37,26,20) 
+    Vector_CrossProduct(sC, sA, sB)
+    Debug ("correct Result (-37,26,20)")
+    mac_Debug_Result(sC, sA, sA)
+  EndProcedure
+  
+  Procedure Test_Vector_X_Matrix()
+    Protected mx.TMatrix 
+   
+    Debug "----------------------------------------"
+    Debug "Vector_X_Matrix()"
+   
+    Vector_X_Matrix(sC, sA, mx)
+  EndProcedure
+  
+  Procedure Test_Matrix_X_Matrix()
+    Protected mx0.Tmatrix, mx1.TMatrix, mx2.TMatrix
+    
+    Debug "----------------------------------------"
+    Debug "Marix_X_Matrix()"
+    
+    Matrix_X_Matrix(mx0, mx1, mx2)
+    
+  EndProcedure
+  
+  SetVectorBasicValues()        ; Set Vectors to basic valus
+  
+  Debug "----------------------------------------"
+  mac_Debug_AB(sA, sB)  ; Show A and B in Debug output
+  
+  ; correct Results at x32
+  Test_VectorAdd()          ; Test the Vector_Add funtions
+  Test_VectorSUB()          ; Test the Vector_SUB funtions
+  Test_VectorMul()          ; Test the Vector_Mul funtions
+  Test_VectorDiv()          ; Test the Vector_Div funtions
+  Test_VectorSwap()         ; Test the Vector_Div funtions
+  Test_VectorScale()        ; Test the Vector_Div funtions
+  
+  Test_VectorCrossProduct() ; Test the Vector_CrossProduct funtions
+  
+  Test_Vector_X_Matrix()
+  Test_Matrix_X_Matrix()
+  
+CompilerEndIf
+
+
+; IDE Options = PureBasic 6.21 (Windows - x64)
+; CursorPosition = 760
+; FirstLine = 732
+; Folding = --------------
+; Optimizer
+; CPU = 5
