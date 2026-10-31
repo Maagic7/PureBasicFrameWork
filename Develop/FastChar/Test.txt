@@ -1,0 +1,252 @@
+DeclareModule PbXRef
+  
+  EnableExplicit
+  
+  ;- --------------------------------------------------
+  ;- STRUCTURES and CONSTANTS
+  ;  --------------------------------------------------
+  
+  Declare.i CreateXRef(StartFile$, *pXRef.XRef::TThis, ParseIncludeFiles = #True)
+ 
+EndDeclareModule
+
+Module PbXRef
+  
+  EnableExplicit
+  
+  ; Flags for Module FChr:: Character Classification Table
+  Global Flag_WordChars         ; Flag for groupe of valid Word Characters (inside a Word)
+  Global Flag_WordStartChars    ; Flag for groupe of valid WordStart Characters (1st Char of Word) 
+  Global Flag_WordPostfixChars  ; Flag for groupe of valid WordPostfix Characters (postfix like '$')
+  Global Flag_NumberStartChars  ; Flag for groupe of valid Characters to start a Number
+  
+  Global mem_Init
+  
+  Procedure DeInit()    
+    FChr::FreeUserFlag(Flag_WordChars)
+    FChr::FreeUserFlag(Flag_WordStartChars)
+    FChr::FreeUserFlag(Flag_WordPostfixChars)
+    FChr::FreeUserFlag(Flag_NumberStartChars)
+    mem_Init = #False
+    ProcedureReturn mem_Init
+  EndProcedure
+
+  Procedure Init()
+    
+    If mem_Init
+      DeInit()
+    EndIf
+    
+    Flag_WordChars        = FChr::AllocateUserFlag()   ; Flag for WordCharacters in Purebasic
+    Flag_WordStartChars   = FChr::AllocateUserFlag()   ; Falg for WordStartCharacters in Purebasic
+    Flag_WordPostfixChars = FChr::AllocateUserFlag()   ; Flag for WordPostfixCharacters in Purebasic
+    Flag_NumberStartChars = FChr::AllocateUserFlag()   ; Flag for NumberStartCharacters in Purebasic
+    
+    If Flag_WordChars = 0 Or Flag_WordStartChars = 0 Or Flag_WordPostfixChars = 0 Or Flag_NumberStartChars = 0
+      ; Fire a Message if there are not enough free User Flags
+      MessageRequester("Error: " + #PB_Compiler_Module, "Can't get a free UserFlag from Moudule FChr!")
+    Else  
+      
+      ; Valid Chars for a Word. ASCII Chars, Decimals, and '_'
+      FChr::CopyToUserFlag(Flag_WordChars, FChr::#FChr_AsciiLetter | FChr::#FChr_Dec)
+      FChr::SetUserFlag("_", Flag_WordChars, #True)
+      
+      ; Valid Chars for 1st Character of a Word. Decimals are not allowed as 1st char in PB
+      FChr::CopyToUserFlag(Flag_WordStartChars, FChr::#FChr_AsciiLetter)    
+      FChr::SetUserFlag("*#", Flag_WordStartChars, #True)
+          
+      ; Valid Postifix Chars. In PB it's the String Postfix '$'
+      FChr::SetUserFlag("$",  Flag_WordPostfixChars, #True)
+           
+      FChr::CopyToUserFlag(Flag_NumberStartChars, FChr::#FChr_Dec)
+      FChr::SetUserFlag("$%+-", Flag_NumberStartChars, #True)
+      
+      mem_Init = #True
+    EndIf
+    ProcedureReturn mem_Init
+  EndProcedure
+  
+   
+  ;- ----------------------------------------------------------------------
+  ;- Module Private Functions
+  ;- ----------------------------------------------------------------------
+  
+  Macro _CMovWordStart(_pChar)
+    While _pChar\c
+      If (FChr::FlagTable(_pChar\c) & Flag_WordStartChars)
+        Break  
+      EndIf
+      _pChar + SizeOf(Character)  
+    Wend   
+  EndMacro
+  
+  Macro _CMovWordEnd(_pChar)
+    While _pChar\c
+      If (FChr::FlagTable(_pChar\c) & Flag_WordChars) = 0
+        If (FChr::FlagTable(_pChar\c) & Flag_WordPostfixChars)
+          _pChar + SizeOf(Character)
+        EndIf
+        Break  
+      EndIf
+      _pChar + SizeOf(Character)  
+    Wend   
+  EndMacro
+    
+  Macro _mac_PeekWord(_pStart, _pEnd)
+    PeekS(_pStart, (_pEnd - _pStart)>>1)
+  EndMacro
+    
+  Procedure.i _ParseCode(List lstCodeLines.s(), *XR.XRef::TThis, *pFile.XRef::TFile)
+    Protected *pC.PX::pChar
+    Protected.i ChrFlags, ret, I, cntWord
+    Protected *pStart
+    Protected Word$, Line$
+    
+    If Not mem_Init 
+      Init()    ; Init Module PbXRef
+    EndIf
+    
+    ForEach lstCodeLines()
+      I + 1
+      ; Debug Str(I) + " : " + lstCodeLines()
+      Line$ = lstCodeLines()
+      
+      *pC = @Line$
+      If *pC        
+        While *pC\c         ; Until EndOfString
+         PX::CSkipSpaceTab(*pC)
+         Select *pC\c 
+            Case ';'                  ; Comment
+              ;Debug "comment"
+              Break
+              
+            Case '!'
+              ; Debug "direct ASM or C command"
+              Break
+              
+            Case '"'                  ; Quotes
+              PX::CInc(*pC)                 ; Inkrement *pC to NextChar
+              PX::CMovBeyondNext(*pC, '"')  ; Move *pC Beyond Next DQuote
+              
+            Default
+              _CMovWordStart(*pC)           ; Mov Charpointer to Next WordStart Character
+              *pStart = *pC                 ; save Pointer of WordStart
+              PX::CInc(*pC)                 ; Inckrement Pointer to Next Char
+              
+              _CMovWordEnd(*pC)             ; Move CharPointer to Next NonWord Character
+              If *pC > *pStart              ; if WordLength > 0
+                Word$ = _mac_PeekWord(*pStart, *pC)
+                If Len(Word$)>2
+                  cntWord + 1
+                  ret = XRef::AddWord(*XR, Word$,*pFile, I)
+                  ;Debug Word$ +" : " + Len(Word$)
+                EndIf
+              EndIf
+              
+              If *pC\c 
+                PX::CInc(*pC)  
+              EndIf
+              
+          EndSelect
+        Wend
+        
+      Else
+        ; Raise Pointer Exception      
+      EndIf
+    Next
+    
+    ProcedureReturn cntWord
+  EndProcedure
+  
+  ;- ----------------------------------------------------------------------
+  ;- Module Public Functions
+  ;- ----------------------------------------------------------------------
+  
+  Procedure.i CreateXRef(StartFile$, *pXRef.XRef::TThis, ParseIncludeFiles = #True)
+    
+    Protected NewList lstLines.s()
+    Protected *pFile.XRef::TFile
+    Protected cntWord
+    
+    Debug "CreateXRef"
+    
+    If PX::FileExist(StartFile$)
+      Debug "FileExist " + StartFile$ 
+      *pFile = XRef::AddFile(*pXref, StartFile$)
+      If *pFile
+        Debug "LoadFile"
+        FS::FileToStringList(StartFile$, lstLines(), #True)
+        Debug StartFile$
+        Debug "Lines = " + ListSize(lstLines())
+        Debug "----------------------------------------"
+        cntWord = _ParseCode(lstLines(), *pXRef, *pFile)
+        *pXRef\LineCount = ListSize(lstLines())
+      EndIf
+    Else
+      MessageRequester("File do not exist!", StartFile$)  
+    EndIf
+    
+    ProcedureReturn cntWord
+  EndProcedure
+  
+  
+EndModule
+
+CompilerIf  #True;  #PB_Compiler_IsMainFile
+  EnableExplicit
+  
+  OpenConsole("PB-Xref")
+  PrintN( "PB V" + StrF(#PB_Compiler_Version/100, 2) + " : " + PX::GetBackendString())
+  PrintN("")
+  
+  Debug "Start!!!"
+  UseModule PbXRef
+  
+  Define File$ 
+  ;File$ = "D:\PureBasic\PbFrameWork\Modules\ModulDevelop\FastChar\test.txt"
+  File$ = "D:\PureBasic\PbFrameWork\Modules\PbFw_Module_STEP3D_Structures.pb"
+  ;File$ = "C:\Program Files\LibreOffice\share\extensions\dict-de\th_de_DE_v2.dat"
+  ; File$ = "PB_Code_70k_lines.pb"
+  
+  Define *PbX.XRef::TThis
+  Define I, t1, cntWords
+  
+  t1 = ElapsedMilliseconds()
+  *PbX = XRef::New()
+  cntWords = CreateXRef(File$, *PbX)
+  t1 = ElapsedMilliseconds() - t1
+  
+  Debug ""
+  Debug "-------------------------------------"
+  ForEach *PbX\lstWords()
+    Debug *PbX\lstWords()\Word$  
+  Next
+  
+  SortStructuredList(*PbX\lstWords(), #PB_Sort_Descending, OffsetOf(Xref::TWord\Word$), TypeOf(Xref::TWord\Word$))
+  
+  PrintN("No of Codelines = " + *PbX\LineCount)
+  PrintN("Time to parse ms = " + Str(t1))
+  PrintN("Total amount of Words = " + Str(cntWords))
+  PrintN("Different Words found = " + Str(ListSize(*PbX\lstWords())))
+  PrintN("")
+  PrintN("First 10 Words")
+  I =0
+  ForEach *pBx\lstWords()
+    
+    If Asc(*pBx\lstWords()\Word$) = 'A'
+      PrintN(*pBx\lstWords()\Word$)
+      I+1
+      If I > 10
+        Break
+      EndIf
+      
+    EndIf
+        
+  Next
+  PrintN("") 
+   PrintN("") 
+  PrintN("Press any key")
+  Input()
+  
+  *Pbx = XRef::Destroy(*PbX)
+CompilerEndIf

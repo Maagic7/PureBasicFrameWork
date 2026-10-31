@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.41 (Windows - x64)">
+  <section name="config">
+    <options closefiles="1" openmode="0" name="DSP develop"/>
+  </section>
+  <section name="data">
+    <explorer view="..\..\..\" pattern="0"/>
+    <log show="1"/>
+    <lastopen date="2026-10-26 13:10" user="user1" host="AMD5800X"/>
+  </section>
+  <section name="files">
+    <file name="Scope_Main.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="+"/>
+      <fingerprint md5="efbc8332b804aadc6fa02fbb631e3c68"/>
+    </file>
+    <file name="..\..\Modules\PbFw_Module_RingBuffer.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="9d5a43d99cc79a72b775e00dcabb084d"/>
+    </file>
+    <file name="DSP_Main.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
+      <fingerprint md5="67a0455e8a6aa82ea3eb4c85bfd23d86"/>
+    </file>
+    <file name="..\..\Modules\DSP\PbFw_Module_DOSC.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="56b5374d1975ca7f2269303fe57c11c9"/>
+    </file>
+    <file name="..\..\Modules\DSP\PbFw_Module_DSP.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="d36889ec4b3b27876ed02e90360c9698"/>
+    </file>
+    <file name="..\..\Modules\DSP\PbFw_Module_Lame.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="08796efacadfc05287dfbec3d40b5b79"/>
+    </file>
+    <file name="..\..\Modules\DSP\PbFw_Module_SCOPE.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="d66e4433ecb95dafe2f4e241db0064aa"/>
+    </file>
+    <file name="..\..\Modules\DSP\PbFw_Module_SFX.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="9d54ad6bc037acdb073b4353b69b925d"/>
+    </file>
+  </section>
+  <section name="targets">
+    <target name="Default Target" enabled="1" default="1">
+      <inputfile value="DSP_Main.pb"/>
+      <outputfile value="DSP.exe"/>
+      <options dpiaware="1" debug="1" optimizer="0"/>
+      <format exe="default" cpu="5"/>
+    </target>
+  </section>
+</project>

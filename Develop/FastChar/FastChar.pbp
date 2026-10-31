@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.41 (Windows - x64)">
+  <section name="config">
+    <options closefiles="1" openmode="0" name="FastChar"/>
+  </section>
+  <section name="data">
+    <explorer view="..\..\" pattern="0"/>
+    <log show="1"/>
+    <lastopen date="2026-10-26 13:11" user="user1" host="AMD5800X"/>
+  </section>
+  <section name="files">
+    <file name="..\..\Modules\PbFw_Module_PX.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="466ec14d9d4c9ad3a0fce98e26c68de4"/>
+    </file>
+    <file name="..\..\Modules\PbFw_Module_PbXRef.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="a5c33a681dfd3b731dfb960419b8e473"/>
+    </file>
+    <file name="..\..\Modules\PbFw_Module_XRef.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="9a1e4d4c5b44548dcafbc980ee530478"/>
+    </file>
+    <file name="..\..\Modules\PbFw_Module_FastChar.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="ef400b5271c5b2d334c13fe3b95bd5f9"/>
+    </file>
+    <file name="..\..\Modules\PbFw_Module_PbSdk.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="b40b16ea73bf75cd3990a254b8dc0053"/>
+    </file>
+    <file name="FastChar_Main.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
+      <fingerprint md5="75472544dce92c33c01709b018d8c13d"/>
+    </file>
+    <file name="..\..\Modules\PbFw_Module_FileSystem.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="f06a7ef62cf0b14232c3125ebbcc8c96"/>
+    </file>
+    <file name="..\..\Modules\PbFw_Module_CodeCreation.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="717a7384898b0165aa265d9d582ce9c2"/>
+    </file>
+  </section>
+  <section name="targets">
+    <target name="Default Target" enabled="1" default="1">
+      <inputfile value="..\FastChar\FastChar_Main.pb"/>
+      <outputfile value=""/>
+      <compiler version="PureBasic 6.40 alpha 3 - C Backend (Windows - x64)"/>
+      <options dpiaware="1" debug="1" optimizer="1"/>
+      <format exe="default" cpu="5"/>
+    </target>
+  </section>
+</project>

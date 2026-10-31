@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 6.41 (Windows - x64)">
+  <section name="config">
+    <options closefiles="1" openmode="0" name="PureBasicExtentionModule_PX"/>
+  </section>
+  <section name="data">
+    <explorer view="..\..\" pattern="0"/>
+    <log show="1"/>
+    <lastopen date="2026-10-26 13:24" user="user1" host="AMD5800X"/>
+  </section>
+  <section name="files">
+    <file name="PX_Main.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="+"/>
+      <fingerprint md5="c53c4c34a8b494cf7f36075851401850"/>
+    </file>
+    <file name="..\..\Modules\PbFw_Module_PX.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="++"/>
+      <fingerprint md5="fa355ba095bdfabfb2909d277528aaa6"/>
+    </file>
+    <file name="AdvancedStringParsing.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="+"/>
+      <fingerprint md5="e160bbba9a199a83eb03992382ce2e67"/>
+    </file>
+    <file name="..\..\Modules\PbFw_Module_CodeCreation.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" sortindex="999" panelstate="++"/>
+      <fingerprint md5="717a7384898b0165aa265d9d582ce9c2"/>
+    </file>
+    <file name="TextBetween.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="+"/>
+      <fingerprint md5="10af93ef398ff4ff143e4755fb5f50ab"/>
+    </file>
+  </section>
+  <section name="targets">
+    <target name="Default Target" enabled="1" default="1">
+      <inputfile value="PX_Main.pb"/>
+      <outputfile value=""/>
+      <options dpiaware="1" debug="1" optimizer="0"/>
+      <format exe="default" cpu="5"/>
+    </target>
+  </section>
+</project>
