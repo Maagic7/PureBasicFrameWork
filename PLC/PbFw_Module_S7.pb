@@ -253,10 +253,11 @@ DeclareModule S7
       a.a[0]
       u.u[0]
       w.w[0]
+      l.l[0]
       q.q[0]
       BYTE.a
+      CHAR.a
       WORD.u
-      CHAR.c
       DATE.u
       S5Time.u
       INT.w
@@ -908,11 +909,7 @@ Module S7
   ; VAR(BitNo.i)  : Bit number [0..7]
   ; VAR(value.i) : The value of the Bit [0,1], [#False,#True]
   ; RET.i : #True if done
-  ; ============================================================================  
-    ; ============================================================================
-    ;   Writes a single Bit into a Buffer()
-    ; ============================================================================
-  
+  ; ============================================================================    
     Protected *pVal.TS7uni        ; Pointer to the actual Value accessed by pReadBuf + ByteOffset
      
     *pVal = _CheckBuffer(*Buf, BufByteSize, ByteOffset)   ; returns the Pointer to the actual Value in Buffer or 0
@@ -1462,7 +1459,7 @@ Module S7
     S5Time$ = UCase(S5Time$)
     *pC = @S5Time$
     
-    PX::CMovBeyondNext(*pC,I,'#')
+    PX::CMovIBeyondNext(*pC,I,'#')
     
     While *pC\c
       I=0
@@ -1520,7 +1517,7 @@ Module S7
     *pC = @S7Time$
     
     ; IEC-Time T#5D4H3M2S1MS
-    PX::CMovBeyondNext(*pC,I,'#')
+    PX::CMovIBeyondNext(*pC,I,'#')
     
     While *pC\c                     ; until EndOfString
       I=0
@@ -1581,16 +1578,16 @@ Module S7
     ;TimeOfDay$ = UCase(TimeOfDay$)
     *pC = @TimeOfDay$
     
-    PX::CMovBeyondNext(*pC,I,'#')
+    PX::CMovIBeyondNext(*pC,I,'#')
     hh=Val(PeekS(*pC,2))
     
-    PX::CMovBeyondNext(*pC,I,':')
+    PX::CMovIBeyondNext(*pC,I,':')
     mm=Val(PeekS(*pC,2))
     
-    PX::CMovBeyondNext(*pC,I,':')
+    PX::CMovIBeyondNext(*pC,I,':')
     ss=Val(PeekS(*pC,2))
     
-    PX::CMovBeyondNext(*pC,I,'.')
+    PX::CMovIBeyondNext(*pC,I,'.')
     ms=Val(PeekS(*pC))
     
     If hh = 24 
@@ -1627,17 +1624,17 @@ Module S7
     *pC = @S7Date$
     
     ; Date D#2015-12-29
-    PX::CMovBeyondNext(*pC,I,'#')
+    PX::CMovIBeyondNext(*pC,I,'#')
         
     ; Year
     Y=Val(PeekS(*pC))
     ;Debug "Year = " + Str(Y)
-    PX::CMovBeyondNext(*pC,I,'-')
+    PX::CMovIBeyondNext(*pC,I,'-')
     
     ; Month
     M=Val(PeekS(*pC))
     ;Debug "Month = " + M
-    PX::CMovBeyondNext(*pC,I,'-')
+    PX::CMovIBeyondNext(*pC,I,'-')
     
     ; Day
     D = Val(PeekS(*pC))
@@ -1666,17 +1663,17 @@ Module S7
     *pC = @S7Date$
     
     ; Date D#2015-12-29
-    PX::CMovBeyondNext(*pC,I,'#')
+    PX::CMovIBeyondNext(*pC,I,'#')
         
     ; Year
     Y=Val(PeekS(*pC))
     ;Debug "Year = " + Str(Y)
-    PX::CMovBeyondNext(*pC,I,'-')
+    PX::CMovIBeyondNext(*pC,I,'-')
     
     ; Month
     M=Val(PeekS(*pC))
     ;Debug "Month = " + M
-    PX::CMovBeyondNext(*pC,I,'-')
+    PX::CMovIBeyondNext(*pC,I,'-')
     
     ; Day
     D = Val(PeekS(*pC))
@@ -1705,26 +1702,26 @@ Module S7
     *pC = @S7DateAndTime$
          
     ; Year
-    PX::CMovBeyondNext(*pC,I,'#')      
+    PX::CMovIBeyondNext(*pC,I,'#')      
     Y=Val(PeekS(*pC, 4))
     ; Month
-    PX::CMovBeyondNext(*pC,I,'-')
+    PX::CMovIBeyondNext(*pC,I,'-')
     M=Val(PeekS(*pC, 2))
     ; Day
-    PX::CMovBeyondNext(*pC,I,'-')
+    PX::CMovIBeyondNext(*pC,I,'-')
     D=Val(PeekS(*pC, 2))
     
     ; Hour
-    PX::CMovBeyondNext(*pC,I,'-')
+    PX::CMovIBeyondNext(*pC,I,'-')
     hh=Val(PeekS(*pC,2))
     ; Minute
-    PX::CMovBeyondNext(*pC,I,':')
+    PX::CMovIBeyondNext(*pC,I,':')
     mm=Val(PeekS(*pC,2))
     ; Second
-    PX::CMovBeyondNext(*pC,I,':')
+    PX::CMovIBeyondNext(*pC,I,':')
     ss=Val(PeekS(*pC,2))
     ;Millisecond
-    PX::CMovBeyondNext(*pC,I,'.')
+    PX::CMovIBeyondNext(*pC,I,'.')
     ms=Val(PeekS(*pC))
     
     If Y >= 1990 And Y <= 1999
@@ -1825,28 +1822,28 @@ Module S7
       Case "B#"     ; Byte B#16#1; 
       ; --------------------------------------------------                           
         type = #S7_DataType_BYTE
-        PX::CMovBeyondLast(*pC,I,'#')   ; move CharPointer to Char after the Last # -> '1'
+        PX::CMovIBeyondLast(*pC,I,'#')   ; move CharPointer to Char after the Last # -> '1'
         *outS7val\BYTE = Val("$" + PeekS(*pC))
         
       ; --------------------------------------------------                           
       Case "W#"      ; WORD W#16#1C
       ; --------------------------------------------------                           
         type = #S7_DataType_WORD
-        PX::CMovBeyondLast(*pC,I,'#')
+        PX::CMovIBeyondLast(*pC,I,'#')
         *outS7val\WORD = Val("$" + PeekS(*pC))
         
       ; --------------------------------------------------                           
       Case "DW"     ; DWORD DW#16#123ABC
       ; --------------------------------------------------                           
         type = #S7_DataType_DWORD
-        PX::CMovBeyondLast(*pC,I,'#')   ; Move Pointer to Char after '#'
+        PX::CMovIBeyondLast(*pC,I,'#')   ; Move Pointer to Char after '#'
         *outS7val\_qDWORD = Val("$" + PeekS(*pC))
         
       ; --------------------------------------------------                           
       Case "L#"     ; DINT L#9876
       ; --------------------------------------------------                           
         type = #S7_DataType_DINT
-        PX::CMovBeyondNext(*pC,I,'#')
+        PX::CMovIBeyondNext(*pC,I,'#')
         *outS7val\DINT = Val(PeekS(*pC))  
          
       ; --------------------------------------------------                           
@@ -2354,9 +2351,8 @@ CompilerIf #PB_Compiler_IsMainFile
   DisableExplicit
 CompilerEndIf
 
-; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 1080
-; FirstLine = 528
+; IDE Options = PureBasic 6.41 (Windows - x64)
+; CursorPosition = 901
 ; Folding = -----------
 ; EnableXP
 ; CPU = 5
