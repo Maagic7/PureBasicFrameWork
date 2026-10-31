@@ -26,13 +26,6 @@ The Library is embeded in the PureBasicFrameWork
 *   Language version: PureBasic 6.00+
 *   Floating Point Precision: Double (.d)
 *   Operating System: Cross-platform (Windows, macOS, Linux)
-*   Compiler Requirement: **Thread-Safe** option must be enabled in the Compiler Options!
-
-## Project File Layout
-*   `DSP_main.pb`: Main application GUI orchestrator, thread coordinator, and event loop.
-*   `PbFw_Module_DSP.pb`: Core mathematical DSP algorithm library containing filters, transformations, and dynamics.
-*   `DSP_AudioIO.pb`: Virtual background hardware stream and audio thread simulator.
-*   `Dsp_Draw.pb`: Hardware-accelerated VectorDrawing engine rendering the live Oscilloscope and Logarithmic Frequenz-Analyzer spectrum.
 
 ---
 Co-authored with support from Google Gemini. Licensed under the MIT License.

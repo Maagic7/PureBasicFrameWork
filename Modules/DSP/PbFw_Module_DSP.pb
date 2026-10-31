@@ -3024,7 +3024,7 @@ CompilerIf #PB_Compiler_IsMainFile
     ; Da es "In-Place" rechnet, arbeiten wir direkt auf 'buf'
     Debug "N = " + N
     Debug "arraysize = " + ArraySize(buf())
-    FFT_Radix2(buf(), N)
+    FFT_Radix2_cmplx(buf(), N)
     
     r + 1
     show(r, "--- OUTPUT (Frequenzbereich mit Normierung 1/N) ---", buf())
@@ -3102,8 +3102,8 @@ CompilerIf #False
   ; smoothing on the screen using your Interpolate_Lagrange3 engine!
 CompilerEndIf
 ; IDE Options = PureBasic 6.41 (Windows - x64)
-; CursorPosition = 75
-; FirstLine = 23
+; CursorPosition = 3028
+; FirstLine = 2992
 ; Folding = ----------
 ; Optimizer
 ; CPU = 5
