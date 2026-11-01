@@ -26,7 +26,7 @@
 ;             or \PbFramWork\MitLicence.txt
 ; ===========================================================================
 ;{ ChangeLog: 
-;  2026/11/01 S.Maag solved hotswap stay compact at ConvertToSparse
+;  2026/11/01 S.Maag fixed hotswap to keep layout compact in ConvertToSpars
 ;  2026/10/25 S.Maag solved bugs! Added sort and filter functions
 ;}
 ;{ TODO!
@@ -1426,7 +1426,7 @@ CompilerIf #PB_Compiler_IsMainFile
 CompilerEndIf
 
 ; IDE Options = PureBasic 6.41 (Windows - x64)
-; CursorPosition = 21
+; CursorPosition = 31
 ; Folding = 8-----
 ; DPIAware
 ; CPU = 5
