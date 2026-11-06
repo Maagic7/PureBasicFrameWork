@@ -19,6 +19,7 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{ 
+;  2026/11/04 S.Maag Added G-Code Export
 ;  2026/11/03 S.Maag fixed some things and created test code with help of AI
 ;}             
 ; ============================================================================
@@ -850,8 +851,7 @@ End
 
 
 ; IDE Options = PureBasic 6.41 (Windows - x64)
-; CursorPosition = 447
-; FirstLine = 410
+; CursorPosition = 28
 ; Folding = ---
 ; DPIAware
 ; CPU = 5
