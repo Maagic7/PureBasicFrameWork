@@ -14,6 +14,7 @@
 ; ===========================================================================
 ; ChangeLog:
 ;{
+; 2026/11/06 S.Maag : Fixed TextBetween Array: out of bounds
 ; 2026/10/15 S.Maag : Added Macros for Memory operations
 ; 2026/08/17 S.Maag : fixed BSwap16 MaskOut Error: Wrong shift commands for the 2 bytes!
 ; 2026/02/07 S.Maag : fixed Macro BSwap16(_WordValue): Mask out irrelevant Bits because
@@ -2394,7 +2395,7 @@ Module PX
   ; ============================================================================
     Protected posL, posR, xRight        ; Character postion of found Char 
     Protected lenBL, lenBR              ; Bytelength of Left$, Right$ 
-    Protected ASize, N
+    Protected ASize, N, matchLen
     Protected Str.String, *pStr.Integer ; for hooking *String into Str.String 
         
     lenBL = Len(Left$) * SizeOf(Character)
@@ -2416,33 +2417,34 @@ Module PX
     ; but hand made!
     *pStr = @Str            ; Overlay IntergerStructure on String Structure
     *pStr\i = *String       ; Hook String into Str\s => PokeI(@Str, *String))
-    xRight = Bool(Right$)   ; Check for Right$=#Null$ to return until EndOfString
-    
+     
     Repeat
       posL = FindString(Str\s, Left$)
       If posL
         *String = *String + posL*SizeOf(Character) + lenBL - SizeOf(Character)    ; Pointer to Char after Position found
-        *pStr\i = *String           ; New Startposition after Left$
-        posR = FindString(Str\s, Right$)
+        *pStr\i = *String         
+        posR = FindString(Str\s, Right$)       
         
-        If posR
-          If (posR -1) >= MinLength
-            If ASize < N
+        If posR          
+          If (posR - 1) >= MinLength
+            If N > ASize
               ASize + ArrayRedimStep
               ReDim Out(ASize)
             EndIf            
-            N+1
-            Out(N)=PeekS(*String, posR-1)
+            
+            Out(N) = PeekS(*String, posR-1)
+            N + 1
           EndIf
+          
           *String = *String + posR*SizeOf(Character) + lenBR - SizeOf(Character)  ; Pointer to Char after Position found
-          *pStr\i = *String         ; New Startposition after Right$
+          *pStr\i = *String         
         Else
           Break        
         EndIf       
       Else
         Break
       EndIf       
-    ForEver
+    ForEver   
     
     ; befor leaving the Procedure we have to unhook the Strings, otherwise PB will delete
     ; the original String allocated Memory and the original String Point to non allocated
@@ -3144,9 +3146,9 @@ CompilerEndIf
 
 
 ; IDE Options = PureBasic 6.41 (Windows - x64)
-; CursorPosition = 2429
-; FirstLine = 2374
+; CursorPosition = 2439
+; FirstLine = 2359
 ; Folding = ----------------------------
-; Markers = 1402,2949
+; Markers = 1403,2951
 ; Optimizer
 ; CPU = 5
