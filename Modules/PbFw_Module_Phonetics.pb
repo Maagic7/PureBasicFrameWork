@@ -1,4 +1,4 @@
-﻿; ===========================================================================
+﻿﻿; ===========================================================================
 ;  FILE: PbFw_Module_Phonetics.pb
 ;  NAME: Module Phnonetics 
 ;  DESC: Phonetic algorithms which assigns to words a sequence of digits,
@@ -21,7 +21,7 @@
 ;
 ; AUTHOR   :  Stefan Maag
 ; DATE     :  2025/01/23
-; VERSION  :  0.51 Developer Version
+; VERSION  :  0.5 pretested Developer Version
 ; COMPILER :  PureBasic 6.0 and higher
 ;
 ; LICENCE  :  MIT License see https://opensource.org/license/mit/
@@ -39,9 +39,9 @@
 ;- Include Files
 ;  ----------------------------------------------------------------------
 
-XIncludeFile "PbFw_Module_PX.pb"          ; PX::      Purebasic Extention Module
-XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
-XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::     Debug Module
+; XIncludeFile "PbFw_Module_PX.pb"          ; PX::      Purebasic Extention Module
+; XIncludeFile "PbFw_Module_PbFw.pb"        ; PbFw::    FrameWork control Module
+; XIncludeFile "PbFw_Module_Debug.pb"       ; DBG::     Debug Module
 
 ; XIncludeFile ""
 
@@ -623,9 +623,8 @@ CompilerEndIf
 ; EndDataSection
 
 
-; IDE Options = PureBasic 6.21 (Windows - x64)
-; CursorPosition = 250
-; FirstLine = 247
+; IDE Options = PureBasic 6.41 (Windows - x64)
+; CursorPosition = 35
 ; Folding = --
 ; Optimizer
 ; CPU = 5
